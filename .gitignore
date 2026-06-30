@@ -1,0 +1,37 @@
+# Secrets
+.env
+rclone-config/
+
+# Pre-git backups (contain original files with inline credentials)
+backup/
+
+# Shopware data
+shopware-html-data/
+shopware-mysql-data/
+shopware-data/
+
+# Dolibarr SdWa5 data
+dolibarr-mariadb-data/
+dolibarr-documents-data/
+dolibarr-custom-data/
+
+# Dolibarr Project 2 data
+project2-dolibarr-mariadb-data/
+project2-dolibarr-documents-data/
+project2-dolibarr-custom-data/
+
+# Dolibarr Project 3 data
+project3-dolibarr-mariadb-data/
+project3-dolibarr-documents-data/
+project3-dolibarr-custom-data/
+
+# Other service data
+vaultwarden-data/
+ollama-data/
+minecraft-data/
+
+# Empty build dirs (nothing to commit)
+docker/
+
+# Backup of original compose before credential extraction
+docker-compose.bak.yml

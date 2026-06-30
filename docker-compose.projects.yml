@@ -1,0 +1,78 @@
+version: '3'
+
+services:
+  project2_dolibarr_db:
+    image: mariadb:latest
+    container_name: project2_dolibarr_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${PROJECT2_MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${PROJECT2_MYSQL_DATABASE:-dolidb}
+      MYSQL_USER: ${PROJECT2_MYSQL_USER:-dolidbuser}
+      MYSQL_PASSWORD: ${PROJECT2_MYSQL_PASSWORD}
+    volumes:
+      - ./project2-dolibarr-mariadb-data:/var/lib/mysql
+
+  project2_dolibarr:
+    image: dolibarr/dolibarr:latest
+    container_name: project2_dolibarr
+    restart: unless-stopped
+    environment:
+      DOLI_INIT_DEMO: ${PROJECT2_INIT_DEMO:-0}
+      DOLI_DB_HOST: project2_dolibarr_db
+      DOLI_DB_NAME: ${PROJECT2_MYSQL_DATABASE:-dolidb}
+      DOLI_DB_USER: ${PROJECT2_MYSQL_USER:-dolidbuser}
+      DOLI_DB_PASSWORD: ${PROJECT2_MYSQL_PASSWORD}
+      DOLI_URL_ROOT: "https://project2.sdwa5.org"
+      DOLI_ADMIN_LOGIN: "${PROJECT2_ADMIN_LOGIN:-admin}"
+      DOLI_ADMIN_PASSWORD: "${PROJECT2_ADMIN_PASSWORD}"
+      DOLI_CRON: ${PROJECT2_CRON:-0}
+      DOLI_CRON_KEY: ${PROJECT2_CRON_KEY}
+      DOLI_COMPANY_NAME: ${PROJECT2_COMPANY_NAME:-Project 2}
+      WWW_USER_ID: ${PROJECT2_WWW_USER_ID:-1000}
+      WWW_GROUP_ID: ${PROJECT2_WWW_GROUP_ID:-1000}
+    ports:
+      - "127.0.0.1:8003:80"
+    links:
+      - project2_dolibarr_db
+    volumes:
+      - ./project2-dolibarr-documents-data:/var/www/documents
+      - ./project2-dolibarr-custom-data:/var/www/html/custom
+
+  project3_dolibarr_db:
+    image: mariadb:latest
+    container_name: project3_dolibarr_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${PROJECT3_MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${PROJECT3_MYSQL_DATABASE:-dolidb}
+      MYSQL_USER: ${PROJECT3_MYSQL_USER:-dolidbuser}
+      MYSQL_PASSWORD: ${PROJECT3_MYSQL_PASSWORD}
+    volumes:
+      - ./project3-dolibarr-mariadb-data:/var/lib/mysql
+
+  project3_dolibarr:
+    image: dolibarr/dolibarr:latest
+    container_name: project3_dolibarr
+    restart: unless-stopped
+    environment:
+      DOLI_INIT_DEMO: ${PROJECT3_INIT_DEMO:-0}
+      DOLI_DB_HOST: project3_dolibarr_db
+      DOLI_DB_NAME: ${PROJECT3_MYSQL_DATABASE:-dolidb}
+      DOLI_DB_USER: ${PROJECT3_MYSQL_USER:-dolidbuser}
+      DOLI_DB_PASSWORD: ${PROJECT3_MYSQL_PASSWORD}
+      DOLI_URL_ROOT: "https://project3.sdwa5.org"
+      DOLI_ADMIN_LOGIN: "${PROJECT3_ADMIN_LOGIN:-admin}"
+      DOLI_ADMIN_PASSWORD: "${PROJECT3_ADMIN_PASSWORD}"
+      DOLI_CRON: ${PROJECT3_CRON:-0}
+      DOLI_CRON_KEY: ${PROJECT3_CRON_KEY}
+      DOLI_COMPANY_NAME: ${PROJECT3_COMPANY_NAME:-Project 3}
+      WWW_USER_ID: ${PROJECT3_WWW_USER_ID:-1000}
+      WWW_GROUP_ID: ${PROJECT3_WWW_GROUP_ID:-1000}
+    ports:
+      - "127.0.0.1:8004:80"
+    links:
+      - project3_dolibarr_db
+    volumes:
+      - ./project3-dolibarr-documents-data:/var/www/documents
+      - ./project3-dolibarr-custom-data:/var/www/html/custom

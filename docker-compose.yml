@@ -1,0 +1,182 @@
+version: '3.9'
+
+services:
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: unless-stopped
+    environment:
+      - ADMIN_TOKEN=${VAULTWARDEN_ADMIN_TOKEN}
+    volumes:
+      - ./vaultwarden-data:/data
+    ports:
+      - "127.0.0.1:8000:80"
+
+
+  shopware:
+    image: dockware/shopware:latest
+    container_name: shopware
+    ports:
+      - "127.0.0.1:8001:80"
+      - "127.0.0.1:8443:443"
+    environment:
+      - SHOP_DOMAIN=sdwa5.org
+      - APP_URL=https://sdwa5.org
+    volumes:
+      - ./shopware-mysql-data:/var/lib/mysql
+      - ./shopware-html-data:/var/www/html
+    restart: unless-stopped
+
+
+  minecraft:
+    image: itzg/minecraft-server:latest
+    tty: true
+    stdin_open: true
+    profiles: ["minecraft"]
+    ports:
+      - "25565:25565"
+    environment:
+      VERSION: "1.21.4"
+      EULA: "TRUE"
+      TYPE: "FABRIC"
+      ONLINE_MODE: "true"
+      DIFFICULTY: "3"
+      OPS: |-
+        bestcodename
+        Boehmb0Ss
+      EXISTING_OPS_FILE: "MERGE"
+      MODRINTH_PROJECTS: |-
+        c2me-fabric
+        carpet-extra
+        cloth-config
+        dcintegration:3.1.0.1-1.21.3
+        distanthorizons:beta
+        easyauth
+        fabric-api
+        carpet
+        inventory-sorting
+        lithium
+        scalablelux
+        servux
+        textile_backup
+        xaeros-minimap
+        xaeros-world-map
+      MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
+      VERSION_FROM_MODRINTH_PROJECTS: "true" # not yet taking modloader type into account
+      MEMORY: "5G"
+      MOTD: "\u00a78\u00a7lSch\u00a78ei\u00a74\u00a7l\u00a7k\u00df\u00a78\u00a7l die Wand an \u00a74\u00a7l5\u00a7r\n\u00a78Free Teknology Sound System"
+      ICON: "https://sdwa5.org/media/06/e8/9f/1759093654/Logo_neu.png"
+      USE_MEOWICE_FLAGS: "true"
+      TZ: "Europe/Berlin"
+      ENABLE_WHITELIST: "true"
+      WHITELIST: |-
+        bestcodename
+        Boehmb0Ss
+        DCXI
+        NABI
+      EXISTING_WHITELIST_FILE: "MERGE"
+      PLAYER_IDLE_TIMEOUT: "10"
+      LOG_TIMESTAMP: "true"
+    volumes:
+      - "./minecraft-data:/data"
+    restart: unless-stopped
+
+
+
+
+
+  dolibarr_db:
+    image: mariadb:latest
+    container_name: dolibarr_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DOLIBARR_MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DOLIBARR_MYSQL_DATABASE:-dolidb}
+      MYSQL_USER: ${DOLIBARR_MYSQL_USER:-dolidbuser}
+      MYSQL_PASSWORD: ${DOLIBARR_MYSQL_PASSWORD}
+    volumes:
+      - ./dolibarr-mariadb-data:/var/lib/mysql
+
+  dolibarr:
+    image: dolibarr/dolibarr:latest
+    container_name: dolibarr
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1"]
+      start_period: 300s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    environment:
+      DOLI_INIT_DEMO: ${DOLIBARR_INIT_DEMO:-0}
+      DOLI_DB_HOST: dolibarr_db
+      DOLI_DB_NAME: ${DOLIBARR_MYSQL_DATABASE:-dolidb}
+      DOLI_DB_USER: ${DOLIBARR_MYSQL_USER:-dolidbuser}
+      DOLI_DB_PASSWORD: ${DOLIBARR_MYSQL_PASSWORD}
+      DOLI_URL_ROOT: "https://erp.sdwa5.org"
+      DOLI_ADMIN_LOGIN: "${DOLIBARR_ADMIN_LOGIN:-admin}"
+      DOLI_ADMIN_PASSWORD: "${DOLIBARR_ADMIN_PASSWORD}"
+      DOLI_CRON: 0
+      DOLI_CRON_USER: "${DOLIBARR_ADMIN_LOGIN:-admin}"
+      DOLI_CRON_KEY: ${DOLIBARR_CRON_KEY}
+      DOLI_COMPANY_NAME: ${DOLIBARR_COMPANY_NAME:-SdWa5}
+      WWW_USER_ID: ${DOLIBARR_WWW_USER_ID:-1000}
+      WWW_GROUP_ID: ${DOLIBARR_WWW_GROUP_ID:-1000}
+    ports:
+      - "127.0.0.1:8002:80"
+    links:
+      - dolibarr_db
+    volumes:
+      - ./dolibarr-documents-data:/var/www/documents
+      - ./dolibarr-custom-data:/var/www/html/custom
+
+  dolibarr_cron:
+    image: dolibarr/dolibarr:latest
+    container_name: dolibarr_cron
+    restart: unless-stopped
+    depends_on:
+      dolibarr:
+        condition: service_healthy
+    environment:
+      DOLI_INIT_DEMO: ${DOLIBARR_INIT_DEMO:-0}
+      DOLI_DB_HOST: dolibarr_db
+      DOLI_DB_NAME: ${DOLIBARR_MYSQL_DATABASE:-dolidb}
+      DOLI_DB_USER: ${DOLIBARR_MYSQL_USER:-dolidbuser}
+      DOLI_DB_PASSWORD: ${DOLIBARR_MYSQL_PASSWORD}
+      DOLI_URL_ROOT: "https://erp.sdwa5.org"
+      DOLI_ADMIN_LOGIN: "${DOLIBARR_ADMIN_LOGIN:-admin}"
+      DOLI_ADMIN_PASSWORD: "${DOLIBARR_ADMIN_PASSWORD}"
+      DOLI_CRON: 1
+      DOLI_CRON_USER: "${DOLIBARR_ADMIN_LOGIN:-admin}"
+      DOLI_CRON_KEY: ${DOLIBARR_CRON_KEY}
+      DOLI_COMPANY_NAME: ${DOLIBARR_COMPANY_NAME:-SdWa5}
+      WWW_USER_ID: ${DOLIBARR_WWW_USER_ID:-1000}
+      WWW_GROUP_ID: ${DOLIBARR_WWW_GROUP_ID:-1000}
+    links:
+      - dolibarr_db
+    volumes:
+      - ./dolibarr-documents-data:/var/www/documents
+      - ./dolibarr-custom-data:/var/www/html/custom
+
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ./ollama-data:/root/.ollama
+
+  restic:
+    image: lobaro/restic-backup-docker:latest
+    container_name: restic
+    restart: unless-stopped
+    volumes:
+      - ./rclone-config:/root/.config/rclone
+      - ./:/data:ro
+    environment:
+      - RESTIC_REPOSITORY=${RESTIC_REPOSITORY:-rclone:SdWa5:restic-backups}
+      - RESTIC_PASSWORD=${RESTIC_PASSWORD}
+      # This sets the schedule (at 4:00 AM every day)
+      - BACKUP_CRON=0 4 * * *
+      # This tells the scheduled job WHAT to back up
+      - BACKUP_DIRS=/data
+      - RESTIC_FORGET_ARGS=--keep-daily 6 --keep-weekly 3 --keep-monthly 11 --keep-yearly 2 --prune

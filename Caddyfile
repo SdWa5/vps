@@ -1,0 +1,30 @@
+# Global options
+{
+    email ripper@sdwa5.org  # For Let's Encrypt notifications
+}
+
+# Main domain - Shopware
+https://sdwa5.org {
+    reverse_proxy https://127.0.0.1:8443 {
+        transport http {
+            tls_insecure_skip_verify
+        }
+    }
+}
+
+# Other services
+vault.sdwa5.org {
+    reverse_proxy localhost:8000
+}
+
+erp.sdwa5.org {
+    reverse_proxy localhost:8002
+}
+
+project2.sdwa5.org {
+    reverse_proxy localhost:8003
+}
+
+project3.sdwa5.org {
+    reverse_proxy localhost:8004
+}

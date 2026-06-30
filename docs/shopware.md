@@ -254,14 +254,7 @@ Plugin "Dark Mode Storefront" installed (applies to all themes).
 
 ## TODO
 
-1. **Git repo for /opt/docker/** — version-control all SdWa5 VPS config/data
-    1. Audit `docker-compose.yml` — extract all credentials, secrets, and crypto material to a separate `.env` file (never committed); replace inline with `${VAR}` references
-    2. Create `.gitignore` — exclude `.env`, mounted data dirs (`shopware-html-data/`, `shopware-mysql-data/`, etc.), any other runtime/generated paths
-    3. Create repo on GitHub (private), init, initial commit with sanitized compose + config only
-    4. Move `sdwa5-shopware.md` → `docs/sdwa5-shopware.md` inside the repo
-    5. Add `docs/` entries for other projects running on the VPS
-    6. Add `README.md` (makeareadme conventions) and `CHANGELOG.md` (keepachangelog format)
-2. **Merch / Products**
+1. **Merch / Products**
     1. Make use of variants and other product related shopware features
     2. Add missing product images, remove background / opacity from existing images
     3. **Non-binding preorders / interest capture** — no native Shopware 6 core feature for this.

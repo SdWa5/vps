@@ -31,15 +31,22 @@ Reverse proxy: **Caddy** (systemd service, not in Docker) — see [caddy.md](cad
 │   ├── nginx/                      # empty (unused)
 │   └── php/                        # empty (unused)
 ├── docs/                           # this documentation
-├── shopware-html-data/             # gitignored — Shopware web root + MySQL
+├── shopware-html-data/             # partially tracked — Shopware web root + MySQL
+│   ├── composer.json/.lock, symfony.lock, config/*   # tracked
+│   ├── custom/plugins/{FroshLazySizes,FroshPlatformFilterSearch,SwagPlatformSecurity,FroshShopmon}/
+│   │                                                  # tracked — store-installed, not in composer.lock
+│   └── .env, var/, vendor/, public/, files/, config/jwt/   # gitignored (secrets/build/uploads)
 ├── shopware-mysql-data/            # gitignored
 ├── shopware-data/                  # gitignored (legacy mount)
 ├── dolibarr-mariadb-data/          # gitignored — Dolibarr SdWa5 DB
 ├── dolibarr-documents-data/        # gitignored — Dolibarr SdWa5 uploads
-├── dolibarr-custom-data/           # gitignored — Dolibarr SdWa5 custom modules
+├── dolibarr-custom-data/           # gitignored — only GeoLite2-Country.mmdb (MaxMind, re-downloadable)
 ├── vaultwarden-data/               # gitignored — Vaultwarden data
 ├── ollama-data/                    # gitignored — Ollama model cache
-├── minecraft-data/                 # gitignored — Minecraft world data
+├── minecraft-data/                 # partially tracked — Minecraft world data
+│   ├── server.properties, eula.txt, ops.json, whitelist.json, banned-*.json, config/   # tracked
+│   │   (except config/Discord-Integration.toml — contains the bot token, stays gitignored)
+│   └── world/, backup/, mods/, logs/, versions/, libraries/, cache/   # gitignored (data/rebuildable)
 └── rclone-config/                  # gitignored — rclone.conf with OAuth tokens
     └── rclone.conf
 ```
@@ -72,3 +79,7 @@ docker exec shopware php bin/console cache:clear
 - `docker/nginx/` and `docker/php/` dirs exist but are empty — historical artifact from initial setup.
 - `shopware-data/` is a legacy volume mount, unused since migration to `shopware-html-data/`.
 - Minecraft is fully configured but commented out; `minecraft-data/` persists the world.
+- `shopware-html-data/` and `minecraft-data/` are no longer fully gitignored — see the tree above for which
+  subpaths are tracked. `frosh/platform-thumbnail-processor` and `frosh/mail-platform-archive` are also
+  installed plugins but stay untracked since they're proper `composer.json`/`composer.lock` requires and get
+  reproduced by `composer install`.

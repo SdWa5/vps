@@ -28,3 +28,11 @@ World data persists in `minecraft-data/` on the VPS.
 ```bash
 docker compose --profile minecraft up -d
 ```
+
+## Version control
+
+Server config is tracked in the repo: `server.properties`, `eula.txt`, `ops.json`, `whitelist.json`,
+`banned-players.json`, `banned-ips.json`, and `config/` (mod configs). `config/Discord-Integration.toml`
+stays gitignored — it holds the Discord bot token. `world/`, `backup/`, `mods/`, `logs/`, `versions/`,
+`libraries/`, `cache/`, `EasyAuth/easyauth.db` and `DiscordIntegration-Data/` stay gitignored too (runtime
+data, or reproducible via `MODRINTH_PROJECTS` in `docker-compose.yml`).

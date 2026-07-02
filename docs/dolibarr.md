@@ -20,7 +20,9 @@ Admin login for all instances: `admin` (see `*_ADMIN_PASSWORD` in .env)
 
 - ERP for Musikverein Schmeiß die Wand an 5
 - Cron job runs as separate `dolibarr_cron` container (depends on `dolibarr` being healthy)
-- Data dirs: `dolibarr-documents-data/`, `dolibarr-custom-data/`, `dolibarr-mariadb-data/`
+- Data dirs: `dolibarr-documents-data/`, `dolibarr-custom-data/`, `dolibarr-mariadb-data/` — all gitignored.
+  `dolibarr-custom-data/` currently only holds `GeoLite2-Country.mmdb` (MaxMind GeoIP DB), not custom module
+  code — a re-downloadable binary, so it's not tracked in the repo either.
 
 ## Project 2 + Project 3 instances
 

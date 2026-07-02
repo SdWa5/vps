@@ -71,6 +71,13 @@ DELETE /api/_action/cache
 - Volume: `./shopware-html-data:/var/www/html`, `./shopware-mysql-data:/var/lib/mysql`
 - APP_URL: `https://sdwa5.org` (set in `/opt/docker/shopware-html-data/.env`)
 - DockwareSamplePlugin: uninstalled
+- `composer.json`/`.lock`, `symfony.lock` and `config/{packages,routes*,services.yaml,bundles.php}` are tracked
+  in the repo (everything else in `shopware-html-data/` — `.env`, `var/`, `vendor/`, `public/`, `files/`,
+  `config/jwt/` — stays gitignored)
+- Store-installed plugins **FroshLazySizes, FroshPlatformFilterSearch, SwagPlatformSecurity, FroshShopmon** are
+  tracked too — they're not in `composer.lock` (Store install, not `composer require`), so without a repo copy
+  they'd only be recoverable via the Shopware Store account. `FroshPlatformThumbnailProcessor` and
+  `FroshPlatformMailArchive` don't need this — they're real composer requires.
 
 ## Shop identity
 
@@ -274,9 +281,6 @@ Plugin "Dark Mode Storefront" installed (applies to all themes).
     2. Hardware — still missing:
         1. images
         2. value of hardware (our original investment price to buy each gear for informational purposes only)
-    3. **CMS HTML block refactor** — several pages use `html` CMS slot type beyond the SoundCloud embed (the only
-       legitimate use case). Refactor those slots to native Shopware CMS blocks/elements fitting the content
-       (text, image, image-text, etc.) — `html` blocks bypass the HTML sanitizer and complicate future theming.
 5. update email templates (order confirmation etc. still default Shopware copy)
     1. dont get too fancy
 6. Checkout end-to-end test — no real order flow tested yet

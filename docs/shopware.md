@@ -295,3 +295,8 @@ Plugin "Dark Mode Storefront" installed (applies to all themes).
     pages, ideally as primary/first results (content pages are more likely what visitors search for than merch).
 12. **Hide cart UI when irrelevant** — hide cart icon, minicart, and related shop chrome when cart is empty AND user
     is not on a PDP or category listing page. Reduces commercial appearance on content-only pages.
+13. **Switch store-installed plugins to composer install** — FroshLazySizes, FroshPlatformFilterSearch,
+    SwagPlatformSecurity, FroshShopmon are currently installed via the Shopware Store plugin manager and not in
+    `composer.json`/`composer.lock` (unlike FroshPlatformThumbnailProcessor, FroshPlatformMailArchive). Their
+    source is now tracked in git as a stopgap (see [infrastructure.md](infrastructure.md)), but `composer require`
+    would be the proper fix so `composer install` alone reproduces the install and updates go through Composer.

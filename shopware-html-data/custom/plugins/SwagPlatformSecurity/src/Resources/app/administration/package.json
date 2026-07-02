@@ -1,0 +1,24 @@
+{
+    "name": "swag-platform-security",
+    "description": "Shopware Platform Security Plugin",
+    "author": "shopware AG",
+    "scripts": {
+        "lint": "eslint --ext .js,.html.twig src/",
+        "lint:fix": "eslint --ext .js,.html.twig src/ --fix",
+        "format": "prettier --check \"src/**/*.{js,ts}\" --config .prettierrc.js --cache",
+        "format:fix": "prettier --write \"src/**/*.{js,ts}\" --config .prettierrc.js --cache"
+    },
+    "devDependencies": {
+        "@shopware-ag/eslint-config-base": "2.0.0",
+        "@babel/core": "7.26.0",
+        "@babel/eslint-parser": "7.26.5",
+        "eslint": "8.57.1",
+        "eslint-config-prettier": "9.1.0",
+        "eslint-plugin-import": "2.31.0",
+        "eslint-plugin-twig-vue": "file:../../../../../../../src/Administration/Resources/app/administration/twigVuePlugin",
+        "eslint-plugin-vue": "9.32.0",
+        "eslint-plugin-vuejs-accessibility": "2.4.1",
+        "prettier": "3.6.2",
+        "prettier-plugin-multiline-arrays": "3.0.6"
+    }
+}

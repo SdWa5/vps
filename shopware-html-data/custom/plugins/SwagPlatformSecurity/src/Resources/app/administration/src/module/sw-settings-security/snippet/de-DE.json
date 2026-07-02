@@ -1,0 +1,119 @@
+{
+    "sw-settings-security": {
+        "modal": {
+            "labelConfirmWithPassword": "Passwort",
+            "placeholderConfirmWithPassword": "Mit Passwort bestätigen ...",
+            "enterPassword": "Passwort eingeben ...",
+            "labelButtonCancel": "Abbrechen",
+            "labelButtonConfirm": "Speichern"
+        },
+        "notification": {
+            "title": "Sicherheitsplugin",
+            "message": "Bitte aktualisieren Sie das Sicherheits-Plugin auf die neueste Version",
+            "passwordErrorTitle": "Falsches Passwort",
+            "passwordErrorMessage": "Das eingegebene Passwort ist falsch. Bitte versuchen Sie es erneut.",
+            "fetchErrorMessage": "Beim Abrufen der Sicherheitsupdates ist ein Fehler aufgetreten."
+        },
+        "general": {
+            "cardTitle": "Verfügbare Fixes",
+            "textHeadline": "Sicherheitsplugin",
+            "mainMenuItemGeneral": "Security Plugin",
+            "description": "Behebt bekannte Probleme in älteren Shopware-Versionen",
+            "buttonSave": "Speichern",
+            "noFixesTitle": "Dein System ist geschützt gegen alle bekannten Lücken.",
+            "noFixesDescription": "Derzeit sind keine Sicherheitsupdates für Ihre Shopware Version verfügbar.",
+            "alert": "Achtung, dies sind wichtige Sicherheitsupdates für Deinen Shop! Deaktivierst du eine oder mehrere der Optionen, öffnet das bekannte Sicherheitslücken. Du solltest Dir also sicher sein, was Du tust und die Sicherheitsupdates nur temporär deaktivieren.",
+            "advisoryLink": "Advisory"
+        },
+        "fixes": {
+            "GHSA-9v82-vcjxm-76j": {
+                "label": "XSS-Sicherheitslücke über URL-Parameter",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-9v82-vcjx-m76j"
+            },
+            "GHSA-r2vg-hvjm-fg38":  {
+                "label": "Bestellungen konnten über die Store-API storniert werden, wenn OrderRefunds deaktiviert ist",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-r2vg-hvjm-fg38"
+            },
+            "GHSA-6wh5-mw9h-5c3w": {
+                "label": "Schwachstelle beim Upload von Erweiterungen",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-6wh5-mw9h-5c3w"
+            },
+            "GHSA-m895-2hj3-8cg9": {
+                "label": "Private Media-IDs über Aggregationen der Admin-API abrufbar",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-m895-2hj3-8cg9"
+            },
+            "GHSA-h2x3-h9qr-cf82": {
+                "label": "CSRF-Schwachstelle in der Abonnementverwaltung",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-h2x3-h9qr-cf82"
+            },
+            "GHSA-27c9-vp3w-6ww8": {
+                "label": "Offenlegung sensibler Benutzerinformationen über CSV-Export",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-27c9-vp3w-6ww8"
+            },
+            "GHSA-3cpp-fv95-mpr5": {
+                "label": "Server-Side Request Forgery (SSRF) bei der Dokumentenerstellung",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-3cpp-fv95-mpr5"
+            },
+            "GHSA-2w46-vq8h-98vh": {
+                "label": "Passwort-Reset-Tokens laufen nicht ab",
+                "link":  "https://github.com/shopware/shopware/security/advisories/GHSA-2w46-vq8h-98vh"
+            },
+            "GHSA-6w82-v552-wjw2": {
+                "label": "Reflektierte XSS-Schwachstelle auf der Login-Seite",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-r2vg-hvjm-fg38"
+            },
+            "GHSA-7cw6-7h3h-v8pf": {
+                "label": "Unsachgemäße Kontrolle der Code-Erzeugung in Twig-Templates",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-7cw6-7h3h-v8pf"
+            },
+            "GHSA-7vvp-j573-5584": {
+                "label": "Strengere Kontrolle der deepLinkCode Filter in der Bestell-Store-API",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-7vvp-j573-5584"
+            },
+            "GHSA-gqc5-xv7m-gcjq": {
+                "label": "Store-API-Login ermöglichte Existenzprüfung registrierter E-Mail-Adressen",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-gqc5-xv7m-gcjq"
+            },
+            "GHSA-c4p7-rwrg-pf6p": {
+                "label": "Mögliche Kompromittierung von App-Zugangsdaten",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-c4p7-rwrg-pf6p"
+            },
+            "GHSA-8v9p-g828-v98f": {
+                "label": "Vertraulicher Benutzerwiederherstellungs-Hash wurde über API-Antworten offengelegt",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-8v9p-g828-v98f"
+            },
+            "GHSA-gv8p-48fr-4fxg": {
+                "label": "Admin-API-Benutzer können die Admin-Rechte für Integrationen erweitern",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-gv8p-48fr-4fxg"
+            },
+            "GHSA-v39m-97p8-gqg7": {
+                "label": "Erhöhung der Administratorrechte über die ACL-Benutzerverwaltung",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-v39m-97p8-gqg7"
+            },
+            "GHSA-4x3x-869w-xx3m": {
+                "label": "Offener Redirect im SSO-Authentifizierungs-Endpoint",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-4x3x-869w-xx3m"
+            },
+            "GHSA-f8q6-3g5w-jjr6": {
+                "label": "Unsachgemäße Zugriffskontrolle in der Store-API ermöglichte Änderungen von Bestellstatus",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-f8q6-3g5w-jjr6"
+            },
+            "GHSA-7w52-7jvm-m9vw": {
+                "label": "Zeitsichere OAuth-Authentifizierung gegen Benutzerenumeration",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-7w52-7jvm-m9vw"
+            },
+            "GHSA-9v5m-39wh-5chq": {
+                "label": "Zahlungsabwicklung ohne Prüfung der Kundenzuordnung",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-9v5m-39wh-5chq"
+            },
+            "GHSA-xvhc-gm7j-mhmc": {
+                "label": "Aktive SVG-Inhalte beim Medien-Upload ablehnen, um XSS zu verhindern",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-xvhc-gm7j-mhmc"
+            },
+            "GHSA-gq96-5pfx-f4vc": {
+                "label": "Server-Side Request Forgery (SSRF) über externe Medien-Link-URL",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-gq96-5pfx-f4vc"
+            }
+        }
+    }
+}

@@ -1,0 +1,26 @@
+{% sw_extends '@Storefront/storefront/component/account/login.html.twig'%}
+
+{% block component_account_login_form_error %}
+    {% if swagSecurity.isActive('GHSA-6w82-v552-wjw2') %}
+        {% if loginError %}
+            {% if errorSnippet != null %}
+                {% sw_include '@Storefront/storefront/utilities/alert.html.twig' with {
+                    type: 'danger',
+                    content: errorSnippet|trans|sw_sanitize({}, true)
+                } %}
+            {% elseif waitTime != null %}
+                {% sw_include '@Storefront/storefront/utilities/alert.html.twig' with {
+                    type: 'info',
+                    content: 'account.loginThrottled'|trans({'%seconds%': waitTime|number_format})|sw_sanitize
+                } %}
+            {% else %}
+                {% sw_include '@Storefront/storefront/utilities/alert.html.twig' with {
+                    type: 'danger',
+                    content: 'account.loginBadCredentials'|trans|sw_sanitize
+                } %}
+            {% endif %}
+        {% endif %}
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,139 @@
+{% block sw_settings_security_index %}
+    <sw-page class="sw-settings-security">
+        {% block sw_settings_security_search_bar %}
+            <template #search-bar>
+                <sw-search-bar />
+            </template>
+        {% endblock %}
+
+        {% block sw_settings_security_smart_bar_header %}
+            <template #smart-bar-header>
+                {% block sw_settings_security_smart_bar_header_title %}
+                    <h2>
+                        {% block sw_settings_security_smart_bar_header_title_text %}
+                            <span>{{ $tc('sw-settings.index.title') }}</span>
+
+                            <sw-icon
+                                name="regular-chevron-right-xs"
+                                size="16px"
+                            />
+
+                            <span>{{ $tc('sw-settings-security.general.textHeadline') }}</span>
+                        {% endblock %}
+                    </h2>
+                {% endblock %}
+            </template>
+        {% endblock %}
+
+        {% block sw_settings_security_smart_bar_actions %}
+            <template #smart-bar-actions>
+                {% block sw_settings_security_actions_save %}
+                    <mt-button
+                        v-if="fixes?.availableFixes?.length > 0"
+                        class="sw-settings-security__save-action"
+                        :is-loading="isLoading"
+                        variant="primary"
+                        @click="onSave"
+                    >
+                        {{ $tc('sw-settings-security.general.buttonSave') }}
+                    </mt-button>
+                {% endblock %}
+            </template>
+        {% endblock %}
+
+        {% block sw_settings_security_content %}
+            <template #content>
+                <sw-card-view
+                    v-if="isLoading || fixes?.availableFixes?.length > 0"
+                    class="sw-settings-security__card"
+                >
+                    <mt-card
+                        :title="$tc('sw-settings-security.general.cardTitle')"
+                        :is-loading="isLoading"
+                    >
+                        <mt-banner variant="attention">
+                            {{ $tc('sw-settings-security.general.alert') }}
+                        </mt-banner>
+
+                        <template
+                            v-for="fix in fixes.availableFixes"
+                            :key="fix"
+                        >
+                            <div class="sw-settings-security__fix">
+                                <mt-switch
+                                    v-model="config[fix]"
+                                    class="sw-settings-security__fix-checkbox"
+                                    :name="fix"
+                                    :label="$tc('sw-settings-security.fixes.' + fix + '.label')"
+                                />
+
+                                <div class="sw-settings-security__fix-actions">
+                                    <mt-link
+                                        as="a"
+                                        target="_blank"
+                                        type="external"
+                                        :href="$tc('sw-settings-security.fixes.' + fix + '.link')"
+                                    >
+                                        {{ $tc('sw-settings-security.general.advisoryLink') }}
+                                    </mt-link>
+                                </div>
+                            </div>
+                        </template>
+                    </mt-card>
+                </sw-card-view>
+
+                <div
+                    v-else
+                    class="sw-settings-security__no-fixes-container"
+                >
+                    <mt-empty-state
+                        class="sw-settings-security__no-fixes"
+                        icon="regular-lock"
+                        :headline="$tc('sw-settings-security.general.noFixesTitle')"
+                        :description="$tc('sw-settings-security.general.noFixesDescription')"
+                        centered
+                    />
+                </div>
+
+                <sw-modal
+                    v-if="confirmPasswordModal"
+                    class="sw-settings-user-detail__confirm-password-modal"
+                    :title="$tc('sw-settings-security.modal.placeholderConfirmWithPassword')"
+                    variant="small"
+                    @modal-close="onCloseConfirmPasswordModal"
+                >
+                    <mt-password-field
+                        v-model="confirmPassword"
+                        class="sw-settings-user-detail__confirm-password"
+                        required
+                        name="sw-field--confirm-password"
+                        :password-toggle-able="true"
+                        :copy-able="false"
+                        :label="$tc('sw-settings-security.modal.labelConfirmWithPassword')"
+                        :placeholder="$tc('sw-settings-security.modal.enterPassword')"
+                    />
+
+                    <template #modal-footer>
+                        <mt-button
+                            :disabled="isLoading"
+                            size="small"
+                            @click="onCloseConfirmPasswordModal"
+                        >
+                            {{ $tc('sw-settings-security.modal.labelButtonCancel') }}
+                        </mt-button>
+
+                        <mt-button
+                            variant="primary"
+                            :disabled="!confirmPassword"
+                            :is-loading="isLoading"
+                            size="small"
+                            @click="onVerifiedSave"
+                        >
+                            {{ $tc('sw-settings-security.modal.labelButtonConfirm') }}
+                        </mt-button>
+                    </template>
+                </sw-modal>
+            </template>
+        {% endblock %}
+    </sw-page>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% sw_extends '@Subscription/storefront/page/account/subscription/subscription-item.html.twig' %}
+
+{% block page_account_subscription_item_context_menu_content_pause_subscription %}
+    {% if swagSecurity.isActive('GHSA-h2x3-h9qr-cf82') %}
+        <form method="post" action="{{ path('frontend.account.subscription.pause', { 'subscriptionId': subscription.id }) }}">
+            <button class="dropdown-item subscription-table-header-context-menu-content-link">
+                {{ "commercial.subscriptions.account.pauseSubscription"|trans|sw_sanitize }}
+            </button>
+        </form>
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}
+
+{% block page_account_subscription_item_context_menu_content_resume_subscription %}
+    {% if swagSecurity.isActive('GHSA-h2x3-h9qr-cf82') %}
+        <form method="post" action="{{ path('frontend.account.subscription.activate', { 'subscriptionId': subscription.id }) }}">
+            <button class="dropdown-item subscription-table-header-context-menu-content-link">
+                {{ "commercial.subscriptions.account.resumeSubscription"|trans|sw_sanitize }}
+            </button>
+        </form>
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}
+
+{% block page_account_subscription_item_context_menu_content_cancel_subscription %}
+    {% if swagSecurity.isActive('GHSA-h2x3-h9qr-cf82') %}
+        <form method="post" action="{{ path('frontend.account.subscription.cancel', { 'subscriptionId': subscription.id }) }}">
+            <button class="dropdown-item subscription-table-header-context-menu-content-link">
+                {{ "commercial.subscriptions.account.cancelSubscription"|trans|sw_sanitize }}
+            </button>
+        </form>
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}

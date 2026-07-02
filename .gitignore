@@ -5,8 +5,27 @@ rclone-config/
 # Pre-git backups (contain original files with inline credentials)
 backup/
 
-# Shopware data
-shopware-html-data/
+# Shopware data (vendor/build/secrets stay ignored, real config tracked below)
+shopware-html-data/*
+!shopware-html-data/composer.json
+!shopware-html-data/composer.lock
+!shopware-html-data/symfony.lock
+!shopware-html-data/config/
+shopware-html-data/config/*
+!shopware-html-data/config/packages/
+!shopware-html-data/config/routes.yaml
+!shopware-html-data/config/routes/
+!shopware-html-data/config/services.yaml
+!shopware-html-data/config/bundles.php
+!shopware-html-data/custom/
+shopware-html-data/custom/*
+!shopware-html-data/custom/plugins/
+shopware-html-data/custom/plugins/*
+# Store-installed plugins, not tracked via composer.json/composer.lock
+!shopware-html-data/custom/plugins/FroshLazySizes/
+!shopware-html-data/custom/plugins/FroshPlatformFilterSearch/
+!shopware-html-data/custom/plugins/SwagPlatformSecurity/
+!shopware-html-data/custom/plugins/FroshShopmon/
 shopware-mysql-data/
 shopware-data/
 
@@ -28,7 +47,18 @@ project3-dolibarr-custom-data/
 # Other service data
 vaultwarden-data/
 ollama-data/
-minecraft-data/
+
+# Minecraft data (world/mods/logs stay ignored, server config tracked below)
+minecraft-data/*
+!minecraft-data/server.properties
+!minecraft-data/eula.txt
+!minecraft-data/ops.json
+!minecraft-data/whitelist.json
+!minecraft-data/banned-players.json
+!minecraft-data/banned-ips.json
+!minecraft-data/config/
+# Discord bot token lives here - never commit
+minecraft-data/config/Discord-Integration.toml
 
 # Empty build dirs (nothing to commit)
 docker/

@@ -1,0 +1,119 @@
+{
+    "sw-settings-security": {
+        "modal": {
+            "labelConfirmWithPassword": "Password",
+            "placeholderConfirmWithPassword": "Confirm with password",
+            "enterPassword": "Enter your password ...",
+            "labelButtonCancel": "Cancel",
+            "labelButtonConfirm": "Save"
+        },
+        "notification": {
+            "title": "Security Plugin",
+            "message": "Please update the security plugin to the latest version",
+            "passwordErrorTitle": "Incorrect Password",
+            "passwordErrorMessage": "The submitted password is incorrect. Please try again.",
+            "fetchErrorMessage": "An error occurred while fetching the security fixes."
+        },
+        "general": {
+            "cardTitle": "Available fixes",
+            "textHeadline": "Security Plugin",
+            "mainMenuItemGeneral": "Security Plugin",
+            "description": "Fixes known issues in older Shopware versions",
+            "buttonSave": "Save",
+            "noFixesTitle": "Your system is protected against all known vulnerabilities.",
+            "noFixesDescription": "There are currently no security fixes available for your Shopware version.",
+            "alert": "Caution, these are important security fixes for your shop! Deactivating one or more of these will make your shop vulnerable to these security gaps. Be sure what you are doing when deactivating any of the options and consider doing so only temporarily.",
+            "advisoryLink": "Advisory"
+        },
+        "fixes": {
+            "GHSA-9v82-vcjxm-76j": {
+                "label": "XSS vulnerability via URL parameters",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-9v82-vcjx-m76j"
+            },
+            "GHSA-r2vg-hvjm-fg38": {
+                "label": "Orders could be canceled via Store-API when `OrderRefunds` is disabled",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-r2vg-hvjm-fg38"
+            },
+            "GHSA-6wh5-mw9h-5c3w": {
+                "label": "Vulnerability during extension upload",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-6wh5-mw9h-5c3w"
+            },
+            "GHSA-m895-2hj3-8cg9": {
+                "label": "Private media IDs retrievable via Admin API aggregations",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-m895-2hj3-8cg9"
+            },
+            "GHSA-h2x3-h9qr-cf82": {
+                "label": "CSRF vulnerability in subscription management",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-h2x3-h9qr-cf82"
+            },
+            "GHSA-27c9-vp3w-6ww8": {
+                "label": "Exposure of sensitive user information via CSV export",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-27c9-vp3w-6ww8"
+            },
+            "GHSA-3cpp-fv95-mpr5": {
+                "label": "Server-Side Request Forgery (SSRF) in document generation",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-3cpp-fv95-mpr5"
+            },
+            "GHSA-2w46-vq8h-98vh": {
+                "label": "Password reset tokens not expiring",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-2w46-vq8h-98vh"
+            },
+            "GHSA-6w82-v552-wjw2": {
+                "label": "Reflected XSS vulnerability in the login page",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-r2vg-hvjm-fg38"
+            },
+            "GHSA-7cw6-7h3h-v8pf": {
+                "label": "Improper Control of Generation of Code in Twig rendered views",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-7cw6-7h3h-v8pf"
+            },
+            "GHSA-7vvp-j573-5584": {
+                "label": "Stricter control of deepLinkCode filters in the order store API",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-7vvp-j573-5584"
+            },
+            "GHSA-gqc5-xv7m-gcjq": {
+                "label": "Account enumeration via Store API login endpoint",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-gqc5-xv7m-gcjq"
+            },
+            "GHSA-c4p7-rwrg-pf6p": {
+                "label": "Potential take over of app credentials",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-c4p7-rwrg-pf6p"
+            },
+            "GHSA-8v9p-g828-v98f": {
+                "label": "Sensitive user recovery hash exposed through API responses",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-8v9p-g828-v98f"
+            },
+            "GHSA-gv8p-48fr-4fxg": {
+                "label": "Admin API users can elevate integration admin privileges",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-gv8p-48fr-4fxg"
+            },
+            "GHSA-v39m-97p8-gqg7": {
+                "label": "Admin privilege escalation via ACL user management",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-v39m-97p8-gqg7"
+            },
+            "GHSA-4x3x-869w-xx3m": {
+                "label": "Open redirect in SSO authentication endpoint",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-4x3x-869w-xx3m"
+            },
+            "GHSA-f8q6-3g5w-jjr6": {
+                "label": "Improper access control in the Store API allowed changing order state changes",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-f8q6-3g5w-jjr6"
+            },
+            "GHSA-7w52-7jvm-m9vw": {
+                "label": "Timing-safe OAuth authentication to prevent user/client enumeration",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-7w52-7jvm-m9vw"
+            },
+            "GHSA-9v5m-39wh-5chq": {
+                "label": "Payment processing without customer ownership check",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-9v5m-39wh-5chq"
+            },
+            "GHSA-xvhc-gm7j-mhmc": {
+                "label": "Reject active SVG content during media uploads to prevent XSS",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-xvhc-gm7j-mhmc"
+            },
+            "GHSA-gq96-5pfx-f4vc": {
+                "label": "Server-Side Request Forgery (SSRF) via external media link URL",
+                "link": "https://github.com/shopware/shopware/security/advisories/GHSA-gq96-5pfx-f4vc"
+            }
+        }
+    }
+}

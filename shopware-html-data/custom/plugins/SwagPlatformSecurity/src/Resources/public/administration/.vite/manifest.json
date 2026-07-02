@@ -1,0 +1,11 @@
+{
+  "main.js": {
+    "file": "js/swag-platform-security.js",
+    "name": "swag-platform-security",
+    "src": "main.js",
+    "isEntry": true,
+    "css": [
+      "css/swag-platform-security.css"
+    ]
+  }
+}

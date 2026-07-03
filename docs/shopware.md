@@ -64,6 +64,35 @@ DELETE /api/_action/cache
 - `html` — raw HTML via `|raw`, **no sanitizer** — use for iframes/embeds
 - `visibility: {"mobile": true, "tablet": true, "desktop": true}` required on blocks or they won't render
 - New blocks created via API default `visibility: null` — must be patched explicitly
+- Sanitizer allows `class` attribute on `table`/`div` (verified 2026-07-02, PATCH via Admin API then
+  render-check on storefront) — Bootstrap utility classes below work in `text` slots, no need to fall
+  back to `html` slots just to style a table.
+
+### CMS table styling convention
+
+Tables inside `text` slots (e.g. Hardware page spec tables) use the theme's existing Bootstrap table
+CSS — no custom CSS needed:
+
+```html
+
+<div class="table-responsive">
+    <table class="table table-bordered table-striped">...</table>
+</div>
+```
+
+- `table-responsive` wrapper: horizontal scroll on narrow viewports instead of overflow/squash.
+- `table table-bordered table-striped`: cell borders + row striping (theme ships full Bootstrap
+  table CSS already; a bare `<table>` with no class renders borderless with browser-default zero
+  cell padding).
+- **Units go in the column header, not repeated in every cell** — e.g. `<th>Freq Range (Hz)</th>`
+  with cell values `38–200`, not `<td>38–200 Hz</td>` repeated per row. Applies to any column where
+  every cell shares the same unit.
+- **Equipment identity: separate `Model` + `Brand` columns**, not combined free text (e.g. not
+  `<td>Pioneer XDJ-RR</td>`). Column order is `Model` then `Brand` (matches the original
+  Enclosures/Amplifiers tables — kept consistent across Hardware page, 2026-07-02 rework).
+- **Units go in the column header, not repeated in every cell** — e.g. `<th>Freq Range (Hz)</th>`
+  with cell values `38–200`, not `<td>38–200 Hz</td>` repeated per row. Applies to any column where
+  every cell shares the same unit.
 
 ## Infrastructure
 
@@ -140,21 +169,24 @@ Each page = compact text block (form-critical info only) + Shopware native `form
 
 ## Legal pages
 
-All under footer nav "Rechtliches" → `/Rechtliches/*/`
+"Rechtliches" is the sales channel's **Footer service navigation** root (`serviceCategoryId`) —
+renders as a flat link row in the footer-bottom bar, not a footer column. Old `/Rechtliches/*/`
+URLs 301-redirect to the new ones (Shopware kept the superseded SEO URLs as redirects).
 System configs wired: imprintPage, privacyPage, tosPage, revocationPage, shippingPaymentInfoPage
 
-| Page           | URL                          | Content                                                       |
-|----------------|------------------------------|---------------------------------------------------------------|
-| Impressum      | /Rechtliches/Impressum/      | §5 ECG — name, address, ZVR, Obmann, Kleinunternehmer         |
-| Datenschutz    | /Rechtliches/Datenschutz/    | DSGVO — Art. 6, rights Art. 15–22, DSB contact, BAO retention |
-| AGB            | /Rechtliches/AGB/            | Bilingual — German AGB + English T&C, donation model, no VAT  |
-| Widerrufsrecht | /Rechtliches/Widerrufsrecht/ | §11 FAGG Widerrufsbelehrung + Muster-Formular                 |
+| Page           | URL              | Content                                                       |
+|----------------|------------------|---------------------------------------------------------------|
+| Impressum      | /Impressum/      | §5 ECG — name, address, ZVR, Obmann, Kleinunternehmer         |
+| Datenschutz    | /Datenschutz/    | DSGVO — Art. 6, rights Art. 15–22, DSB contact, BAO retention |
+| AGB            | /AGB/            | Bilingual — German AGB + English T&C, donation model, no VAT  |
+| Widerrufsrecht | /Widerrufsrecht/ | §11 FAGG Widerrufsbelehrung + Muster-Formular                 |
 
 ## Footer
 
-- **Rechtliches**: Impressum, Datenschutz, AGB, Widerrufsrecht
-- **Follow Us**: Facebook, Instagram, YouTube
-- **Admin**: ERP (erp.sdwa5.org), Vault (vault.sdwa5.org)
+- **Footer navigation** (`footerCategoryId`, rendered as columns): **Follow Us** (Facebook,
+  Instagram, YouTube), **Admin** (ERP erp.sdwa5.org, Vault vault.sdwa5.org)
+- **Footer service navigation** (`serviceCategoryId`, rendered as a flat bottom-bar link row):
+  Rechtliches — Impressum, Datenschutz, AGB, Widerrufsrecht
 - **Contact column**: shop@sdwa5.org + link to /Requests-Contact/ (via `footer.serviceHotline*` snippets — default "
   Service hotline" block repurposed)
 
@@ -198,7 +230,9 @@ Product numbers: SDWA5-* · Images added
 **Snippet overrides in DB:**
 
 - Banner text, German labels, accept button — custom copy
-- `cookie.descriptionInfo` — hardcoded `/Rechtliches/Datenschutz/` link (fixes `/page/cms/Array` bug)
+- `cookie.descriptionInfo` — hardcoded Datenschutz link, updated 2026-07-03 to `/Datenschutz/`
+  (was `/Rechtliches/Datenschutz/` before the Footer service navigation move, see TODO history).
+  Not the main banner text — see open TODO item re: `cookie.messageTextPage`'s `/page/cms/Array` bug.
 - Cache cleared 2026-06-29: `docker exec shopware php bin/console cache:clear`
 
 ### Native vs. non-native gating
@@ -238,9 +272,18 @@ Admin → Themes → edit theme config.
 
 **Colors (explicitly set):**
 
-- `sw-color-brand-primary`: `#1fe51f` (green — brand color, contrasts logo + buy button)
-- `sw-color-buy-button`: `#e5231f` (red)
-- All other colors: Storefront theme defaults
+| Variable                 | Light value | Light lightness | Dark lightness |
+|--------------------------|-------------|-----------------|----------------|
+| `sw-color-brand-primary` | `#1fe51f`   | 51%             | 51% (excluded) |
+| `sw-color-buy-button`    | `#e5231f`   | 51%             | 51% (excluded) |
+| `sw-border-color`        | `#c2c2c2`   | 76%             | 24%            |
+| `sw-text-color`          | `#595959`   | 35%             | 65%            |
+| `sw-headline-color`      | `#141414`   | 8%              | 92%            |
+
+All other colors: Storefront theme defaults. Border/Text/Headline light values were picked specifically
+so the Dark Mode plugin's lightness inversion (`L_dark = 100% - L_light`, see plugin section below) lands
+them in the recommended dark-mode target ranges. Primary/Buy button are brand colors — high saturation
+keeps them above the plugin's saturation threshold, so it leaves them untouched in both modes.
 
 **Logos / images (all replaced):**
 
@@ -252,51 +295,83 @@ Admin → Themes → edit theme config.
 
 ### Dark Mode Storefront plugin
 
-Plugin "Dark Mode Storefront" installed (applies to all themes).
+Plugin "Dark Mode Storefront" (technical name `DneStorefrontDarkMode`, composer `dne/storefront-dark-mode`,
+v4.0.0) installed — applies to all themes. Inverts lightness of colors below the saturation threshold to
+generate a dark counterpart at runtime (post-CSS, via a Sabberworm CSS rewrite pass); colors above the
+threshold (vivid brand colors) are left untouched in both modes.
 
-| Setting                         | Value   |
-|---------------------------------|---------|
-| Percentage of minimum lightness | 8       |
-| All other settings              | default |
+| Setting                                                        | Value   |
+|----------------------------------------------------------------|---------|
+| Percentage of minimum lightness                                | 8       |
+| Percentage threshold for color contrast (saturation threshold) | 65      |
+| All other settings                                             | default |
+
+**Known bug — Admin save fails with false "SCSS Value ... is not valid for type color":**
+
+Happens when setting *any* low-saturation/gray color (Border, Text colour, Headline color, Background,
+etc. — anything under the saturation threshold above) via Admin → Themes → edit theme config. Root cause:
+the plugin decorates Shopware core's `ScssPhpCompiler` service globally (`services.xml`:
+`decorates="Shopware\Storefront\Theme\ScssPhpCompiler"`). Shopware's own save-time validator
+(`SCSSValidator::validateTypeColor`) compiles a throwaway one-line snippet through that same decorated
+service to sanity-check the color; the plugin's rewrite pass injects extra `:root` / `@media` blocks into
+that snippet, which breaks the validator's greedy unanchored regex and produces a false "invalid color"
+error. Vivid/high-saturation colors (Primary, Buy button) are unaffected — they're above the saturation
+threshold, so the plugin skips rewriting them, and validation sees clean CSS.
+
+This is *not* a real compile problem — `bin/console theme:compile` succeeds fine even when Admin save
+rejects the value. Confirmed via direct scssphp test (raw compiler compiles the "invalid" colors without
+issue) and via services.xml (decoration target confirmed).
+
+**Workaround** when setting a new gray/muted color via Admin:
+
+1. `bin/console plugin:deactivate DneStorefrontDarkMode` (+ `cache:clear`)
+2. Set the color in Admin → Themes → edit theme config, save (validation now uses the undecorated
+   compiler, passes)
+3. `bin/console plugin:activate DneStorefrontDarkMode` (+ `cache:clear`)
+
+No upstream fix applied — plugin is at latest available version (4.0.0, not upgradeable per
+`plugin:list`). Worth reporting to the plugin author (global compiler decoration corrupting core's
+validation-only compiles) or Shopware core (validator regex too fragile — should be non-greedy/anchored).
 
 ## TODO
 
-1. **Merch / Products**
+1. update email templates (order confirmation etc. still default Shopware copy)
+    1. dont get too fancy (e.g. with corporate or blogging style expressions)
+2. Search: include CMS pages — storefront search currently returns only products. Extend to also surface CMS
+   pages, ideally as primary/first results (content pages are more likely what visitors search for than merch).
+3. Cookie consent
+    1. SoundCloud embed — register cookie entry in "Comfort features" group + gate iframe behind consent
+    2. `cookie.messageTextPage` (the main consent banner text) still renders its link as `/page/cms/Array` —
+       confirmed live 2026-07-03, not just a stale-cache issue. `cookie.descriptionInfo` (a separate, secondary
+       snippet — not the main banner) was fixed and confirmed pointing at the current Datenschutz URL.
+4. Merch / Products
     1. Make use of variants and other product related shopware features
     2. Add missing product images, remove background / opacity from existing images
-    3. **Non-binding preorders / interest capture** — no native Shopware 6 core feature for this.
+    3. Non-binding preorders / interest capture — no native Shopware 6 core feature for this.
        `GET /api/product-notification` → 404 confirms. Options:
-        - **Contact form** (zero effort): link from product/category pages to /Requests-Contact/ — captures
+        - Contact form (zero effort): link from product/category pages to /Requests-Contact/ — captures
           interest via email, fully manual
-        - **Plugin** (paid): back-in-stock / waitlist plugins on Shopware marketplace (e.g. ACRIS stock
+        - Plugin (paid): back-in-stock / waitlist plugins on Shopware marketplace (e.g. ACRIS stock
           notification) — adds "notify me" button on out-of-stock products, admin sees subscriber list
-2. Cookie consent
-    1. SoundCloud embed — register cookie entry in "Comfort features" group + gate iframe behind consent
-    2. Verify `cookie.descriptionInfo` fix renders correctly in storefront (cache cleared 2026-06-29, not confirmed)
-3. SEO — meta titles/descriptions empty on all pages, no sitemap submitted
-4. Content
-    1. Artists & Friends — **in progress** (finish content, links)
-        1. add friends: "Let It Slide"
-        2. ask in SdWa5 Family Whatsapp group who wants to be featured
-    2. Hardware — still missing:
-        1. images
-        2. value of hardware (our original investment price to buy each gear for informational purposes only)
-5. update email templates (order confirmation etc. still default Shopware copy)
-    1. dont get too fancy
-6. Checkout end-to-end test — no real order flow tested yet
-7. update mysql and php
-8. frosh tools system-status
+5. Checkout end-to-end test — no real order flow tested yet
+6. SEO — meta titles/descriptions empty on all pages, no sitemap submitted
+7. Switch store-installed plugins to composer install — FroshLazySizes, FroshPlatformFilterSearch,
+   SwagPlatformSecurity, FroshShopmon are currently installed via the Shopware Store plugin manager and not in
+   `composer.json`/`composer.lock` (unlike FroshPlatformThumbnailProcessor, FroshPlatformMailArchive). Their
+   source is now tracked in git as a stopgap (see [infrastructure.md](infrastructure.md)), but `composer require`
+   would be the proper fix so `composer install` alone reproduces the install and updates go through Composer.
+8. update mysql and php
+9. frosh tools system-status
     1. System Health
     2. Performance recommendations
-9. Privacy + ToS pages — legal text review by Austrian lawyer (DSGVO, AGB)
-10. **Footer navigation structure** — currently only the "Footer" navigation entry point is used. Check if
-    "Footer service navigation" should also be used and move appropriate content there (e.g. legal pages / Rechtliches).
-11. **Search: include CMS pages** — storefront search currently returns only products. Extend to also surface CMS
-    pages, ideally as primary/first results (content pages are more likely what visitors search for than merch).
-12. **Hide cart UI when irrelevant** — hide cart icon, minicart, and related shop chrome when cart is empty AND user
+10. Hide cart UI when irrelevant — hide cart icon, minicart, and related shop chrome when cart is empty AND user
     is not on a PDP or category listing page. Reduces commercial appearance on content-only pages.
-13. **Switch store-installed plugins to composer install** — FroshLazySizes, FroshPlatformFilterSearch,
-    SwagPlatformSecurity, FroshShopmon are currently installed via the Shopware Store plugin manager and not in
-    `composer.json`/`composer.lock` (unlike FroshPlatformThumbnailProcessor, FroshPlatformMailArchive). Their
-    source is now tracked in git as a stopgap (see [infrastructure.md](infrastructure.md)), but `composer require`
-    would be the proper fix so `composer install` alone reproduces the install and updates go through Composer.
+11. Privacy + ToS pages — legal text review by Austrian lawyer (DSGVO, AGB)
+12. Content
+    1. add images
+    2. add "useful links" page
+        1. grouped overview
+        2. use everything useful from my firefox bookmarks
+    3. Artists & Friends
+        1. add links
+        2. asked in SdWa5 Family Whatsapp group who wants to be featured -> wait for responses

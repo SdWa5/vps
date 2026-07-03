@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-03
+
+### Added
+
+- Caddyfile: browser-language auto-redirect — German-language browsers requesting `/` get one-time `302 → /de`, marked by `lang_redirect` cookie (first visit only, root path only)
+- `docs/caddy.md`: browser-language redirect section with behavior, `redir` matcher gotcha, curl verification commands
+- `docs/shopware.md`: "Languages & domains" section — sales channel domains, URL-based switcher, hreflang decision, en_US decision (not configured), Caddy redirect pointer
+
+### Changed
+
+- `docs/shopware.md`: TODO item 1 (language switching) collapsed to remaining German-homepage issue
+
 ## [1.0.1] - 2026-07-02
 
 ### Added

@@ -10,7 +10,7 @@ Reverse proxy handling TLS termination for all public-facing services.
 
 | Domain                    | Upstream            | Notes                              |
 |---------------------------|---------------------|------------------------------------|
-| sdwa5.org                 | https://127.0.0.1:8443 | TLS passthrough (skip verify)   |
+| sdwa5.org                 | https://127.0.0.1:8443 | TLS skip verify; de-browser 302→/de (see below) |
 | vault.sdwa5.org           | http://localhost:8000 |                                  |
 | erp.sdwa5.org             | http://localhost:8002 |                                  |
 | project2.sdwa5.org     | http://localhost:8003 |                                  |
@@ -24,6 +24,16 @@ Reverse proxy handling TLS termination for all public-facing services.
 }
 
 https://sdwa5.org {
+    @deFirstVisit {
+        path /
+        header_regexp Accept-Language ^de
+        not header_regexp Cookie (^|;\s*)lang_redirect=
+    }
+    handle @deFirstVisit {
+        header +Set-Cookie "lang_redirect=1; Path=/; Max-Age=31536000; Secure; SameSite=Lax"
+        redir * /de 302
+    }
+
     reverse_proxy https://127.0.0.1:8443 {
         transport http {
             tls_insecure_skip_verify
@@ -46,6 +56,31 @@ project2.sdwa5.org {
 project3.sdwa5.org {
     reverse_proxy localhost:8004
 }
+```
+
+## Browser-language redirect (Shopware /de)
+
+German-language browsers (`Accept-Language` starting with `de`) requesting `/` get a one-time
+`302 → /de`. Details:
+
+- **Root path only** — deep links are never redirected (English SEO URLs have no automatic `/de`
+  equivalent)
+- **First visit only** — the redirect response sets `lang_redirect=1` (1 year); requests carrying that
+  cookie are never redirected again, so a manual switch back to English sticks. Needed because
+  Shopware's language switcher is URL-based and sets no cookie of its own
+- Redirect is answered by Caddy directly, never reaches Shopware → no full-page-cache interaction
+- Gotcha: `redir /de 302` does NOT work — Caddy parses a leading-`/` first argument as a path
+  *matcher*, silently making `302` the target. Must be `redir * /de 302`
+
+Verify after changes:
+
+```bash
+# German browser, first visit → 302 /de + Set-Cookie lang_redirect
+curl -sI https://sdwa5.org -H 'Accept-Language: de-DE,de;q=0.9'
+# German browser, cookie set → 200, no redirect
+curl -sI https://sdwa5.org -H 'Accept-Language: de-DE' -H 'Cookie: lang_redirect=1'
+# English browser → 200, no redirect
+curl -sI https://sdwa5.org -H 'Accept-Language: en-GB,en;q=0.9'
 ```
 
 ## Operations

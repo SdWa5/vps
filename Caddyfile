@@ -5,6 +5,19 @@
 
 # Main domain - Shopware
 https://sdwa5.org {
+    # First-visit browser-language redirect: German browsers land on /de.
+    # Only on root path; lang_redirect cookie marks "already redirected once"
+    # (Shopware switcher is URL-based, sets no cookie of its own).
+    @deFirstVisit {
+        path /
+        header_regexp Accept-Language ^de
+        not header_regexp Cookie (^|;\s*)lang_redirect=
+    }
+    handle @deFirstVisit {
+        header +Set-Cookie "lang_redirect=1; Path=/; Max-Age=31536000; Secure; SameSite=Lax"
+        redir * /de 302
+    }
+
     reverse_proxy https://127.0.0.1:8443 {
         transport http {
             tls_insecure_skip_verify

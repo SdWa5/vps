@@ -118,6 +118,31 @@ CSS — no custom CSS needed:
 - Language: English primary, German enabled in storefront SC
 - Single domain sdwa5.org with language switcher (no separate de.sdwa5.org)
 
+## Languages & domains
+
+Two languages on the Storefront Sales Channel, subpath domain structure (set up 2026-07):
+
+| Domain                 | Language | Snippet set   | Currency | Units  |
+|------------------------|----------|---------------|----------|--------|
+| `https://sdwa5.org`    | English (default) | BASE en-GB | Euro | Metric |
+| `https://sdwa5.org/de` | Deutsch  | BASE de-DE    | Euro     | Metric |
+
+- Built-in language switcher in storefront header: purely **URL-based** (no cookie), toggles
+  `sdwa5.org` ↔ `sdwa5.org/de`
+- Hreflang: "Localisation according to language" → plain `de`/`en` tags (not `en-GB` etc.), because the
+  channel serves multiple countries (DE, AT, GR, UK, IE, IS) under one English domain — region codes
+  would be inaccurate
+- Browser-language auto-redirect: done at **Caddy level**, not in Shopware (no solid free plugin exists;
+  paid options are all subscription). German-language browsers hitting `/` get a one-time 302 to `/de`;
+  a `lang_redirect` cookie marks "already redirected", so a manual switch back to English sticks. The
+  redirect is answered by Caddy directly and never reaches Shopware, so it can't poison the HTTP cache.
+  Config + test commands: see [caddy.md](caddy.md)
+- `en_US`: deliberately **not** configured. US browsers send `Accept-Language: en-US`, don't match the
+  `^de` redirect, and land on the English root anyway; hreflang `en` covers US searchers. Activating
+  en_US (inheriting en_GB) would add a third domain and snippet maintenance for zero gain — revisit only
+  if US-specific content or USD pricing is ever wanted
+- `http://` domain entries were removed from the Sales Channel; Caddy redirects http→https itself
+
 ## SMTP
 
 - Host: smtp.gmail.com:587, STARTTLS
@@ -335,16 +360,19 @@ validation-only compiles) or Shopware core (validator regex too fragile — shou
 
 ## TODO
 
-1. update email templates (order confirmation etc. still default Shopware copy)
+1. Language switching — done except: home page in German isn't up to date with English (and broken
+   design). Setup documented under [Languages & domains](#languages--domains)
+2. update email templates (order confirmation etc. still default Shopware copy)
     1. dont get too fancy (e.g. with corporate or blogging style expressions)
-2. Search: include CMS pages — storefront search currently returns only products. Extend to also surface CMS
+    2. en and de
+3. Search: include CMS pages — storefront search currently returns only products. Extend to also surface CMS
    pages, ideally as primary/first results (content pages are more likely what visitors search for than merch).
-3. Cookie consent
+4. Cookie consent
     1. SoundCloud embed — register cookie entry in "Comfort features" group + gate iframe behind consent
     2. `cookie.messageTextPage` (the main consent banner text) still renders its link as `/page/cms/Array` —
        confirmed live 2026-07-03, not just a stale-cache issue. `cookie.descriptionInfo` (a separate, secondary
        snippet — not the main banner) was fixed and confirmed pointing at the current Datenschutz URL.
-4. Merch / Products
+5. Merch / Products
     1. Make use of variants and other product related shopware features
     2. Add missing product images, remove background / opacity from existing images
     3. Non-binding preorders / interest capture — no native Shopware 6 core feature for this.
@@ -353,21 +381,21 @@ validation-only compiles) or Shopware core (validator regex too fragile — shou
           interest via email, fully manual
         - Plugin (paid): back-in-stock / waitlist plugins on Shopware marketplace (e.g. ACRIS stock
           notification) — adds "notify me" button on out-of-stock products, admin sees subscriber list
-5. Checkout end-to-end test — no real order flow tested yet
-6. SEO — meta titles/descriptions empty on all pages, no sitemap submitted
-7. Switch store-installed plugins to composer install — FroshLazySizes, FroshPlatformFilterSearch,
+6. Checkout end-to-end test — no real order flow tested yet
+7. SEO — meta titles/descriptions empty on all pages, no sitemap submitted
+8. Switch store-installed plugins to composer install — FroshLazySizes, FroshPlatformFilterSearch,
    SwagPlatformSecurity, FroshShopmon are currently installed via the Shopware Store plugin manager and not in
    `composer.json`/`composer.lock` (unlike FroshPlatformThumbnailProcessor, FroshPlatformMailArchive). Their
    source is now tracked in git as a stopgap (see [infrastructure.md](infrastructure.md)), but `composer require`
    would be the proper fix so `composer install` alone reproduces the install and updates go through Composer.
-8. update mysql and php
-9. frosh tools system-status
+9. update mysql and php
+10. frosh tools system-status
     1. System Health
     2. Performance recommendations
-10. Hide cart UI when irrelevant — hide cart icon, minicart, and related shop chrome when cart is empty AND user
+11. Hide cart UI when irrelevant — hide cart icon, minicart, and related shop chrome when cart is empty AND user
     is not on a PDP or category listing page. Reduces commercial appearance on content-only pages.
-11. Privacy + ToS pages — legal text review by Austrian lawyer (DSGVO, AGB)
-12. Content
+12. Privacy + ToS pages — legal text review by Austrian lawyer (DSGVO, AGB)
+13. Content
     1. add images
     2. add "useful links" page
         1. grouped overview

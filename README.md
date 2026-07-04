@@ -38,7 +38,7 @@ All secrets live in `.env` — never committed. See `.env.example` for required 
 See `docs/` for per-service documentation:
 
 - [Infrastructure overview](docs/infrastructure.md)
-- [Shopware](docs/shopware.md)
+- [Shopware](docs/shopware/README.md)
 - [Dolibarr](docs/dolibarr.md)
 - [Vaultwarden](docs/vaultwarden.md)
 - [Backup (Restic + rclone)](docs/backup.md)

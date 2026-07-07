@@ -36,10 +36,8 @@ flowchart LR
     U -. ":11434" .-> OL
     U -. ":25565" .-> MC
 
-    C -- ":8443 (https)" --> SW
-    C -- ":8000" --> VW
-    C -- ":8002" --> DL
-    C -- ":8003 / :8004" --> P2 & P3
+    C --> SW & VW & DL
+    C --> P2 & P3
 
     DL --> DLDB
     DLC --> DLDB

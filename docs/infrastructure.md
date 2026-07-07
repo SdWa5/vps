@@ -23,7 +23,7 @@ flowchart LR
             P3DB[("MariaDB")]
             OL["Ollama<br/>0.0.0.0:11434 · no auth"]
             MC["Minecraft<br/>0.0.0.0:25565 · profile, inactive"]
-            RS["Restic backup<br/>daily 04:00"]
+            RS["Restic backup<br/>daily 04:00 · source /opt/docker (ro)"]
         end
     end
 
@@ -44,7 +44,6 @@ flowchart LR
     P2 --> P2DB
     P3 --> P3DB
 
-    RS -- "/opt/docker (ro)" --> docker
     RS -- "rclone (OAuth2)" --> GD
 ```
 

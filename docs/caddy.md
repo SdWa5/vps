@@ -11,7 +11,7 @@ Reverse proxy handling TLS termination for all public-facing services.
 | Domain                    | Upstream            | Notes                              |
 |---------------------------|---------------------|------------------------------------|
 | sdwa5.org                 | https://127.0.0.1:8443 | TLS skip verify; de-browser 302→/de (see below) |
-| vault.sdwa5.org           | http://localhost:8000 |                                  |
+| vault.sdwa5.org           | http://localhost:8000 | sets `X-Real-IP` for Vaultwarden |
 | erp.sdwa5.org             | http://localhost:8002 |                                  |
 | project2.sdwa5.org     | http://localhost:8003 |                                  |
 | project3.sdwa5.org          | http://localhost:8004 |                                  |
@@ -42,7 +42,9 @@ https://sdwa5.org {
 }
 
 vault.sdwa5.org {
-    reverse_proxy localhost:8000
+    reverse_proxy localhost:8000 {
+        header_up X-Real-IP {remote_host}
+    }
 }
 
 erp.sdwa5.org {

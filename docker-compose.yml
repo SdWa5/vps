@@ -6,6 +6,7 @@ services:
     container_name: vaultwarden
     restart: unless-stopped
     environment:
+      - DOMAIN=https://vault.sdwa5.org
       - ADMIN_TOKEN=${VAULTWARDEN_ADMIN_TOKEN}
     volumes:
       - ./vaultwarden-data:/data

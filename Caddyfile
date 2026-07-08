@@ -27,7 +27,9 @@ https://sdwa5.org {
 
 # Other services
 vault.sdwa5.org {
-    reverse_proxy localhost:8000
+    reverse_proxy localhost:8000 {
+        header_up X-Real-IP {remote_host}
+    }
 }
 
 erp.sdwa5.org {

@@ -46,7 +46,7 @@ Top-level order (Clothing & Merch deliberately **last** — non-commercial inten
 | Events             | /Events/                 | Events                                                    |
 | ↳ Event Inquiry    | /Events/Event-Inquiry/   | Contact form + what-to-include checklist (bilingual)      |
 | Music / Mixes      | /Music-Mixes/            | SoundCloud embed + Genre Overview + yt-dlp link (biling.) |
-| Artists & Friends  | /Artists-Friends/        | 🚧 in progress — DJs (MEQ1) + Friends (bilingual)         |
+| Artists & Friends  | /Artists-Friends/        | 🚧 in progress — DJs (MEQ1) + Friends incl. darkbloc 🇹🇷; PSL (IG) + Scheiterhaufen (FB) linked (bilingual) |
 | Hardware           | /Hardware/               | Speakers, amps, DSP, DJ gear, lighting (bilingual)        |
 | Gallery            | /Gallery/                | Galerie (11 Flyer images, image-gallery block)            |
 | Requests & Contact | /Requests-Contact/       | Booking & Contact                                         |

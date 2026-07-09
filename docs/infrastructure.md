@@ -28,23 +28,19 @@ flowchart LR
     end
 
     GD[("Google Drive<br/>rclone:SdWa5:restic-backups")]
-
-    U -- "sdwa5.org" --> C
-    U -- "vault.sdwa5.org" --> C
-    U -- "erp.sdwa5.org" --> C
-    U -- "project2/project3.sdwa5.org" --> C
-    U -. ":11434" .-> OL
-    U -. ":25565" .-> MC
-
+    U -- " sdwa5.org " --> C
+    U -- " vault.sdwa5.org " --> C
+    U -- " erp.sdwa5.org " --> C
+    U -- " project2/project3.sdwa5.org " --> C
+    U -. " :11434 " .-> OL
+    U -. " :25565 " .-> MC
     C --> SW & VW & DL
     C --> P2 & P3
-
     DL --> DLDB
     DLC --> DLDB
     P2 --> P2DB
     P3 --> P3DB
-
-    RS -- "rclone (OAuth2)" --> GD
+    RS -- " rclone (OAuth2) " --> GD
 ```
 
 Domain → port mapping lives in the [Caddyfile](../Caddyfile); backup detail in
@@ -52,17 +48,17 @@ Domain → port mapping lives in the [Caddyfile](../Caddyfile); backup detail in
 
 ## Stack overview
 
-| Service           | Image                          | Port (internal) | Public URL                  | Compose file                        |
-|-------------------|--------------------------------|-----------------|-----------------------------|-------------------------------------|
-| Shopware          | dockware/shopware:latest       | 8001 / 8443     | https://sdwa5.org           | docker-compose.yml                  |
-| Vaultwarden       | vaultwarden/server:latest      | 8000            | https://vault.sdwa5.org     | docker-compose.yml                  |
-| Dolibarr SdWa5    | dolibarr/dolibarr:latest       | 8002            | https://erp.sdwa5.org       | docker-compose.yml                  |
-| Dolibarr SdWa5 cron | dolibarr/dolibarr:latest     | —               | —                           | docker-compose.yml                  |
-| Dolibarr Project 2 | dolibarr/dolibarr:latest    | 8003            | https://project2.sdwa5.org | docker-compose.projects.yml    |
-| Dolibarr Project 3   | dolibarr/dolibarr:latest       | 8004            | https://project3.sdwa5.org    | docker-compose.projects.yml      |
-| Ollama            | ollama/ollama:latest           | 11434           | (no domain, port open)      | docker-compose.yml                  |
-| Restic backup     | lobaro/restic-backup-docker    | —               | —                           | docker-compose.yml                  |
-| Minecraft         | itzg/minecraft-server:latest   | 25565           | —                           | docker-compose.yml (profile: minecraft) |
+| Service             | Image                        | Port (internal) | Public URL                 | Compose file                            |
+|---------------------|------------------------------|-----------------|----------------------------|-----------------------------------------|
+| Shopware            | dockware/shopware:latest     | 8001 / 8443     | https://sdwa5.org          | docker-compose.yml                      |
+| Vaultwarden         | vaultwarden/server:latest    | 8000            | https://vault.sdwa5.org    | docker-compose.yml                      |
+| Dolibarr SdWa5      | dolibarr/dolibarr:latest     | 8002            | https://erp.sdwa5.org      | docker-compose.yml                      |
+| Dolibarr SdWa5 cron | dolibarr/dolibarr:latest     | —               | —                          | docker-compose.yml                      |
+| Dolibarr Project 2  | dolibarr/dolibarr:latest     | 8003            | https://project2.sdwa5.org | docker-compose.projects.yml             |
+| Dolibarr Project 3  | dolibarr/dolibarr:latest     | 8004            | https://project3.sdwa5.org | docker-compose.projects.yml             |
+| Ollama              | ollama/ollama:latest         | 11434           | (no domain, port open)     | docker-compose.yml                      |
+| Restic backup       | lobaro/restic-backup-docker  | —               | —                          | docker-compose.yml                      |
+| Minecraft           | itzg/minecraft-server:latest | 25565           | —                          | docker-compose.yml (profile: minecraft) |
 
 Reverse proxy: **Caddy** (systemd service, not in Docker) — see [caddy.md](caddy.md)
 
@@ -117,9 +113,7 @@ NAME       TYPE      SIZE  USED PRIO
   priority -2 → only used when zram is full.
 - **No zswap** — the Debian cloud kernel is built without it
   (`CONFIG_ZSWAP is not set` in `/boot/config-6.1.0-47-cloud-amd64`), so zram
-  is the only in-RAM compression option here. The local desktop uses
-  zswap + swapfile instead — see
-  [ai/docs/debian/zswap-swap-setup.md](../../../ai/docs/debian/zswap-swap-setup.md).
+  is the only in-RAM compression option here.
 - Sysctls at Debian defaults: `vm.swappiness=60`, `vm.page-cluster=3`.
 
 ```bash
@@ -153,7 +147,8 @@ docker exec shopware php bin/console cache:clear
 
 ## Notes
 
-- Ollama port 11434 is bound to `0.0.0.0` (public). No auth. Consider firewall rule or binding to localhost if not needed externally.
+- Ollama port 11434 is bound to `0.0.0.0` (public). No auth. Consider firewall rule or binding to localhost if not
+  needed externally.
 - `docker/nginx/` and `docker/php/` dirs exist but are empty — historical artifact from initial setup.
 - `shopware-data/` is a legacy volume mount, unused since migration to `shopware-html-data/`.
 - Minecraft is fully configured but excluded from default `up` via compose profile `minecraft`;

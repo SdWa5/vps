@@ -1,5 +1,11 @@
 version: '3.9'
 
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   vaultwarden:
     image: vaultwarden/server:latest
@@ -8,6 +14,7 @@ services:
     environment:
       - DOMAIN=https://vault.sdwa5.org
       - ADMIN_TOKEN=${VAULTWARDEN_ADMIN_TOKEN}
+    logging: *default-logging
     volumes:
       - ./vaultwarden-data:/data
     ports:
@@ -23,6 +30,7 @@ services:
     environment:
       - SHOP_DOMAIN=sdwa5.org
       - APP_URL=https://sdwa5.org
+    logging: *default-logging
     volumes:
       - ./shopware-mysql-data:/var/lib/mysql
       - ./shopware-html-data:/var/www/html
@@ -34,6 +42,7 @@ services:
     tty: true
     stdin_open: true
     profiles: ["minecraft"]
+    logging: *default-logging
     ports:
       - "25565:25565"
     environment:
@@ -95,6 +104,7 @@ services:
       MYSQL_DATABASE: ${DOLIBARR_MYSQL_DATABASE:-dolidb}
       MYSQL_USER: ${DOLIBARR_MYSQL_USER:-dolidbuser}
       MYSQL_PASSWORD: ${DOLIBARR_MYSQL_PASSWORD}
+    logging: *default-logging
     volumes:
       - ./dolibarr-mariadb-data:/var/lib/mysql
 
@@ -102,6 +112,7 @@ services:
     image: dolibarr/dolibarr:latest
     container_name: dolibarr
     restart: unless-stopped
+    logging: *default-logging
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1"]
       start_period: 300s
@@ -135,6 +146,7 @@ services:
     image: dolibarr/dolibarr:latest
     container_name: dolibarr_cron
     restart: unless-stopped
+    logging: *default-logging
     depends_on:
       dolibarr:
         condition: service_healthy
@@ -162,6 +174,7 @@ services:
   ollama:
     image: ollama/ollama:latest
     profiles: ["ollama"]
+    logging: *default-logging
     ports:
       - "11434:11434"
     volumes:
@@ -171,6 +184,7 @@ services:
     image: lobaro/restic-backup-docker:latest
     container_name: restic
     restart: unless-stopped
+    logging: *default-logging
     volumes:
       - ./rclone-config:/root/.config/rclone
       - ./:/data:ro

@@ -23,7 +23,7 @@ docker compose up -d
 | Shopware (SdWa5)   | https://sdwa5.org             | docker-compose.yml             |
 | Vaultwarden        | https://vault.sdwa5.org       | docker-compose.yml             |
 | Dolibarr SdWa5     | https://erp.sdwa5.org         | docker-compose.yml             |
-| Ollama             | :11434 (no public domain)     | docker-compose.yml             |
+| Ollama (inactive)  | :11434 (no public domain)     | docker-compose.yml (profile: ollama) |
 | Restic backup      | —                             | docker-compose.yml             |
 | Dolibarr Project 2 | https://project2.sdwa5.org | docker-compose.projects.yml |
 | Dolibarr Project 3    | https://project3.sdwa5.org      | docker-compose.projects.yml |
@@ -50,6 +50,7 @@ See `docs/` for per-service documentation:
 - [Caddy](docs/caddy.md)
 - [Ollama](docs/ollama.md)
 - [Minecraft](docs/minecraft.md)
+- [Maintenance (disk cleanup, log caps)](docs/maintenance.md)
 
 ## Common operations
 
@@ -59,6 +60,10 @@ docker compose up -d
 
 # Start Project 2/Project 3 services
 docker compose -f docker-compose.projects.yml up -d
+
+# Start a profile-gated service (excluded from default up)
+docker compose --profile minecraft up -d
+docker compose --profile ollama up -d
 
 # Restart a single service
 docker compose restart shopware

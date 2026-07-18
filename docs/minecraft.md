@@ -29,6 +29,29 @@ World data persists in `minecraft-data/` on the VPS.
 docker compose --profile minecraft up -d
 ```
 
+## Backup retention
+
+The `textile_backup` mod writes world archives to `minecraft-data/backup/world/` (~5.4 GB each). Retention
+is already configured in `config/textile_backup.json5` and the mod self-prunes on its own runs:
+
+| Setting | Value | Meaning |
+|---------|-------|---------|
+| `backupsToKeep` | 3 | keep at most 3 archives |
+| `maxAge` | 172800 s | drop archives older than 48 h |
+| `maxSize` | 31251200 KiB | ≈ 29.8 GiB folder cap |
+
+**Caveat:** pruning only runs while the server is up. Because Minecraft is profile-gated (inactive), the mod
+never runs to age out old archives — so stale backups can sit indefinitely despite the retention config. In
+the July 2026 cleanup, 11 GB of May archives were left over this way. Safe to delete manually — Restic mirrors
+all of `/opt/docker` off-box daily:
+
+```bash
+ls -lht minecraft-data/backup/world/          # newest first
+rm minecraft-data/backup/world/<old-archive>.zip
+```
+
+See [maintenance.md](maintenance.md).
+
 ## Version control
 
 Server config is tracked in the repo: `server.properties`, `eula.txt`, `ops.json`, `whitelist.json`,

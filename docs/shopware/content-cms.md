@@ -45,7 +45,7 @@ Top-level order (Clothing & Merch deliberately **last** — non-commercial inten
 | ↳ Membership       | /About-SdWa5/Membership/ | Membership info + contact form (bilingual)                |
 | Events             | /Events/                 | Events                                                    |
 | ↳ Event Inquiry    | /Events/Event-Inquiry/   | Contact form + what-to-include checklist (bilingual)      |
-| Music / Mixes      | /Music-Mixes/            | SoundCloud embed + Genre Overview + yt-dlp link (biling.) |
+| Music / Mixes      | /Music-Mixes/            | SoundCloud embed (click-to-load facade, consent-gated) + Genre Overview + yt-dlp link (biling.) |
 | Artists & Friends  | /Artists-Friends/        | 🚧 in progress — DJs (MEQ1) + Friends incl. darkbloc 🇹🇷; PSL (IG) + Scheiterhaufen (FB) linked (bilingual) |
 | Hardware           | /Hardware/               | Speakers, amps, DSP, DJ gear, lighting (bilingual)        |
 | Gallery            | /Gallery/                | Galerie (11 Flyer images, image-gallery block)            |
@@ -74,7 +74,10 @@ Each page = compact text block (form-critical info only) + Shopware native `form
 "Rechtliches" is the sales channel's **Footer service navigation** root (`serviceCategoryId`) —
 renders as a flat link row in the footer-bottom bar, not a footer column. Old `/Rechtliches/*/`
 URLs 301-redirect to the new ones (Shopware kept the superseded SEO URLs as redirects).
-System configs wired: imprintPage, privacyPage, tosPage, revocationPage, shippingPaymentInfoPage
+System configs wired: imprintPage, privacyPage, tosPage, revocationPage, shippingPaymentInfoPage,
+contactPage. **2026-07-20:** removed SC-scoped `{"_value": uuid}`-corrupted duplicate rows of these
+(from the 2026-06-29 footer-nav write) that caused `/page/cms/Array` links — storefront now uses the
+correct bare-UUID null-scope defaults. See [cookie-consent.md](cookie-consent.md).
 
 | Page           | URL              | Content                                                       |
 |----------------|------------------|---------------------------------------------------------------|

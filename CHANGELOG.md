@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.4.5] - 2026-07-20
+
+### Fixed
+
+- Cookie banner + footer legal links rendered `/page/cms/Array`. Root cause: 8 corrupted
+  sales-channel-scoped `system_config` rows from the 2026-06-29 footer-nav write stored
+  `core.basicInformation.{imprint,privacy,tos,revocation,shippingPaymentInfo,contact}Page` (and
+  `phone`) as `{"_value": uuid}` instead of a bare string, so `(string)[]` → `"Array"`. Removed the
+  corrupted rows; storefront now falls back to the correct bare-UUID null-scope defaults. Verified
+  live. (Shop config lives in the DB on the VPS — no repo code changed.)
+
+### Added
+
+- SoundCloud embed on Music/Mixes is now a **click-to-load facade** (consent-gated): no request to
+  soundcloud.com until the visitor clicks; consent remembered in first-party `localStorage`. DSGVO/
+  TKG-compliant without a plugin.
+- `cookie.messageTextPage` snippet override (de-DE + en-GB) with a hardcoded `/Datenschutz/` link,
+  guaranteeing the pretty banner link independent of CMS-page SEO URLs.
+
+### Changed
+
+- `docs/shopware/cookie-consent.md`: documented the `/page/cms/Array` root cause + fix, the
+  SoundCloud facade, and the settings audit (accept-all OFF, EU/AT rationale); corrected the false
+  `frosh/cookieman` reference (no such Shopware plugin — `dmind/cookieman` is TYPO3-only).
+- `docs/shopware/content-cms.md`: Music/Mixes SoundCloud noted as facade-gated; legal-page config
+  corruption fix recorded.
+- `docs/shopware/TODO.md`: removed resolved "Cookie consent" item, renumbered.
+
 ## [1.4.4] - 2026-07-18
 
 ### Added

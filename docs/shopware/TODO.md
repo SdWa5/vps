@@ -1,26 +1,17 @@
 # Shopware TODO
 
-1. Cookie consent
-    1. SoundCloud embed — register cookie entry in "Comfort features" group + gate iframe behind consent
-    2. `cookie.messageTextPage` (the main consent banner text) still renders its link as `/page/cms/Array` —
-       confirmed live 2026-07-03, not just a stale-cache issue. `cookie.descriptionInfo` (a separate, secondary
-       snippet — not the main banner) was fixed and confirmed pointing at the current Datenschutz URL.
-    3. investigate if settings used correctly:
-        1. Show "Accept all cookies" button is false
-        2. Use default cookie notification is true
-        3. not cookie but may be AT relevant: Show "Revoke a contract" button in footer
-2. update email templates (order confirmation etc. still default Shopware copy)
+1. update email templates (order confirmation etc. still default Shopware copy)
     1. dont get too fancy (e.g. with corporate or blogging style expressions)
     2. en and de
-3. Layout for 404 pages
+2. Layout for 404 pages
    Assign layout...
-4. Shop page layout for maintenance pages
+3. Shop page layout for maintenance pages
    Select layout
-5. Search: include CMS pages — storefront search currently returns only products. Extend to also surface CMS
+4. Search: include CMS pages — storefront search currently returns only products. Extend to also surface CMS
    pages, ideally as primary/first results (sdwa5.org primarily used as homepage, online shop secondary functionality).
    If this todo isnt solvable using built-in Shopware features or free plugins, move this todo to the "Hide cart UI"
    todo
-6. Merch / Products
+5. Merch / Products
     1. Make use of variants and other product related shopware features
     2. Add missing product images, remove background / opacity from existing images
     3. Non-binding preorders / interest capture — no native Shopware 6 core feature for this.
@@ -29,21 +20,24 @@
           interest via email, fully manual
         - Plugin (paid): back-in-stock / waitlist plugins on Shopware marketplace (e.g. ACRIS stock
           notification) — adds "notify me" button on out-of-stock products, admin sees subscriber list
-7. Checkout end-to-end test — no real order flow tested yet
-8. SEO — meta titles/descriptions empty on all pages, no sitemap submitted
-9. Switch store-installed plugins to composer install — FroshLazySizes, FroshPlatformFilterSearch,
+6. Checkout end-to-end test — no real order flow tested yet
+   (deferred — not selling products yet)
+7. SEO — meta titles/descriptions empty on all pages, no sitemap submitted
+8. Switch store-installed plugins to composer install — FroshLazySizes, FroshPlatformFilterSearch,
    SwagPlatformSecurity, FroshShopmon are currently installed via the Shopware Store plugin manager and not in
    `composer.json`/`composer.lock` (unlike FroshPlatformThumbnailProcessor, FroshPlatformMailArchive). Their
    source is now tracked in git as a stopgap (see [infrastructure.md](../infrastructure.md)), but `composer require`
    would be the proper fix so `composer install` alone reproduces the install and updates go through Composer.
-10. update mysql and php
-11. frosh tools system-status
+9. update mysql and php
+10. frosh tools system-status
     1. System Health
     2. Performance recommendations
-12. Hide cart UI when irrelevant — hide cart icon, minicart, and related shop chrome when cart is empty AND user
+11. Hide cart UI when irrelevant — hide cart icon, minicart, and related shop chrome when cart is empty AND user
     is not on a PDP or category listing page. Reduces commercial appearance on content-only pages.
-13. Privacy + ToS pages — legal text review by Austrian lawyer (DSGVO, AGB)
-14. Content
+12. Privacy + ToS pages — DSGVO + AGB compliance review. Professional lawyer review is out of budget (won't happen),
+    so do an in-depth AI-assisted review instead: check Datenschutzerklärung, AGB, Impressum, and cookie/consent
+    wording against DSGVO. Treat AI output as best-effort, not legal advice.
+13. Content
     1. add images
     2. add "useful links" page
         1. grouped overview

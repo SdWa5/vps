@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.4.6] - 2026-07-22
+
+### Added
+
+- `docs/shopware/privacy-tos-review-2026-07-22.md`: in-depth AI-assisted DSGVO/AGB
+  compliance review of the live Impressum, Datenschutzerklärung, AGB, and Widerrufsrecht
+  CMS pages plus the cookie-consent banner wording — best-effort, not legal advice (a
+  professional lawyer review is out of budget). Four independent Opus review passes with
+  live web verification of volatile facts (EU ODR platform status, EU-US Data Privacy
+  Framework, UK adequacy decision), cross-checked against each other and the org's own
+  docs. Flags a repealed-statute citation on the Impressum, undisclosed third-party
+  embeds/processors on the Datenschutzerklärung, a self-contradicting Widerrufsrecht
+  page, cross-page KSchG inconsistency, and the central open question of whether the
+  shop's €0-donation mechanic is legally a gift or a disguised sale.
+
+### Changed
+
+- `docs/shopware/TODO.md`: removed resolved "Privacy + ToS pages" item (the review is
+  done — applying its suggested fixes is tracked as a new, separate follow-up item
+  pending Obmann/board sign-off); reflowed line-wrap width on several other items.
+
 ## [1.4.5] - 2026-07-20
 
 ### Fixed

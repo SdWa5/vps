@@ -91,6 +91,11 @@ The tell is what is **missing**. A working login is followed by `GET /api/sync`,
 `prelogin/password` and loops. The password is correct, the server served it, the client fails
 afterwards while processing the response.
 
+**The mobile app is not affected.** Verified on 2026-09-01: the phone synced the same vault from the
+same server while the extension failed. The app is native and never runs the extension's JavaScript
+policy-mapping path, so a working app alongside a broken extension confirms the server and the
+account are fine and narrows the fault to the extension build.
+
 Affects extension 2026.8.0 against Vaultwarden 1.37.x. Tracked upstream as
 [#7635](https://github.com/dani-garcia/vaultwarden/issues/7635),
 [#7632](https://github.com/dani-garcia/vaultwarden/issues/7632) and
@@ -108,7 +113,15 @@ Affects extension 2026.8.0 against Vaultwarden 1.37.x. Tracked upstream as
 
 ### What works
 
-Pin the client to **2026.7.0**, which upstream confirms is unaffected.
+Try a full reinstall first, it keeps the current version. Discussion #7617 reports corrupt extension
+storage producing the same symptom, and a browser-only failure is consistent with that:
+
+1. `about:addons` → Bitwarden → **Remove**, not disable.
+2. Close Firefox completely, then reopen it.
+3. Reinstall from addons.mozilla.org.
+4. Set Self-hosted to `https://vault.sdwa5.org` before logging in.
+
+If that does not help, pin the client to **2026.7.0**, which upstream confirms is unaffected.
 
 Firefox:
 

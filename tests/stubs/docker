@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Fake docker. Behaviour comes from STUB_* environment variables.
+case "${1:-}" in
+    inspect)
+        # docker inspect -f '<fmt>' <name>
+        name="${!#}"
+        var="STUB_CONTAINER_${name}"
+        echo "${!var-true healthy}"
+        [[ -n "${!var-x}" ]] || exit 1
+        ;;
+    image)
+        # docker image inspect -f '{{.Id}}' <image>
+        [[ -z "${STUB_IMAGE_ID:-}" ]] && exit 1
+        echo "$STUB_IMAGE_ID"
+        ;;
+    logs)
+        printf '%s\n' "${STUB_RESTIC_LOG:-}"
+        ;;
+    exec)
+        # docker exec vaultwarden /vaultwarden --version
+        [[ -z "${STUB_VW_VERSION:-}" ]] && exit 1
+        echo "Vaultwarden ${STUB_VW_VERSION}"
+        ;;
+esac
+exit 0

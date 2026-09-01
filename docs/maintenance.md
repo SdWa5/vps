@@ -2,6 +2,16 @@
 
 Operational runbooks for the SdWa5 VPS (Contabo, `/`= 99 GB).
 
+Since 2026-09-01 an hourly health check mails when disk, containers, backups, public endpoints,
+Caddy or the Vaultwarden version go wrong. See [monitoring.md](monitoring.md). The runbooks below are
+what to do once that mail arrives.
+
+Two incidents shaped them:
+
+- **Disk full** — see [Disk cleanup](#disk-cleanup) below.
+- **Clients broken while the web vault works** — a Vaultwarden version mismatch, not an outage. The
+  runbook lives in [vaultwarden.md](vaultwarden.md#runbook-clients-broken-web-vault-fine).
+
 ## Disk cleanup
 
 Runbook distilled from the **July 2026 incident** — root `/` hit **100 %** (99 GB used), services at risk.
@@ -59,8 +69,11 @@ Log opts apply on container (re)creation, not to running containers:
 
 ```bash
 cd /opt/docker
-docker compose up -d                                              # recreates changed services
+docker-compose up -d                                              # recreates changed services
 docker inspect --format '{{.HostConfig.LogConfig}}' shopware      # expect: {json-file map[max-file:3 max-size:10m]}
 ```
+
+> `docker-compose.projects.yml` still has no `logging:` on any of its four services, so the
+> project2/project3 containers log uncapped. Tracked in [TODO.md](../TODO.md).
 
 To change the cap, edit the single `x-logging` block at the top of `docker-compose.yml` and recreate.

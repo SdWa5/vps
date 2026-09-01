@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Fake df. Reports STUB_DISK_PCT percent used on a 99G filesystem.
+pct="${STUB_DISK_PCT:-30}"
+echo "Filesystem     Size  Used Avail Use% Mounted on"
+echo "/dev/sda1       99G   28G   67G  ${pct}% /"

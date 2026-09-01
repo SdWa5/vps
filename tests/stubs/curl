@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Fake curl. Distinguishes the three call shapes the scripts make.
+args="$*"
+
+# Mail delivery: send_mail pipes a config file into stdin.
+if [[ "$args" == *"--config -"* ]]; then
+    cat > /dev/null
+    upload=""
+    prev=""
+    for a in "$@"; do
+        [[ "$prev" == "--upload-file" ]] && upload="$a"
+        prev="$a"
+    done
+    {
+        echo "=== MAIL ==="
+        [[ -r "$upload" ]] && cat "$upload"
+    } >> "${STUB_MAIL_LOG:-/dev/null}"
+    exit "${STUB_MAIL_RC:-0}"
+fi
+
+# GitHub release lookup.
+if [[ "$args" == *"api.github.com"* ]]; then
+    [[ -z "${STUB_GITHUB_JSON:-}" ]] && exit 7
+    printf '%s' "$STUB_GITHUB_JSON"
+    exit 0
+fi
+
+# HTTP status probe.
+if [[ "$args" == *"%{http_code}"* ]]; then
+    printf '%s' "${STUB_HTTP_CODE:-200}"
+    exit 0
+fi
+
+exit 0

@@ -25,6 +25,11 @@ flowchart LR
             MC["Minecraft<br/>0.0.0.0:25565 · profile, inactive"]
             RS["Restic backup<br/>daily 04:00 · source /opt/docker (ro)"]
         end
+
+        subgraph cron ["cron · /etc/cron.d"]
+            HC["vps-health.sh<br/>hourly · mails on fault only"]
+            AU["vaultwarden-autoupdate.sh<br/>Sun 03:00 · pull, snapshot, verify"]
+        end
     end
 
     GD[("Google Drive<br/>rclone:SdWa5:restic-backups")]
@@ -41,6 +46,9 @@ flowchart LR
     P2 --> P2DB
     P3 --> P3DB
     RS -- " rclone (OAuth2) " --> GD
+    HC -. " checks " .-> C & SW & VW & DL & RS
+    AU -- " updates " --> VW
+    HC & AU -- " SMTP alerts " --> MB[("Mail<br/>ripper@sdwa5.org")]
 ```
 
 Domain → port mapping lives in the [Caddyfile](../Caddyfile); backup detail in
@@ -59,6 +67,13 @@ Domain → port mapping lives in the [Caddyfile](../Caddyfile); backup detail in
 | Ollama              | ollama/ollama:latest         | 11434           | (no domain, port open)     | docker-compose.yml                      |
 | Restic backup       | lobaro/restic-backup-docker  | —               | —                          | docker-compose.yml                      |
 | Minecraft           | itzg/minecraft-server:latest | 25565           | —                          | docker-compose.yml (profile: minecraft) |
+
+Cron jobs (host, not Docker) — see [monitoring.md](monitoring.md):
+
+| Job                        | Script                                  | Schedule       |
+|----------------------------|-----------------------------------------|----------------|
+| Health check               | `monitoring/vps-health.sh`              | hourly, `:17`  |
+| Vaultwarden auto-update    | `monitoring/vaultwarden-autoupdate.sh`  | Sunday 03:00   |
 
 Reverse proxy: **Caddy** (systemd service, not in Docker) — see [caddy.md](caddy.md)
 

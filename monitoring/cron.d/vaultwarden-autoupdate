@@ -1,0 +1,12 @@
+# Weekly Vaultwarden update. Deploy to /etc/cron.d/vaultwarden-autoupdate
+# (root:root, mode 644).
+#
+# Sunday 03:00, one hour before the restic backup at 04:00, so the daily backup
+# always captures the post-update state. Mails only on an actual update or a
+# failure. Also reports if vps-health.sh has stopped running.
+
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=""
+
+0 3 * * 0 root /opt/docker/monitoring/vaultwarden-autoupdate.sh 2>&1 | logger -t vaultwarden-autoupdate

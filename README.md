@@ -4,7 +4,7 @@ Docker Compose configuration for all services running on the SdWa5 Contabo VPS.
 
 ## Requirements
 
-- Docker + Docker Compose v2
+- Docker + Docker Compose v1. The VPS has `docker-compose` 1.29.2. The v2 subcommand form `docker compose` does not exist there, so every command below uses the hyphenated binary.
 - Caddy (system service, not in Docker)
 - A `.env` file in this directory (see `.env.example`)
 
@@ -13,7 +13,7 @@ Docker Compose configuration for all services running on the SdWa5 Contabo VPS.
 ```bash
 cp .env.example .env
 # Fill in all values in .env
-docker compose up -d
+docker-compose up -d
 ```
 
 ## Services
@@ -51,26 +51,47 @@ See `docs/` for per-service documentation:
 - [Ollama](docs/ollama.md)
 - [Minecraft](docs/minecraft.md)
 - [Maintenance (disk cleanup, log caps)](docs/maintenance.md)
+- [Monitoring (health checks, alerts, Vaultwarden auto-update)](docs/monitoring.md)
 
 ## Common operations
 
 ```bash
 # Start all main services
-docker compose up -d
+docker-compose up -d
 
 # Start Project 2/Project 3 services
-docker compose -f docker-compose.projects.yml up -d
+docker-compose -f docker-compose.projects.yml up -d
 
 # Start a profile-gated service (excluded from default up)
-docker compose --profile minecraft up -d
-docker compose --profile ollama up -d
+docker-compose --profile minecraft up -d
+docker-compose --profile ollama up -d
 
 # Restart a single service
-docker compose restart shopware
+docker-compose restart shopware
 
 # Follow logs
-docker compose logs -f
+docker-compose logs -f
 
 # Reload Caddy config
 systemctl reload caddy
+
+# Health check on demand (see docs/monitoring.md)
+/opt/docker/monitoring/vps-health.sh --dry-run
 ```
+
+## Monitoring
+
+Two cron jobs watch the box and mail `ripper@sdwa5.org` when
+something is wrong. A healthy system sends nothing. Vaultwarden updates itself every Sunday, because
+the Bitwarden clients auto-update and a server left behind stops working with them.
+
+See [docs/monitoring.md](docs/monitoring.md).
+
+## Tests
+
+```bash
+tests/run.sh
+```
+
+Runs the bats suite for the monitoring scripts plus shellcheck, both inside Docker. Nothing has to be
+installed on the host.

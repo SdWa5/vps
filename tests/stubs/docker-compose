@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Fake docker-compose. Records every invocation and can be told to fail.
+echo "$*" >> "${STUB_COMPOSE_LOG:-/dev/null}"
+case "${1:-}" in
+    pull) exit "${STUB_PULL_RC:-0}" ;;
+esac
+exit 0

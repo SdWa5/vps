@@ -6,6 +6,72 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-09-01
+
+### Added
+
+- `monitoring/vps-health.sh`: hourly health check covering disk usage, expected containers, restic
+  backup age and result, the three public HTTPS endpoints, Caddy, and Vaultwarden version drift.
+  Mails only on a fault or a recovery, so a healthy system is silent. Repeat reminders for an
+  unchanged problem back off, doubling from one day and capping at 30 days, which costs six mails in
+  the first month and one a month afterwards. An escalation, a changed message or a fault that
+  returns after recovery alerts immediately instead of waiting out the backoff.
+- `monitoring/vaultwarden-autoupdate.sh`: weekly Vaultwarden update every Sunday 03:00, one hour
+  before the restic run. Snapshots `vaultwarden-data/` before applying, verifies that
+  `vault.sdwa5.org/alive` returns 200 afterwards, and on failure restores the snapshot, pins the
+  previous image in `docker-compose.override.yml` and mails an alert. Keeps the newest three
+  snapshots. Only Vaultwarden is auto-updated.
+- `monitoring/lib.sh`: shared config loading and SMTP delivery through `curl` to
+  `smtps://smtp.gmail.com:465`, reusing the Gmail app password Vaultwarden already sends from. The
+  password is passed to `curl` through a config file on stdin, so it never appears in the process
+  list.
+- The two cron jobs watch each other. `vps-health.sh` writes `/var/lib/vps-health/last-run` on every
+  run and the weekly job mails if that file is missing or older than two hours. Without this a health
+  check that silently stopped would look exactly like a healthy server.
+- `monitoring/cron.d/vps-health` and `monitoring/cron.d/vaultwarden-autoupdate`: cron entries with
+  output going to the journal under their own tags, so nothing new needs log rotation.
+- `tests/`: 41 bats cases plus shellcheck, run by `tests/run.sh` entirely in Docker. Stubs `docker`,
+  `docker-compose`, `curl`, `systemctl`, `df` and `hostname`, and drives the clock through
+  `FAKE_NOW`, so the full backoff schedule is verified in under a second. First test setup in this
+  repository.
+- `docs/monitoring.md`: what is checked, the backoff schedule, the mail path, installation, how to
+  rehearse an alert, and the limitations of monitoring a host from itself.
+- `docs/vaultwarden.md`: client compatibility section and a runbook for "clients broken, web vault
+  fine", plus the 2026-09-01 incident record.
+- `.env.example`: `MONITOR_SMTP_PASSWORD` and the optional monitoring overrides.
+
+### Changed
+
+- Vaultwarden upgraded from 1.36.0 to 1.37.2 on the VPS. The Bitwarden browser extension and the
+  mobile app had stopped logging in while the web vault kept working, because the web vault ships
+  with the server and is always version-matched. Upstream requires 1.37.0 for clients 2026.7.0+ and
+  1.37.2 for clients 2026.8.0+. The API version string moved from 2025.12.0 to 2026.6.0.
+- `README.md`: corrected the Compose requirement. The VPS runs docker-compose v1 (1.29.2) and
+  `docker compose` does not exist there, so every documented command now uses `docker-compose`. Added
+  the monitoring and tests sections.
+- `docs/maintenance.md`: notes that monitoring is now active and points at the second runbook.
+  Corrected the `docker compose` invocation and flagged the uncapped logging in
+  `docker-compose.projects.yml`.
+- `docs/infrastructure.md`: the diagram and the stack overview now include the two cron jobs.
+- `docs/vaultwarden.md`: corrected the note claiming SMTP is not configured. It has been configured
+  through the admin panel and is stored in `vaultwarden-data/config.json`.
+
+### Fixed
+
+- The Bitwarden browser extension and mobile app could not reach `vault.sdwa5.org`. Not the
+  disk-full condition of July 2026: disk was at 30 %, all containers healthy and the last backup
+  green throughout. The server was four months behind the auto-updating clients, fixed by the 1.36.0
+  to 1.37.2 upgrade.
+
+### Known issues
+
+- Extension 2026.8.0 still cannot unlock against Vaultwarden 1.37.2, reporting "Invalid master
+  password" for a login the server logs as successful. Open upstream,
+  [#7635](https://github.com/dani-garcia/vaultwarden/issues/7635), with no fixed release and no
+  addressing commit on `main`. Clients are pinned to extension 2026.7.0 with auto-update off.
+  Disabling the organization policies was tried on 2026-09-01 and reverted, the bug reproduces
+  without them. See `docs/vaultwarden.md`.
+
 ## [1.4.6] - 2026-07-22
 
 ### Added

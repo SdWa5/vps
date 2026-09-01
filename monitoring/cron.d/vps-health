@@ -1,0 +1,11 @@
+# SdWa5 VPS health check. Deploy to /etc/cron.d/vps-health (root:root, mode 644).
+#
+# Runs hourly and mails only when something is wrong or has just recovered.
+# Output goes to the journal, which is already size-capped, so nothing new needs
+# rotating. MAILTO is empty because the script does its own mail delivery.
+
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=""
+
+17 * * * * root /opt/docker/monitoring/vps-health.sh 2>&1 | logger -t vps-health

@@ -123,6 +123,15 @@ Finished Backup at $(date '+%Y-%m-%d %H:%M:%S') after 3 seconds" health
     [ "$(mail_count)" -eq 0 ]
 }
 
+@test "the web vault version is not mistaken for the server version" {
+    # The container prints both. Reading the wrong one hid drift completely:
+    # 2026.7.0 sorts above every 1.x release, so an old server looked current.
+    STUB_VW_VERSION=1.36.0 STUB_WEB_VAULT_VERSION=2026.7.0 health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"1.36.0 is behind 1.37.2"* ]]
+    [[ "$(mail_body)" != *"2026.7.0"* ]]
+}
+
 @test "an unreachable GitHub API does not alert" {
     STUB_VW_VERSION=1.36.0 STUB_GITHUB_JSON="" health
     [ "$(mail_count)" -eq 0 ]

@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `monitoring/vps-health.sh` and `monitoring/vaultwarden-autoupdate.sh` read the web vault version
+  instead of the server version. `vaultwarden --version` prints both, and taking the last
+  version-shaped number picked up `Web-Vault 2026.7.0`, which sorts above every 1.x release, so the
+  drift check would have reported an outdated server as current. Caught on the first live dry run.
+  Both now match the `Vaultwarden` line specifically, with a regression test.
+
 ## [1.5.0] - 2026-09-01
 
 ### Added

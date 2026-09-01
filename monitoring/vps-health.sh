@@ -147,7 +147,10 @@ check_caddy() {
 check_vaultwarden_version() {
     local running latest newest
 
-    running="$(docker exec vaultwarden /vaultwarden --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | tail -1)"
+    # The container prints "Vaultwarden <server>" and "Web-Vault <web vault>".
+    # Only the first is comparable against the GitHub release tag.
+    running="$(docker exec vaultwarden /vaultwarden --version 2>/dev/null \
+        | grep -oE '^Vaultwarden [0-9]+\.[0-9]+\.[0-9]+' | head -1 | awk '{print $2}')"
     if [[ -z "$running" ]]; then
         printf 'WARN\tCould not determine the running Vaultwarden version\n'
         return

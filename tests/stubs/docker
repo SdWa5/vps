@@ -20,6 +20,7 @@ case "${1:-}" in
         # docker exec vaultwarden /vaultwarden --version
         [[ -z "${STUB_VW_VERSION:-}" ]] && exit 1
         echo "Vaultwarden ${STUB_VW_VERSION}"
+        echo "Web-Vault ${STUB_WEB_VAULT_VERSION:-2026.7.0}"
         ;;
 esac
 exit 0

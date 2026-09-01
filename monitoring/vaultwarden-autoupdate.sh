@@ -40,9 +40,11 @@ image_id() {
     docker image inspect -f '{{.Id}}' "$IMAGE" 2>/dev/null
 }
 
+# The container prints "Vaultwarden <server>" and "Web-Vault <web vault>".
+# Only the first one is the release version.
 running_version() {
     docker exec "$SERVICE" /vaultwarden --version 2>/dev/null \
-        | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | tail -1
+        | grep -oE '^Vaultwarden [0-9]+\.[0-9]+\.[0-9]+' | head -1 | awk '{print $2}'
 }
 
 # The two cron jobs watch each other. Without an all-green digest, a health

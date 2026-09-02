@@ -46,6 +46,10 @@ project3-dolibarr-custom-data/
 
 # Other service data
 vaultwarden-data/
+# Pre-update snapshots written by monitoring/vaultwarden-autoupdate.sh. Without
+# this the deploy checkout at /opt/docker always reports a dirty tree, which
+# makes "is this host clean?" useless as a deploy precondition.
+vaultwarden-data.bak-*/
 vaultwarden-db-backup/
 ollama-data/
 

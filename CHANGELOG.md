@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `monitoring/vps-health.sh` padded the check-name column to 20 characters in the `--dry-run` output
   and in the alert mail body. `vaultwarden_db_backup` is 21, so it pushed the status column out of
   line on that row. Widened to 21.
+- `.gitignore` did not cover the `vaultwarden-data.bak-*` snapshots that
+  `monitoring/vaultwarden-autoupdate.sh` writes, so the deploy checkout at `/opt/docker` always
+  reported a dirty working tree. That makes a clean tree useless as a precondition for the automated
+  deploy in `TODO.md` item 1.
 
 ## [1.6.0] - 2026-09-03
 

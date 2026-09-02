@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- `monitoring/vps-health.sh` padded the check-name column to 20 characters in the `--dry-run` output
+  and in the alert mail body. `vaultwarden_db_backup` is 21, so it pushed the status column out of
+  line on that row. Widened to 21.
+
 ## [1.6.0] - 2026-09-03
 
 ### Added

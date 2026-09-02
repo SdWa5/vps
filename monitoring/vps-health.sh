@@ -348,7 +348,7 @@ main() {
 
     if (( DRY_RUN )); then
         printf '%s\n' "$results" | while IFS=$'\t' read -r key status message; do
-            printf '%-20s %-5s %s\n' "$key" "$status" "$message"
+            printf '%-21s %-5s %s\n' "$key" "$status" "$message"
         done
         return 0
     fi
@@ -415,7 +415,7 @@ main() {
     (( ${#alerts[@]} > 0 ))     && body+="Problems:"$'\n'"$(printf '  %s\n' "${alerts[@]}")"$'\n\n'
     (( ${#recoveries[@]} > 0 )) && body+="Recovered:"$'\n'"$(printf '  %s\n' "${recoveries[@]}")"$'\n\n'
     body+="Full check output:"$'\n'
-    body+="$(printf '%s\n' "$results" | awk -F'\t' '{printf "  %-20s %-5s %s\n", $1, $2, $3}')"$'\n\n'
+    body+="$(printf '%s\n' "$results" | awk -F'\t' '{printf "  %-21s %-5s %s\n", $1, $2, $3}')"$'\n\n'
     body+="Runbooks: docs/maintenance.md and docs/monitoring.md in /opt/docker."$'\n'
     body+="Reminders for an unchanged problem back off: 1, 2, 4, 8, 16, then every 30 days."$'\n'
 

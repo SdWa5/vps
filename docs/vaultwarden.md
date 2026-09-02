@@ -68,14 +68,13 @@ icon, Inspect popup, then attempt a login with the Console and Network tabs open
 `docker logs -f vaultwarden` runs on the server. A request that never reaches the server means the
 client aborts locally.
 
-**Incident 2026-09-01.** The server ran 1.36.0, built 2026-05-03, while the clients had moved past
-2026.7.0. The extension and the app failed to log in, the web vault worked. Disk was at 30 %, all
-containers healthy, backups green. The server was upgraded to 1.37.2, which moved the API version
-string from 2025.12.0 to 2026.6.0. That was necessary but not sufficient, see the next section.
+The 2026-09-01 upgrade from 1.36.0 to 1.37.2 moved the API version string from 2025.12.0 to
+2026.6.0. See the runbook below for the incident that prompted it.
 
-## Known issue: extension 2026.8.0 cannot unlock
+## Runbook: extension says "Invalid master password" but the server accepted the login
 
-**Open upstream, no fixed release as of 2026-09-01. The web vault is unaffected.**
+Resolved on 2026-09-02 by reinstalling the extension. Kept here because the diagnosis is not
+obvious and the symptom lies about its own cause.
 
 Symptom: the extension reports **"Invalid master password"** or **"no elements in sequence"**, while
 the server log says the opposite:
@@ -86,53 +85,46 @@ the server log says the opposite:
 [request][INFO]  POST /identity/accounts/prelogin/password      <- restarts the login flow
 ```
 
-The tell is what is **missing**. A working login is followed by `GET /api/sync`, `GET
+**The tell is what is missing.** A working login is followed by `GET /api/sync`, `GET
 /api/accounts/profile` and a WebSocket upgrade. A broken one goes straight back to
-`prelogin/password` and loops. The password is correct, the server served it, the client fails
-afterwards while processing the response.
+`prelogin/password` and loops. The password is correct and the server served the vault. The client
+fails afterwards, while processing the response.
 
-**The mobile app is not affected.** Verified on 2026-09-01: the phone synced the same vault from the
-same server while the extension failed. The app is native and never runs the extension's JavaScript
-policy-mapping path, so a working app alongside a broken extension confirms the server and the
-account are fine and narrows the fault to the extension build.
+### Triage order
 
-Affects extension 2026.8.0 against Vaultwarden 1.37.x. Tracked upstream as
-[#7635](https://github.com/dani-garcia/vaultwarden/issues/7635),
-[#7632](https://github.com/dani-garcia/vaultwarden/issues/7632) and
-[discussion #7617](https://github.com/dani-garcia/vaultwarden/discussions/7617).
+1. **Compare the server and client versions.** Bitwarden clients auto-update from the stores, this
+   server does not, and a server left behind breaks them while the web vault keeps working. See the
+   section above.
+2. **Check whether another client works.** If the mobile app syncs the same vault, the server and the
+   account are fine and the fault is in that one client. The app is native and does not run the
+   extension's JavaScript paths.
+3. **Reinstall the extension.** Remove it in `about:addons`, not disable. Close Firefox completely,
+   reopen, reinstall from addons.mozilla.org, set Self-hosted to `https://vault.sdwa5.org` before
+   logging in. Stale extension storage survives a logout and a browser restart, so neither of those
+   is a substitute.
+4. **Only then consider pinning the client** to the last known-good version, currently 2026.7.0, with
+   automatic updates off. Upstream tracks the version-specific variant of this symptom as
+   [#7635](https://github.com/dani-garcia/vaultwarden/issues/7635),
+   [#7632](https://github.com/dani-garcia/vaultwarden/issues/7632) and
+   [discussion #7617](https://github.com/dani-garcia/vaultwarden/discussions/7617).
 
-### What does not help
+The web vault at https://vault.sdwa5.org is the fallback throughout. It is served by the server, so
+it is always version-matched and cannot hit this class of bug.
 
-- **Upgrading the server.** 1.37.2 is the newest release and is already deployed. No commit on `main`
-  since 1.37.2 addresses this.
-- **Disabling the organization policies.** Tried on 2026-09-01 and reverted. Issue #7635 points at
-  `toSdkPolicyView` calling `toISOString()` on a date Vaultwarden never sends, which suggested an
-  empty policy list would avoid the crash. It does not. The bug reproduces with every policy
-  disabled.
-- **Logging out and back in**, or restarting the browser.
+### Incident 2026-09-01/02
 
-### What works
+The server ran 1.36.0, built 2026-05-03, four months behind clients that had moved past 2026.7.0.
+The extension and, at first, the app could not log in. Disk was at 30 %, every container healthy,
+the last backup green.
 
-Try a full reinstall first, it keeps the current version. Discussion #7617 reports corrupt extension
-storage producing the same symptom, and a browser-only failure is consistent with that:
+Two things were needed. Upgrading the server to 1.37.2 was necessary and fixed the app. The
+extension kept failing, because it was replaying local state built against the old server, and a
+clean reinstall cleared it. It now works on 2026.8.0, so no client is pinned.
 
-1. `about:addons` → Bitwarden → **Remove**, not disable.
-2. Close Firefox completely, then reopen it.
-3. Reinstall from addons.mozilla.org.
-4. Set Self-hosted to `https://vault.sdwa5.org` before logging in.
-
-If that does not help, pin the client to **2026.7.0**, which upstream confirms is unaffected.
-
-Firefox:
-
-1. https://addons.mozilla.org/firefox/addon/bitwarden-password-manager/versions/
-2. Download 2026.7.0 and open the `.xpi` in Firefox. It installs over the newer version.
-3. `about:addons` → Bitwarden → Details → **Automatic Updates: Off**, otherwise Firefox puts 2026.8.0
-   back.
-4. Re-check that setting after the fix lands upstream, then turn updates back on.
-
-Until then the web vault at https://vault.sdwa5.org is the fallback. It is served by the server, so
-it is always version-matched and cannot hit this class of bug at all.
+What did **not** help, recorded so it is not tried again: logging out inside the extension,
+restarting the browser, and disabling the organization policies. The policy attempt came from
+#7635 pointing at a date field on policy objects. It was applied and reverted the same evening. The
+upstream symptom reproduces with every policy disabled, and all three are `enabled = 1` again.
 
 ## Notes
 

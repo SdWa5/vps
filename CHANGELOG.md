@@ -71,14 +71,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   green throughout. The server was four months behind the auto-updating clients, fixed by the 1.36.0
   to 1.37.2 upgrade.
 
-### Known issues
-
-- Extension 2026.8.0 still cannot unlock against Vaultwarden 1.37.2, reporting "Invalid master
-  password" for a login the server logs as successful. Open upstream,
-  [#7635](https://github.com/dani-garcia/vaultwarden/issues/7635), with no fixed release and no
-  addressing commit on `main`. Clients are pinned to extension 2026.7.0 with auto-update off.
-  Disabling the organization policies was tried on 2026-09-01 and reverted, the bug reproduces
-  without them. See `docs/vaultwarden.md`.
+- The Bitwarden browser extension additionally kept failing after the server upgrade, reporting
+  "Invalid master password" for a login the server logged as successful. Cause was stale extension
+  storage built against the old server, which survives both a logout and a browser restart. A full
+  reinstall cleared it and the extension works on 2026.8.0, so no client is pinned. Confirmed on the
+  server by the `GET /api/sync => 200 OK` that every failed attempt was missing. Disabling the
+  organization policies was tried on 2026-09-01 and reverted; the upstream symptom in
+  [#7635](https://github.com/dani-garcia/vaultwarden/issues/7635) reproduces without them. The full
+  triage order is in `docs/vaultwarden.md`.
 
 ## [1.4.6] - 2026-07-22
 

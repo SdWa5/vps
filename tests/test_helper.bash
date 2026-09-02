@@ -19,7 +19,7 @@ common_setup() {
     export STUB_HTTP_CODE=200
     export STUB_CADDY_STATE=active
     export STUB_VW_VERSION=1.37.2
-    export STUB_GITHUB_JSON='{"tag_name":"1.37.2"}'
+    export STUB_GITHUB_TAG=1.37.2
     set_backup_fresh
 }
 

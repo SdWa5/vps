@@ -18,8 +18,22 @@ if [[ "$args" == *"--config -"* ]]; then
     exit "${STUB_MAIL_RC:-0}"
 fi
 
-# GitHub release lookup.
+# GitHub release lookup. STUB_GITHUB_JSON is a raw body; STUB_GITHUB_TAG is a
+# shortcut that builds a realistic release payload whose notes mention other
+# versions, which is what broke the naive extraction in production.
 if [[ "$args" == *"api.github.com"* ]]; then
+    if [[ -n "${STUB_GITHUB_TAG:-}" ]]; then
+        cat <<JSON
+{
+  "url": "https://api.github.com/repos/dani-garcia/vaultwarden/releases/374920992",
+  "tag_name": "${STUB_GITHUB_TAG}",
+  "name": "${STUB_GITHUB_TAG}",
+  "body": "This update is required for clients v2026.8.0+.\r\nFixes an issue in 1.37.1 and 1.37.0.\r\nWeb-Vault 2026.7.0.",
+  "draft": false
+}
+JSON
+        exit 0
+    fi
     [[ -z "${STUB_GITHUB_JSON:-}" ]] && exit 7
     printf '%s' "$STUB_GITHUB_JSON"
     exit 0

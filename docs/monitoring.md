@@ -1,11 +1,12 @@
 # Monitoring
 
-Two cron jobs, no dashboard, no extra container, no external monitoring service.
-Both live in [`monitoring/`](../monitoring/) and are deployed to `/opt/docker/monitoring/`.
+Three cron jobs, no dashboard, no extra container, no external monitoring service.
+All live in [`monitoring/`](../monitoring/) and are deployed to `/opt/docker/monitoring/`.
 
 | Job | Script | Schedule | Sends mail when |
 |-----|--------|----------|-----------------|
 | Health check | `vps-health.sh` | hourly, `:17` | something is wrong or has just recovered |
+| Vaultwarden database copy | `vaultwarden-db-backup.sh` | daily 03:50 | the dump failed or could not be verified |
 | Vaultwarden update | `vaultwarden-autoupdate.sh` | Sunday 03:00 | an update was applied, an update failed, or the health check stopped running |
 
 **A healthy system sends nothing.** There is no all-green digest.
@@ -32,6 +33,7 @@ auto-update.
 | `disk` | `/` at or above `DISK_WARN` (85 %) as WARN, `DISK_CRIT` (92 %) as CRIT |
 | `containers` | any of vaultwarden, shopware, dolibarr, dolibarr_db, dolibarr_cron, restic is missing, stopped or `unhealthy` |
 | `backup` | the last restic run failed, or finished more than `BACKUP_MAX_AGE_HOURS` (26) ago |
+| `vaultwarden_db_backup` | the consistent database copy is missing, or older than `DB_BACKUP_MAX_AGE_HOURS` (26) |
 | `http` | `vault.sdwa5.org/alive`, `sdwa5.org` or `erp.sdwa5.org` returns anything but 200 |
 | `caddy` | `systemctl is-active caddy` is not `active` |
 | `vaultwarden_version` | the running version is behind the newest GitHub release |
@@ -76,6 +78,49 @@ DISK_WARN=1 /opt/docker/monitoring/vps-health.sh --dry-run
 
 Silence a check you have accepted by overriding its threshold in `/opt/docker/.env`, for example
 `DISK_WARN=95`. Removing a check entirely means editing `run_checks` in the script.
+
+## Vaultwarden database backup
+
+`monitoring/vaultwarden-db-backup.sh`
+
+restic mounts `/opt/docker` read-only and copies `vaultwarden-data/db.sqlite3` while Vaultwarden is
+writing to it. SQLite in WAL mode spreads a commit across the database file and the write-ahead log,
+so a copy taken between the two can restore into a torn transaction. Nothing warns about it, and the
+damage only surfaces on the day the restore is actually needed.
+
+This job removes that. It writes a consistent copy through SQLite's own online backup API, which
+reads through SQLite rather than copying bytes, so the write-ahead log is folded in and the result is
+one restorable file.
+
+1. Dump `vaultwarden-data/db.sqlite3` to `vaultwarden-db-backup/db.sqlite3.tmp`.
+2. Verify the dump with `PRAGMA integrity_check`.
+3. Only then rename it over `vaultwarden-db-backup/db.sqlite3`.
+
+Any failure keeps the previous verified copy in place and mails. A dump that fails its integrity
+check is discarded rather than published, because a copy that cannot be read back is not a backup.
+
+Vaultwarden keeps serving throughout. The backup API takes a read lock per page batch instead of
+stopping the container, so unlike the update job this one needs no downtime.
+
+The job runs at 03:50, ten minutes before restic at 04:00, so every snapshot contains a database that
+is safe to restore. The hot copy in `vaultwarden-data/` stays in the snapshot as well. It costs
+nothing and sits next to the consistent one, so a restore has both.
+
+`sqlite3` has to be installed on the host. Without it the job mails and exits non-zero rather than
+leaving the gap silently open.
+
+```bash
+/opt/docker/monitoring/vaultwarden-db-backup.sh              # what cron runs
+/opt/docker/monitoring/vaultwarden-db-backup.sh --dry-run    # report the paths, write nothing
+/opt/docker/monitoring/vaultwarden-db-backup.sh --help
+```
+
+Restore from a snapshot with the consistent copy rather than the hot one:
+
+```bash
+docker exec restic restic restore latest --target /tmp/restore
+sqlite3 /tmp/restore/data/vaultwarden-db-backup/db.sqlite3 'PRAGMA integrity_check;'
+```
 
 ## Vaultwarden auto-update
 
@@ -148,9 +193,12 @@ Rotating the Gmail app password means updating it in both places, the Vaultwarde
 ```bash
 cd /opt/docker
 git pull --ff-only
-install -m 644 -o root -g root monitoring/cron.d/vps-health            /etc/cron.d/vps-health
-install -m 644 -o root -g root monitoring/cron.d/vaultwarden-autoupdate /etc/cron.d/vaultwarden-autoupdate
+apt install sqlite3
+install -m 644 -o root -g root monitoring/cron.d/vps-health              /etc/cron.d/vps-health
+install -m 644 -o root -g root monitoring/cron.d/vaultwarden-db-backup   /etc/cron.d/vaultwarden-db-backup
+install -m 644 -o root -g root monitoring/cron.d/vaultwarden-autoupdate  /etc/cron.d/vaultwarden-autoupdate
 mkdir -p /var/lib/vps-health
+/opt/docker/monitoring/vaultwarden-db-backup.sh
 /opt/docker/monitoring/vps-health.sh --test-mail
 ```
 
@@ -160,6 +208,7 @@ rotating:
 
 ```bash
 journalctl -t vps-health -n 50
+journalctl -t vaultwarden-db-backup -n 50
 journalctl -t vaultwarden-autoupdate -n 50
 ```
 
@@ -169,7 +218,7 @@ journalctl -t vaultwarden-autoupdate -n 50
 tests/run.sh          # bats suite plus shellcheck, both in Docker
 ```
 
-The suite stubs `docker`, `docker-compose`, `curl`, `systemctl`, `df` and `hostname`, and drives the
+The suite stubs `docker`, `docker-compose`, `curl`, `sqlite3`, `systemctl`, `df` and `hostname`, and drives the
 clock through `FAKE_NOW`, so the whole backoff schedule is verified in under a second without
 waiting days and without touching a real host. `tests/run.sh` installs GNU coreutils into the
 throwaway bats container, because the Alpine base ships busybox `date`, which cannot parse the

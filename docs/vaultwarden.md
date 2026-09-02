@@ -126,6 +126,104 @@ restarting the browser, and disabling the organization policies. The policy atte
 #7635 pointing at a date field on policy objects. It was applied and reverted the same evening. The
 upstream symptom reproduces with every policy disabled, and all three are `enabled = 1` again.
 
+## Master password and KDF
+
+The KDF is a property of the account, stored on the Vaultwarden user row as `client_kdf_type`,
+`client_kdf_iter`, `client_kdf_memory` and `client_kdf_parallelism`. The server never derives
+anything from it. It only returns the parameters at `/identity/accounts/prelogin/password` so the
+client can turn the master password into the key. **Nothing in this section touches the server.**
+There is no environment variable, no compose change, no restart and no Caddy change. It all happens
+in the web vault at https://vault.sdwa5.org.
+
+### Target settings
+
+| Setting | Value |
+|---------|-------|
+| KDF algorithm | Argon2id |
+| Memory | 64 MiB |
+| Iterations | 3 |
+| Parallelism | 4 |
+
+These are Bitwarden's own defaults and they are already a large step up from PBKDF2. Do not raise
+the iteration count instead of the memory. Argon2 gains more resistance per unit of unlock time from
+memory than from iterations, so a higher `t` at the same memory buys less for the same wait. The
+limit on memory is not this server and not the desktop, it is the iOS autofill extension, which runs
+under a hard memory ceiling and fails to unlock when the parameters exceed it. Raising memory is
+therefore a separate, deliberate change with its own verification on the phone, not something to
+bundle into a password rotation.
+
+### Order of operations
+
+Changing the master password and changing the KDF both re-wrap the account key and both revoke every
+session on every device. Do them one at a time, with a verified login in between, so a failure names
+its own cause.
+
+1. **Export first.** Web vault, Tools, Export vault, format `.json (Encrypted)`, type **Password
+   protected**, with a file password that is not the new master password. Store it offline.
+
+   The type matters. **Account restricted** is encrypted with the account key, so it is worthless as
+   a rollback if the key change is what went wrong. Only **Password protected** carries its own KDF
+   and can be opened without the account.
+
+2. **Consistent server copy.** Run the database backup by hand so the current state is captured
+   before anything is re-wrapped:
+
+   ```bash
+   ssh root@sdwa5.org /opt/docker/monitoring/vaultwarden-db-backup.sh
+   ```
+
+   The stop/snapshot/start dance from the update runbook below is deliberately **not** used here. It
+   exists because Vaultwarden migrations are forward-only. A password or KDF change is a single
+   atomic request carrying the re-wrapped key, so it cannot half-apply and leave a corrupt database.
+   The export in step 1 is the real rollback.
+
+3. **Change the master password.** Web vault, Settings, Security, Master password. Leave "Rotate
+   account encryption key" unticked, because that is a third separate operation.
+
+4. **Log back in everywhere and verify**: web vault, browser extension, mobile app. Do not continue
+   until all three work.
+
+5. **Change the KDF.** Web vault, Settings, Security, Keys, Encryption key settings, with the values
+   from the table above.
+
+6. **Log back in everywhere again**, and verify autofill on the phone specifically. That is the
+   setting most likely to break and the one least likely to be noticed.
+
+7. **Clear the generator history last.** A master password generated in the client sits in that
+   client's generator history, which anyone who unlocks the vault can read. That is circular, so it
+   has to go. It is also the only copy of the password until it has been memorised, so this step
+   comes after the new password is committed to memory and demonstrably works, never before.
+
+### The re-login is the risky part, not the change
+
+Steps 4 and 6 force exactly the full re-login that triggered the September 2026 extension failure
+recorded below. If the extension reports "Invalid master password" or "no elements in sequence"
+afterwards, the vault is almost certainly fine and the extension is replaying stale local state.
+
+**The web vault is the arbiter.** If https://vault.sdwa5.org accepts the new password in a normal
+browser tab, the change worked and the fault is in that one client. Follow the reinstall runbook
+below rather than assuming the vault is damaged and rolling anything back.
+
+### What a password change does not cover
+
+- **The personal API key is a separate credential.** It lives on the same page, under Settings,
+  Security, Keys, and it is not rotated by a master password change. Rotate it there if a client
+  secret was ever stored outside the vault.
+- **Vault copies already on disk stay readable under the old key forever.** Client state files, old
+  desktop or CLI installations and any previous export are unaffected by a password change. They
+  have to be deleted. A plaintext export, which is what `bitwarden_export_*.json` is unless the name
+  says `encrypted`, is worse than a weak master password and no KDF setting helps against it.
+- **Clipboard history.** A password copied out of the vault can persist on disk in the desktop's
+  clipboard manager. On KDE that is Klipper, under `~/.local/share/klipper/`.
+
+### Break-glass gap
+
+The admin token's plaintext is documented at the top of this file as living "in the admins' password
+managers", and the password manager is this vault. If the vault is unreachable or the master password
+is lost, `/admin` is unreachable with it. The recovery path is the offline export from step 1 plus a
+restic restore of `vaultwarden-data/`, both of which have to exist before they are needed. Nothing
+else closes the loop today.
+
 ## Notes
 
 - SMTP is configured through the admin panel and stored in `vaultwarden-data/config.json`. It sends

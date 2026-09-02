@@ -1,0 +1,13 @@
+# Consistent Vaultwarden database copy. Deploy to /etc/cron.d/vaultwarden-db-backup
+# (root:root, mode 644).
+#
+# 03:50, ten minutes before the restic backup at 04:00, so every snapshot holds a
+# database written through SQLite's online backup API rather than copied hot.
+# Silent on success, mails on any failure. Requires sqlite3 on the host.
+# MAILTO is empty because the script does its own mail delivery.
+
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=""
+
+50 3 * * * root /opt/docker/monitoring/vaultwarden-db-backup.sh 2>&1 | logger -t vaultwarden-db-backup

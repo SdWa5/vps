@@ -21,6 +21,18 @@ common_setup() {
     export STUB_VW_VERSION=1.37.2
     export STUB_GITHUB_TAG=1.37.2
     set_backup_fresh
+    set_db_backup_fresh
+}
+
+# vps-health.sh reads the age of the consistent database copy off the file's
+# mtime, so the fixture has to move with FAKE_NOW just like the restic log does.
+set_db_backup_fresh() {
+    local ref
+    ref="${FAKE_NOW:-$(date +%s)}"
+    export VAULTWARDEN_DB_BACKUP="$BATS_TEST_TMPDIR/vaultwarden-db-backup/db.sqlite3"
+    mkdir -p "$(dirname "$VAULTWARDEN_DB_BACKUP")"
+    printf 'SQLite format 3' > "$VAULTWARDEN_DB_BACKUP"
+    touch -d "@$(( ref - 3600 ))" "$VAULTWARDEN_DB_BACKUP"
 }
 
 # The backup check compares against now(), which honours FAKE_NOW, so the fake
@@ -46,11 +58,16 @@ health_at() {
     export FAKE_NOW="$1"
     shift
     set_backup_fresh
+    set_db_backup_fresh
     health "$@"
 }
 
 autoupdate() {
     run "$REPO_ROOT/monitoring/vaultwarden-autoupdate.sh" "$@"
+}
+
+db_backup() {
+    run "$REPO_ROOT/monitoring/vaultwarden-db-backup.sh" "$@"
 }
 
 mail_count() {

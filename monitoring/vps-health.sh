@@ -20,6 +20,7 @@
 #   EXPECTED_CONTAINERS            space-separated container names
 #   HEALTH_URLS                    space-separated "label=url" pairs
 #   BACKUP_MAX_AGE_HOURS           age at which the restic backup counts as stale
+#   DB_BACKUP_MAX_AGE_HOURS        age at which the Vaultwarden db dump counts as stale
 #   STATE_DIR, FAKE_NOW            test hooks
 
 set -uo pipefail
@@ -35,6 +36,7 @@ DISK_CRIT="${DISK_CRIT:-92}"
 EXPECTED_CONTAINERS="${EXPECTED_CONTAINERS:-vaultwarden shopware dolibarr dolibarr_db dolibarr_cron restic}"
 HEALTH_URLS="${HEALTH_URLS:-vaultwarden=https://vault.sdwa5.org/alive shopware=https://sdwa5.org/ dolibarr=https://erp.sdwa5.org/}"
 BACKUP_MAX_AGE_HOURS="${BACKUP_MAX_AGE_HOURS:-26}"
+DB_BACKUP_MAX_AGE_HOURS="${DB_BACKUP_MAX_AGE_HOURS:-26}"
 VAULTWARDEN_RELEASE_API="${VAULTWARDEN_RELEASE_API:-https://api.github.com/repos/dani-garcia/vaultwarden/releases/latest}"
 
 STATE_FILE="$STATE_DIR/state"
@@ -111,6 +113,28 @@ check_backup() {
         printf 'CRIT\tLast restic backup is %sh old (%s), expected within %sh\n' "$age_hours" "$last_finish" "$BACKUP_MAX_AGE_HOURS"
     else
         printf 'OK\tLast restic backup %sh ago (%s)\n' "$age_hours" "$last_finish"
+    fi
+}
+
+# The restic check above only proves that a snapshot was taken. It says nothing
+# about whether the Vaultwarden database inside it can be restored, because
+# restic copies it hot. vaultwarden-db-backup.sh writes the consistent copy and
+# is silent on success, so this is what notices when it stops running.
+check_vaultwarden_db_backup() {
+    local dump age_hours
+    dump="${VAULTWARDEN_DB_BACKUP:-$COMPOSE_DIR/vaultwarden-db-backup/db.sqlite3}"
+
+    if [[ ! -f "$dump" ]]; then
+        printf 'CRIT\tNo consistent Vaultwarden database copy at %s, restores fall back to the hot file\n' "$dump"
+        return
+    fi
+
+    age_hours=$(( ($(now) - $(stat -c %Y "$dump")) / 3600 ))
+
+    if (( age_hours >= DB_BACKUP_MAX_AGE_HOURS )); then
+        printf 'CRIT\tConsistent Vaultwarden database copy is %sh old, expected within %sh\n' "$age_hours" "$DB_BACKUP_MAX_AGE_HOURS"
+    else
+        printf 'OK\tConsistent Vaultwarden database copy %sh old (%s bytes)\n' "$age_hours" "$(stat -c %s "$dump")"
     fi
 }
 
@@ -253,12 +277,12 @@ completely silent. Repeat reminders for an unchanged problem back off: 1, 2, 4,
   vps-health.sh --test-mail  send one mail to every recipient and exit
   vps-health.sh --help       this text
 
-Checks: disk, containers, restic backup age, public HTTP endpoints, Caddy,
-Vaultwarden version drift.
+Checks: disk, containers, restic backup age, Vaultwarden database dump age,
+public HTTP endpoints, Caddy, Vaultwarden version drift.
 
 Environment overrides (also honoured from the compose .env): DISK_WARN,
-DISK_CRIT, EXPECTED_CONTAINERS, HEALTH_URLS, BACKUP_MAX_AGE_HOURS, STATE_DIR,
-FAKE_NOW.
+DISK_CRIT, EXPECTED_CONTAINERS, HEALTH_URLS, BACKUP_MAX_AGE_HOURS,
+DB_BACKUP_MAX_AGE_HOURS, STATE_DIR, FAKE_NOW.
 USAGE
 }
 
@@ -289,12 +313,13 @@ emit() {
 }
 
 run_checks() {
-    emit disk                "$(check_disk)"
-    emit containers          "$(check_containers)"
-    emit backup              "$(check_backup)"
-    emit http                "$(check_http)"
-    emit caddy               "$(check_caddy)"
-    emit vaultwarden_version "$(check_vaultwarden_version)"
+    emit disk                  "$(check_disk)"
+    emit containers            "$(check_containers)"
+    emit backup                "$(check_backup)"
+    emit vaultwarden_db_backup "$(check_vaultwarden_db_backup)"
+    emit http                  "$(check_http)"
+    emit caddy                 "$(check_caddy)"
+    emit vaultwarden_version   "$(check_vaultwarden_version)"
 }
 
 main() {

@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-09-03
+
+### Added
+
+- `monitoring/vaultwarden-db-backup.sh`: daily consistent copy of the Vaultwarden database at 03:50,
+  ten minutes before the restic run. restic mounted `/opt/docker` read-only and copied
+  `vaultwarden-data/db.sqlite3` while Vaultwarden was writing to it, and SQLite in WAL mode spreads a
+  commit across the database file and the write-ahead log, so a snapshot taken between the two could
+  restore into a torn transaction. The dump now goes through SQLite's online backup API into
+  `vaultwarden-db-backup/db.sqlite3`, is verified with `PRAGMA integrity_check` and only then
+  replaces the previous copy. Any failure keeps the last verified copy and mails. Vaultwarden keeps
+  serving, because the backup API takes a read lock per page batch rather than stopping the
+  container.
+- `monitoring/vps-health.sh`: new `vaultwarden_db_backup` check, critical when the consistent copy is
+  missing or older than `DB_BACKUP_MAX_AGE_HOURS` (26). The existing `backup` check only proved that
+  a snapshot was taken, never that the database inside it could be restored, and the dump job is
+  silent on success, so nothing would otherwise notice it stopping.
+- `monitoring/cron.d/vaultwarden-db-backup`: cron entry, journal tag `vaultwarden-db-backup`.
+- `docs/vaultwarden.md`: "Master password and KDF" section. Records that the KDF is an account
+  property on the Vaultwarden user row and that changing it touches nothing server-side, the
+  Argon2id target of 64 MiB / 3 iterations / parallelism 4 and why memory rather than iterations is
+  the knob to raise, the order in which the password and the KDF are changed with a verified login in
+  between, the password-protected export as the only usable rollback, and the fact that the forced
+  re-login is what triggered the September 2026 extension failure. Also records the break-glass gap,
+  since the admin token's plaintext lives in the vault that the token would be needed to recover.
+- `tests/vaultwarden-db-backup.bats` and a `sqlite3` stub: 11 new cases covering a successful publish,
+  file permissions, a missing `sqlite3`, an unreadable source, a failed dump and a dump that fails its
+  integrity check. The suite is now 62 cases.
+
+### Changed
+
+- `docs/backup.md` now states that a restore takes the vault from `vaultwarden-db-backup/db.sqlite3`
+  rather than from the hot `vaultwarden-data/db.sqlite3`, and documents verifying the restored
+  database before trusting it.
+
 ### Fixed
 
 - `monitoring/vps-health.sh` reported "Vaultwarden 1.37.2 is behind 1.37.2" and mailed 8 problems for

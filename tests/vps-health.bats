@@ -132,8 +132,54 @@ Finished Backup at $(date '+%Y-%m-%d %H:%M:%S') after 3 seconds" health
     [[ "$(mail_body)" != *"2026.7.0"* ]]
 }
 
+@test "the release notes are not mistaken for the release tag" {
+    # Regression, 2026-09-02. The 1.37.2 notes mention 2026.8.0, 1.37.1 and
+    # 1.37.0. Scraping the response for anything version-shaped returned all of
+    # them, sort -V picked 2026.8.0, and a current server was reported as
+    # "1.37.2 is behind 1.37.2" across seven lines.
+    STUB_VW_VERSION=1.37.2 STUB_GITHUB_TAG=1.37.2 health
+    [ "$(mail_count)" -eq 0 ]
+}
+
+@test "a v-prefixed release tag is understood" {
+    STUB_VW_VERSION=1.36.0 STUB_GITHUB_TAG=v1.37.2 health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"1.36.0 is behind 1.37.2"* ]]
+}
+
+@test "a compact single-line release payload is parsed correctly" {
+    STUB_VW_VERSION=1.37.2 \
+    STUB_GITHUB_JSON='{"tag_name":"1.37.2","body":"required for clients v2026.8.0+, fixes 1.37.1"}' \
+    STUB_GITHUB_TAG="" health
+    [ "$(mail_count)" -eq 0 ]
+}
+
+@test "a nonsense release tag is treated as no answer, not as drift" {
+    STUB_VW_VERSION=1.36.0 STUB_GITHUB_JSON='{"tag_name":"nightly"}' STUB_GITHUB_TAG="" health
+    [ "$(mail_count)" -eq 0 ]
+}
+
+@test "a multi-line check message cannot become extra checks" {
+    # Regression, 2026-09-02. Extra lines were parsed as further checks with an
+    # empty status, alerted on, and written to the state file. One run produced
+    # an "8 problem(s)" mail from a single failing check.
+    STUB_CADDY_STATE=$'"'"'failed\ninjected\nlines'"'"' health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"1 problem(s)"* ]]
+    run bash -c "wc -l < '$STATE_DIR/state'"
+    [ "$output" -eq 1 ]
+}
+
+@test "stale state records are pruned" {
+    mkdir -p "$STATE_DIR"
+    printf 'phantom\tCRIT\tdeadbeef\t1\t1\t1\n' > "$STATE_DIR/state"
+    health
+    run grep -c phantom "$STATE_DIR/state"
+    [ "$output" -eq 0 ]
+}
+
 @test "an unreachable GitHub API does not alert" {
-    STUB_VW_VERSION=1.36.0 STUB_GITHUB_JSON="" health
+    STUB_VW_VERSION=1.36.0 STUB_GITHUB_TAG="" STUB_GITHUB_JSON="" health
     [ "$(mail_count)" -eq 0 ]
 }
 

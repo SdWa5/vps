@@ -8,6 +8,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
+- `monitoring/vps-health.sh` reported "Vaultwarden 1.37.2 is behind 1.37.2" and mailed 8 problems for
+  a healthy server. Two defects, found by the first real cron run on 2026-09-02.
+  - The release lookup scraped the GitHub response for anything version-shaped, which also matched
+    the release notes. The 1.37.2 notes mention 2026.8.0, 1.37.1 and 1.37.0, so the comparison value
+    became seven lines and `sort -V` picked 2026.8.0. It now reads the `tag_name` value itself, on
+    pretty and on compact JSON, accepts an optional `v` prefix, and rejects anything that is not a
+    dotted version.
+  - A check emitting more than one line turned every extra line into a phantom check with an empty
+    status, which was alerted on and written to the state file. Check output is now normalised to
+    exactly one tab-separated line by `emit`, and an unrecognised status is reported as a malformed
+    check rather than silently treated as a fault.
+- `monitoring/vps-health.sh` never removed state records for keys a run no longer produces, so a
+  renamed check or a malformed run left records behind forever. Recovery is only detected for keys
+  still present in the results, so nothing else would have cleared them.
+
 - `monitoring/vps-health.sh` and `monitoring/vaultwarden-autoupdate.sh` read the web vault version
   instead of the server version. `vaultwarden --version` prints both, and taking the last
   version-shaped number picked up `Web-Vault 2026.7.0`, which sorts above every 1.x release, so the

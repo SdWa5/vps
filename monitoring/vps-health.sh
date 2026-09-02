@@ -156,8 +156,18 @@ check_vaultwarden_version() {
         return
     fi
 
+    # Take the tag_name value itself. Scraping the response for anything
+    # version-shaped also matches the release notes, and the 1.37.2 notes
+    # mention 2026.8.0 and 1.37.1, which produced a multi-line result and a
+    # false "1.37.2 is behind 1.37.2". Works on pretty and on compact JSON.
     latest="$(curl -fsS --max-time 20 "$VAULTWARDEN_RELEASE_API" 2>/dev/null \
-        | grep -m1 '"tag_name"' | grep -oE '[0-9]+\.[0-9]+\.[0-9]+')"
+        | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"v\{0,1\}\([0-9][0-9.]*\)".*/\1/p' \
+        | head -1)"
+
+    # Anything that is not a plain dotted version is treated as no answer.
+    if [[ ! "$latest" =~ ^[0-9]+(\.[0-9]+)+$ ]]; then
+        latest=""
+    fi
 
     # GitHub being unreachable is not a server fault. Stay quiet rather than
     # training the recipient to ignore this alert.
@@ -208,6 +218,18 @@ state_drop() {
     mv "$STATE_FILE.tmp" "$STATE_FILE"
 }
 
+# Remove state records whose key is absent from the given results.
+prune_orphan_state() {
+    local results="$1" keys
+    [[ -s "$STATE_FILE" ]] || return 0
+    keys="$(printf '%s\n' "$results" | cut -f1)"
+    awk -F'\t' -v keep="$keys" '
+        BEGIN { n = split(keep, a, "\n"); for (i = 1; i <= n; i++) ok[a[i]] = 1 }
+        $1 in ok
+    ' "$STATE_FILE" > "$STATE_FILE.tmp"
+    mv "$STATE_FILE.tmp" "$STATE_FILE"
+}
+
 state_put() {
     local key="$1" status="$2" fp="$3" first="$4" last="$5" count="$6"
     state_drop "$key"
@@ -240,13 +262,39 @@ FAKE_NOW.
 USAGE
 }
 
+# emit KEY CHECK-OUTPUT
+#
+# Normalises one check into exactly one "key<TAB>status<TAB>message" line.
+#
+# Without this a check that emits a newline turns every extra line into a
+# phantom check with an empty status, which is then alerted on and written to
+# the state file. That happened on 2026-09-02: a multi-line version string
+# produced five phantom checks and an "8 problem(s)" mail.
+emit() {
+    local key="$1" out="$2" status message
+
+    status="${out%%$'\t'*}"
+    message="${out#*$'\t'}"
+    message="$(printf '%s' "$message" | tr '\n\t' '  ' | sed 's/  */ /g; s/ *$//')"
+
+    case "$status" in
+        OK|WARN|CRIT) ;;
+        *)
+            message="malformed check output: ${status} ${message}"
+            status="CRIT"
+            ;;
+    esac
+
+    printf '%s\t%s\t%s\n' "$key" "$status" "$message"
+}
+
 run_checks() {
-    printf 'disk\t%s\n'                 "$(check_disk)"
-    printf 'containers\t%s\n'           "$(check_containers)"
-    printf 'backup\t%s\n'               "$(check_backup)"
-    printf 'http\t%s\n'                 "$(check_http)"
-    printf 'caddy\t%s\n'                "$(check_caddy)"
-    printf 'vaultwarden_version\t%s\n'  "$(check_vaultwarden_version)"
+    emit disk                "$(check_disk)"
+    emit containers          "$(check_containers)"
+    emit backup              "$(check_backup)"
+    emit http                "$(check_http)"
+    emit caddy               "$(check_caddy)"
+    emit vaultwarden_version "$(check_vaultwarden_version)"
 }
 
 main() {
@@ -320,6 +368,12 @@ main() {
             state_put "$key" "$status" "$fp" "$first" "$last" "$count"
         fi
     done <<< "$results"
+
+    # Records for keys this run did not produce are stale, for example after a
+    # check is renamed or removed, or after a malformed run wrote phantom keys.
+    # Nothing else would ever clear them, because recovery is only detected for
+    # keys that still appear in the results.
+    prune_orphan_state "$results"
 
     date -d "@$ts" '+%Y-%m-%d %H:%M:%S' > "$LAST_RUN_FILE"
 

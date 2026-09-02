@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Fake sqlite3. Behaviour comes from STUB_* environment variables.
+#
+# Understands the two invocations vaultwarden-db-backup.sh makes:
+#   sqlite3 <db> ".backup '<path>'"
+#   sqlite3 <db> "PRAGMA integrity_check;"
+db="${1:-}"
+cmd="${2:-}"
+
+case "$cmd" in
+    .backup*)
+        [[ "${STUB_SQLITE_BACKUP_FAIL:-0}" == 1 ]] && { echo "Error: unable to open database file" >&2; exit 1; }
+        [[ -r "$db" ]] || { echo "Error: unable to open database file" >&2; exit 1; }
+        # Strip ".backup " and the surrounding single quotes to get the target.
+        target="${cmd#.backup }"
+        target="${target#\'}"
+        target="${target%\'}"
+        printf '%s' "${STUB_SQLITE_DUMP_CONTENT:-SQLite format 3}" > "$target"
+        ;;
+    *integrity_check*)
+        echo "${STUB_SQLITE_INTEGRITY:-ok}"
+        ;;
+esac
+exit 0

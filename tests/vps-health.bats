@@ -26,6 +26,7 @@ setup() {
     [[ "$output" == *"disk"* ]]
     [[ "$output" == *"containers"* ]]
     [[ "$output" == *"backup"* ]]
+    [[ "$output" == *"vaultwarden_db_backup"* ]]
     [[ "$output" == *"http"* ]]
     [[ "$output" == *"caddy"* ]]
     [[ "$output" == *"vaultwarden_version"* ]]
@@ -96,6 +97,25 @@ Finished Backup at $(date -d '-30 hours' '+%Y-%m-%d %H:%M:%S') after 47 seconds"
 Finished Backup at $(date '+%Y-%m-%d %H:%M:%S') after 3 seconds" health
     [ "$(mail_count)" -eq 1 ]
     [[ "$(mail_body)" == *"did not succeed"* ]]
+}
+
+@test "a missing Vaultwarden database dump is critical" {
+    rm -f "$VAULTWARDEN_DB_BACKUP"
+    health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"No consistent Vaultwarden database copy"* ]]
+}
+
+@test "a stale Vaultwarden database dump is critical" {
+    touch -d '-30 hours' "$VAULTWARDEN_DB_BACKUP"
+    health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"database copy is 30h old"* ]]
+}
+
+@test "a fresh Vaultwarden database dump is silent" {
+    health
+    [ "$(mail_count)" -eq 0 ]
 }
 
 @test "a non-200 public endpoint is critical" {

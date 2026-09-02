@@ -81,7 +81,7 @@ systemctl reload caddy
 
 ## Monitoring
 
-Two cron jobs watch the box and mail `ripper@sdwa5.org` when
+Three cron jobs watch the box and mail `ripper@sdwa5.org` when
 something is wrong. A healthy system sends nothing. Vaultwarden updates itself every Sunday, because
 the Bitwarden clients auto-update and a server left behind stops working with them.
 

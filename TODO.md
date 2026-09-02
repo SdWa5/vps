@@ -19,12 +19,10 @@
     2. [docker-compose.projects.yml](docker-compose.projects.yml) has no `logging:` on any of its four
        services, so the project2/project3 containers log uncapped. same repeat vector as the july 2026
        disk-full incident. apply the `x-logging` anchor (ca. 20 Minuten)
-    3. restic copies `vaultwarden-data/db.sqlite3` hot, without a `sqlite3 .backup` step, so a restore
-       can hit a torn wal. add a pre-backup hook (ca. 45 Minuten)
-    4. no restore drill has ever been run. restore one snapshot into a scratch dir and verify it opens
-       (ca. 2 Stunden)
-    5. ollama binds `0.0.0.0:11434` with no auth in [docker-compose.yml](docker-compose.yml). profile-
+    3. no restore drill has ever been run. restore one snapshot into a scratch dir and verify
+       `vaultwarden-db-backup/db.sqlite3` opens (ca. 2 Stunden)
+    4. ollama binds `0.0.0.0:11434` with no auth in [docker-compose.yml](docker-compose.yml). profile-
        gated and inactive, but bind it to `127.0.0.1` (ca. 15 Minuten)
-    6. monitoring runs on the monitored host, so a dead vps sends nothing and the silence looks
+    5. monitoring runs on the monitored host, so a dead vps sends nothing and the silence looks
        healthy. an external dead-man's switch would close that gap, deliberately deferred
        (ca. 45 Minuten)

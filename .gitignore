@@ -46,6 +46,7 @@ project3-dolibarr-custom-data/
 
 # Other service data
 vaultwarden-data/
+vaultwarden-db-backup/
 ollama-data/
 
 # Minecraft data (world/mods/logs stay ignored, server config tracked below)

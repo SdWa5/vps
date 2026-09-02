@@ -1,10 +1,30 @@
-1. automatic provisioning and deployment
+1. automatic provisioning and deployment (ca. 16 Stunden)
+
+    today only the vaultwarden **image** updates itself, weekly, via
+    [monitoring/vaultwarden-autoupdate.sh](monitoring/vaultwarden-autoupdate.sh). everything in this
+    repo, so compose files, monitoring scripts and cron entries, reaches the vps only when someone
+    runs `git pull` in `/opt/docker` by hand. a merged commit therefore does nothing until deployed
+    manually, which is the same silent-drift class the monitoring work removed for image versions.
+
+    decided on 2026-09-03: push-based github action. a pull-based self-update cron job on the vps was
+    the cheaper alternative at ca. 5 Stunden and was considered and rejected, because the action gives
+    a deployment record per merge and gated deploys. do not re-open that comparison without a reason.
+
     1. move credentials from vps to [docs/vaultwarden.md](docs/vaultwarden.md)
     2. github action on merge to main:
         1. pull credentials from vaultwarden
         2. provision vps (idempotent)
         3. deploy to vps (upload from within github action to vps)
         4. cd /opt/docker && docker-compose pull && docker-compose up -d
+    3. blocked on 1.1, which is circular: the action needs an ssh deploy key or equivalent to reach
+       the vps, and the credentials it would read live in the vault it is deploying. break the loop by
+       storing the deploy key as a github secret directly, not via vaultwarden
+    4. a config deploy touches every service at once, unlike the vaultwarden image update which
+       touches one. it needs the same discipline as
+       [monitoring/vaultwarden-autoupdate.sh](monitoring/vaultwarden-autoupdate.sh): health-check
+       after apply, and on failure `git reset --hard` to the previous commit plus a loud mail
+    5. add a github action running `tests/run.sh` on push as well. there is no ci today
+       (ca. 45 Minuten)
 2. connect google drive <-> [docs/dolibarr.md](docs/dolibarr.md) <-> shopware if possible
 3. [docs/shopware/TODO.md](docs/shopware/TODO.md)
 4. maybe add nextcloud (docker-compose.yml)

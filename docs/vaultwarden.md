@@ -191,13 +191,25 @@ its own cause.
 
    Type it rather than read it, because the recall that matters is motor rather than visual.
 
-   While learning it, keep the only copy on paper. A Bitwarden item would work and is far better
-   than a plaintext file, but during this window it sits in a vault still protected by the **old**
-   password. Changing the master password re-wraps the user key rather than re-encrypting each item,
-   so anyone holding the old password and a copy of the vault taken during this window could read
-   the new one out of it. Paper is not synced, not searchable and not swappable. Either way it is
-   not a backup, because a forgotten master password means the vault cannot be opened to read it.
-   The export from step 1 is the backup.
+   **Keep no copy at all.** A password not yet in use costs nothing to lose, because you generate
+   another and start over. What is actually needed is the answer to "did I remember it correctly",
+   which is a verifier rather than a copy:
+
+   ```bash
+   cd ~/PhpstormProjects/ai
+   scripts/genpass/genpass.py --show --verifier ~/.newpass.verify lower+digit 18
+   scripts/genpass/genpass.py --check ~/.newpass.verify
+   ```
+
+   `--show` draws on the terminal's alternate screen, so the password never enters the scrollback.
+   The verifier is a salted scrypt digest that cannot be reversed, so the file is safe on disk.
+
+   **Do not park it in a Bitwarden item.** During this window that item sits in a vault still
+   protected by the **old** password, and a master password change re-wraps the user key rather than
+   re-encrypting each item, so anyone holding the old password and a copy of the vault taken now
+   could read the new one out of it. It is not a backup either, because a forgotten master password
+   means the vault cannot be opened to read the item inside it. The export from step 1 is the
+   backup.
 
 4. **Change the master password.** Web vault, Settings, Security, Master password. Leave "Rotate
    account encryption key" unticked, because that is a third separate operation.

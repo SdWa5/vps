@@ -12,7 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   anything, gated on two cold successes on separate days with at least one after a night's sleep rather than on a
   repetition count. Records that the copy stays on paper while learning, because a Bitwarden item would sit in a vault
   still protected by the old password and a master password change re-wraps the user key rather than re-encrypting each
-  item, and that neither is a backup. Later steps renumbered to 4 through 8.
+  item, and that neither is a backup. Later steps renumbered to 4 through 8. Amended the same day to
+  keep no copy at all rather than a paper one, using `genpass.py --show --verifier` and `--check` from
+  the workstation docs, since a password not yet in use costs nothing to lose and only recall needs
+  verifying.
 - `docs/vaultwarden.md` points at `~/PhpstormProjects/ai/docs/password-strength.md` for the master password length
   analysis, and names the outcome of 18 lowercase characters with at least one digit so the answer is available
   without leaving this repository.

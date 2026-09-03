@@ -182,26 +182,43 @@ its own cause.
    atomic request carrying the re-wrapped key, so it cannot half-apply and leave a corrupt database.
    The export in step 1 is the real rollback.
 
-3. **Change the master password.** Web vault, Settings, Security, Master password. Leave "Rotate
+3. **Memorise the new password before changing anything.** The gate is not a repetition count. It is
+   **two cold successes on separate days, at least one of them after a night's sleep**, typed with
+   nothing visible and without a run-up. Sleep is what turns a typing sequence from something you
+   are holding into something you have, so a password typed perfectly twenty times on day zero and
+   lost on day two was never learned. See `~/PhpstormProjects/ai/docs/password-strength.md` for the
+   schedule, which is roughly ten reps now, five the same day, then day 1, day 3 and day 7.
+
+   Type it rather than read it, because the recall that matters is motor rather than visual.
+
+   While learning it, keep the only copy on paper. A Bitwarden item would work and is far better
+   than a plaintext file, but during this window it sits in a vault still protected by the **old**
+   password. Changing the master password re-wraps the user key rather than re-encrypting each item,
+   so anyone holding the old password and a copy of the vault taken during this window could read
+   the new one out of it. Paper is not synced, not searchable and not swappable. Either way it is
+   not a backup, because a forgotten master password means the vault cannot be opened to read it.
+   The export from step 1 is the backup.
+
+4. **Change the master password.** Web vault, Settings, Security, Master password. Leave "Rotate
    account encryption key" unticked, because that is a third separate operation.
 
-4. **Log back in everywhere and verify**: web vault, browser extension, mobile app. Do not continue
+5. **Log back in everywhere and verify**: web vault, browser extension, mobile app. Do not continue
    until all three work.
 
-5. **Change the KDF.** Web vault, Settings, Security, Keys, Encryption key settings, with the values
+6. **Change the KDF.** Web vault, Settings, Security, Keys, Encryption key settings, with the values
    from the table above.
 
-6. **Log back in everywhere again**, and verify autofill on the phone specifically. That is the
+7. **Log back in everywhere again**, and verify autofill on the phone specifically. That is the
    setting most likely to break and the one least likely to be noticed.
 
-7. **Clear the generator history last.** A master password generated in the client sits in that
+8. **Clear the generator history last.** A master password generated in the client sits in that
    client's generator history, which anyone who unlocks the vault can read. That is circular, so it
    has to go. It is also the only copy of the password until it has been memorised, so this step
    comes after the new password is committed to memory and demonstrably works, never before.
 
 ### The re-login is the risky part, not the change
 
-Steps 4 and 6 force exactly the full re-login that triggered the September 2026 extension failure
+Steps 5 and 7 force exactly the full re-login that triggered the September 2026 extension failure
 recorded below. If the extension reports "Invalid master password" or "no elements in sequence"
 afterwards, the vault is almost certainly fine and the extension is replaying stale local state.
 

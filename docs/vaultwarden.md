@@ -144,6 +144,11 @@ in the web vault at https://vault.sdwa5.org.
 | Iterations | 3 |
 | Parallelism | 4 |
 
+The full analysis of master password length against typing cost, including the entropy tables and the reasoning
+behind picking a lowercase alphabet, lives outside this repository in the workstation docs at
+`~/PhpstormProjects/ai/docs/password-strength.md`. The short version is 18 lowercase characters with at least one
+digit, which is 93 bits.
+
 These are Bitwarden's own defaults and they are already a large step up from PBKDF2. Do not raise
 the iteration count instead of the memory. Argon2 gains more resistance per unit of unlock time from
 memory than from iterations, so a higher `t` at the same memory buys less for the same wait. The

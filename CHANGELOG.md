@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `docs/vaultwarden.md` points at `~/PhpstormProjects/ai/docs/password-strength.md` for the master password length
+  analysis, and names the outcome of 18 lowercase characters with at least one digit so the answer is available
+  without leaving this repository.
+
 ### Fixed
 
 - `monitoring/vps-health.sh` padded the check-name column to 20 characters in the `--dry-run` output

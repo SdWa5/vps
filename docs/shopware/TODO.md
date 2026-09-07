@@ -18,6 +18,23 @@
           email, fully manual
         - Plugin (paid): back-in-stock / waitlist plugins on Shopware marketplace (e.g. ACRIS stock notification) —
           adds "notify me" button on out-of-stock products, admin sees subscriber list
+    4. Actual preorders — accept binding, paid orders for merch that is not in stock yet, with a
+       stated delivery date or window. **The reason is the money, not the feature.** Merch is
+       markedly cheaper per piece in bulk, and the association cannot accumulate the capital for a
+       bulk order before it has sold anything. A preorder run turns that around, because the
+       customers fund the order they are waiting for. That gives the two variants a shared purpose
+       and a clear split. 5.3 only counts interest, which sizes the bulk order but pays for nothing.
+       This item takes the money up front, which is what actually unlocks the bulk price.
+       Check first how far core Shopware carries it. The clearance sale flag, the stock and restock
+       time fields and the delivery time of a product are the relevant settings, and a plugin is
+       only needed if they are not enough. Three decisions belong to this.
+        - When the money is taken, at order time or at dispatch. Only "at order time" finances the
+          bulk order, so this is the decision the whole item rests on.
+        - A minimum quantity below which the run does not happen, and what happens to the money
+          then. A refund path has to exist before the first preorder is sold.
+        - The legal wording for a binding prepaid sale with a later delivery date, which goes into
+          the same AGB pass as item 13. Taking money for goods not yet ordered is the part a
+          non-profit should get right on paper.
 6. Checkout end-to-end test — no real order flow tested yet
    (deferred — not selling products yet)
 7. SEO — meta titles/descriptions empty on all pages, no sitemap submitted

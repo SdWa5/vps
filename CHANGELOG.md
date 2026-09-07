@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-09-07
+
+### Added
+
+- `docs/vaultwarden.md` — runbook for a mobile client that cannot log in after a password or KDF
+  change. The tell is the `devices` table rather than the log: the Android app's `updated_at` predated
+  the change by over an hour, a log capture over the attempt window was empty, and no authentication
+  had been rejected anywhere, so the failure was entirely local. A locked Bitwarden client holds a
+  stale `kdfConfig` and a user key wrapped with the old master key, and never calls the server, so it
+  cannot learn that anything changed. Clearing the app's storage and logging in fresh fixed it.
+  Records that a second factor and a pending new-device verification were both ruled out, since both
+  produce the same symptom.
+- `docs/vaultwarden.md` — the rotation performed on 2026-09-07 is recorded in the "Master password and
+  KDF" section, together with the fact that `private_key` and `public_key` were unchanged, which is
+  the proof that "Rotate account encryption key" was left off.
+- `docs/vaultwarden.md` step 7 now warns that the mobile app is expected to refuse the new password at
+  its lock screen, so the reader does not read it as a fault and retry.
+- `TODO.md` items 7.6 and 7.7: returning to a tagged release once one above 1.37.2 exists, and the
+  fact that emergency access is enabled but nobody is enrolled while the SdWa5 org has a single owner,
+  which leaves a forgotten master password unrecoverable for all four accounts.
+
+### Changed
+
+- The account now uses Argon2id at 64 MiB, 3 iterations, parallelism 4, verified from the database.
+  451 ciphers intact. The other three accounts remain on PBKDF2 600,000, which only their holders can
+  change.
+
 ## [1.8.0] - 2026-09-07
 
 ### Changed

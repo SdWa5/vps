@@ -60,3 +60,10 @@
     5. the other three vaultwarden accounts are on pbkdf2. argon2id is a per-account setting
        that only the account holder can change, so this is a message to them rather than an action
        (ca. 15 Minuten)
+    6. back to a tagged release once one above 1.37.2 exists. the server is pinned to the testing
+       digest for issue #7659, and `monitoring/vps-health.sh` will warn about version drift the moment
+       a release lands, which is the signal. see [docs/vaultwarden.md](docs/vaultwarden.md)
+       (ca. 30 Minuten)
+    7. emergency access is enabled on the server but nobody is enrolled and the sdwa5 org has a single
+       owner. a forgotten master password is unrecoverable for any of the four accounts today
+       (ca. 45 Minuten)

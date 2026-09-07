@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `docs/ssh-hardening.md` and `TODO.md` item 7.2 corrected. `id_ed25519_sdwa5` does belong in
+  Vaultwarden, which is the private vault for a private key. The original reasoning, that Vaultwarden
+  running on the host the key unlocks makes storing it there circular, only applies when the server
+  and every logged-in client are unavailable at once, because Bitwarden clients cache the vault and
+  unlock offline. What survives is that a KDF or master password change logs out every client for a
+  while, and that a vault item cannot be fetched from a rescue console, so the notebook copy stays on
+  the list and the Contabo console remains the break-glass.
+
 ## [1.7.0] - 2026-09-07
 
 ### Added

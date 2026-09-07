@@ -50,8 +50,9 @@
     1. no firewall at all. `iptables -P INPUT ACCEPT` with no rules, so every port a container opens
        is public. fail2ban manages its own chain and does not change that. an nftables default-deny
        with the handful of published ports would (ca. 2 Stunden)
-    2. second copy of `id_ed25519_sdwa5` on the notebook. today the workstation is the only holder and
-       the contabo console is the only thing behind it (ca. 15 Minuten)
+    2. `id_ed25519_sdwa5` into vaultwarden and a second copy on the notebook. today the workstation is
+       the only holder and the contabo console is the only thing behind it. the vault item does not
+       replace the notebook copy, because a rescue console cannot fetch one (ca. 15 Minuten)
     3. `admin` (uid 1000, full sudo) has a password and no authorized_keys, so it can no longer reach
        the host over ssh. decide whether it gets a key or the account goes away (ca. 20 Minuten)
     4. [docs/services.md](../docs/services.md) in the parent repo says vaultwarden has "currently only

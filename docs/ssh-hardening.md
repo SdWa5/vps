@@ -128,10 +128,21 @@ substitute.
 Fingerprint `SHA256:3r0Dk1tFl8W/iHyFC6rsOFbQ1JznqEeP5+06iYug0mA`, comment
 `stefanr@stefan-desktop sdwa5-vps personal 2026-09-07`.
 
-The private key lives on the workstation only. It is **deliberately not stored in Vaultwarden**,
-because Vaultwarden runs on the host this key unlocks, and a credential kept inside the thing it
-opens is not a backup. A second copy belongs on the notebook. Client-side detail, including the
-`~/.ssh/conf.d` layout, is documented in `~/PhpstormProjects/ai/docs/ssh-keys.md`.
+The private key is stored in Vaultwarden, which is the private vault, and a second copy belongs on
+the notebook.
+
+Vaultwarden running on the very host this key unlocks looks circular, and that was the initial
+reasoning for keeping it out. It does not hold up. If the key file is lost the vault is still up and
+the key can be read back, and if Vaultwarden itself is down the Bitwarden clients cache the vault and
+unlock offline, so the loop needs the server and every logged-in client to fail at once.
+
+Two caveats do survive, and they are why the notebook copy stays on the list. A KDF or master password
+change logs out every client, so for a while the vault exists only on the server. And a vault item
+cannot be fetched from a rescue console, which is exactly where you sit when SSH is broken. The
+Contabo console is therefore the break-glass rather than the vault.
+
+Client-side detail, including the `~/.ssh/conf.d` layout and where each of the five keys is backed up,
+is documented in `~/PhpstormProjects/ai/docs/ssh-keys.md`.
 
 ## Break-glass
 
@@ -201,8 +212,8 @@ test never authenticates at all.
 
 ## Open items
 
-- Second copy of `id_ed25519_sdwa5` on the notebook. Until then the workstation is the only holder,
-  with the Contabo console behind it.
+- Second copy of `id_ed25519_sdwa5` on the notebook, and the key into Vaultwarden. Until then the
+  workstation is the only holder, with the Contabo console behind it.
 - `admin` can no longer log in over SSH, because it has no `authorized_keys`. That is intended.
   If it should be reachable, give it a key rather than re-enabling passwords.
 - No firewall. `iptables -P INPUT ACCEPT` with no rules, so every port a service opens is public.

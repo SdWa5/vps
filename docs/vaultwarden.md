@@ -21,13 +21,12 @@ echo -n '<token>' | argon2 "$(openssl rand -base64 32)" -e -id -k 65540 -t 3 -p 
 cd /opt/docker && docker-compose up -d vaultwarden
 ```
 
-## Temporarily on the testing image
+## The testing image, used briefly on 2026-09-07
 
-**Since 2026-09-07 this server runs `vaultwarden/server:testing`, pinned by digest**
-`sha256:4d840a0d45e51389297bb69dead79e8a549afa2d7a9d3db3221123a02668e441`, which reports
-`Vaultwarden 1.37.2-a6c3bd6d`.
+**Back on `vaultwarden/server:latest` since 2026-09-07.** The testing image was used for about two
+hours, only to get the master password changed, and the pin is gone again.
 
-### Why
+### Why it was needed
 
 Changing the master password is broken in the 1.37.2 release. The bundled web vault sends Bitwarden's
 newer payload, with `authenticationData` and `unlockData` carrying `masterPasswordAuthenticationHash`
@@ -44,39 +43,54 @@ The client shows only "An error has occurred."
 
 Upstream issue [#7659](https://github.com/dani-garcia/vaultwarden/issues/7659), duplicate of
 [#7622](https://github.com/dani-garcia/vaultwarden/issues/7622), fixed by
-[PR #7634](https://github.com/dani-garcia/vaultwarden/pull/7634). The fix landed around 2026-08-29 and
-is not in any tagged release. 1.37.2 is from 2026-08-22. The maintainers' answer in the thread is to
-use the testing image.
+[PR #7634](https://github.com/dani-garcia/vaultwarden/pull/7634) around 2026-08-29 and still not in a
+tagged release. The maintainers' answer in the thread is to use the testing image.
 
-Downgrading to 1.37.0 also fixes the password change and was rejected, because it breaks the browser
-extensions, which is the September 2026 incident recorded further down this file.
+Downgrading to 1.37.0 also fixes it and was rejected, because it breaks the browser extensions, which
+is the September 2026 incident recorded further down this file.
 
-### Why it is pinned by digest
+### Why coming back was cheap
 
-`testing` tracks the main branch. Leaving the tag floating would let the weekly auto-update move this
-vault onto whatever main-branch happens to be, every Sunday, unattended. The digest pin makes
-`docker-compose pull` a no-op, so nothing moves until someone decides it should.
-
-### How you will know to go back
-
-`monitoring/vps-health.sh` compares the running version against the newest GitHub release. The pinned
-image reports `1.37.2`, because the check strips the `-a6c3bd6d` suffix, so it is quiet today. The
-moment a release above 1.37.2 appears it will warn that the server is behind, and that warning **is
-the signal to return to a release**:
+**The testing build applied no schema migration.** The newest row in `__diesel_schema_migrations` is
+`20260505120000` from 2026-09-01, so the schema was identical to what 1.37.2 expects and the revert
+was a plain tag change rather than a snapshot restore. Check that before any future downgrade:
 
 ```bash
-# once a release above 1.37.2 exists
-cd /opt/docker
-# set docker-compose.yml back to  image: vaultwarden/server:latest
-# and monitoring/vaultwarden-autoupdate.sh back to IMAGE=vaultwarden/server:latest
-docker-compose stop vaultwarden \
-  && cp -a vaultwarden-data "vaultwarden-data.bak-$(date +%Y%m%d-%H%M)" \
-  && docker-compose pull vaultwarden \
-  && docker-compose up -d vaultwarden
+sqlite3 /opt/docker/vaultwarden-data/db.sqlite3 \
+  "SELECT version, run_on FROM __diesel_schema_migrations ORDER BY version DESC LIMIT 5;"
 ```
 
-Migrations are forward-only, so going back to 1.37.2 specifically is not possible without restoring a
-snapshot. Going forward to a later release is fine.
+Vaultwarden migrations are forward-only, so a build that *had* applied one would make the revert a
+restore instead, and the master password and KDF changes would be lost with it.
+
+### What stays broken on the release, and what does not
+
+Worth knowing rather than rediscovering:
+
+- **Master password change**: broken. Needs the testing image again, which is a ten minute round trip
+  now that this is documented.
+- **Reset two-step login**: broken by the same payload change,
+  [#7674](https://github.com/dani-garcia/vaultwarden/issues/7674).
+- **Organisation import into a collection**: broken,
+  [#7698](https://github.com/dani-garcia/vaultwarden/issues/7698). Confirmed with `.kdbx` through the
+  SDK importer, where the payload omits `groups` and `users` that Vaultwarden requires but never
+  reads. That matters for re-importing the SdWa5 org export.
+- **Personal import from a password-protected `.json` export**: unaffected, because a personal export
+  carries no `groups` or `users` fields. This is the disaster-recovery path, so it is the one that
+  matters most.
+
+### Doing it again
+
+```bash
+# to testing, pinned by digest so the weekly auto-update cannot drift the vault onto main
+docker pull vaultwarden/server:testing
+docker image inspect -f '{{index .RepoDigests 0}}' vaultwarden/server:testing
+# put that digest in docker-compose.yml AND in IMAGE= in monitoring/vaultwarden-autoupdate.sh,
+# otherwise the weekly job compares the wrong image
+cd /opt/docker && docker-compose stop vaultwarden \
+  && cp -a vaultwarden-data "vaultwarden-data.bak-$(date +%Y%m%d-%H%M)" \
+  && docker-compose pull vaultwarden && docker-compose up -d vaultwarden
+```
 
 ## Client compatibility — keep the server current
 

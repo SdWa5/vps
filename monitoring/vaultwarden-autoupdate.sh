@@ -26,7 +26,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 load_env
 
 SERVICE="${SERVICE:-vaultwarden}"
-IMAGE="${IMAGE:-vaultwarden/server:latest}"
+IMAGE="${IMAGE:-vaultwarden/server:testing@sha256:4d840a0d45e51389297bb69dead79e8a549afa2d7a9d3db3221123a02668e441}"
 DATA_DIR="${DATA_DIR:-$COMPOSE_DIR/vaultwarden-data}"
 HEALTH_URL="${HEALTH_URL:-https://vault.sdwa5.org/alive}"
 HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-60}"
@@ -134,7 +134,8 @@ usage() {
     cat <<'USAGE'
 vaultwarden-autoupdate.sh - weekly Vaultwarden update
 
-Pulls vaultwarden/server:latest. If the image is unchanged, exits silently.
+Pulls the image pinned in docker-compose.yml. If unchanged, exits silently. While
+that pin is a digest the pull is a no-op, which is deliberate, see docs/vaultwarden.md.
 Otherwise snapshots vaultwarden-data/, recreates the container and verifies that
 the public /alive endpoint answers 200. On failure it restores the snapshot, pins
 the previous image in docker-compose.override.yml and mails an alert.
@@ -198,7 +199,7 @@ main() {
     if ! wait_for_health; then
         rollback "$before" "$snapshot_dir"
         send_mail "[sdwa5] Vaultwarden update FAILED, rolled back" \
-"The new vaultwarden/server:latest image did not become healthy within ${HEALTH_TIMEOUT}s on $(hostname).
+"The new $IMAGE image did not become healthy within ${HEALTH_TIMEOUT}s on $(hostname).
 
 $HEALTH_URL never returned 200.
 

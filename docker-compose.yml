@@ -8,7 +8,15 @@ x-logging: &default-logging
 
 services:
   vaultwarden:
-    image: vaultwarden/server:latest
+    # Pinned to the testing image, temporarily, for issue #7659. The master password
+    # change is broken in the 1.37.2 release, which sends 422 "missing field
+    # newMasterPasswordHash" because the bundled web vault uses Bitwarden's newer
+    # payload shape. Fixed by PR #7634, which is in testing but not in any tag yet.
+    # Pinned by digest on purpose, so the weekly auto-update cannot silently move
+    # this vault onto whatever main-branch happens to be. Go back to
+    # vaultwarden/server:latest once a release above 1.37.2 exists. See
+    # docs/vaultwarden.md.
+    image: vaultwarden/server:testing@sha256:4d840a0d45e51389297bb69dead79e8a549afa2d7a9d3db3221123a02668e441
     container_name: vaultwarden
     restart: unless-stopped
     environment:

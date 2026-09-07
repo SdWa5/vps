@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-09-07
+
+### Changed
+
+- Vaultwarden runs `vaultwarden/server:testing`, pinned by digest
+  `sha256:4d840a0d45e51389297bb69dead79e8a549afa2d7a9d3db3221123a02668e441`, reporting
+  `1.37.2-a6c3bd6d`. Changing the master password is broken in the 1.37.2 release: the bundled web
+  vault sends Bitwarden's newer payload with `authenticationData` and `unlockData`, while the handler
+  still expects `newMasterPasswordHash`, so the request fails with 422 before reaching the database
+  and the client shows only "An error has occurred". Upstream issue #7659, duplicate of #7622, fixed
+  by PR #7634 around 2026-08-29 and not in any tagged release. Downgrading to 1.37.0 also fixes it and
+  was rejected, because it breaks the browser extensions, which is the September 2026 incident already
+  recorded in `docs/vaultwarden.md`.
+- The pin is a digest rather than the floating `testing` tag on purpose. `testing` tracks main, and a
+  floating tag would let the weekly auto-update move this vault onto whatever main-branch happens to
+  be, every Sunday, unattended. With a digest, `docker-compose pull` is a no-op.
+- `monitoring/vaultwarden-autoupdate.sh` follows the same pin, so it compares the right image rather
+  than still inspecting `vaultwarden/server:latest` while compose points elsewhere. Its help text and
+  failure mail no longer hardcode the tag.
+- `docs/vaultwarden.md` gained a "Temporarily on the testing image" section covering the reason, why
+  the digest pin, and the route back. `docs/infrastructure.md` and `docs/monitoring.md` follow.
+
+### Added
+
+- The route back is documented and self-signalling. `monitoring/vps-health.sh` strips the `-a6c3bd6d`
+  suffix, so it reads `1.37.2` and stays quiet today. The moment a release above 1.37.2 appears it
+  warns that the server is behind, and that warning is the cue to return to `latest`.
+
 ### Changed
 
 - `docs/ssh-hardening.md` records that this host is not exposed by the unprotected copies of the old

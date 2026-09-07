@@ -128,6 +128,11 @@ substitute.
 Fingerprint `SHA256:3r0Dk1tFl8W/iHyFC6rsOFbQ1JznqEeP5+06iYug0mA`, comment
 `stefanr@stefan-desktop sdwa5-vps personal 2026-09-07`.
 
+This host is **not** exposed by the unprotected copies of the old keys that still sit on
+stefan-notebook, because `id_rsa` was removed from `authorized_keys` here and `id_ed25519_sdwa5` does
+not exist on that machine. Replacing the key rather than only adding a passphrase to it is what bought
+that.
+
 The private key is stored in Vaultwarden, which is the private vault, and a second copy belongs on
 the notebook.
 

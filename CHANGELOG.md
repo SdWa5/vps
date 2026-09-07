@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- `docs/ssh-hardening.md` records that this host is not exposed by the unprotected copies of the old
+  keys still on stefan-notebook, because `id_rsa` was removed from its `authorized_keys` and
+  `id_ed25519_sdwa5` does not exist on that machine. Replacing the key rather than only adding a
+  passphrase to it is what bought that.
+
 - `docs/ssh-hardening.md` and `TODO.md` item 7.2 corrected. `id_ed25519_sdwa5` does belong in
   Vaultwarden, which is the private vault for a private key. The original reasoning, that Vaultwarden
   running on the host the key unlocks makes storing it there circular, only applies when the server

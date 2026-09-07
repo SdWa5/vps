@@ -126,7 +126,9 @@ sqlite3 /tmp/restore/data/vaultwarden-db-backup/db.sqlite3 'PRAGMA integrity_che
 
 `monitoring/vaultwarden-autoupdate.sh`
 
-1. Pull `vaultwarden/server:latest` and compare image IDs. Unchanged means exit, silently.
+1. Pull the image pinned in `docker-compose.yml` and compare image IDs. Unchanged means exit,
+   silently. While that pin is a digest, as it is now, the pull is a no-op by design. See
+   [vaultwarden.md](vaultwarden.md).
 2. Snapshot `vaultwarden-data/` to `vaultwarden-data.bak-<timestamp>`. The newest 3 are kept.
 3. `docker-compose up -d vaultwarden`.
 4. Poll `https://vault.sdwa5.org/alive` for up to 60 s expecting 200.

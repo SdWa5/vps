@@ -21,6 +21,63 @@ echo -n '<token>' | argon2 "$(openssl rand -base64 32)" -e -id -k 65540 -t 3 -p 
 cd /opt/docker && docker-compose up -d vaultwarden
 ```
 
+## Temporarily on the testing image
+
+**Since 2026-09-07 this server runs `vaultwarden/server:testing`, pinned by digest**
+`sha256:4d840a0d45e51389297bb69dead79e8a549afa2d7a9d3db3221123a02668e441`, which reports
+`Vaultwarden 1.37.2-a6c3bd6d`.
+
+### Why
+
+Changing the master password is broken in the 1.37.2 release. The bundled web vault sends Bitwarden's
+newer payload, with `authenticationData` and `unlockData` carrying `masterPasswordAuthenticationHash`
+and `masterKeyWrappedUserKey`, while the server's handler still expects `newMasterPasswordHash`. The
+request never reaches the database:
+
+```
+POST /api/accounts/password
+Data guard `Json < ChangePassData >` failed: Error("missing field `newMasterPasswordHash`")
+=> 422 Unprocessable Entity
+```
+
+The client shows only "An error has occurred."
+
+Upstream issue [#7659](https://github.com/dani-garcia/vaultwarden/issues/7659), duplicate of
+[#7622](https://github.com/dani-garcia/vaultwarden/issues/7622), fixed by
+[PR #7634](https://github.com/dani-garcia/vaultwarden/pull/7634). The fix landed around 2026-08-29 and
+is not in any tagged release. 1.37.2 is from 2026-08-22. The maintainers' answer in the thread is to
+use the testing image.
+
+Downgrading to 1.37.0 also fixes the password change and was rejected, because it breaks the browser
+extensions, which is the September 2026 incident recorded further down this file.
+
+### Why it is pinned by digest
+
+`testing` tracks the main branch. Leaving the tag floating would let the weekly auto-update move this
+vault onto whatever main-branch happens to be, every Sunday, unattended. The digest pin makes
+`docker-compose pull` a no-op, so nothing moves until someone decides it should.
+
+### How you will know to go back
+
+`monitoring/vps-health.sh` compares the running version against the newest GitHub release. The pinned
+image reports `1.37.2`, because the check strips the `-a6c3bd6d` suffix, so it is quiet today. The
+moment a release above 1.37.2 appears it will warn that the server is behind, and that warning **is
+the signal to return to a release**:
+
+```bash
+# once a release above 1.37.2 exists
+cd /opt/docker
+# set docker-compose.yml back to  image: vaultwarden/server:latest
+# and monitoring/vaultwarden-autoupdate.sh back to IMAGE=vaultwarden/server:latest
+docker-compose stop vaultwarden \
+  && cp -a vaultwarden-data "vaultwarden-data.bak-$(date +%Y%m%d-%H%M)" \
+  && docker-compose pull vaultwarden \
+  && docker-compose up -d vaultwarden
+```
+
+Migrations are forward-only, so going back to 1.37.2 specifically is not possible without restoring a
+snapshot. Going forward to a later release is fine.
+
 ## Client compatibility — keep the server current
 
 **Vaultwarden must track the Bitwarden client releases.** The browser extension and the mobile app

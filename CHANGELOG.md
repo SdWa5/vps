@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- `docs/shopware/TODO.md` item 5.4, actual preorders. Binding prepaid orders for merch not yet in
+  stock, motivated by financing rather than by the feature itself, since bulk pricing needs capital
+  the association does not have before it has sold anything. Distinguishes it from 5.3, which only
+  measures interest. Names the three open decisions: when the money is taken, the minimum quantity and
+  the refund path if the run does not happen, and the legal wording for a binding prepaid sale, which
+  belongs in the same AGB pass as item 13.
+
 ## [1.10.0] - 2026-09-07
 
 ### Changed

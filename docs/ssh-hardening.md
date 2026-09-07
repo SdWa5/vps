@@ -133,8 +133,9 @@ stefan-notebook, because `id_rsa` was removed from `authorized_keys` here and `i
 not exist on that machine. Replacing the key rather than only adding a passphrase to it is what bought
 that.
 
-The private key is stored in Vaultwarden, which is the private vault, and a second copy belongs on
-the notebook.
+The private key is stored in Vaultwarden since 2026-09-08, as item
+`00fceed1-965b-4857-9b91-2d371d0c6662`, uploaded by path and then downloaded again and compared
+byte-for-byte against the file on disk. A second copy still belongs on the notebook.
 
 Vaultwarden running on the very host this key unlocks looks circular, and that was the initial
 reasoning for keeping it out. It does not hold up. If the key file is lost the vault is still up and
@@ -217,8 +218,10 @@ test never authenticates at all.
 
 ## Open items
 
-- Second copy of `id_ed25519_sdwa5` on the notebook, and the key into Vaultwarden. Until then the
-  workstation is the only holder, with the Contabo console behind it.
+- Second copy of `id_ed25519_sdwa5` on the notebook. The key went into Vaultwarden on 2026-09-08, so
+  the workstation is no longer the only holder, but a rescue console cannot fetch a vault item and
+  every client is logged out for a while after a KDF change. The Contabo console stays the break-glass
+  behind both.
 - `admin` can no longer log in over SSH, because it has no `authorized_keys`. That is intended.
   If it should be reachable, give it a key rather than re-enabling passwords.
 - No firewall. `iptables -P INPUT ACCEPT` with no rules, so every port a service opens is public.

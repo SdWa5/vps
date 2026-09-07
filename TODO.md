@@ -46,3 +46,16 @@
     5. monitoring runs on the monitored host, so a dead vps sends nothing and the silence looks
        healthy. an external dead-man's switch would close that gap, deliberately deferred
        (ca. 45 Minuten)
+7. security follow-ups from the 2026-09-07 ssh hardening ([docs/ssh-hardening.md](docs/ssh-hardening.md))
+    1. no firewall at all. `iptables -P INPUT ACCEPT` with no rules, so every port a container opens
+       is public. fail2ban manages its own chain and does not change that. an nftables default-deny
+       with the handful of published ports would (ca. 2 Stunden)
+    2. second copy of `id_ed25519_sdwa5` on the notebook. today the workstation is the only holder and
+       the contabo console is the only thing behind it (ca. 15 Minuten)
+    3. `admin` (uid 1000, full sudo) has a password and no authorized_keys, so it can no longer reach
+       the host over ssh. decide whether it gets a key or the account goes away (ca. 20 Minuten)
+    4. [docs/services.md](../docs/services.md) in the parent repo says vaultwarden has "currently only
+       Stefan". the database holds 4 accounts. reconcile the doc with reality (ca. 15 Minuten)
+    5. the other three vaultwarden accounts are on pbkdf2. argon2id is a per-account setting
+       that only the account holder can change, so this is a message to them rather than an action
+       (ca. 15 Minuten)

@@ -28,8 +28,11 @@ flowchart LR
 
         subgraph cron ["cron · /etc/cron.d"]
             HC["vps-health.sh<br/>hourly · mails on fault only"]
+            DB["vaultwarden-db-backup.sh<br/>daily 03:50 · consistent sqlite copy"]
             AU["vaultwarden-autoupdate.sh<br/>Sun 03:00 · pull, snapshot, verify"]
         end
+
+        SSHD["sshd :22<br/>key-only · fail2ban"]
     end
 
     GD[("Google Drive<br/>rclone:SdWa5:restic-backups")]
@@ -37,6 +40,7 @@ flowchart LR
     U -- " vault.sdwa5.org " --> C
     U -- " erp.sdwa5.org " --> C
     U -- " project2/project3.sdwa5.org " --> C
+    U -- " ssh :22 (key-only) " --> SSHD
     U -. " :11434 " .-> OL
     U -. " :25565 " .-> MC
     C --> SW & VW & DL
@@ -73,9 +77,14 @@ Cron jobs (host, not Docker) — see [monitoring.md](monitoring.md):
 | Job                        | Script                                  | Schedule       |
 |----------------------------|-----------------------------------------|----------------|
 | Health check               | `monitoring/vps-health.sh`              | hourly, `:17`  |
+| Vaultwarden database copy  | `monitoring/vaultwarden-db-backup.sh`   | daily 03:50    |
 | Vaultwarden auto-update    | `monitoring/vaultwarden-autoupdate.sh`  | Sunday 03:00   |
 
 Reverse proxy: **Caddy** (systemd service, not in Docker) — see [caddy.md](caddy.md)
+
+Host access: **sshd on :22, key-only** since 2026-09-07, with fail2ban. No firewall, so
+`iptables -P INPUT ACCEPT` still applies and any port a service opens is public. See
+[ssh-hardening.md](ssh-hardening.md).
 
 ## Directory layout (`/opt/docker/`)
 
@@ -90,6 +99,11 @@ Reverse proxy: **Caddy** (systemd service, not in Docker) — see [caddy.md](cad
 │   ├── nginx/                      # empty (unused)
 │   └── php/                        # empty (unused)
 ├── docs/                           # this documentation
+├── hardening/                      # host SSH and fail2ban config, deployed to /etc
+│   ├── sshd_config.d/10-hardening.conf
+│   └── fail2ban/jail.local
+├── monitoring/                     # host cron scripts, deployed to /opt/docker/monitoring
+├── vaultwarden-db-backup/          # gitignored — consistent sqlite copy for restic
 ├── shopware-html-data/             # partially tracked — Shopware web root + MySQL
 │   ├── composer.json/.lock, symfony.lock, config/*   # tracked
 │   ├── custom/plugins/{FroshLazySizes,FroshPlatformFilterSearch,SwagPlatformSecurity,FroshShopmon}/

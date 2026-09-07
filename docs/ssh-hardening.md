@@ -150,6 +150,125 @@ Contabo console is therefore the break-glass rather than the vault.
 Client-side detail, including the `~/.ssh/conf.d` layout and where each of the five keys is backed up,
 is documented in `~/PhpstormProjects/ai/docs/ssh-keys.md`.
 
+## Firewall
+
+Added 2026-09-08. Deployable copies are
+[`hardening/firewall/`](../hardening/firewall/) and
+[`hardening/systemd/resolved.conf.d/`](../hardening/systemd/resolved.conf.d/), byte-identical to what
+runs on the host.
+
+### What was actually exposed, which is less than "no firewall" suggests
+
+`iptables -P INPUT ACCEPT` with no rules sounds like every service is public. Measured before the
+change, it was not:
+
+```
+0.0.0.0:22    sshd                needed
+*:80, *:443   caddy, tcp and udp  needed
+0.0.0.0:5355  systemd-resolved    LLMNR, not needed
+127.0.0.1:25    exim4
+127.0.0.1:2019  caddy admin API
+127.0.0.1:8000  vaultwarden
+127.0.0.1:8001  shopware
+127.0.0.1:8002  dolibarr
+127.0.0.1:8443  shopware tls
+```
+
+**Every Docker publish binds `127.0.0.1`.** The usual failure here is a container published on
+`0.0.0.0`, which Docker inserts into its own `DOCKER` chain ahead of any host firewall and so exposes
+regardless of what `INPUT` says. This compose file never did that, so the only unnecessary open port
+was LLMNR.
+
+That is why the firewall is defence in depth rather than a repair. It protects against the *next*
+service that binds `0.0.0.0` by accident, not against a hole that was there.
+
+### LLMNR
+
+Link-local name resolution served nothing on a public VPS and was the one avoidable open port. It is
+turned off at the source rather than filtered, which closes 5355 on TCP and UDP for both families.
+
+### The rules
+
+`INPUT` only, IPv4 and IPv6. Loopback, established and related, all ICMP, the Docker bridges, then
+22, 80 and 443, then a `DROP` policy.
+
+**`iptables-restore` is deliberately not used, and neither is `iptables-persistent`.** Both replace
+every chain in the filter table, and Docker owns `DOCKER`, `DOCKER-USER`, `DOCKER-ISOLATION-*` and a
+set of `FORWARD` rules that it rebuilds at its own start. Restoring a saved snapshot at boot would
+replay stale copies of those, referring to bridges and subnets that may no longer exist.
+[`sdwa5-firewall.sh`](../hardening/firewall/sdwa5-firewall.sh) therefore flushes `INPUT` alone and
+appends its own rules, which makes it idempotent and leaves Docker's chains untouched.
+
+**ICMPv6 is accepted wholesale on purpose.** Neighbour discovery and path MTU discovery both ride on
+it. Dropping ICMPv6 does not harden IPv6, it removes it.
+
+### fail2ban and the flush
+
+fail2ban inserts its `f2b-sshd` jump at the head of `INPUT`, so flushing that chain removes it, and
+SSH would then be unfiltered while still looking correct. Two things handle that:
+
+- [`sdwa5-firewall.service`](../hardening/firewall/sdwa5-firewall.service) is ordered
+  `Before=fail2ban.service`, so at boot fail2ban starts afterwards and reinserts the jump itself.
+- An `ExecStartPost` restarts fail2ban when it is already running, which covers a manual restart of
+  the unit. It is guarded by `is-active` so it is a no-op at boot, and uses `--no-block`, because
+  waiting on a unit ordered after this one would deadlock.
+
+Verify the jump is first, not merely present. Read it a few seconds after any fail2ban restart, since
+`systemctl restart` returns before fail2ban has inserted the rule and a chain read in that window is
+misleading.
+
+### IPv6 is unreachable from outside for an unrelated reason
+
+The host holds `2a02:c206:3015:7801::1/64` with a default route, and no AAAA record is published for
+`sdwa5.org`. An inbound SSH attempt straight to the address returns `No route to host` from a client
+with working IPv6, and the `ip6tables` `INPUT` policy counter reads **0 packets, 0 bytes**, so nothing
+arrives at the host at all. The block is therefore upstream of it, and predates this change.
+
+The IPv6 rules are in place regardless, so that publishing an AAAA record later does not silently
+expose an unfiltered stack.
+
+### Result
+
+```
+22    OPEN
+80    OPEN
+443   OPEN
+25, 2019, 5355, 8000, 8001, 8002, 8443, 3306   filtered
+```
+
+Web, HTTP/3 on UDP 443, SSH and ICMP all verified working afterwards from outside.
+
+### Installation
+
+```bash
+cd /opt/docker && git pull --ff-only
+install -m 755 -o root -g root hardening/firewall/sdwa5-firewall.sh /usr/local/sbin/sdwa5-firewall.sh
+install -m 644 -o root -g root hardening/firewall/sdwa5-firewall.service /etc/systemd/system/
+install -m 644 -o root -g root hardening/systemd/resolved.conf.d/10-no-llmnr.conf /etc/systemd/resolved.conf.d/
+systemctl daemon-reload
+systemctl enable --now sdwa5-firewall.service
+systemctl restart systemd-resolved
+```
+
+**Arm an auto-revert before the first apply**, because a mistake here costs the SSH session. A
+snapshot plus a timer means the box repairs itself in fifteen minutes instead of needing the console:
+
+```bash
+D=/root/fw-backup-$(date +%Y%m%d-%H%M%S); mkdir -p "$D"
+iptables-save > "$D/rules.v4"
+printf '*filter\n:INPUT ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT ACCEPT [0:0]\nCOMMIT\n' > "$D/rules.v6"
+printf '#!/bin/bash\niptables-restore < %s/rules.v4\nip6tables-restore < %s/rules.v6\nsystemctl restart fail2ban\n' "$D" "$D" > /root/fw-revert.sh
+chmod +x /root/fw-revert.sh
+systemd-run --on-active=15min --unit=fw-revert /root/fw-revert.sh
+# ... apply, then prove a NEW ssh session works, then:
+systemctl stop fw-revert.timer
+```
+
+Note that `ip6tables-save` writes an **empty file** on this host, exiting 0. The nft backend has no
+`ip6` filter table until something creates one, while `ip6tables -S` synthesises the default policies
+and so looks normal. An empty restore file is a silent no-op, which is why the IPv6 baseline above is
+written by hand. Validate both with `iptables-restore --test` before trusting them.
+
 ## Break-glass
 
 **The Contabo console is the fallback and nothing in this document affects it.** It logs in through
@@ -224,5 +343,5 @@ test never authenticates at all.
   behind both.
 - `admin` can no longer log in over SSH, because it has no `authorized_keys`. That is intended.
   If it should be reachable, give it a key rather than re-enabling passwords.
-- No firewall. `iptables -P INPUT ACCEPT` with no rules, so every port a service opens is public.
-  fail2ban manages its own chain and does not change that. Tracked in [TODO.md](../TODO.md).
+- IPv6 is unreachable from outside, and the cause is upstream of this host rather than in its
+  configuration. Worth resolving before any AAAA record is published. See the firewall section.

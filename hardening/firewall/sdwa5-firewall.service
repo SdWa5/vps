@@ -1,0 +1,22 @@
+[Unit]
+Description=SdWa5 default-deny INPUT firewall
+# Docker rebuilds its own chains at start. Running after it keeps the bridge
+# list current, and running before fail2ban keeps fail2ban's jump at the head
+# of INPUT, because this script flushes that chain.
+After=network-online.target docker.service
+Wants=network-online.target
+Before=fail2ban.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/sdwa5-firewall.sh
+# Flushing INPUT removes fail2ban's jump. At boot that does not matter, because
+# fail2ban starts afterwards and inserts it. On a manual restart it does, so the
+# jump is restored here. The is-active guard keeps this a no-op at boot, and
+# --no-block avoids waiting on a unit that is ordered after this one, which would
+# otherwise deadlock.
+ExecStartPost=/bin/sh -c 'systemctl is-active --quiet fail2ban && systemctl --no-block restart fail2ban || true'
+
+[Install]
+WantedBy=multi-user.target

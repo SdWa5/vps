@@ -63,7 +63,7 @@ Domain → port mapping lives in the [Caddyfile](../Caddyfile); backup detail in
 | Service             | Image                        | Port (internal) | Public URL                 | Compose file                            |
 |---------------------|------------------------------|-----------------|----------------------------|-----------------------------------------|
 | Shopware            | dockware/shopware:latest     | 8001 / 8443     | https://sdwa5.org          | docker-compose.yml                      |
-| Vaultwarden         | vaultwarden/server:testing (pinned) | 8000            | https://vault.sdwa5.org    | docker-compose.yml                      |
+| Vaultwarden         | vaultwarden/server:latest    | 8000            | https://vault.sdwa5.org    | docker-compose.yml                      |
 | Dolibarr SdWa5      | dolibarr/dolibarr:latest     | 8002            | https://erp.sdwa5.org      | docker-compose.yml                      |
 | Dolibarr SdWa5 cron | dolibarr/dolibarr:latest     | —               | —                          | docker-compose.yml                      |
 | Dolibarr Project 2  | dolibarr/dolibarr:latest     | 8003            | https://project2.sdwa5.org | docker-compose.projects.yml             |

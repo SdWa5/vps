@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-09-07
+
+### Changed
+
+- Back on `vaultwarden/server:latest`. The testing pin from 1.8.0 existed only to get the master
+  password changed, that is done, and a tagged release is the right default for a password vault.
+  The weekly auto-update tracks releases again, so 1.37.3 will arrive on its own rather than needing
+  a version-drift warning as a cue.
+- `monitoring/vaultwarden-autoupdate.sh` back to `IMAGE=vaultwarden/server:latest`, matching compose.
+  `docs/infrastructure.md` and `docs/monitoring.md` follow.
+- `docs/vaultwarden.md` — the testing section is now a record of why it was needed and how to do it
+  again, rather than a description of current state. It gains the reason the revert was cheap: the
+  testing build applied **no** schema migration, the newest row in `__diesel_schema_migrations` being
+  `20260505120000` from 2026-09-01, so the schema matched what 1.37.2 expects and no snapshot restore
+  was involved. A build that had applied one would have made the revert a restore instead, losing the
+  master password and KDF changes with it, so the check is documented as a precondition.
+
+### Added
+
+- `docs/vaultwarden.md` lists what stays broken on the release, so it is not rediscovered. Master
+  password change and reset two-step login are both broken by the same payload change, #7659 and
+  #7674. Organisation import into a collection is broken by #7698, confirmed with `.kdbx` through the
+  SDK importer where the payload omits `groups` and `users` that Vaultwarden requires but never reads.
+  Personal import from a password-protected `.json` export is unaffected, because such an export
+  carries neither field, and that is the disaster-recovery path that matters.
+
+### Removed
+
+- `TODO.md` item 7.6, returning to a tagged release, which this release does.
+
 ## [1.9.0] - 2026-09-07
 
 ### Added

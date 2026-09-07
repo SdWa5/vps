@@ -6,6 +6,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-09-07
+
+### Added
+
+- `hardening/sshd_config.d/10-hardening.conf` and `hardening/fail2ban/jail.local`, the deployable host
+  SSH configuration, byte-identical to what runs on the VPS. Applied after finding 13,672 failed root
+  logins in the previous 24 hours, escalating to several hundred attempts per minute during the work,
+  against a host with `PasswordAuthentication yes`, `PermitRootLogin yes`, no firewall and no
+  fail2ban. `PasswordAuthentication no`, `PermitRootLogin prohibit-password` and `MaxStartups
+  30:50:200` now apply, and `Failed password` went from roughly 180 per minute to zero.
+- `docs/ssh-hardening.md`, recording the finding, the change, the verification and the break-glass
+  path. Includes the two traps that produce false results when testing this: a reload leaves
+  already-forked sshd children on the old config for up to `LoginGraceTime`, and `ssh -i` appends to
+  the identity list rather than replacing what the config supplies, so a "key still works" test can
+  pass on the wrong key.
+- fail2ban with the sshd jail. The Debian default fails to start on this host with "Have not found
+  any log file for sshd jail", because sshd logs to journald only and there is no rsyslog or
+  `/var/log/auth.log`, so `backend = systemd` is set explicitly. 71 addresses banned in the first
+  hour.
+- `README.md` gained a "Host access" section and both new documents in the index.
+- `docs/infrastructure.md` gained the sshd node and edge in the diagram, the `hardening/` and
+  `vaultwarden-db-backup/` directories in the layout, and the daily database copy in the cron table,
+  which had been missing since 1.6.0.
+- `TODO.md` item 7, the security follow-ups: no firewall at all, the notebook key copy, what to do
+  about the `admin` account, the parent repo's `docs/services.md` claiming one Vaultwarden user where
+  the database holds four, and the other three accounts still being on PBKDF2.
+
+### Changed
+
+- root's `authorized_keys` on the VPS holds one personal ed25519 key,
+  `SHA256:3r0Dk1tFl8W/iHyFC6rsOFbQ1JznqEeP5+06iYug0mA`, instead of the 8196-bit work RSA key
+  `sri@sri-VirtualBox` that was previously its only entry. That work key is also used for
+  `github.com` and `git.myndc.de`, and a work credential holding sole root on the private box that
+  carries the vault is a boundary problem in both directions. The old key is verified rejected.
+
+### Fixed
+
+- `/etc/ssh/sshd_config.d/50-cloud-init.conf` contained `PasswordAuthentication yes` and silently
+  overrode the `PasswordAuthentication no` already present at line 57 of `sshd_config`, because the
+  `Include` sits at line 12 and sshd uses the first occurrence of a keyword. Editing the main file
+  changed nothing. `10-hardening.conf` sorts before the cloud-init file and therefore wins, which
+  also survives `cloud-init.service` rewriting its own file on every boot.
+
 ### Added
 
 - `docs/vaultwarden.md` — new step 3 in the master password order of operations: memorise the password before changing

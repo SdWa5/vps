@@ -1,0 +1,24 @@
+# SdWa5 VPS fail2ban configuration.
+#
+# sshd logs to journald only. rsyslog is not installed and /var/log/auth.log does
+# not exist, so the Debian default backend "auto" finds no log file and fail2ban
+# refuses to start with "Have not found any log file for sshd jail". The backend
+# is therefore set to systemd explicitly.
+#
+# Added 2026-09-07 after finding 13,672 failed root logins in 24 hours against a
+# host with password authentication enabled and no firewall.
+
+[DEFAULT]
+ignoreip = 127.0.0.1/8 ::1
+backend  = systemd
+bantime  = 1h
+findtime = 10m
+maxretry = 5
+
+# Repeat offenders escalate: 1h, 2h, 4h and so on, capped at one week.
+bantime.increment = true
+bantime.factor    = 2
+bantime.maxtime   = 1w
+
+[sshd]
+enabled = true

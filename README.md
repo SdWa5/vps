@@ -52,6 +52,7 @@ See `docs/` for per-service documentation:
 - [Minecraft](docs/minecraft.md)
 - [Maintenance (disk cleanup, log caps)](docs/maintenance.md)
 - [Monitoring (health checks, alerts, Vaultwarden auto-update)](docs/monitoring.md)
+- [SSH hardening (key-only access, fail2ban)](docs/ssh-hardening.md)
 
 ## Common operations
 
@@ -86,6 +87,15 @@ something is wrong. A healthy system sends nothing. Vaultwarden updates itself e
 the Bitwarden clients auto-update and a server left behind stops working with them.
 
 See [docs/monitoring.md](docs/monitoring.md).
+
+## Host access
+
+SSH is key-only. `PasswordAuthentication no` and `PermitRootLogin prohibit-password`, applied
+2026-09-07 after 13,672 failed root logins in 24 hours, with fail2ban behind it. The deployable
+config lives in [`hardening/`](hardening/).
+
+The Contabo console remains the fallback and is unaffected by any of it, because it goes through
+getty and PAM rather than sshd. See [docs/ssh-hardening.md](docs/ssh-hardening.md).
 
 ## Tests
 

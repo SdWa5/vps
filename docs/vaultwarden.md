@@ -183,6 +183,47 @@ restarting the browser, and disabling the organization policies. The policy atte
 #7635 pointing at a date field on policy objects. It was applied and reverted the same evening. The
 upstream symptom reproduces with every policy disabled, and all three are `enabled = 1` again.
 
+## Runbook: a mobile client cannot log in after a password or KDF change
+
+Seen 2026-09-07, immediately after the rotation below. The web vault and the Firefox extension worked,
+the Android app did not.
+
+**The tell is in the database, not in the log.** The app never contacted the server at all:
+
+```sql
+SELECT d.atype, d.name, d.updated_at FROM devices d
+JOIN users u ON u.uuid = d.user_uuid WHERE u.email = '<address>' ORDER BY d.updated_at DESC;
+```
+
+```
+Android  25053PC47G   last seen 17:25    <- over an hour BEFORE the change
+password change                18:46
+KDF change                     18:49
+```
+
+A `docker logs vaultwarden` capture over the same window was empty, and no authentication had been
+rejected anywhere. So the failure was entirely local to the app.
+
+**Why it cannot be otherwise.** A Bitwarden client stores its vault cache on the device together with
+`kdfConfig` and `masterKeyEncryptedUserKey`. After a server-side change both of those are stale: the
+old KDF parameters and the user key wrapped with the old master key. Entering the new password at the
+lock screen derives a key using the old parameters, fails to unwrap the stored user key, and reports
+an invalid master password. A locked client never calls the server, so it has no way to learn that
+anything changed, and its stored refresh token is dead anyway because the change rotated
+`security_stamp`.
+
+**The fix is to discard the local state.** Clearing the app's storage and logging in fresh worked and
+is what was done here. The lighter option is the **Log out** control on the app's lock screen, which
+clears the same stored keys without a reinstall. That should be equivalent, since it targets exactly
+the state that is stale, but it was not the path taken on 2026-09-07 and is therefore untested here.
+
+After a reinstall the self-hosted URL has to be set to `https://vault.sdwa5.org` in the login screen's
+settings before entering the address, otherwise the app tries Bitwarden's cloud.
+
+Ruled out during that diagnosis, and worth ruling out again rather than assuming: no second factor is
+configured on the account, and `login_verify_count` was 0 with `verified_at` set, so no new-device
+verification was pending.
+
 ## Master password and KDF
 
 The KDF is a property of the account, stored on the Vaultwarden user row as `client_kdf_type`,
@@ -191,6 +232,12 @@ anything from it. It only returns the parameters at `/identity/accounts/prelogin
 client can turn the master password into the key. **Nothing in this section touches the server.**
 There is no environment variable, no compose change, no restart and no Caddy change. It all happens
 in the web vault at https://vault.sdwa5.org.
+
+**Performed on 2026-09-07.** New master password and Argon2id at 64 MiB, 3 iterations, parallelism 4,
+both verified from the database rather than from the UI. `private_key` and `public_key` were unchanged,
+which is the proof that "Rotate account encryption key" really was left off, and all 451 ciphers came
+through. The other three accounts remain on PBKDF2, since the KDF is per account and only its holder
+can change it.
 
 ### Target settings
 
@@ -279,6 +326,10 @@ its own cause.
 
 7. **Log back in everywhere again**, and verify autofill on the phone specifically. That is the
    setting most likely to break and the one least likely to be noticed.
+
+   Expect the mobile app to refuse the new password at its lock screen. That is not a fault, it is the
+   stale local state described in the runbook above, and it needs a log out or a reset rather than a
+   retry.
 
 8. **Clear the generator history last.** A master password generated in the client sits in that
    client's generator history, which anyone who unlocks the vault can read. That is circular, so it

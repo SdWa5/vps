@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `docs/ssh-hardening.md` — `id_ed25519_sdwa5` is in Vaultwarden since 2026-09-08, as item
+  `00fceed1-965b-4857-9b91-2d371d0c6662`. It was uploaded by path so the key never passed through a
+  command line or the process list, then downloaded again and compared byte-for-byte against the file
+  on disk. The open item narrows to the notebook copy alone, which stays open because a rescue console
+  cannot fetch a vault item and every client is logged out for a while after a KDF change.
+
 ### Added
 
 - `docs/shopware/TODO.md` item 5.4, actual preorders. Binding prepaid orders for merch not yet in

@@ -26,6 +26,7 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt koalaman/shellcheck:stable -x \
     monitoring/vps-health.sh \
     monitoring/vaultwarden-autoupdate.sh \
     monitoring/vaultwarden-db-backup.sh \
+    hardening/firewall/sdwa5-firewall.sh \
     tests/run.sh \
     tests/test_helper.bash \
     tests/stubs/*

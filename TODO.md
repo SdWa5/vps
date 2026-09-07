@@ -47,19 +47,16 @@
        healthy. an external dead-man's switch would close that gap, deliberately deferred
        (ca. 45 Minuten)
 7. security follow-ups from the 2026-09-07 ssh hardening ([docs/ssh-hardening.md](docs/ssh-hardening.md))
-    1. no firewall at all. `iptables -P INPUT ACCEPT` with no rules, so every port a container opens
-       is public. fail2ban manages its own chain and does not change that. an nftables default-deny
-       with the handful of published ports would (ca. 2 Stunden)
-    2. `id_ed25519_sdwa5` into vaultwarden and a second copy on the notebook. today the workstation is
-       the only holder and the contabo console is the only thing behind it. the vault item does not
-       replace the notebook copy, because a rescue console cannot fetch one (ca. 15 Minuten)
-    3. `admin` (uid 1000, full sudo) has a password and no authorized_keys, so it can no longer reach
+    1. a second copy of `id_ed25519_sdwa5` on the notebook. the key is in vaultwarden since 2026-09-08,
+       so the workstation is no longer the only holder, but a rescue console cannot fetch a vault item
+       and every client is logged out for a while after a kdf change (ca. 15 Minuten)
+    2. `admin` (uid 1000, full sudo) has a password and no authorized_keys, so it can no longer reach
        the host over ssh. decide whether it gets a key or the account goes away (ca. 20 Minuten)
-    4. [docs/services.md](../docs/services.md) in the parent repo says vaultwarden has "currently only
+    3. [docs/services.md](../docs/services.md) in the parent repo says vaultwarden has "currently only
        Stefan". the database holds 4 accounts. reconcile the doc with reality (ca. 15 Minuten)
-    5. the other three vaultwarden accounts are on pbkdf2. argon2id is a per-account setting
+    4. the other three vaultwarden accounts are on pbkdf2. argon2id is a per-account setting
        that only the account holder can change, so this is a message to them rather than an action
        (ca. 15 Minuten)
-    6. emergency access is enabled on the server but nobody is enrolled and the sdwa5 org has a single
+    5. emergency access is enabled on the server but nobody is enrolled and the sdwa5 org has a single
        owner. a forgotten master password is unrecoverable for any of the four accounts today
        (ca. 45 Minuten)

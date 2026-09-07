@@ -6,6 +6,48 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-09-08
+
+### Added
+
+- `hardening/firewall/sdwa5-firewall.sh` and `sdwa5-firewall.service`. Default-deny `INPUT` for IPv4
+  and IPv6, allowing loopback, established and related, ICMP, the Docker bridges and 22, 80 and 443.
+  Enabled at boot.
+- `hardening/systemd/resolved.conf.d/10-no-llmnr.conf`. Turns LLMNR and mDNS off, which closed 5355
+  on TCP and UDP for both families. It was the only unnecessary port open to the internet.
+- `docs/ssh-hardening.md` gains a firewall section covering the measured exposure before the change,
+  why `iptables-restore` and `iptables-persistent` are not used, the fail2ban flush problem and the
+  IPv6 finding.
+- `hardening/firewall/sdwa5-firewall.sh` added to the shellcheck list in `tests/run.sh`, which is an
+  explicit file list rather than a glob and would otherwise never have covered it.
+
+### Changed
+
+- The firewall is defence in depth rather than a repair. Measured before the change, every Docker
+  publish already bound `127.0.0.1`, along with exim4 and the Caddy admin API, so only 22, 80, 443
+  and 5355 were public. The value is protection against the next service that binds `0.0.0.0` by
+  accident.
+- The script rewrites `INPUT` alone instead of restoring a saved table. Docker owns `DOCKER`,
+  `DOCKER-USER`, `DOCKER-ISOLATION-*` and a set of `FORWARD` rules and rebuilds them at its own start,
+  so a restored snapshot would replay stale copies referring to bridges that may no longer exist. This
+  also makes the script idempotent.
+- The unit is ordered `Before=fail2ban.service` and restarts fail2ban from `ExecStartPost` when it is
+  already running. Flushing `INPUT` removes fail2ban's jump, which would leave SSH unfiltered while
+  still looking correct. The `ExecStartPost` is guarded by `is-active` so it is a no-op at boot, and
+  uses `--no-block`, because waiting on a unit ordered after this one would deadlock.
+
+### Notes
+
+- IPv6 is unreachable from outside for a reason upstream of this host. It holds
+  `2a02:c206:3015:7801::1/64` with a default route and no AAAA record is published. Inbound SSH to the
+  address returns `No route to host` from a client with working IPv6, and the `ip6tables` `INPUT`
+  policy counter reads 0 packets, so nothing arrives at all. The v6 rules are in place regardless, so
+  that publishing an AAAA record later does not expose an unfiltered stack.
+- `ip6tables-save` writes an empty file on this host and exits 0, because the nft backend has no `ip6`
+  filter table until something creates one, while `ip6tables -S` synthesises the default policies and
+  looks normal. An empty restore file is a silent no-op, so an auto-revert built from it protects
+  nothing.
+
 ### Changed
 
 - `docs/ssh-hardening.md` — `id_ed25519_sdwa5` is in Vaultwarden since 2026-09-08, as item

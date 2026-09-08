@@ -58,6 +58,8 @@
        has a single owner and holds a small number of ciphers, and emergency_access still has zero
        rows, so until a grantee is confirmed, losing stefan's account loses the org data. verify with
        `SELECT COUNT(*) FROM emergency_access;` (ca. 30 Minuten)
-    4. inbound ipv6 to the host is unverified rather than broken. outbound works, no AAAA record is
-       published, and the client used for testing had ipv6 blocked by mullvad. settle it from a host
-       with working ipv6 before publishing an AAAA record (ca. 15 Minuten)
+    4. inbound ipv6 does not reach the host, tested 2026-09-08 from a mullvad exit in sweden with
+       working ipv6. the icmpv6 error comes from the contabo router `2a02:c205::1eaf` and a tcpdump on
+       the vps captured 0 packets, so neither the vm stack nor the firewall is the cause. outbound
+       works 6/6. confirm from a second independent network, then ask contabo whether the /64 is
+       routed inbound. nothing depends on it while no AAAA record is published (ca. 30 Minuten)

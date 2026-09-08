@@ -6,6 +6,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.17.0] - 2026-09-08
+
+### Fixed
+
+- **The IPv6 conclusion in 1.16.0 was wrong and is withdrawn.** Inbound IPv6 reaches the host. A
+  repeat test on 2026-09-08 gave ping 3/3 at 0% loss and 58 ms, a successful `ssh -6` login, and
+  `ip6tables` counters that moved, with `tcp dpt:22` and `tcp dpt:443` each counting a SYN and the
+  ICMPv6 rule rising by 11. The recommendation to open a Contabo support ticket is removed, since it
+  rested on a single failed window treated as a steady state.
+- `curl -6 https://[2a02:...]/` returning `000` is recorded as expected rather than a fault. A
+  literal-IP URL sends no SNI and Caddy closes the handshake.
+
+### Changed
+
+- `TODO.md` item 7.4 now reads that inbound IPv6 is intermittent with an unknown cause, and says
+  explicitly not to open a Contabo ticket on the current evidence. The untested hypothesis is
+  neighbour cache expiry, since nothing here emits IPv6 and no AAAA record points at the host, and it
+  names the experiment that would confirm it.
+- `docs/monitoring.md` no longer calls inbound IPv6 unverified.
+
+### Added
+
+- `docs/ssh-hardening.md` records what the three attempts cost and the two rules that come out of it.
+  A negative network result needs repetition before it becomes a conclusion, because a single failed
+  window and a permanent fault look identical. And every counter gets checked rather than the
+  convenient ones, since the check that missed this filtered the `ip6tables` output to the policy and
+  the TCP rules, so an inbound ICMPv6 packet was counted on the line that had been filtered out.
+
 ## [1.16.0] - 2026-09-08
 
 ### Added

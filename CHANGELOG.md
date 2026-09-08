@@ -6,6 +6,50 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.20.0] - 2026-09-08
+
+### Changed
+
+- **Every image tag is pinned.** All twelve were on `:latest` and only Vaultwarden was ever pulled, so
+  `:latest` delivered neither updates nor reproducibility. The hazard it did carry was a future
+  `docker-compose pull` crossing a major version under a live database: measured 2026-09-08,
+  `mariadb:latest`, `lts`, `12` and `12.3` all pointed at one digest, so `latest` was 12.3 and would
+  have followed to 13 on its own. Each tag was chosen by finding which real Docker Hub tag carries the
+  digest that is running, rather than by reading a version number out of the container.
+  - `dockware/shopware:6.7.11.1`, exact, since dockware publishes no `6.7` series tag.
+  - `dolibarr/dolibarr:23.0.2`, exact, for both `dolibarr` and `dolibarr_cron` and for the two project
+    services. A Dolibarr minor upgrade runs forward-only database migrations and no restore drill has
+    been done yet, so the `23` tag was rejected because it would let 23.x move on its own.
+  - `mariadb:12.3`, minor series rather than exact, in both compose files. Patch updates inside 12.3
+    are safe and wanted; the major-version jump is the one-way door.
+- Four images keep `:latest`, each with the reason written at the line so nobody pins them later.
+  `vaultwarden` is owned by its weekly auto-update script and a pin would freeze security updates for
+  a password vault. `restic` has nothing to pin to. `minecraft` and `ollama` are profile-gated and not
+  present on the host, and Minecraft's build is decided by its `VERSION` environment variable.
+
+### Added
+
+- `docs/maintenance.md` gained an **Image versions** section: the per-service table with its reasons,
+  the warning that pinning is not a no-op on the next pull, and the procedure for bumping a pinned
+  service.
+- `docs/maintenance.md` now states that `docker-compose.projects.yml` carries its own copy of the
+  `x-logging` anchor, since YAML anchors do not cross files, and that both must be kept in step.
+
+### Security
+
+- **The image carrying both backups is five years old.** `lobaro/restic-backup-docker:latest` has not
+  been pushed since 2021-05-05, and the newest version tag in the repository is `1.3.1-0.9.6` from
+  2020. It cannot be pinned to anything better, so it is now filed as an explicit decision rather than
+  sitting unnoticed behind a `:latest` that looks current.
+
+### Removed
+
+- `TODO.md` item 6.1 asked to decide between auto-update, pinned tags with renovate, and a manual
+  window. The mechanism is settled and built, so the item is now only about cadence, and renovate
+  waits on the repositories going public.
+- The stale note in `docs/maintenance.md` saying the project compose file has no logging cap. It has
+  one since 1.19.0.
+
 ## [1.19.0] - 2026-09-08
 
 ### Security

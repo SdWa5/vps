@@ -42,13 +42,21 @@
        files alone would change nothing. these are pseudonyms rather than real names and no
        credential, so it is a disclosure decision for the owner and not a leak (`decision`)
 6. reliability follow-ups from the 2026-09-01 monitoring work ([docs/monitoring.md](docs/monitoring.md))
-    1. update policy for shopware, dolibarr and mariadb — only vaultwarden auto-updates today. decide
-       between auto-update, pinned tags with renovate, or a manual quarterly window (ca. 2 Stunden)
+    1. **the mechanism is settled and built** — every image is pinned as of 2026-09-08, see
+       [docs/maintenance.md](docs/maintenance.md#image-versions). what is left is the **cadence**: who
+       checks for new tags and how often. renovate would open the PRs automatically but needs the
+       repos public or a token, so it waits on the go-public work. until then it is a manual window,
+       and nothing schedules one (`decision`, ca. 30 Minuten)
+    2. the restic backup container runs `lobaro/restic-backup-docker:latest`, whose `latest` tag has
+       not been pushed since **2021-05-05**, and whose newest version tag is `1.3.1-0.9.6` from 2020.
+       so the image carrying both backups is five years old and unmaintained, and it cannot be pinned
+       to anything better. either accept it explicitly or move to a maintained image, which changes
+       the backup path and therefore waits on the restore drill below (ca. 2 Stunden)
     3. no restore drill has ever been run, for either backup. restore one restic snapshot into a
        scratch dir and verify `vaultwarden-db-backup/db.sqlite3` opens. the contabo auto backup is a
        second independent copy with 10 daily restore points, found 2026-09-08, and it has never been
        restore-tested either. it restores only as a whole vm (ca. 2 Stunden)
-    5. monitoring runs on the monitored host, so a dead vps sends nothing and the silence looks
+    4. monitoring runs on the monitored host, so a dead vps sends nothing and the silence looks
        healthy. an external dead-man's switch would close that gap, deliberately deferred
        (ca. 45 Minuten)
 7. security follow-ups from the 2026-09-07 ssh hardening ([docs/ssh-hardening.md](docs/ssh-hardening.md))

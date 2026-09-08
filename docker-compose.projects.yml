@@ -12,7 +12,9 @@ x-logging: &default-logging
 
 services:
   project2_dolibarr_db:
-    image: mariadb:latest
+    # Same pin as docker-compose.yml. Minor series rather than exact, so
+    # patches inside 12.3 still arrive and a major-version jump cannot.
+    image: mariadb:12.3
     container_name: project2_dolibarr_db
     restart: unless-stopped
     logging: *default-logging
@@ -25,7 +27,9 @@ services:
       - ./project2-dolibarr-mariadb-data:/var/lib/mysql
 
   project2_dolibarr:
-    image: dolibarr/dolibarr:latest
+    # Same exact pin as docker-compose.yml, for the same reason: Dolibarr
+    # minor upgrades run forward-only database migrations.
+    image: dolibarr/dolibarr:23.0.2
     container_name: project2_dolibarr
     restart: unless-stopped
     logging: *default-logging
@@ -52,7 +56,9 @@ services:
       - ./project2-dolibarr-custom-data:/var/www/html/custom
 
   project3_dolibarr_db:
-    image: mariadb:latest
+    # Same pin as docker-compose.yml. Minor series rather than exact, so
+    # patches inside 12.3 still arrive and a major-version jump cannot.
+    image: mariadb:12.3
     container_name: project3_dolibarr_db
     restart: unless-stopped
     logging: *default-logging
@@ -65,7 +71,9 @@ services:
       - ./project3-dolibarr-mariadb-data:/var/lib/mysql
 
   project3_dolibarr:
-    image: dolibarr/dolibarr:latest
+    # Same exact pin as docker-compose.yml, for the same reason: Dolibarr
+    # minor upgrades run forward-only database migrations.
+    image: dolibarr/dolibarr:23.0.2
     container_name: project3_dolibarr
     restart: unless-stopped
     logging: *default-logging

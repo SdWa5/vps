@@ -1,5 +1,11 @@
 # Secrets
 .env
+# Any hand-made copy of it too. Only `.env` itself was ignored, so an `.env.bak-*`
+# left behind by an edit showed up as untracked in the deploy checkout at
+# /opt/docker, which is exactly what makes "is this host clean?" useless as a
+# deploy precondition.
+.env.*
+!.env.example
 rclone-config/
 
 # Pre-git backups (contain original files with inline credentials)

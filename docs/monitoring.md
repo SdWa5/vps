@@ -194,8 +194,13 @@ update job mails if that file is missing or older than two hours.
 
 ## Mail delivery
 
-Recipients are `ripper@sdwa5.org`, overridable through
-`MONITOR_MAIL_TO`.
+Recipients are every space-separated address in `MONITOR_MAIL_TO`. It defaults to `ripper@sdwa5.org`
+alone, and the host adds any further recipient in `/opt/docker/.env`.
+
+**A private address belongs in `.env` and not in this repository.** The default used to carry one
+directly in `monitoring/lib.sh`, which would have published it the moment the repository went public,
+so it moved to `.env` on 2026-09-08 with the effective recipient list unchanged. `.env` is
+gitignored.
 
 Mail goes out through `curl` to `smtps://smtp.gmail.com:465` as `ripper@sdwa5.org`, reusing the
 Gmail app password Vaultwarden already sends from. The local exim4 would deliver direct-to-MX from a
@@ -215,7 +220,7 @@ list.
 | `MONITOR_SMTP_USER` | `ripper@sdwa5.org` | SMTP login and envelope sender |
 | `MONITOR_SMTP_HOST` | `smtp.gmail.com` | |
 | `MONITOR_SMTP_PORT` | `465` | implicit TLS |
-| `MONITOR_MAIL_TO` | both addresses above | space-separated |
+| `MONITOR_MAIL_TO` | `ripper@sdwa5.org` | space-separated; the host sets its own list in `.env` |
 
 Vaultwarden already holds the same app password. Copy it across without ever printing it:
 

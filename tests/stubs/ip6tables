@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# Fake ip6tables. Only "-S INPUT" is used, see the iptables stub.
+# Fake ip6tables. Only "-S INPUT" is used, see the iptables stub. Invocations
+# are logged to the same STUB_IPT_LOG, so a firewall test can assert both
+# families from one file.
+[[ -n "${STUB_IPT_LOG:-}" ]] && printf 'ip6tables %s\n' "$*" >> "$STUB_IPT_LOG"
 if [[ "${1:-}" == "-S" ]]; then
     printf '%s' "${STUB_IPT_V6-}"
     [[ -n "${STUB_IPT_V6-}" ]] && printf '\n'

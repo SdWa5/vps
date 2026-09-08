@@ -1,4 +1,20 @@
 #!/usr/bin/env bash
+# Fake iptables. Every invocation is appended to STUB_IPT_LOG when that is set,
+# so a test can assert which rules a script tried to write.
+[[ -n "${STUB_IPT_LOG:-}" ]] && printf 'iptables %s\n' "$*" >> "$STUB_IPT_LOG"
+
+# `-C` is a rule existence check. STUB_IPT_HAVE holds one pattern per line, and
+# a check succeeds when the whole invocation contains that line. One pattern per
+# line rather than per word, because the two checks this script makes both
+# mention f2b-sshd and word splitting would make either satisfy both.
+if [[ "${1:-}" == "-C" ]]; then
+    while IFS= read -r want; do
+        [[ -z "$want" ]] && continue
+        [[ "$*" == *"$want"* ]] && exit 0
+    done <<< "${STUB_IPT_HAVE-}"
+    exit 1
+fi
+
 # Fake iptables. "-S <chain>" dumps a per-chain variable, so a test can express
 # any shape including an empty one, which is how a missing chain is expressed.
 #

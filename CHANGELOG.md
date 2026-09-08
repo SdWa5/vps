@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.29.0] - 2026-09-08
+
+### Security
+
+- **`sdwa5-firewall.sh` re-adds fail2ban's jump itself, because fail2ban does not.** Flushing `INPUT`
+  removes the jump fail2ban puts at its head, and the unit's `ExecStartPost` restarted fail2ban so
+  fail2ban would re-insert it. **Measured 2026-09-08, that does not work.** After
+  `systemctl restart sdwa5-firewall`, fail2ban restarted and logged `Server ready` and
+  `Creating new jail 'sshd'`, and thirty seconds later the jump was still absent. The same commands
+  run by hand insert it without complaint, so the cause inside fail2ban 1.0.2 is not established,
+  only the effect is. The effect is that **every firewall restart and every boot silently switched
+  off SSH brute-force filtering** while `iptables -S INPUT` still looked plausible.
+- It was found because the new `DOCKER-USER` check fired on its own first deployment, which is the
+  check doing exactly what it was written for.
+- The jump is only re-added when the `f2b-sshd` chain exists, because creating that chain is
+  fail2ban's job and a jump to a missing chain fails.
+- **The `ExecStartPost` restarting fail2ban is removed, which buys a second thing.** A fail2ban
+  restart logs `Flush ticket(s) with iptables-multiport` and discards every active ban, so the old
+  arrangement threw away the bans it was trying to protect. Bans now survive a firewall restart,
+  because nothing touches the `f2b-sshd` chain.
+
+### Added
+
+- `tests/sdwa5-firewall.bats`, the first tests this script has had, taking the suite from 91 to 104.
+  They cover the `INPUT` rebuild, the service ports, bridge discovery, every `DOCKER-USER` rule
+  including that egress is `RETURN` and never `ACCEPT`, the external interface coming from the default
+  route, and three cases for the fail2ban jump: re-added when its chain exists, left alone when it does
+  not, and not inserted twice.
+- A `tests/stubs/ip` stub, and the `iptables` and `ip6tables` stubs now log every invocation so a test
+  can assert what a script tried to write. `STUB_IPT_HAVE` matches one pattern per line rather than per
+  word, because both `-C` checks in this script mention `f2b-sshd` and word splitting made either
+  satisfy both.
+- `docs/ssh-hardening.md` records that **`fail2ban-client stop <jail>` is not reversible with
+  `start <jail>`**. `stop` removes the jail from the running server and `start` then fails with
+  `UnknownJailException`, leaving the jail not running at all. Learned while diagnosing this, and it
+  briefly left the sshd jail down.
+
 ## [1.28.0] - 2026-09-08
 
 ### Security

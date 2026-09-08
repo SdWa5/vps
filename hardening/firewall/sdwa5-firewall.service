@@ -11,12 +11,18 @@ Before=fail2ban.service
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/local/sbin/sdwa5-firewall.sh
-# Flushing INPUT removes fail2ban's jump. At boot that does not matter, because
-# fail2ban starts afterwards and inserts it. On a manual restart it does, so the
-# jump is restored here. The is-active guard keeps this a no-op at boot, and
-# --no-block avoids waiting on a unit that is ordered after this one, which would
-# otherwise deadlock.
-ExecStartPost=/bin/sh -c 'systemctl is-active --quiet fail2ban && systemctl --no-block restart fail2ban || true'
+# There is deliberately no ExecStartPost restarting fail2ban any more.
+#
+# It used to be here to make fail2ban re-insert the jump that flushing INPUT
+# removes, and measured on 2026-09-08 it did not work: fail2ban restarted, logged
+# "Server ready" and "Creating new jail 'sshd'", and 30 seconds later the jump
+# was still gone. So every firewall restart and every boot silently switched off
+# SSH brute-force filtering. The script re-adds the jump itself now.
+#
+# Dropping the restart buys a second thing. A fail2ban restart logs
+# "Flush ticket(s) with iptables-multiport" and discards every active ban, so the
+# old arrangement threw away the bans it was trying to protect. They now survive
+# a firewall restart, because nothing touches the f2b-sshd chain.
 
 [Install]
 WantedBy=multi-user.target

@@ -24,5 +24,11 @@ description = "Commit c516d41, reviewed in full and remediated"
 # Allowlisted by commit rather than by path on purpose. A `paths` entry makes
 # gitleaks skip reading the file at all, which would also blind the
 # working-tree scan to a secret arriving there in future. Scoping it to this
-# one immutable, fully reviewed commit hides nothing else.
-commits = ["c516d4129deca57e6904c846bbf2c74a642c9059"]
+# one fully reviewed commit hides nothing else.
+#
+# **A commit SHA is not immutable, and this one already moved once.** The
+# history rewrite of 2026-09-08 changed every hash, so the previous value
+# `c516d41` stopped matching and the two findings came back. Anything that
+# rewrites history has to update this line, and the commit is findable again
+# with `git log --diff-filter=A -- minecraft-data/server.properties`.
+commits = ["9f800d74349984f6e0675d28b4766821a51252b1"]

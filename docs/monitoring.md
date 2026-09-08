@@ -36,10 +36,21 @@ auto-update.
 | `vaultwarden_db_backup` | the consistent database copy is missing, or older than `DB_BACKUP_MAX_AGE_HOURS` (26) |
 | `http` | `vault.sdwa5.org/alive`, `sdwa5.org` or `erp.sdwa5.org` returns anything but 200 |
 | `caddy` | `systemctl is-active caddy` is not `active` |
+| `firewall` | the IPv4 `INPUT` policy is not `DROP`, fail2ban's jump is gone, or a port in `FIREWALL_PORTS` (22 80 443) is no longer accepted. An open IPv6 policy is a WARN rather than a CRIT |
 | `vaultwarden_version` | the running version is behind the newest GitHub release |
 
 A container reporting `starting` is not an alert, that is a normal `start_period`. GitHub being
 unreachable is not an alert either, otherwise the recipient learns to ignore this mail.
+
+The firewall check exists because that failure is silent. Anything that flushes `INPUT`, including
+the firewall unit's own restart, removes fail2ban's jump, and the chain still looks plausible
+afterwards. A missing `iptables` binary or an unreadable chain is reported as CRIT rather than
+passing, since a check that cannot see its subject has not confirmed anything. All faults it finds
+are reported in one line rather than one per run, so a single mail carries the whole picture.
+
+IPv6 is a WARN because nothing currently reaches the host over IPv6 and no AAAA record is published,
+so an open v6 policy is a gap that matters once that changes rather than a live exposure. See the
+firewall section of [ssh-hardening.md](ssh-hardening.md).
 
 ### Reminder backoff
 

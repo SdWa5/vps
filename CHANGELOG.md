@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.12.0] - 2026-09-08
+
+### Added
+
+- `monitoring/vps-health.sh` gains `check_firewall`. It alerts when the IPv4 `INPUT` policy is not
+  `DROP`, when fail2ban's `f2b-sshd` jump is missing, and when a port in `FIREWALL_PORTS` is no longer
+  accepted. Without it the firewall added in 1.11.0 could disappear unnoticed, because anything that
+  flushes `INPUT` leaves a chain that still looks plausible.
+- `FIREWALL_PORTS` tunable, default `22 80 443`.
+- Six tests in `tests/vps-health.bats` covering an ACCEPT policy, a missing fail2ban jump, a dropped
+  service port, an unreadable chain, an open IPv6 policy and several faults at once. `tests/stubs/iptables`
+  and `tests/stubs/ip6tables` are new, and `common_setup` now installs a healthy chain by default.
+- `docs/monitoring.md` documents the check and why IPv6 is a WARN rather than a CRIT.
+
+### Changed
+
+- A missing `iptables` binary or an unreadable `INPUT` chain is CRIT rather than silently passing. A
+  check that cannot see its subject has confirmed nothing, and silence would read as healthy.
+- All firewall faults are reported in one line rather than one per run, so a single mail carries the
+  whole picture instead of the first problem only.
+
 ## [1.11.0] - 2026-09-08
 
 ### Added

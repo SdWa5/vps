@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Fake iptables. Only "-S INPUT" is used. STUB_IPT_V4 is the whole chain dump,
+# so a test can express any shape, including an empty one.
+if [[ "${1:-}" == "-S" ]]; then
+    printf '%s' "${STUB_IPT_V4-}"
+    [[ -n "${STUB_IPT_V4-}" ]] && printf '\n'
+    exit 0
+fi
+exit 0

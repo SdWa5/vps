@@ -21,6 +21,7 @@
 #   HEALTH_URLS                    space-separated "label=url" pairs
 #   BACKUP_MAX_AGE_HOURS           age at which the restic backup counts as stale
 #   DB_BACKUP_MAX_AGE_HOURS        age at which the Vaultwarden db dump counts as stale
+#   FIREWALL_PORTS                 tcp ports the INPUT chain must still accept
 #   STATE_DIR, FAKE_NOW            test hooks
 
 set -uo pipefail
@@ -38,6 +39,7 @@ HEALTH_URLS="${HEALTH_URLS:-vaultwarden=https://vault.sdwa5.org/alive shopware=h
 BACKUP_MAX_AGE_HOURS="${BACKUP_MAX_AGE_HOURS:-26}"
 DB_BACKUP_MAX_AGE_HOURS="${DB_BACKUP_MAX_AGE_HOURS:-26}"
 VAULTWARDEN_RELEASE_API="${VAULTWARDEN_RELEASE_API:-https://api.github.com/repos/dani-garcia/vaultwarden/releases/latest}"
+FIREWALL_PORTS="${FIREWALL_PORTS:-22 80 443}"
 
 STATE_FILE="$STATE_DIR/state"
 DRY_RUN=0
@@ -168,6 +170,55 @@ check_caddy() {
 # The check that would have caught the September 2026 outage: Bitwarden clients
 # auto-update from the stores, this server does not. A server left behind stops
 # working with the extension and the mobile app while the web vault keeps going.
+check_firewall() {
+    local v4 v6 problems=() port
+
+    # A missing binary is not a passing check. Without it nothing here can be
+    # confirmed, and silence would read as healthy.
+    if ! command -v iptables >/dev/null 2>&1; then
+        printf 'CRIT\tiptables is not available, the firewall cannot be verified\n'
+        return
+    fi
+
+    v4="$(iptables -S INPUT 2>/dev/null)"
+    if [[ -z "$v4" ]]; then
+        printf 'CRIT\tCould not read the INPUT chain, the firewall cannot be verified\n'
+        return
+    fi
+
+    grep -q '^-P INPUT DROP' <<<"$v4" \
+        || problems+=("IPv4 INPUT policy is not DROP, the host is unfiltered")
+
+    # fail2ban inserts this jump at the head of INPUT. Anything that flushes the
+    # chain removes it, and SSH is then unfiltered while the chain still looks
+    # right, which is exactly the failure worth catching.
+    grep -q 'j f2b-sshd' <<<"$v4" \
+        || problems+=("fail2ban jump is missing from INPUT, ssh brute force is unfiltered")
+
+    # A DROP policy without the service rules is an outage, not protection.
+    for port in $FIREWALL_PORTS; do
+        grep -qE -- "--dport $port( |\$)" <<<"$v4" \
+            || problems+=("no INPUT rule accepts tcp $port")
+    done
+
+    if (( ${#problems[@]} )); then
+        printf 'CRIT\t%s\n' "$(IFS='; '; echo "${problems[*]}")"
+        return
+    fi
+
+    # IPv6 is a warning rather than a critical. Nothing reaches this host over
+    # IPv6 today and no AAAA record is published, so a missing v6 policy is a
+    # gap that matters once that changes, not a live exposure.
+    v6="$(ip6tables -S INPUT 2>/dev/null)"
+    if ! grep -q '^-P INPUT DROP' <<<"$v6"; then
+        printf 'WARN\tIPv4 firewall is up, IPv6 INPUT policy is not DROP\n'
+        return
+    fi
+
+    printf 'OK\tINPUT DROP on both families, fail2ban jump present, %s accepted\n' \
+        "$(tr ' ' ',' <<<"$FIREWALL_PORTS")"
+}
+
 check_vaultwarden_version() {
     local running latest newest
 
@@ -282,7 +333,7 @@ public HTTP endpoints, Caddy, Vaultwarden version drift.
 
 Environment overrides (also honoured from the compose .env): DISK_WARN,
 DISK_CRIT, EXPECTED_CONTAINERS, HEALTH_URLS, BACKUP_MAX_AGE_HOURS,
-DB_BACKUP_MAX_AGE_HOURS, STATE_DIR, FAKE_NOW.
+DB_BACKUP_MAX_AGE_HOURS, FIREWALL_PORTS, STATE_DIR, FAKE_NOW.
 USAGE
 }
 
@@ -319,6 +370,7 @@ run_checks() {
     emit vaultwarden_db_backup "$(check_vaultwarden_db_backup)"
     emit http                  "$(check_http)"
     emit caddy                 "$(check_caddy)"
+    emit firewall              "$(check_firewall)"
     emit vaultwarden_version   "$(check_vaultwarden_version)"
 }
 

@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.13.0] - 2026-09-08
+
+### Changed
+
+- The `admin` account gets neither an SSH key nor deletion. It is removed from the `sudo` and
+  `www-data` groups, its password is locked and its shell is `/usr/sbin/nologin`. It keeps no
+  `authorized_keys`.
+- Its GECOS field now records why it must not be deleted, because `getent passwd` is where someone
+  will look before running `userdel`.
+- The break-glass procedure names root only. `admin` can no longer log in at the console either, and
+  Contabo can reset the root password from the panel, so that route depends on no stored credential.
+
+### Removed
+
+- `TODO.md` item on deciding the fate of the `admin` account.
+
+### Notes
+
+- The decision turns on a uid collision. The Dolibarr image defines its own `www-data` as uid 1000,
+  which maps to `admin` on the host, and 3461 files totalling 64 MB under `dolibarr-documents-data`
+  and `dolibarr-custom-data` are owned by it. Deleting the account frees uid 1000, `adduser` hands out
+  the lowest free uid, and the next account created would silently inherit ownership of every Dolibarr
+  document. The account stays to reserve the uid.
+- The same collision was the risk. Host uid 1000 is a public-facing container's web server uid and it
+  sat in the host's `sudo` group, so anything achieving host execution as that uid would have
+  inherited sudo membership.
+- Containers resolve uid 1000 through their own `/etc/passwd` and never the host's, so locking the
+  password and changing the shell does not affect them. Verified afterwards with 10 uid 1000 processes
+  still running, all 3461 files still owned, Dolibarr returning 200 and all three containers healthy.
+
 ## [1.12.0] - 2026-09-08
 
 ### Added

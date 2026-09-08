@@ -297,6 +297,33 @@ is missing or has fallen back to a bare `-j RETURN`. Anything that flushes the c
 Docker restart, would otherwise leave every published port unfiltered while the chain still looks
 present.
 
+### fail2ban's jump is re-added by the script, because fail2ban does not
+
+This replaced an arrangement that did not work, and it was caught by the new `DOCKER-USER` check
+firing on its own first deployment.
+
+Flushing `INPUT` removes the jump fail2ban puts at its head. The unit used to carry an
+`ExecStartPost` that restarted fail2ban so fail2ban would re-insert it, and the previous version of
+this document asserted that it did. **Measured 2026-09-08, it does not.** After
+`systemctl restart sdwa5-firewall`, fail2ban restarted and logged `Server ready` and
+`Creating new jail 'sshd'`, and thirty seconds later the jump was still absent. The same three
+commands run by hand insert it without complaint, so the cause inside fail2ban 1.0.2 is **not
+established, only the effect is**. The effect is what matters: every firewall restart and every boot
+silently switched off SSH brute-force filtering while `iptables -S INPUT` still looked plausible.
+
+So `sdwa5-firewall.sh` re-adds the jump itself, deterministically, and only when the `f2b-sshd` chain
+exists, because creating that chain is fail2ban's job and a jump to a missing chain fails.
+
+**Dropping the fail2ban restart buys a second thing.** A fail2ban restart logs
+`Flush ticket(s) with iptables-multiport` and discards every active ban, so the old arrangement threw
+away the bans it was trying to protect. Bans now survive a firewall restart, because nothing here
+touches the `f2b-sshd` chain.
+
+One thing to avoid, learned the hard way while diagnosing this. **`fail2ban-client stop <jail>` is
+not reversible with `start <jail>`.** `stop` removes the jail from the running server and `start` then
+fails with `UnknownJailException`, leaving the jail not running at all. Use
+`systemctl restart fail2ban` instead.
+
 Credit where due. The gap was caught by a parallel session reading this file, after the document had
 already asserted the opposite in the sentence above it.
 

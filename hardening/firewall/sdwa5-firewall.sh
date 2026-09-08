@@ -13,8 +13,22 @@
 # filterable at all, because such a packet is DNAT'd and traverses FORWARD
 # rather than INPUT, which is why an INPUT-only firewall could never see it.
 #
-# fail2ban inserts its jump at the head of INPUT when it starts. The unit that
-# runs this is ordered Before=fail2ban.service so that jump survives.
+# fail2ban's jump is re-added by this script rather than by fail2ban.
+#
+# Flushing INPUT removes the jump fail2ban puts at its head, and until
+# 2026-09-08 this relied on the unit's ExecStartPost restarting fail2ban so that
+# fail2ban would re-insert it. **That does not work.** Measured: after
+# `systemctl restart sdwa5-firewall`, fail2ban restarts and logs "Server ready"
+# and "Creating new jail 'sshd'", and 30 seconds later the jump is still absent.
+# The same commands run by hand insert it without complaint, so the cause inside
+# fail2ban is not established, only the effect is. The effect is what matters,
+# because it means every firewall restart and every boot silently switched off
+# SSH brute-force filtering while the chain still looked correct.
+#
+# So this script re-adds the jump itself, deterministically. It never touches
+# the f2b-sshd chain, so existing bans in it survive a flush of INPUT untouched.
+# The jump is only re-added when that chain exists, because creating it is
+# fail2ban's job and a jump to a missing chain would fail.
 set -e
 
 BRIDGES=$(ip -o link show type bridge | awk '{print $2}' | tr -d ':')
@@ -34,6 +48,14 @@ iptables -A INPUT -p tcp --dport 22  -j ACCEPT
 iptables -A INPUT -p tcp --dport 80  -j ACCEPT
 iptables -A INPUT -p tcp --dport 443 -j ACCEPT
 iptables -A INPUT -p udp --dport 443 -j ACCEPT
+
+# fail2ban's jump, back at the head of INPUT where it belongs. Inserted rather
+# than appended, so it is judged before the blanket accept for port 22.
+if iptables -C f2b-sshd -j RETURN >/dev/null 2>&1; then
+    iptables -C INPUT -p tcp -m multiport --dports ssh -j f2b-sshd >/dev/null 2>&1 \
+        || iptables -I INPUT -p tcp -m multiport --dports ssh -j f2b-sshd
+fi
+
 iptables -P INPUT DROP
 
 # DOCKER-USER, which is where a published container port is actually filtered.

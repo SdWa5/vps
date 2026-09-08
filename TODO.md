@@ -50,11 +50,17 @@
     1. a second copy of `id_ed25519_sdwa5` on the notebook. the key is in vaultwarden since 2026-09-08,
        so the workstation is no longer the only holder, but a rescue console cannot fetch a vault item
        and every client is logged out for a while after a kdf change (ca. 15 Minuten)
-    2. [docs/services.md](../docs/services.md) in the parent repo says vaultwarden has "currently only
-       Stefan". the database holds 4 accounts. reconcile the doc with reality (ca. 15 Minuten)
-    3. the other three vaultwarden accounts are on pbkdf2. argon2id is a per-account setting
-       that only the account holder can change, so this is a message to them rather than an action
+    2. one vaultwarden account still on pbkdf2 has anything to protect, holding a number of items and
+       last seen 2026-09-07. argon2id is per-account and only its holder can change it, so this is a
+       message to that person rather than an action here. the other two pbkdf2 accounts hold 0 items
        (ca. 15 Minuten)
-    4. emergency access is enabled on the server but nobody is enrolled and the sdwa5 org has a single
-       owner. a forgotten master password is unrecoverable for any of the four accounts today
+    3. the sdwa5 org has a single owner and holds a small number of ciphers, and emergency_access
+       has zero rows. losing stefan's account loses the org data. either promote the second active
+       account to owner or enrol a takeover grantee, both of which hand that person full access
        (ca. 45 Minuten)
+    4. two dormant vaultwarden accounts hold 0 items. one logged in once on 2026-06-20, the other has
+       never logged in and is still only invited to the org. decide whether they are deleted or kept
+       (ca. 15 Minuten)
+    5. inbound ipv6 to the host is unverified rather than broken. outbound works, no AAAA record is
+       published, and the client used for testing had ipv6 blocked by mullvad. settle it from a host
+       with working ipv6 before publishing an AAAA record (ca. 15 Minuten)

@@ -217,12 +217,37 @@ Verify the jump is first, not merely present. Read it a few seconds after any fa
 `systemctl restart` returns before fail2ban has inserted the rule and a chain read in that window is
 misleading.
 
-### IPv6 is unreachable from outside for an unrelated reason
+### IPv6, and a measurement that was wrong
 
-The host holds `2a02:c206:3015:7801::1/64` with a default route, and no AAAA record is published for
-`sdwa5.org`. An inbound SSH attempt straight to the address returns `No route to host` from a client
-with working IPv6, and the `ip6tables` `INPUT` policy counter reads **0 packets, 0 bytes**, so nothing
-arrives at the host at all. The block is therefore upstream of it, and predates this change.
+The host holds `2a02:c206:3015:7801::1/64` with a default route via `fe80::1`, and **no AAAA record is
+published** for `sdwa5.org` or `vault.sdwa5.org`, so nothing uses IPv6 for the services today.
+
+**Outbound IPv6 works**, measured on the host at 0% loss and 7 ms to `2001:4860:4860::8888`.
+
+**Inbound is unverified.** It is not known to be broken. An earlier note in this file claimed the
+inbound path was blocked upstream, and that was wrong. The evidence for it was an `ip6tables` `INPUT`
+policy counter of zero packets together with `No route to host` from the workstation, and the actual
+cause was that the workstation's Mullvad tunnel has `IPv6: off` and blocks IPv6 while connected. The
+ICMPv6 errors were generated locally, by the test client's own address. A client that cannot emit an
+IPv6 packet proves nothing about the far end.
+
+Two traps sit in that, both of which cost time here:
+
+**A zero counter is ambiguous.** `0 packets` on a DROP policy means nothing was dropped, which reads
+as "nothing arrived" and is equally consistent with "nothing was ever sent".
+
+**Check the client before concluding anything about the server.** The one-line version:
+
+```bash
+ping -6 -c2 2001:4860:4860::8888 || echo "this client has no working IPv6, test nothing from it"
+mullvad status 2>/dev/null | grep -i ipv6      # if Mullvad is connected with IPv6 off, that is why
+```
+
+To actually settle inbound, run this from a host with working IPv6:
+
+```bash
+ssh -6 -o ControlPath=none root@2a02:c206:3015:7801::1 true && echo "inbound v6 reaches sshd"
+```
 
 The IPv6 rules are in place regardless, so that publishing an AAAA record later does not silently
 expose an unfiltered stack.
@@ -373,5 +398,6 @@ test never authenticates at all.
   the workstation is no longer the only holder, but a rescue console cannot fetch a vault item and
   every client is logged out for a while after a KDF change. The Contabo console stays the break-glass
   behind both.
-- IPv6 is unreachable from outside, and the cause is upstream of this host rather than in its
-  configuration. Worth resolving before any AAAA record is published. See the firewall section.
+- Inbound IPv6 is unverified. Outbound works, no AAAA record is published, and the client used for
+  testing had IPv6 blocked by its VPN. Settle it from a host with working IPv6 before publishing an
+  AAAA record. See the firewall section.

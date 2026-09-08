@@ -222,6 +222,10 @@ services:
     image: lobaro/restic-backup-docker:latest
     container_name: restic
     restart: unless-stopped
+    # PID 1 in this image is `tail -fn0 /var/log/cron.log`, which never reaps
+    # children, so every rclone process a backup run spawns became a zombie.
+    # Measured 108 of them on 2026-09-08 after 51 days up. An init reaps them.
+    init: true
     logging: *default-logging
     volumes:
       - ./rclone-config:/root/.config/rclone
@@ -229,7 +233,11 @@ services:
     environment:
       - RESTIC_REPOSITORY=${RESTIC_REPOSITORY:-rclone:SdWa5:restic-backups}
       - RESTIC_PASSWORD=${RESTIC_PASSWORD}
-      # This sets the schedule (at 4:00 AM every day)
+      # Daily, and this is 04:00 UTC rather than local: no TZ is set here, so
+      # the container runs UTC and the job lands at 06:00 CEST / 05:00 CET.
+      # monitoring/vaultwarden-db-backup.sh is host cron and therefore Berlin
+      # time, so the two are 2h10m apart rather than the 10 minutes the docs
+      # used to claim. See docs/backup.md.
       - BACKUP_CRON=0 4 * * *
       # This tells the scheduled job WHAT to back up
       - BACKUP_DIRS=/data

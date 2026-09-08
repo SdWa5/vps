@@ -6,6 +6,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.21.0] - 2026-09-08
+
+### Added
+
+- **The restore drill has been run, and it passed.** `docs/backup.md` gained a Restore drill section
+  with the recipe and what the first run measured. Restoring the vault database from snapshot
+  `b672181d` took 6 seconds, `PRAGMA integrity_check` returned `ok`, and the database held 29 tables
+  with 4 users, 450 ciphers, 1 organization and 5 collections against a live vault of 455 ciphers,
+  which is the expected daily drift. The repository was previously unproven end to end.
+- The drill restores through the existing `restic` container on purpose, because it already holds
+  `RESTIC_REPOSITORY`, `RESTIC_PASSWORD` and the rclone config, so the drill never handles the
+  repository password. It also deletes the restored copy afterwards, which is not tidiness: that file
+  is every credential the association has.
+- `docs/backup.md` records that the Contabo whole-VM backup is deliberately **not** drilled, because
+  testing it means replacing the running host, and that it stays worth having as the only copy that
+  survives losing the Google account.
+
+### Fixed
+
+- **`docs/backup.md` said the database copy runs "ten minutes before restic". It does not.** The copy
+  is host cron and therefore Europe/Berlin at 03:50, so 01:50 UTC, while restic is container cron with
+  no `TZ` at 04:00 UTC. The real gap is 2 hours 10 minutes, and 3 hours 10 minutes under CET. The
+  ordering is still correct in both, so nothing is broken, but it held by arithmetic nobody had
+  checked. The schedule is now stated in UTC in both the document and `docker-compose.yml`.
+- **The restic container leaked zombie processes**, 108 of them measured after 51 days up. Its PID 1
+  is `tail -fn0 /var/log/cron.log`, which never reaps the `rclone` children each run spawns. Fixed
+  with `init: true` on the service.
+- The reason for restoring the vault from `vaultwarden-db-backup/db.sqlite3` rather than the hot copy
+  is now stated from measurement rather than as a warning. The live database is in WAL mode with a
+  552 KB `-wal` beside it, every snapshot captures all three files non-atomically, and **a main file
+  restored without its `-wal` opens cleanly and silently presents an earlier state** — the hot copy
+  returned `integrity_check ok` in the drill. So `integrity_check` is not evidence that a hot restore
+  is complete, which is what makes it dangerous.
+
+### Removed
+
+- `TODO.md` item 6.3, the restore drill, done here.
+
 ## [1.20.1] - 2026-09-08
 
 ### Fixed

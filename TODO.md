@@ -60,9 +60,9 @@
        has a single owner and holds a small number of ciphers, and emergency_access still has zero
        rows, so until a grantee is confirmed, losing stefan's account loses the org data. verify with
        `SELECT COUNT(*) FROM emergency_access;` (ca. 30 Minuten)
-    4. open a contabo ticket for inbound ipv6. established 2026-09-08. the prefix `2a02:c206::/32` is
-       announced by AS51167 and seen by 322/322 ris peers, the panel address matches the host exactly,
-       outbound works 6/6, and the icmpv6 `address unreachable` comes from contabo's own router
-       `2a02:c205::1eaf` while tcpdump on the vps captures 0 packets. so everything up to their edge
-       works and their last hop to the vm does not. nothing to change on this host, and nothing depends
-       on it while no AAAA record is published (ca. 20 Minuten)
+    4. inbound ipv6 is intermittent and the cause is unknown. it worked on 2026-09-08 at 0% loss with
+       a successful `ssh -6` login, and failed completely an hour earlier from a different mullvad
+       relay with `address unreachable` from contabo's router. untested hypothesis is neighbour cache
+       expiry, since nothing here emits ipv6 and no AAAA record points at the host. test it by leaving
+       v6 idle for an hour and attempting inbound before any outbound packet. do not open a contabo
+       ticket on the current evidence (ca. 30 Minuten)

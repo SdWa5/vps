@@ -49,9 +49,10 @@ passing, since a check that cannot see its subject has not confirmed anything. A
 are reported in one line rather than one per run, so a single mail carries the whole picture.
 
 IPv6 is a WARN rather than a CRIT because no AAAA record is published for either hostname, so nothing
-resolves to the host over IPv6 and an open v6 policy is a gap that matters once that changes. Whether
-inbound IPv6 reaches the host at all is unverified, see the firewall section of
-[ssh-hardening.md](ssh-hardening.md). Raise this to CRIT if an AAAA record is ever published.
+resolves to the host over IPv6 and an open v6 policy is a gap that matters once that changes. Inbound
+IPv6 does reach the host and an `ssh -6` login succeeds, though intermittently, see the firewall
+section of [ssh-hardening.md](ssh-hardening.md). Raise this to CRIT if an AAAA record is ever
+published, because at that point the v6 rules carry real traffic.
 
 ### Reminder backoff
 

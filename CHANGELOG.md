@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.20.1] - 2026-09-08
+
+### Fixed
+
+- 1.20.0 said `shopware` and `dolibarr` "will not move", which was true of the image content and
+  wrong about the containers. Changing an image *reference* is enough for `docker-compose up -d` to
+  recreate a container, and the host's images were tagged `:latest` locally, so the pinned names were
+  not present and `up -d` would have pulled and recreated three services for no gain. The running
+  images were given their pinned names on the host, which is accurate because that image is
+  6.7.11.1, and `up -d` now recreates `dolibarr_db` alone. `mariadb:12.3` was deliberately left
+  untagged so its patch upgrade stays a real, deliberate step.
+- `docs/maintenance.md` records the check to run before `up -d`, which compares each service's
+  running image id against the id its configured tag resolves to.
+
 ## [1.20.0] - 2026-09-08
 
 ### Changed

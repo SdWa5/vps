@@ -40,7 +40,7 @@ Automated backups via **Restic** + **rclone** to Google Drive.
 
 | Setting           | Value                              |
 |-------------------|------------------------------------|
-| Schedule          | Daily at 04:00                     |
+| Schedule          | Daily at **04:00 UTC**, which is 06:00 CEST / 05:00 CET — the restic container has no `TZ` set and runs UTC |
 | Source            | `/data` (= `/opt/docker/` read-only mount) |
 | Repository        | `rclone:SdWa5:restic-backups` (Google Drive) |
 | Retention         | 6 daily, 3 weekly, 11 monthly, 2 yearly |
@@ -54,12 +54,31 @@ restic mounts `/opt/docker` read-only and copies files while they are being writ
 database file and the write-ahead log, so a snapshot taken between the two can restore into a torn
 transaction, and nothing warns about it until the restore is needed.
 
-`monitoring/vaultwarden-db-backup.sh` runs at 03:50, ten minutes before restic, and writes a verified
-consistent copy to `vaultwarden-db-backup/db.sqlite3` through SQLite's online backup API. restic then
-picks it up as an ordinary file. See [monitoring.md](monitoring.md).
+`monitoring/vaultwarden-db-backup.sh` writes a verified consistent copy to
+`vaultwarden-db-backup/db.sqlite3` through SQLite's online backup API, and restic then picks it up as
+an ordinary file. See [monitoring.md](monitoring.md).
 
-**Restore the vault from `vaultwarden-db-backup/db.sqlite3`, not from `vaultwarden-data/db.sqlite3`.**
-The hot copy is still in every snapshot, and it is the one that can be torn.
+**The two jobs are scheduled in different timezones, and the gap is not ten minutes.** The database
+copy is `50 3 * * *` in `/etc/cron.d/vaultwarden-db-backup`, which is host cron and therefore
+Europe/Berlin, so 01:50 UTC. restic is `0 4 * * *` inside a container with no `TZ`, so 04:00 UTC. The
+real gap is 2 hours 10 minutes, and it is 3 hours 10 minutes under CET. The ordering is correct in
+both, so nothing is broken, but it holds by arithmetic that nobody checked rather than by design. Any
+change to either schedule has to be reasoned about in UTC.
+
+**Restore the vault from `vaultwarden-db-backup/db.sqlite3`, never from
+`vaultwarden-data/db.sqlite3`,** and the reason is stronger than "the hot copy might be torn":
+
+- The live database is in **WAL mode**, measured 2026-09-08, with a 552 KB `db.sqlite3-wal` beside it.
+  A commit lives across the main file and the log.
+- Every snapshot captures all three of `db.sqlite3`, `db.sqlite3-wal` and `db.sqlite3-shm`, and restic
+  reads files one after another rather than atomically. So the trio in a snapshot can be mutually
+  inconsistent even though each file is individually fine.
+- **A main file restored without its `-wal` opens cleanly and silently presents an earlier state.**
+  Measured in the drill below: the hot copy restored on its own passed `PRAGMA integrity_check` with
+  `ok`. So `integrity_check` is not evidence that a hot restore is complete, which is exactly what
+  makes it dangerous.
+- `vaultwarden-db-backup/db.sqlite3` has none of this, because `.backup` reads through SQLite and
+  folds the write-ahead log in, producing one consistent file.
 
 ## rclone remote
 
@@ -87,10 +106,75 @@ sqlite3 /tmp/restore/data/vaultwarden-db-backup/db.sqlite3 'PRAGMA integrity_che
 docker exec restic restic check
 ```
 
+## Restore drill
+
+**First run 2026-09-08, and it passed.** The repository had never been restored from, so it was
+unproven end to end. Re-run it after any change to the backup path, and otherwise once a quarter.
+
+Restoring through the existing container is deliberate: it already holds `RESTIC_REPOSITORY`,
+`RESTIC_PASSWORD` and the rclone config, so the drill never handles the repository password.
+
+```bash
+# 1. Restore just the vault database into a scratch directory inside the container.
+docker exec restic sh -c 'rm -rf /tmp/drill && mkdir -p /tmp/drill'
+docker exec restic restic restore latest --target /tmp/drill \
+    --include /data/vaultwarden-db-backup/db.sqlite3
+
+# 2. Bring it out to where sqlite3 is. The container has no sqlite3; the host does.
+mkdir -p /root/restore-drill
+docker cp restic:/tmp/drill/data/vaultwarden-db-backup/db.sqlite3 /root/restore-drill/
+
+# 3. Verify. integrity_check alone is not enough, so count rows as well.
+cd /root/restore-drill
+sqlite3 db.sqlite3 'PRAGMA integrity_check;'
+sqlite3 db.sqlite3 'SELECT COUNT(*) FROM users;'
+sqlite3 db.sqlite3 'SELECT COUNT(*) FROM ciphers;'
+sqlite3 db.sqlite3 'SELECT MAX(version) FROM __diesel_schema_migrations;'
+
+# 4. Delete the restore. It is a full copy of the vault.
+rm -rf /root/restore-drill
+docker exec restic sh -c 'rm -rf /tmp/drill'
+```
+
+**Step 4 is not tidiness.** The restored file is every credential the association has, in a directory
+nothing else protects, and it is inside the tree restic itself backs up if placed under
+`/opt/docker`. Restore to `/root` and delete it when done.
+
+### What the first drill measured
+
+Snapshot `b672181d`, taken 2026-09-07 04:00 UTC.
+
+| | Result |
+|---|---|
+| Restore wall time | **6 seconds** for the vault database alone |
+| Whole-snapshot restore size | 8.065 GiB across 56 403 files, so a full restore is a different order of magnitude |
+| `PRAGMA integrity_check` | `ok` |
+| `PRAGMA quick_check` | `ok` |
+| Tables | 29 |
+| Rows | 4 users, 450 ciphers, 1 organization, 5 collections |
+| Schema migration | `20260505120000` |
+| Live vault at the time | 4 users, **455** ciphers — five added after the snapshot, which is the expected daily drift rather than a fault |
+| `emergency_access` | **0 rows**, which independently confirms the open item on emergency access enrolment |
+
+The hot copy `vaultwarden-data/db.sqlite3` was restored in the same run purely to test it, and it also
+returned `ok` without its `-wal`. That is the finding recorded above: a clean `integrity_check` says
+nothing about whether a hot restore is complete.
+
+### Not drilled, and why
+
+The **Contabo Auto Backup** restores only as an entire VM image, so testing it means replacing the
+running host. It is accepted as an untested path rather than left looking merely undone. It stays
+worth having as a second, independent copy — it is the only one that survives losing the Google
+account.
+
 ## Notes
 
 - The restic container mounts all of `/opt/docker/` as `/data` read-only.
 - `.gitignore` exclusions do NOT affect what restic backs up — restic backs up everything including data dirs and `.env`.
 - `rclone.conf` OAuth token auto-refreshes; the `expiry` field in the token will update on next use.
-- No restore drill has been run yet, so the repository is unproven end to end. Tracked in
-  [TODO.md](../TODO.md).
+- The restic container accumulates **zombie processes**. Measured 108 on 2026-09-08 after 51 days up.
+  Its PID 1 is `tail -fn0 /var/log/cron.log` with no init, so nothing reaps the `rclone` children each
+  run spawns. `init: true` on the service fixes it. Harmless at this rate against a `kernel.pid_max`
+  of 4194304, but it is an unbounded leak.
+- The container runs **restic 0.12.0, built 2021**, because the image has not been rebuilt since. See
+  the image note in [TODO.md](../TODO.md).

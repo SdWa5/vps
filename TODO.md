@@ -52,11 +52,7 @@
        so the image carrying both backups is five years old and unmaintained, and it cannot be pinned
        to anything better. either accept it explicitly or move to a maintained image, which changes
        the backup path and therefore waits on the restore drill below (ca. 2 Stunden)
-    3. no restore drill has ever been run, for either backup. restore one restic snapshot into a
-       scratch dir and verify `vaultwarden-db-backup/db.sqlite3` opens. the contabo auto backup is a
-       second independent copy with 10 daily restore points, found 2026-09-08, and it has never been
-       restore-tested either. it restores only as a whole vm (ca. 2 Stunden)
-    4. monitoring runs on the monitored host, so a dead vps sends nothing and the silence looks
+    3. monitoring runs on the monitored host, so a dead vps sends nothing and the silence looks
        healthy. an external dead-man's switch would close that gap, deliberately deferred
        (ca. 45 Minuten)
 7. security follow-ups from the 2026-09-07 ssh hardening ([docs/ssh-hardening.md](docs/ssh-hardening.md))

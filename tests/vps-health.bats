@@ -98,6 +98,33 @@ Finished Backup at $(date -u '+%Y-%m-%d %H:%M:%S') after 3 seconds" health
     [[ "$(mail_body)" == *"reported failure"* ]]
 }
 
+# --- DOCKER-USER -----------------------------------------------------------
+
+# Regression for 2026-09-08. The firewall owned INPUT alone, so it read as
+# healthy while every published container port was unfiltered, because such a
+# packet is DNAT'd and traverses FORWARD. The chain Docker ships is a bare
+# `-j RETURN`, which filters nothing and looks like a chain that exists.
+@test "an empty DOCKER-USER chain is critical" {
+    export STUB_IPT_DOCKER_USER='-N DOCKER-USER
+-A DOCKER-USER -j RETURN'
+    health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"DOCKER-USER has no DROP rule"* ]]
+    [[ "$(mail_body)" == *"published container ports are unfiltered"* ]]
+}
+
+@test "a missing DOCKER-USER chain is critical" {
+    export STUB_IPT_DOCKER_USER=''
+    health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"DOCKER-USER chain is missing"* ]]
+}
+
+@test "a filtering DOCKER-USER chain is reported in the healthy line" {
+    health --dry-run
+    [[ "$output" == *"DOCKER-USER filtering"* ]]
+}
+
 # --- Shopware scheduled tasks --------------------------------------------
 
 # Regression for 2026-09-08. Nothing had run Shopware's scheduled tasks since

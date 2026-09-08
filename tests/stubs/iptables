@@ -1,9 +1,16 @@
 #!/usr/bin/env bash
-# Fake iptables. Only "-S INPUT" is used. STUB_IPT_V4 is the whole chain dump,
-# so a test can express any shape, including an empty one.
+# Fake iptables. "-S <chain>" dumps a per-chain variable, so a test can express
+# any shape including an empty one, which is how a missing chain is expressed.
+#
+#   STUB_IPT_V4          the INPUT chain
+#   STUB_IPT_DOCKER_USER the DOCKER-USER chain
 if [[ "${1:-}" == "-S" ]]; then
-    printf '%s' "${STUB_IPT_V4-}"
-    [[ -n "${STUB_IPT_V4-}" ]] && printf '\n'
+    case "${2:-INPUT}" in
+        DOCKER-USER) var=STUB_IPT_DOCKER_USER ;;
+        *)           var=STUB_IPT_V4 ;;
+    esac
+    printf '%s' "${!var-}"
+    [[ -n "${!var-}" ]] && printf '\n'
     exit 0
 fi
 exit 0

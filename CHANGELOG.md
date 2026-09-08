@@ -6,6 +6,53 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.28.0] - 2026-09-08
+
+### Security
+
+- **`sdwa5-firewall.sh` now owns `DOCKER-USER` alongside `INPUT`, so a published container port is
+  filtered at all.** Until now the firewall owned `INPUT` alone, and a published port is DNAT'd in
+  `nat/PREROUTING` and traverses `FORWARD`, so the `INPUT DROP` policy never saw it. `DOCKER-USER` was
+  Docker's empty `-j RETURN`. The chain now returns established traffic and container egress, returns
+  tcp and udp 25565 because `minecraft` publishes on all interfaces on purpose, and drops everything
+  else arriving on the default-route interface.
+- **Every allow is a `RETURN` and never an `ACCEPT`.** `RETURN` hands the packet back to `FORWARD` so
+  Docker's `DOCKER-ISOLATION` and `DOCKER` chains still judge it, while `ACCEPT` would skip them and
+  quietly switch off Docker's isolation between compose projects, which is a bigger hole than the one
+  being closed.
+- The external interface is derived from the default route rather than hardcoded, measured as `eth0`,
+  and the chain is created if absent so a boot before Docker cannot make the script fail.
+- **The `firewall` check now CRITs when `DOCKER-USER` is missing or back to a bare `-j RETURN`.**
+  Anything that flushes the chain, including a Docker restart, would otherwise leave every published
+  port unfiltered while the chain still looks present, which is precisely how this went unnoticed.
+
+### Added
+
+- Three tests, taking the suite from 88 to 91. The `iptables` stub now dumps per chain, so a test can
+  express an empty `DOCKER-USER`, a missing one, or a filtering one.
+- `docs/ssh-hardening.md` replaces the section that asserted the firewall "does not filter published
+  container ports, and cannot" with what it now does, including the rule order, the reason every allow
+  is a `RETURN`, and the updated coverage table.
+
+### Changed
+
+- **There is no IPv6 counterpart, and that is measured rather than skipped.** Docker does no IPv6
+  publishing on this host: `ip6tables` holds zero Docker rules, the v6 `nat` table holds zero DNAT
+  entries, both bridges carry only a link-local `fe80::` address, and there is no
+  `/etc/docker/daemon.json` at all. So there is no v6 path to a container to filter. Enabling Docker's
+  IPv6 changes that, and a v6 counterpart then needs `nft`, because `ip6tables` reports the v6
+  `DOCKER-USER` chain as incompatible with its compat layer.
+
+### Removed
+
+- `TODO.md` item 7.4, done here.
+
+### Deployment
+
+- `hardening/firewall/sdwa5-firewall.sh` has to be copied to `/usr/local/sbin/` and the unit
+  restarted. The rollback for a mistake is `iptables -F DOCKER-USER; iptables -A DOCKER-USER -j RETURN`,
+  which restores Docker's default. SSH cannot be affected, because it lives in `INPUT`.
+
 ## [1.27.1] - 2026-09-08
 
 ### Fixed

@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.25.0] - 2026-09-08
+
+### Added
+
+- **The Modrinth mod list moved out of `docker-compose.yml` into
+  `minecraft/modrinth-mods.txt`.** `MODRINTH_PROJECTS` now points at it as
+  `@/extras/modrinth-mods.txt`, mounted read-only from outside `/data` because it is
+  repository-owned configuration rather than server state. The image ignores blank lines and lines
+  starting with `#`, which is the whole point: **a disabled mod can be commented out and stay
+  visible** instead of having to be deleted, which is what used to happen and left no record it had
+  ever been there.
+- All 15 entries were extracted from the compose file rather than retyped, and verified identical in
+  content and order against the previous commit.
+- `docs/minecraft.md` no longer repeats the list, so the two cannot disagree, and it documents the
+  line syntax: a bare slug takes the newest matching build, `slug:version` pins one as `dcintegration`
+  is held at `3.1.0.1-1.21.3`, and a trailing `?` marks a project optional.
+
+### Removed
+
+- `TODO.md` item 5.1, done here.
+
+### Deployment
+
+- **Unverified against a running server.** The Minecraft profile is down and the image is not present
+  on the host, so the `@` listing-file syntax rests on the image's documentation rather than on a
+  start here. `docs/minecraft.md` carries the verification recipe for the next deliberate start. If
+  the syntax were wrong the server would fail at startup, which is a visible failure rather than a
+  silent one.
+
 ## [1.24.0] - 2026-09-08
 
 ### Security

@@ -19,9 +19,31 @@ World data persists in `minecraft-data/` on the VPS.
 
 ## Mods (Modrinth)
 
-`c2me-fabric`, `carpet-extra`, `cloth-config`, `dcintegration` (Discord, 3.1.0.1), `distanthorizons` (beta),
-`easyauth`, `fabric-api`, `carpet`, `inventory-sorting`, `lithium`, `scalablelux`, `servux`,
-`textile_backup`, `xaeros-minimap`, `xaeros-world-map`
+**The list lives in [`../minecraft/modrinth-mods.txt`](../minecraft/modrinth-mods.txt)**, one project
+per line, and is not repeated here so the two cannot disagree.
+
+`MODRINTH_PROJECTS` in [docker-compose.yml](../docker-compose.yml) points at it as
+`@/extras/modrinth-mods.txt`, mounted read-only from outside `/data` because it is
+repository-owned configuration rather than server state. The image ignores blank lines and lines
+starting with `#`, which is the point of the move: **a disabled mod can be commented out and stay
+visible** instead of having to be deleted, which is what used to happen and left no record that it had
+ever been there.
+
+Line syntax, from the image's own documentation. A bare slug takes the newest build matching `TYPE`
+and `VERSION`. `slug:version` pins one, which is how `dcintegration` is held at `3.1.0.1-1.21.3`. A
+trailing `?` marks a project optional, so a missing build is skipped rather than failing the start.
+
+**This move is unverified against a running server.** The Minecraft profile is down and the image is
+not even present on the host, so the `@` listing-file syntax rests on the image's documentation rather
+than on a start here. Verify it on the next deliberate start:
+
+```bash
+cd /opt/docker
+docker-compose --profile minecraft up -d
+docker-compose logs -f minecraft | grep -iE "modrinth|Downloading|not found"
+# Expect 15 projects resolved and no "not found". Then check the jars landed:
+ls minecraft-data/mods/ | wc -l
+```
 
 ## To start
 

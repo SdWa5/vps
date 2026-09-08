@@ -67,22 +67,10 @@ services:
         bestcodename
         Boehmb0Ss
       EXISTING_OPS_FILE: "MERGE"
-      MODRINTH_PROJECTS: |-
-        c2me-fabric
-        carpet-extra
-        cloth-config
-        dcintegration:3.1.0.1-1.21.3
-        distanthorizons:beta
-        easyauth
-        fabric-api
-        carpet
-        inventory-sorting
-        lithium
-        scalablelux
-        servux
-        textile_backup
-        xaeros-minimap
-        xaeros-world-map
+      # The list lives in minecraft/modrinth-mods.txt so that a disabled mod can
+      # be commented out and stay visible. Blank lines and `#` comments are
+      # ignored by the image. See docs/minecraft.md.
+      MODRINTH_PROJECTS: "@/extras/modrinth-mods.txt"
       MODRINTH_DOWNLOAD_DEPENDENCIES: "required"
       VERSION_FROM_MODRINTH_PROJECTS: "true" # not yet taking modloader type into account
       MEMORY: "5G"
@@ -101,6 +89,9 @@ services:
       LOG_TIMESTAMP: "true"
     volumes:
       - "./minecraft-data:/data"
+      # Read-only, and outside /data on purpose: this is repository-owned
+      # configuration rather than server state.
+      - "./minecraft/modrinth-mods.txt:/extras/modrinth-mods.txt:ro"
     restart: unless-stopped
 
 

@@ -27,16 +27,14 @@
 3. [docs/shopware/TODO.md](docs/shopware/TODO.md)
 4. maybe add nextcloud (docker-compose.yml)
 5. [docs/minecraft.md](docs/minecraft.md)
-    1. move modlist into a separate file to allow comments, then comment out disabled mods (currently disabled
-       mods must be removed entirely, so there is no overview of them)
-    2. auto-detect minecraft version from the mods in the modlist (the docker minecraft server in use already has
+    1. auto-detect minecraft version from the mods in the modlist (the docker minecraft server in use already has
        this functionality, but it had a bug; that should be fixed by now)
-    3. 35 of the 63 tracked files under `minecraft-data/config/` are luckperms translation files,
+    2. 35 of the 63 tracked files under `minecraft-data/config/` are luckperms translation files,
        downloaded artifacts in 27 languages rather than configuration. every file under
        `minecraft-data/` arrived in one commit, `c516d41`, and none has been edited since, so nothing
        there is hand-maintained. untracking the translations is cleanup with no security value, and it
        makes the next `git pull` on the host delete them, so it is not free (ca. 15 Minuten)
-    4. `ops.json` and `whitelist.json` are tracked and hold four Minecraft usernames with their UUIDs.
+    3. `ops.json` and `whitelist.json` are tracked and hold four Minecraft usernames with their UUIDs.
        going public discloses them. the same four usernames are already in `docker-compose.yml` under
        `OPS` and `WHITELIST`, which is where the image reads them from, so untracking the two JSON
        files alone would change nothing. these are pseudonyms rather than real names and no

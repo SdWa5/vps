@@ -1,0 +1,30 @@
+# Modrinth projects for the SdWa5 Minecraft server.
+#
+# Read by MODRINTH_PROJECTS in docker-compose.yml as `@/extras/modrinth-mods.txt`.
+# The itzg/minecraft-server image treats each line as one project reference and
+# **ignores blank lines and lines starting with `#`**, which is the whole reason
+# this list moved out of the compose file: a disabled mod can now be commented
+# out and stay visible, instead of having to be deleted so that nobody remembers
+# it was ever here.
+#
+# One project per line. A bare slug takes the newest build matching TYPE and
+# VERSION. `slug:version` pins one. A trailing `?` makes a project optional, so
+# a missing build is skipped rather than failing the start.
+#
+# Disabled mods belong here, commented, with a reason and a date.
+
+c2me-fabric
+carpet-extra
+cloth-config
+dcintegration:3.1.0.1-1.21.3
+distanthorizons:beta
+easyauth
+fabric-api
+carpet
+inventory-sorting
+lithium
+scalablelux
+servux
+textile_backup
+xaeros-minimap
+xaeros-world-map

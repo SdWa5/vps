@@ -52,7 +52,7 @@ flowchart LR
     RS -- " rclone (OAuth2) " --> GD
     HC -. " checks " .-> C & SW & VW & DL & RS
     AU -- " updates " --> VW
-    HC & AU -- " SMTP alerts " --> MB[("Mail<br/>ripper@sdwa5.org")]
+    HC & AU -- " SMTP alerts " --> MB[("Mail<br/>MONITOR_MAIL_TO")]
 ```
 
 Domain → port mapping lives in the [Caddyfile](../Caddyfile); backup detail in

@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.24.0] - 2026-09-08
+
+### Security
+
+- **A private, non-organisation email address was hardcoded in `monitoring/lib.sh` as a default alert
+  recipient**, and repeated in `README.md`, `.env.example`, `docs/monitoring.md` and a diagram node in
+  `docs/infrastructure.md`. Publishing this repository would have published it in all five places. The
+  default is now `ripper@sdwa5.org` alone, and the host keeps its own recipient list in
+  `/opt/docker/.env`, which is gitignored. The effective recipients on the host are unchanged, still
+  two addresses, verified by counting them rather than printing them.
+- **This removes the address from the working tree and not from the history.** One commit's content
+  carried it, and far more importantly **all 95 commits in this repository are authored and committed
+  as that address**, because it is the git identity that made them. No change to a file can alter
+  that, so it stays a decision for the owner before the repository goes public.
+- `.gitignore` now covers `.env.*` rather than `.env` alone, with `!.env.example` kept. A hand-made
+  `.env.bak-*` was untracked but not ignored, so it appeared in `git status` in the deploy checkout,
+  which is exactly what the file's own comment says makes "is this host clean?" useless as a deploy
+  precondition.
+
 ## [1.23.0] - 2026-09-08
 
 ### Fixed

@@ -242,9 +242,30 @@ nothing on the host discards it. The VM's stack and the firewall are not the cau
 traffic confirms independently: replies to VM-initiated flows do arrive and are counted by the
 `ESTABLISHED,RELATED` rule.
 
-**What is not established** is whether inbound fails from every source or only over this path. That is
-one vantage point, and Mullvad's own IPv6 is imperfect. Confirm from a second independent network
-before opening a ticket, then ask Contabo whether the `/64` is routed for inbound traffic.
+Three further checks close it, and none of them needs a second vantage point.
+
+**The prefix is globally announced.** RIPEstat reports `2a02:c206::/32` originated by **AS51167**,
+Contabo, seen by **322 of 322** RIS peers and announced continuously since 2020. So the route exists
+everywhere and transit is not the problem.
+
+```bash
+curl -s 'https://stat.ripe.net/data/routing-status/data.json?resource=2a02:c206:3015:7801::1'
+```
+
+**The Contabo panel agrees with the host.** It lists the address as
+`2a02:c206:3015:7801:0000:0000:0000:0001/64`, matching the netplan configuration exactly, and its MAC
+`00:50:56:57:d3:a6` derives to the link-local address the host actually shows,
+`fe80::250:56ff:fe57:d3a6`. The panel record and the running VM are the same machine, correctly
+configured.
+
+**The error source proves the packet arrived.** A client cannot elicit an ICMPv6 error *from the
+destination network's own router* unless the packet reached that router. `2a02:c205::1eaf` is Contabo
+infrastructure. So the packet was sent, transit carried it, Contabo received it, and Contabo could not
+deliver the final hop. A broken test client cannot produce that outcome, which is what made the single
+vantage point sufficient in the end.
+
+**Conclusion.** Everything up to and including Contabo's edge works. The last hop from their router to
+the VM does not. That is a support ticket, and there is nothing to change on this host.
 
 An earlier note in this file claimed the same conclusion on much worse evidence, namely a zero
 `ip6tables` counter plus `No route to host` from the workstation while its Mullvad tunnel had

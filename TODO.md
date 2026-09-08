@@ -39,8 +39,10 @@
     2. [docker-compose.projects.yml](docker-compose.projects.yml) has no `logging:` on any of its four
        services, so the project2/project3 containers log uncapped. same repeat vector as the july 2026
        disk-full incident. apply the `x-logging` anchor (ca. 20 Minuten)
-    3. no restore drill has ever been run. restore one snapshot into a scratch dir and verify
-       `vaultwarden-db-backup/db.sqlite3` opens (ca. 2 Stunden)
+    3. no restore drill has ever been run, for either backup. restore one restic snapshot into a
+       scratch dir and verify `vaultwarden-db-backup/db.sqlite3` opens. the contabo auto backup is a
+       second independent copy with 10 daily restore points, found 2026-09-08, and it has never been
+       restore-tested either. it restores only as a whole vm (ca. 2 Stunden)
     4. ollama binds `0.0.0.0:11434` with no auth in [docker-compose.yml](docker-compose.yml). profile-
        gated and inactive, but bind it to `127.0.0.1` (ca. 15 Minuten)
     5. monitoring runs on the monitored host, so a dead vps sends nothing and the silence looks
@@ -58,8 +60,9 @@
        has a single owner and holds a small number of ciphers, and emergency_access still has zero
        rows, so until a grantee is confirmed, losing stefan's account loses the org data. verify with
        `SELECT COUNT(*) FROM emergency_access;` (ca. 30 Minuten)
-    4. inbound ipv6 does not reach the host, tested 2026-09-08 from a mullvad exit in sweden with
-       working ipv6. the icmpv6 error comes from the contabo router `2a02:c205::1eaf` and a tcpdump on
-       the vps captured 0 packets, so neither the vm stack nor the firewall is the cause. outbound
-       works 6/6. confirm from a second independent network, then ask contabo whether the /64 is
-       routed inbound. nothing depends on it while no AAAA record is published (ca. 30 Minuten)
+    4. open a contabo ticket for inbound ipv6. established 2026-09-08. the prefix `2a02:c206::/32` is
+       announced by AS51167 and seen by 322/322 ris peers, the panel address matches the host exactly,
+       outbound works 6/6, and the icmpv6 `address unreachable` comes from contabo's own router
+       `2a02:c205::1eaf` while tcpdump on the vps captures 0 packets. so everything up to their edge
+       works and their last hop to the vm does not. nothing to change on this host, and nothing depends
+       on it while no AAAA record is published (ca. 20 Minuten)

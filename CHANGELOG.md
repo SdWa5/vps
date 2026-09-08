@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Changed
+
+- `TODO.md` item 7.3 now tracks finishing the emergency access enrolment with the new member, in progress
+  since 2026-09-08, rather than asking which remedy to pick. It names the verification,
+  `SELECT COUNT(*) FROM emergency_access;`, which is still zero.
+
+### Removed
+
+- `TODO.md` item on the two dormant Vaultwarden accounts. Decided 2026-09-08 to keep both, recorded
+  in the parent repo's `docs/services.md`.
+
 ## [1.14.0] - 2026-09-08
 
 ### Fixed

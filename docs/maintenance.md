@@ -94,10 +94,35 @@ its own.
 | `restic` | `lobaro/restic-backup-docker:latest` | Nothing to pin to. The repository publishes six tags, the newest version tag is `1.3.1-0.9.6` from 2020, and `latest` has not been pushed since 2021-05-05, so it is frozen in practice |
 | `minecraft`, `ollama` | `:latest` | Profile-gated and not present on the host, so there is no running digest to pin to. For Minecraft the build is decided by the `VERSION` environment variable anyway |
 
-**Pinning is not a no-op on the next pull.** `shopware` and `dolibarr` are pinned to exactly what runs,
-so those two will not move. `mariadb:12.3` resolves to a newer digest than the one running, measured
-2026-09-08, so the next `docker-compose pull` upgrades MariaDB within 12.3. That is a patch-level
-upgrade and routine, but it is a change and should not arrive as a surprise.
+**Pinning is not a no-op on the next `up -d`, and changing the image *reference* is enough to recreate
+a container even when the image content is identical.** That caught us on 2026-09-08: the host's
+images were tagged `:latest` locally, so `dockware/shopware:6.7.11.1` was not present under its
+pinned name and `up -d` would have pulled and recreated Shopware and both Dolibarr services for no
+gain.
+
+The fix was to give the already-running images their pinned names on the host, which is accurate
+because that image *is* 6.7.11.1:
+
+```bash
+docker tag "$(docker inspect -f '{{.Image}}' shopware)" dockware/shopware:6.7.11.1
+docker tag "$(docker inspect -f '{{.Image}}' dolibarr)" dolibarr/dolibarr:23.0.2
+```
+
+`mariadb:12.3` was deliberately **not** tagged that way. It resolves to a newer digest than the one
+running, so the next `up -d` recreates `dolibarr_db` and upgrades MariaDB within 12.3. That is
+routine at patch level, and leaving it as a real step keeps it deliberate rather than hidden.
+
+So after this change `up -d` recreates `dolibarr_db` alone. Check before running it:
+
+```bash
+cd /opt/docker
+for s in shopware dolibarr dolibarr_cron dolibarr_db; do
+  cfg=$(docker-compose config | awk -v svc="  $s:" '$0==svc{f=1} f&&/image:/{print $2; exit}')
+  run=$(docker inspect -f '{{.Image}}' "$s")
+  want=$(docker image inspect -f '{{.Id}}' "$cfg" 2>/dev/null || echo not-local)
+  echo "$s: $cfg recreate=$([ "$run" = "$want" ] && echo no || echo YES)"
+done
+```
 
 Updating a pinned service:
 

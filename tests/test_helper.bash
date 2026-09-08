@@ -39,6 +39,15 @@ set_firewall_healthy() {
 -A INPUT -p udp -m udp --dport 443 -j ACCEPT'
     export STUB_IPT_V6='-P INPUT DROP
 -A INPUT -p ipv6-icmp -j ACCEPT'
+    # DOCKER-USER as sdwa5-firewall.sh leaves it. The DROP is what the check
+    # looks for, because a chain holding only `-j RETURN` is Docker's empty
+    # default and filters nothing.
+    export STUB_IPT_DOCKER_USER='-N DOCKER-USER
+-A DOCKER-USER -m conntrack --ctstate RELATED,ESTABLISHED -j RETURN
+-A DOCKER-USER -i docker0 -j RETURN
+-A DOCKER-USER -i eth0 -p tcp -m tcp --dport 25565 -j RETURN
+-A DOCKER-USER -i eth0 -j DROP
+-A DOCKER-USER -j RETURN'
 }
 
 # vps-health.sh reads the age of the consistent database copy off the file's

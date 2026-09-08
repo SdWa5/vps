@@ -65,15 +65,7 @@
        has a single owner and holds a small number of ciphers, and emergency_access still has zero
        rows, so until a grantee is confirmed, losing stefan's account loses the org data. verify with
        `SELECT COUNT(*) FROM emergency_access;` (ca. 30 Minuten)
-    4. `DOCKER-USER` is an empty `RETURN`, so the host firewall cannot filter a published container
-       port. a published port is DNAT'd in nat/PREROUTING and traverses FORWARD, never INPUT. **only
-       `minecraft` 25565 still publishes on all interfaces, and that one is deliberate**, since
-       `ollama` moved to `127.0.0.1` on 2026-09-08. so this is now defence in depth against the next
-       accidental `0.0.0.0` publish rather than a live hole, and closing it means rules in
-       `DOCKER-USER` that keep 25565 reachable rather than a blanket drop. a second systemd unit for
-       it must be ordered after `docker.service`, for the same reason `sdwa5-firewall.service` is
-       (ca. 45 Minuten)
-    5. inbound ipv6 works, including cold after 25 minutes idle, so the neighbour-cache hypothesis is
+    4. inbound ipv6 works, including cold after 25 minutes idle, so the neighbour-cache hypothesis is
        refuted. one transient failure on 2026-09-08 was never reproduced and its cause is unknown. do
        not open a contabo ticket. if it recurs, capture the network path in use at the time
        (ca. 10 Minuten)

@@ -248,7 +248,7 @@ check_caddy() {
 # auto-update from the stores, this server does not. A server left behind stops
 # working with the extension and the mobile app while the web vault keeps going.
 check_firewall() {
-    local v4 v6 problems=() port
+    local v4 v6 docker_user problems=() port
 
     # A missing binary is not a passing check. Without it nothing here can be
     # confirmed, and silence would read as healthy.
@@ -278,6 +278,18 @@ check_firewall() {
             || problems+=("no INPUT rule accepts tcp $port")
     done
 
+    # DOCKER-USER is where a published container port is filtered, because such a
+    # packet is DNAT'd and traverses FORWARD rather than INPUT. An INPUT-only
+    # firewall reads as healthy while every published port is wide open, which is
+    # exactly what was true here until 2026-09-08. A chain that is only
+    # `-j RETURN` is the empty default Docker ships.
+    docker_user="$(iptables -S DOCKER-USER 2>/dev/null)"
+    if [[ -z "$docker_user" ]]; then
+        problems+=("the DOCKER-USER chain is missing, published container ports are unfiltered")
+    elif ! grep -qE -- '-j DROP' <<<"$docker_user"; then
+        problems+=("DOCKER-USER has no DROP rule, so it is back to Docker's empty default and published container ports are unfiltered")
+    fi
+
     if (( ${#problems[@]} )); then
         printf 'CRIT\t%s\n' "$(IFS='; '; echo "${problems[*]}")"
         return
@@ -292,7 +304,7 @@ check_firewall() {
         return
     fi
 
-    printf 'OK\tINPUT DROP on both families, fail2ban jump present, %s accepted\n' \
+    printf 'OK\tINPUT DROP on both families, fail2ban jump present, DOCKER-USER filtering, %s accepted\n' \
         "$(tr ' ' ',' <<<"$FIREWALL_PORTS")"
 }
 

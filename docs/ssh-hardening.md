@@ -242,9 +242,10 @@ docker-compose.yml:179   ollama      "11434:11434"   all interfaces, profile-gat
 Both profiles were down, so neither port was open, and both become public the moment their profile
 starts.
 
-### This firewall does not filter published container ports, and cannot
+### Published container ports are filtered in DOCKER-USER, not in INPUT
 
-Stated plainly because the opposite is the intuitive reading of a `DROP` policy on `INPUT`.
+Stated plainly because the opposite is the intuitive reading of a `DROP` policy on `INPUT`, and
+because until 2026-09-08 this firewall genuinely did not cover them.
 
 A published port is DNAT'd in `nat/PREROUTING` and the packet then traverses **`FORWARD`**, never
 `INPUT`. Measured on the host:
@@ -253,26 +254,50 @@ A published port is DNAT'd in `nat/PREROUTING` and the packet then traverses **`
 nat PREROUTING : -A PREROUTING -m addrtype --dst-type LOCAL -j DOCKER
 FORWARD        : -A FORWARD -j DOCKER-USER
                  -A FORWARD -j DOCKER-ISOLATION-STAGE-1
-DOCKER-USER    : -A DOCKER-USER -j RETURN          <- empty pass-through
+DOCKER-USER    : -A DOCKER-USER -j RETURN          <- Docker's empty default
 ```
 
-`DOCKER-USER` is the only hook Docker leaves for an operator, and it is an empty `RETURN` here. So an
-`INPUT DROP` policy is invisible to container traffic. The script flushes `INPUT` alone and leaves
-Docker's chains untouched, which is deliberate and documented below, and the direct consequence is
-that it **cannot** cover a container published on `0.0.0.0`.
+`DOCKER-USER` is the hook Docker provides for the operator. It creates the chain empty, jumps to it
+from the head of `FORWARD` and never puts rules in it, so taking it is the intended use rather than a
+trespass on Docker's own chains. `sdwa5-firewall.sh` now owns it alongside `INPUT`.
 
-What the firewall therefore does and does not buy:
+What it holds, in order:
+
+| Rule | Why |
+|---|---|
+| `ESTABLISHED,RELATED` → `RETURN` | without it every reply a container waits for is dropped |
+| each Docker bridge → `RETURN` | container egress and traffic between containers |
+| `eth0` tcp and udp 25565 → `RETURN` | `minecraft` publishes on all interfaces on purpose |
+| `eth0` anything else → `DROP` | what an accidental `0.0.0.0` publish runs into |
+| `RETURN` | hand the rest back to Docker |
+
+**Every allow is a `RETURN` and never an `ACCEPT`.** `RETURN` hands the packet back to `FORWARD` so
+Docker's `DOCKER-ISOLATION` and `DOCKER` chains still judge it. `ACCEPT` would skip them and quietly
+switch off Docker's network isolation between compose projects, which is a bigger hole than the one
+being closed.
+
+What the firewall now buys:
 
 | | Covered |
 |---|---|
-| A host daemon binding `0.0.0.0`, as LLMNR did | yes |
-| A container published on `0.0.0.0` | **no** |
+| A host daemon binding `0.0.0.0`, as LLMNR did | yes, in `INPUT` |
+| A container published on `0.0.0.0` over IPv4 | yes, in `DOCKER-USER` |
+| A container published over IPv6 | not applicable, see below |
 
-So it is defence in depth for host processes only. Closing the container half means rules in
-`DOCKER-USER`, which is a separate change, because `minecraft` is published on purpose and a blanket
-drop there would break it. Tracked in [TODO.md](../TODO.md).
+**There is no IPv6 half, and that is measured rather than skipped.** Docker does no IPv6 publishing
+on this host, measured 2026-09-08: `ip6tables` holds zero Docker rules, the v6 `nat` table holds zero
+DNAT entries, both bridges carry only a link-local `fe80::` address, and there is no
+`/etc/docker/daemon.json` at all, so Docker runs with IPv6 off by default. There is therefore no v6
+path to a container to filter, and writing v6 rules would be defending an empty path. Enabling
+Docker's IPv6 changes that, and a v6 counterpart then has to be written with `nft`, because
+`ip6tables` reports the v6 `DOCKER-USER` chain as `incompatible, use 'nft' tool`.
 
-Credit where due. This was caught by a parallel session reading the same file, after this document had
+**The `firewall` check in [monitoring.md](monitoring.md) watches this**, and CRITs when `DOCKER-USER`
+is missing or has fallen back to a bare `-j RETURN`. Anything that flushes the chain, including a
+Docker restart, would otherwise leave every published port unfiltered while the chain still looks
+present.
+
+Credit where due. The gap was caught by a parallel session reading this file, after the document had
 already asserted the opposite in the sentence above it.
 
 ### LLMNR

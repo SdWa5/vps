@@ -1,10 +1,21 @@
 version: '3'
 
+# YAML anchors do not cross files, so this repeats the x-logging anchor from
+# docker-compose.yml rather than referencing it. Without a logging cap a
+# container's json-file log grows without bound, which is what filled the disk
+# in July 2026.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   project2_dolibarr_db:
     image: mariadb:latest
     container_name: project2_dolibarr_db
     restart: unless-stopped
+    logging: *default-logging
     environment:
       MYSQL_ROOT_PASSWORD: ${PROJECT2_MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${PROJECT2_MYSQL_DATABASE:-dolidb}
@@ -17,6 +28,7 @@ services:
     image: dolibarr/dolibarr:latest
     container_name: project2_dolibarr
     restart: unless-stopped
+    logging: *default-logging
     environment:
       DOLI_INIT_DEMO: ${PROJECT2_INIT_DEMO:-0}
       DOLI_DB_HOST: project2_dolibarr_db
@@ -43,6 +55,7 @@ services:
     image: mariadb:latest
     container_name: project3_dolibarr_db
     restart: unless-stopped
+    logging: *default-logging
     environment:
       MYSQL_ROOT_PASSWORD: ${PROJECT3_MYSQL_ROOT_PASSWORD}
       MYSQL_DATABASE: ${PROJECT3_MYSQL_DATABASE:-dolidb}
@@ -55,6 +68,7 @@ services:
     image: dolibarr/dolibarr:latest
     container_name: project3_dolibarr
     restart: unless-stopped
+    logging: *default-logging
     environment:
       DOLI_INIT_DEMO: ${PROJECT3_INIT_DEMO:-0}
       DOLI_DB_HOST: project3_dolibarr_db

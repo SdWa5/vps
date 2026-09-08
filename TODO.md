@@ -23,8 +23,6 @@
        touches one. it needs the same discipline as
        [monitoring/vaultwarden-autoupdate.sh](monitoring/vaultwarden-autoupdate.sh): health-check
        after apply, and on failure `git reset --hard` to the previous commit plus a loud mail
-    5. add a github action running `tests/run.sh` on push as well. there is no ci today
-       (ca. 45 Minuten)
 2. connect google drive <-> [docs/dolibarr.md](docs/dolibarr.md) <-> shopware if possible
 3. [docs/shopware/TODO.md](docs/shopware/TODO.md)
 4. maybe add nextcloud (docker-compose.yml)
@@ -33,18 +31,23 @@
        mods must be removed entirely, so there is no overview of them)
     2. auto-detect minecraft version from the mods in the modlist (the docker minecraft server in use already has
        this functionality, but it had a bug; that should be fixed by now)
+    3. 35 of the 63 tracked files under `minecraft-data/config/` are luckperms translation files,
+       downloaded artifacts in 27 languages rather than configuration. every file under
+       `minecraft-data/` arrived in one commit, `c516d41`, and none has been edited since, so nothing
+       there is hand-maintained. untracking the translations is cleanup with no security value, and it
+       makes the next `git pull` on the host delete them, so it is not free (ca. 15 Minuten)
+    4. `ops.json` and `whitelist.json` are tracked and hold four Minecraft usernames with their UUIDs.
+       going public discloses them. the same four usernames are already in `docker-compose.yml` under
+       `OPS` and `WHITELIST`, which is where the image reads them from, so untracking the two JSON
+       files alone would change nothing. these are pseudonyms rather than real names and no
+       credential, so it is a disclosure decision for the owner and not a leak (`decision`)
 6. reliability follow-ups from the 2026-09-01 monitoring work ([docs/monitoring.md](docs/monitoring.md))
     1. update policy for shopware, dolibarr and mariadb — only vaultwarden auto-updates today. decide
        between auto-update, pinned tags with renovate, or a manual quarterly window (ca. 2 Stunden)
-    2. [docker-compose.projects.yml](docker-compose.projects.yml) has no `logging:` on any of its four
-       services, so the project2/project3 containers log uncapped. same repeat vector as the july 2026
-       disk-full incident. apply the `x-logging` anchor (ca. 20 Minuten)
     3. no restore drill has ever been run, for either backup. restore one restic snapshot into a
        scratch dir and verify `vaultwarden-db-backup/db.sqlite3` opens. the contabo auto backup is a
        second independent copy with 10 daily restore points, found 2026-09-08, and it has never been
        restore-tested either. it restores only as a whole vm (ca. 2 Stunden)
-    4. ollama binds `0.0.0.0:11434` with no auth in [docker-compose.yml](docker-compose.yml). profile-
-       gated and inactive, but bind it to `127.0.0.1` (ca. 15 Minuten)
     5. monitoring runs on the monitored host, so a dead vps sends nothing and the silence looks
        healthy. an external dead-man's switch would close that gap, deliberately deferred
        (ca. 45 Minuten)
@@ -61,10 +64,13 @@
        rows, so until a grantee is confirmed, losing stefan's account loses the org data. verify with
        `SELECT COUNT(*) FROM emergency_access;` (ca. 30 Minuten)
     4. `DOCKER-USER` is an empty `RETURN`, so the host firewall cannot filter a published container
-       port. a published port is DNAT'd in nat/PREROUTING and traverses FORWARD, never INPUT. two
-       services publish on all interfaces, `minecraft` 25565 on purpose and `ollama` 11434 with no
-       auth, both profile-gated and currently down. closing this means rules in `DOCKER-USER` that
-       keep 25565 reachable, so a blanket drop is wrong (ca. 45 Minuten)
+       port. a published port is DNAT'd in nat/PREROUTING and traverses FORWARD, never INPUT. **only
+       `minecraft` 25565 still publishes on all interfaces, and that one is deliberate**, since
+       `ollama` moved to `127.0.0.1` on 2026-09-08. so this is now defence in depth against the next
+       accidental `0.0.0.0` publish rather than a live hole, and closing it means rules in
+       `DOCKER-USER` that keep 25565 reachable rather than a blanket drop. a second systemd unit for
+       it must be ordered after `docker.service`, for the same reason `sdwa5-firewall.service` is
+       (ca. 45 Minuten)
     5. inbound ipv6 works, including cold after 25 minutes idle, so the neighbour-cache hypothesis is
        refuted. one transient failure on 2026-09-08 was never reproduced and its cause is unknown. do
        not open a contabo ticket. if it recurs, capture the network path in use at the time

@@ -105,3 +105,16 @@ tests/run.sh
 
 Runs the bats suite for the monitoring scripts plus shellcheck, both inside Docker. Nothing has to be
 installed on the host.
+
+[`.github/workflows/tests.yml`](.github/workflows/tests.yml) runs the same script on every push, so
+CI and a local run are the same thing, and adds a secret scan over the working tree and the full
+history:
+
+```bash
+gitleaks dir . --redact --config .gitleaks.toml
+gitleaks git . --redact --config .gitleaks.toml
+```
+
+The tree scan flags `minecraft-data/server.properties` when you run it on a deploy checkout. That is
+correct and expected: the live file holds a generated `rcon.password`, which is exactly why it is not
+tracked. CI never sees it, because an untracked file is not in the clone.

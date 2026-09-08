@@ -108,7 +108,15 @@ check_shopware_tasks() {
 
     # The table's third column is the last execution, ISO 8601 with an offset,
     # so it sorts lexicographically and cannot be misread by the host timezone.
-    newest="$(awk -F'|' 'NF>4 {gsub(/ /, "", $4); if ($4 ~ /^[0-9]{4}-/) print $4}' <<< "$list" | sort | tail -1)"
+    #
+    # The year is matched as four literal digit classes rather than as {4}.
+    # **The host's awk is mawk, which does not honour interval expressions**,
+    # measured 2026-09-08: `/^[0-9]{4}-/` matches nothing there while
+    # `/^[0-9][0-9][0-9][0-9]-/` matches. The test suite cannot catch this,
+    # because tests/run.sh runs bats in an Alpine container whose busybox awk
+    # does support intervals, and this workstation has GNU awk. So three awks
+    # are in play and only the host's decides. Stay inside POSIX here.
+    newest="$(awk -F'|' 'NF>4 {gsub(/ /, "", $4); if ($4 ~ /^[0-9][0-9][0-9][0-9]-/) print $4}' <<< "$list" | sort | tail -1)"
 
     if [[ -z "$newest" ]]; then
         printf 'CRIT\tNo Shopware scheduled task has ever run\n'

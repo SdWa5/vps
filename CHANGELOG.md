@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.27.1] - 2026-09-08
+
+### Fixed
+
+- **The `shopware_tasks` check reported "No Shopware scheduled task has ever run" against a healthy
+  task list.** Its `awk` matched the year as `{4}`, and **the host's `awk` is `mawk`, which does not
+  honour interval expressions**. Measured on the host: `/^[0-9]{4}-/` matches nothing while
+  `/^[0-9][0-9][0-9][0-9]-/` matches. Now written with literal digit classes.
+- **The test suite could not have caught this**, and that is recorded in `docs/monitoring.md` rather
+  than left as a surprise. `tests/run.sh` runs bats in an Alpine container whose busybox `awk` does
+  support intervals, and the workstation has GNU awk 5.2.1, so three implementations are in play and
+  only the host's decides. Anything parsed with `awk` in this repository stays inside POSIX from here.
+  It was found by running the check on the host after deploying rather than by trusting the green
+  suite.
+
+### Added
+
+- `docs/monitoring.md` records the catch-up behaviour of Shopware's scheduler, because it looks like a
+  defect and is not. After the 47-day outage each task needed **two** runs to get back onto its
+  schedule: Shopware clamps a task's next execution to *now* when the computed next time is still in
+  the past, so the first run leaves it immediately due again. Measured across three consecutive worker
+  runs, after which `shopware.invalidate_cache` sat at +300s, `log_entry.cleanup` at the next day and
+  `app.system_heartbeat` at the next week, and a further run changed nothing.
+
 ## [1.27.0] - 2026-09-08
 
 ### Added

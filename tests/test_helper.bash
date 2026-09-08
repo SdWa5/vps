@@ -22,6 +22,22 @@ common_setup() {
     export STUB_GITHUB_TAG=1.37.2
     set_backup_fresh
     set_db_backup_fresh
+    set_firewall_healthy
+}
+
+# A healthy INPUT chain as the firewall check expects to find it: DROP policy,
+# the fail2ban jump at the head, and an accept rule per service port.
+set_firewall_healthy() {
+    export STUB_IPT_V4='-P INPUT DROP
+-A INPUT -p tcp -m multiport --dports 22 -j f2b-sshd
+-A INPUT -i lo -j ACCEPT
+-A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 80 -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
+-A INPUT -p udp -m udp --dport 443 -j ACCEPT'
+    export STUB_IPT_V6='-P INPUT DROP
+-A INPUT -p ipv6-icmp -j ACCEPT'
 }
 
 # vps-health.sh reads the age of the consistent database copy off the file's

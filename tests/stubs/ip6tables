@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# Fake ip6tables. Only "-S INPUT" is used, see the iptables stub.
+if [[ "${1:-}" == "-S" ]]; then
+    printf '%s' "${STUB_IPT_V6-}"
+    [[ -n "${STUB_IPT_V6-}" ]] && printf '\n'
+    exit 0
+fi
+exit 0

@@ -130,6 +130,57 @@ Finished Backup at $(date '+%Y-%m-%d %H:%M:%S') after 3 seconds" health
     [[ "$(mail_body)" == *"Caddy is failed"* ]]
 }
 
+# --- firewall -------------------------------------------------------------
+
+@test "an ACCEPT policy on INPUT is critical" {
+    STUB_IPT_V4='-P INPUT ACCEPT
+-A INPUT -p tcp -m multiport --dports 22 -j f2b-sshd
+-A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 80 -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 443 -j ACCEPT' health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"IPv4 INPUT policy is not DROP"* ]]
+}
+
+@test "a missing fail2ban jump is critical even when the policy is DROP" {
+    STUB_IPT_V4='-P INPUT DROP
+-A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 80 -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 443 -j ACCEPT' health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"fail2ban jump is missing"* ]]
+}
+
+@test "a DROP policy that no longer accepts a service port is critical" {
+    STUB_IPT_V4='-P INPUT DROP
+-A INPUT -p tcp -m multiport --dports 22 -j f2b-sshd
+-A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 80 -j ACCEPT' health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"no INPUT rule accepts tcp 443"* ]]
+}
+
+@test "an unreadable INPUT chain is critical, not silently healthy" {
+    STUB_IPT_V4='' health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"Could not read the INPUT chain"* ]]
+}
+
+@test "an open IPv6 policy warns while IPv4 is still filtered" {
+    STUB_IPT_V6='-P INPUT ACCEPT' health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"IPv6 INPUT policy is not DROP"* ]]
+}
+
+@test "several firewall faults are reported together rather than one at a time" {
+    STUB_IPT_V4='-P INPUT ACCEPT
+-A INPUT -i lo -j ACCEPT' health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"policy is not DROP"* ]]
+    [[ "$(mail_body)" == *"fail2ban jump is missing"* ]]
+    [[ "$(mail_body)" == *"no INPUT rule accepts tcp 22"* ]]
+}
+
 # --- version drift, the check that would have caught this outage ----------
 
 @test "a Vaultwarden behind the latest release warns" {

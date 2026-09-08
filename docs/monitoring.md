@@ -48,9 +48,10 @@ afterwards. A missing `iptables` binary or an unreadable chain is reported as CR
 passing, since a check that cannot see its subject has not confirmed anything. All faults it finds
 are reported in one line rather than one per run, so a single mail carries the whole picture.
 
-IPv6 is a WARN because nothing currently reaches the host over IPv6 and no AAAA record is published,
-so an open v6 policy is a gap that matters once that changes rather than a live exposure. See the
-firewall section of [ssh-hardening.md](ssh-hardening.md).
+IPv6 is a WARN rather than a CRIT because no AAAA record is published for either hostname, so nothing
+resolves to the host over IPv6 and an open v6 policy is a gap that matters once that changes. Whether
+inbound IPv6 reaches the host at all is unverified, see the firewall section of
+[ssh-hardening.md](ssh-hardening.md). Raise this to CRIT if an AAAA record is ever published.
 
 ### Reminder backoff
 

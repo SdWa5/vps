@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.14.0] - 2026-09-08
+
+### Fixed
+
+- **The IPv6 finding in 1.11.0 was wrong and is corrected.** `docs/ssh-hardening.md` claimed inbound
+  IPv6 was blocked upstream of this host. Inbound is unverified, not broken. The evidence was an
+  `ip6tables` policy counter of zero packets plus `No route to host` from the workstation, and the
+  actual cause was the workstation's Mullvad tunnel, which has `IPv6: off` and blocks IPv6 while
+  connected. Those ICMPv6 errors were generated locally by the test client's own address. Outbound
+  IPv6 from the host works, measured at 0% loss and 7 ms.
+- `docs/monitoring.md` no longer rests the firewall check's IPv6 WARN on that claim. It rests on the
+  absence of an AAAA record, which is measured, and says to raise it to CRIT if one is published.
+
+### Changed
+
+- `TODO.md` items 7.2 to 7.4 rewritten from measurement rather than assumption. Of the three accounts
+  on PBKDF2, only one holds anything, with a number of items. The other two hold zero. The single-owner item
+  now names what is at stake, a small number of ciphers, and what the two remedies cost.
+
+### Added
+
+- `TODO.md` item for the two dormant Vaultwarden accounts, and one for settling inbound IPv6.
+- `docs/ssh-hardening.md` records the two traps behind the wrong finding. A zero counter on a DROP
+  policy is ambiguous between "nothing arrived" and "nothing was sent", and a client must be proven
+  capable before anything is concluded about the server.
+
 ## [1.13.0] - 2026-09-08
 
 ### Changed

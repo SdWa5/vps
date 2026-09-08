@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.23.0] - 2026-09-08
+
+### Fixed
+
+- **`hostname: sdwa5-vps` is pinned on the restic service, because the retention policy did not mean
+  what it says.** `restic forget` groups by `host,paths` by default and restic records
+  `os.Hostname()` on each snapshot, which in a container is the container ID. Every recreation of the
+  container therefore started a fresh retention group with its own full allowance of 6 daily, 3
+  weekly, 11 monthly and 2 yearly. Measured 2026-09-08: **11 distinct hostnames across 61
+  snapshots**, where a single group would hold 17. Adding `init: true` in 1.21.0 created one of those
+  groups.
+
+### Added
+
+- `docs/backup.md` gained a Retention groups section with the measurement, including the repository at
+  100.889 GiB of raw data across 176 717 blobs, the Drive folder at 106.230 GiB in 22 655 objects, and
+  the Shared Drive quota at 100 TiB with 99.870 TiB free.
+
+### Changed
+
+- **The 44 extra snapshots are deliberately kept**, and the reasoning is recorded so it is not
+  reopened as an oversight. `--group-by paths` in `RESTIC_FORGET_ARGS` would apply the policy across
+  all eleven groups and, with `--prune` already there, delete 44 snapshots on the next run. Storage is
+  not a constraint at a tenth of a percent of quota, more history is safer than less for a backup, and
+  the only real cost of the extra groups is a longer `prune` walk against a run measured at 47
+  seconds. So the fix stops new groups forming rather than collapsing the old ones.
+
 ## [1.22.1] - 2026-09-08
 
 ### Security

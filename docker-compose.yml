@@ -222,6 +222,13 @@ services:
     image: lobaro/restic-backup-docker:latest
     container_name: restic
     restart: unless-stopped
+    # restic records os.Hostname() on every snapshot, which in a container is
+    # the container ID, and `restic forget` groups by `host,paths` by default.
+    # So each recreation of this container started a fresh retention group with
+    # its own full allowance. Measured 2026-09-08: 11 distinct hostnames across
+    # 61 snapshots, where one group would hold 17. Pinning the hostname makes
+    # the retention policy mean what it says from here on. See docs/backup.md.
+    hostname: sdwa5-vps
     # PID 1 in this image is `tail -fn0 /var/log/cron.log`, which never reaps
     # children, so every rclone process a backup run spawns became a zombie.
     # Measured 108 of them on 2026-09-08 after 51 days up. An init reaps them.

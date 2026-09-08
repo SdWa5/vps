@@ -106,6 +106,43 @@ sqlite3 /tmp/restore/data/vaultwarden-db-backup/db.sqlite3 'PRAGMA integrity_che
 docker exec restic restic check
 ```
 
+## Retention groups, and why there are eleven of them
+
+`restic forget` groups snapshots by **`host,paths`** by default, and restic records `os.Hostname()`
+on every snapshot. In a container that is the **container ID**, which changes on every recreation. So
+each time the restic container was recreated, the next backup started a brand-new retention group
+with its own full allowance of 6 daily, 3 weekly, 11 monthly and 2 yearly.
+
+Measured 2026-09-08:
+
+| | |
+|---|---|
+| Distinct hostnames in the repository | **11**, each a past container ID |
+| Snapshots held | 61 |
+| Snapshots one group would hold | 17 |
+| Repository raw-data size | 100.889 GiB across 176 717 blobs |
+| Drive folder size | 106.230 GiB in 22 655 objects |
+| Shared Drive quota | 100 TiB, of which 99.870 TiB free |
+
+`hostname: sdwa5-vps` is now pinned in [docker-compose.yml](../docker-compose.yml), so recreating the
+container no longer starts a group. From here the policy means what it says.
+
+**The 44 extra snapshots are deliberately left alone, and that is a decision rather than an
+oversight.** `--group-by paths` in `RESTIC_FORGET_ARGS` would apply the policy across all eleven
+groups at once, and with `--prune` already in those args it would delete 44 snapshots on the next run.
+It is not worth doing:
+
+* **Storage is not a constraint.** 106 GiB against a 100 TiB quota is a tenth of a percent. The
+  saving would be invisible.
+* **More history is safer than less** for a backup. Deleting 44 restore points to make a policy tidy
+  trades away the only thing the repository exists to provide.
+* The real cost of the extra groups is that `prune` walks more data, so a run takes longer. Runtime is
+  not a constraint here either, at 47 seconds measured.
+
+So the fix is only to stop creating new groups. If the old ones are ever to be merged, that is a
+deliberate one-off `forget --group-by paths` with the snapshot list read first, not a change to the
+cron's arguments.
+
 ## Restore drill
 
 **First run 2026-09-08, and it passed.** The repository had never been restored from, so it was

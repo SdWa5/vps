@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.21.1] - 2026-09-08
+
+### Fixed
+
+- `actions/checkout` bumped from `v4` to `v5`, which GitHub's deprecation notice asks for.
+- `.github/workflows/tests.yml` now states plainly that nothing in it has ever executed. Every run in
+  all three SdWa5 repositories is refused within seconds on account billing, measured 2026-09-08, so
+  the local `tests/run.sh` and `gitleaks` runs are the only evidence this pipeline works. The
+  workflows are correct as written and unverified as run, and the distinction is worth having in the
+  file rather than only in a changelog.
+
 ## [1.21.0] - 2026-09-08
 
 ### Added

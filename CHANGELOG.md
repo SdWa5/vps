@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.22.1] - 2026-09-08
+
+### Security
+
+- `docs/ssh-hardening.md` documents the **outbound** key this host uses to reach GitHub. Everything in
+  that document was about getting in, while `/opt/docker` is a git checkout that pulls this
+  repository, and until 2026-09-08 it did so with an account-level key titled "sdwa5.org Contabo VPS".
+  An account key carries the account's whole reach, so root on this VPS had read **and write** access
+  to every repository `bestcodename` can see, while the machine needs to pull exactly one. A
+  compromise of this host was a compromise of every repository.
+- It now pulls with a read-only deploy key scoped to this repository alone, `id=162604148`,
+  `read_only: true`, and `/root/.ssh/config` pins it with `IdentitiesOnly yes` so the old key still on
+  disk cannot be offered by accident. Verified independently: `git ls-remote` succeeds,
+  `git push --dry-run` is refused, and `ssh -T git@github.com` greets as
+  `Hi bestcodename/sdwa5-vps!` rather than `Hi bestcodename!`, which is the clearest signal of scope
+  because a deploy key identifies as the repository.
+- Recorded that pushing from this host now fails by design, that nothing in this repository does, and
+  that the deploy automation in `TODO.md` runs the other way round and is unaffected. Also recorded
+  why the deploy key has no passphrase, namely that an unattended puller cannot answer a prompt, so
+  the mitigation is its scope rather than encryption at rest.
+
 ## [1.22.0] - 2026-09-08
 
 ### Fixed

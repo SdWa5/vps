@@ -147,8 +147,64 @@ change logs out every client, so for a while the vault exists only on the server
 cannot be fetched from a rescue console, which is exactly where you sit when SSH is broken. The
 Contabo console is therefore the break-glass rather than the vault.
 
+### The outbound key, which is how this host reaches GitHub
+
+Everything above is about getting **in**. This host also authenticates **out**, because `/opt/docker`
+is a git checkout that pulls this repository, and until 2026-09-08 it did so with the wrong kind of
+key.
+
+| Key | Purpose | Registered as | Passphrase |
+|---|---|---|---|
+| `/root/.ssh/id_ed25519_deploy` | pull `sdwa5-vps` into `/opt/docker` | deploy key on `bestcodename/sdwa5-vps`, id 162604148, `read_only: true` | no |
+
+Fingerprint `SHA256:9cc+0NXJEYRo7xyJ2WeTAFQbE94nDbCap3kgNdX39IU`. The private half was generated on
+this host and has never crossed the network.
+
+**What it replaced, and why that mattered.** The old `/root/.ssh/id_ed25519` was registered as an
+*account-level* key on the `bestcodename` user, titled "sdwa5.org Contabo VPS". An account key carries
+the account's whole reach, so root on this VPS had read **and write** access to every repository that
+account can see, while the machine needs to pull exactly one. A compromise of this host was therefore
+a compromise of every repository. The key was deleted, GitHub id 155997825.
+
+`/root/.ssh/config` pins the new key so nothing else can be offered by accident:
+
+```
+Host github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519_deploy
+    IdentitiesOnly yes
+```
+
+`IdentitiesOnly yes` is the load-bearing line. Without it ssh offers every key it can find, and the
+old one is still on disk.
+
+**The greeting is the clearest proof of scope**, because a deploy key identifies as the repository
+rather than as the account:
+
+```sh
+ssh -T git@github.com            # Hi bestcodename/sdwa5-vps! not Hi bestcodename!
+cd /opt/docker && git ls-remote origin HEAD    # succeeds
+cd /opt/docker && git push --dry-run origin main   # refused, no write access
+```
+
+Verified in that order on 2026-09-08, and the account key was deleted only after the pull had been
+proven to work through the new one.
+
+**Pushing from this host now fails, by design.** Nothing in this repository does. The deploy
+automation in [TODO.md](../TODO.md) runs the other way round, a GitHub Action reaching *in* to the
+host, so it is unaffected and will need its own key held as a GitHub secret.
+
+**The deploy key has no passphrase, deliberately.** An unattended puller cannot answer a prompt, so
+the mitigation is the key's scope rather than encryption at rest. That is strictly better than what it
+replaced, which also had none and carried the whole account.
+
+The old `/root/.ssh/id_ed25519` is still on disk, fingerprint
+`SHA256:dsDOKwdXfJwdiY1AC6u1PEH3oH6pJPjet4jCghnbsNE`, and is registered nowhere, so it grants nothing.
+It was left rather than deleted, because deleting it is tidy-up and irreversible.
+
 Client-side detail, including the `~/.ssh/conf.d` layout and where each of the five keys is backed up,
-is documented in `~/PhpstormProjects/ai/docs/ssh-keys.md`.
+is documented in `~/PhpstormProjects/ai/docs/ssh-keys.md`, and the replacement procedure with its
+ordering is under "The deploy key replacement, and the order that makes it safe".
 
 ## Firewall
 

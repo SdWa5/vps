@@ -23,6 +23,7 @@ common_setup() {
     set_backup_fresh
     set_db_backup_fresh
     set_firewall_healthy
+    set_shopware_tasks_fresh
 }
 
 # A healthy INPUT chain as the firewall check expects to find it: DROP policy,
@@ -76,6 +77,33 @@ Backup Successful
 Finished Backup at $finished after 47 seconds"
 }
 
+# Shopware's scheduled tasks last ran the given number of hours ago.
+#
+# The check reads the newest last-execution across every task, because the
+# intervals range from 60 seconds to a month and a single old task proves
+# nothing. So the fixture carries a spread: one task at the given age and two
+# deliberately older, which is what a healthy list looks like.
+set_shopware_tasks() {
+    local hours_ago="${1:-1}" ref newest older oldest
+    ref="${FAKE_NOW:-$(date +%s)}"
+    newest="$(date -u -d "@$(( ref - hours_ago * 3600 ))" '+%Y-%m-%dT%H:%M:%S+00:00')"
+    older="$(date -u -d "@$(( ref - (hours_ago + 24) * 3600 ))" '+%Y-%m-%dT%H:%M:%S+00:00')"
+    oldest="$(date -u -d "@$(( ref - (hours_ago + 700) * 3600 ))" '+%Y-%m-%dT%H:%M:%S+00:00')"
+
+    export STUB_SHOPWARE_TASKS="+------------------+---------------------------+---------------------------+--------------+-----------+
+| Name             | Next execution            | Last execution            | Run interval | Status    |
++------------------+---------------------------+---------------------------+--------------+-----------+
+| log_entry.cleanup | $older                   | $older                    | 86400        | scheduled |
+| shopware.invalidate_cache | $newest          | $newest                   | 300          | scheduled |
+| app.system_heartbeat | $oldest               | $oldest                   | 604800       | scheduled |
+| shopware.elasticsearch.create.alias | $newest | -                       | 300          | skipped   |
++------------------+---------------------------+---------------------------+--------------+-----------+"
+}
+
+set_shopware_tasks_fresh() {
+    set_shopware_tasks 1
+}
+
 # A restic `snapshots --json` array, newest last, for the epoch seconds given.
 # Emits UTC with a `Z` offset, exactly as restic does.
 restic_snapshots_json() {
@@ -102,6 +130,7 @@ health_at() {
     shift
     set_backup_fresh
     set_db_backup_fresh
+    set_shopware_tasks_fresh
     health "$@"
 }
 

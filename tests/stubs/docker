@@ -17,7 +17,22 @@ case "${1:-}" in
         printf '%s\n' "${STUB_RESTIC_LOG:-}"
         ;;
     exec)
-        if [[ "$*" == *"restic snapshots"* ]]; then
+        if [[ "$*" == *"scheduled-task:list"* ]]; then
+            # docker exec shopware php bin/console scheduled-task:list
+            # Unset means the command failed, which is a different finding from
+            # a task list that exists but is stale.
+            [[ -z "${STUB_SHOPWARE_TASKS+set}" ]] && {
+                echo "Container shopware is not running"
+                exit 1
+            }
+            printf '%s\n' "$STUB_SHOPWARE_TASKS"
+        elif [[ "$*" == *"scheduled-task:run"* ]]; then
+            [[ -n "${STUB_TASK_RUN_FAILS:-}" ]] && { echo "task run blew up"; exit 1; }
+            echo "Scheduled tasks executed"
+        elif [[ "$*" == *"messenger:consume"* ]]; then
+            [[ -n "${STUB_CONSUME_FAILS:-}" ]] && { echo "consumer blew up"; exit 1; }
+            echo "[OK] Consuming messages"
+        elif [[ "$*" == *"restic snapshots"* ]]; then
             # docker exec restic restic snapshots --json
             # Unset means the repository cannot be reached, which is a different
             # failure from an empty repository (set to an empty JSON array).

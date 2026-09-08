@@ -98,6 +98,58 @@ Finished Backup at $(date -u '+%Y-%m-%d %H:%M:%S') after 3 seconds" health
     [[ "$(mail_body)" == *"reported failure"* ]]
 }
 
+# --- Shopware scheduled tasks --------------------------------------------
+
+# Regression for 2026-09-08. Nothing had run Shopware's scheduled tasks since
+# 2026-07-23, so cache invalidation was dead on a 300-second interval, every
+# cleanup task was dead and the sitemap's lastmod was frozen. It went unnoticed
+# for 47 days because no check watched it. This is that check.
+@test "Shopware scheduled tasks that stopped running are critical" {
+    set_shopware_tasks 48
+    health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"Shopware scheduled tasks last ran 48h ago"* ]]
+    [[ "$(mail_body)" == *"worker is not running"* ]]
+}
+
+@test "a task list where only the newest task is recent is healthy" {
+    # The intervals run from 60 seconds to a month, so an old individual task
+    # proves nothing. Only the newest across all of them does.
+    set_shopware_tasks 1
+    health
+    [ "$(mail_count)" -eq 0 ]
+}
+
+@test "a task list read at its own timezone, not the host's" {
+    # Same shape as the restic bug: the fixture is UTC while the test runs in the
+    # host's zone, so a check ignoring the offset would compute 3h for 1h.
+    TZ='Europe/Berlin' health --dry-run
+    [[ "$output" == *"Shopware scheduled tasks ran 1h ago"* ]]
+}
+
+@test "an unreadable Shopware task list is critical" {
+    unset STUB_SHOPWARE_TASKS
+    health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"Cannot read Shopware scheduled tasks"* ]]
+}
+
+@test "a task list with no execution at all is critical" {
+    export STUB_SHOPWARE_TASKS="+---+
+| Name | Next execution | Last execution | Run interval | Status |
++---+
+| shopware.elasticsearch.create.alias | 2026-01-01T00:00:00+00:00 | - | 300 | skipped |
++---+"
+    health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"No Shopware scheduled task has ever run"* ]]
+}
+
+@test "the dry run lists the Shopware task check" {
+    health --dry-run
+    [[ "$output" == *"shopware_tasks"* ]]
+}
+
 # --- the two bugs this check replaced -------------------------------------
 
 # Regression for 2026-09-08. Adding `init: true` to the restic service

@@ -1,5 +1,39 @@
 # Backup
 
+Two independent backups exist, and only one of them was documented until 2026-09-08.
+
+| | restic | Contabo Auto Backup |
+|---|---|---|
+| Scope | `/opt/docker` | the whole VM |
+| Destination | Google Drive | Contabo |
+| Schedule | daily 04:00 | daily, in a 07:00 to 18:00 UTC+2 window |
+| Retention | 6 daily, 3 weekly, 11 monthly, 2 yearly | 10 daily |
+| Size | per-file, deduplicated | about 18.4 GB per image |
+| Restore | file level | whole VM |
+| Controlled by | this repository | the Contabo panel only |
+
+They fail differently, which is the point. restic dies if the rclone token expires, the Google Drive
+quota fills or the container stops, and none of that touches Contabo's. Contabo's dies with the
+account or the provider, and restores only as a whole machine.
+
+## Contabo Auto Backup
+
+Read from the panel on 2026-09-08. Ten images were present, `vmd157801-BU-…`, dated 2026-08-29 to
+2026-09-07, growing from 18.08 GB to 18.39 GB, so a rolling **ten daily restore points** and no
+weekly or monthly tier.
+
+Two things follow from the timing, and both are lucky rather than designed.
+
+**It runs after the consistent Vaultwarden dump.** `vaultwarden-db-backup.sh` writes its verified copy
+at 03:50, and Contabo images the VM somewhere between 07:00 and 18:00, so every image contains a
+consistent `vaultwarden-db-backup/db.sqlite3` that is at most a few hours older than the image
+itself. A whole-VM image taken while SQLite is running captures `vaultwarden-data/db.sqlite3` hot, and
+that copy can be torn exactly as restic's could. **Restore the vault from the dump, not from the hot
+file**, which is the same rule as for restic.
+
+**It is not driven from this repository and nothing here monitors it.** `vps-health.sh` cannot see it.
+A silently failing Auto Backup would look identical to a working one from inside the host.
+
 Automated backups via **Restic** + **rclone** to Google Drive.
 
 ## Configuration

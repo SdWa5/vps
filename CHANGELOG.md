@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.16.0] - 2026-09-08
+
+### Added
+
+- `docs/backup.md` documents the **Contabo Auto Backup**, a second independent backup that no
+  document here knew about. Ten daily whole-VM images of about 18.4 GB, dated 2026-08-29 to
+  2026-09-07, taken in a 07:00 to 18:00 UTC+2 window. It fails differently from restic, which is its
+  value, and it is driven only from the Contabo panel so nothing here monitors it.
+- The same rule as for restic applies to it. A whole-VM image taken while SQLite runs captures
+  `vaultwarden-data/db.sqlite3` hot, so restore the vault from `vaultwarden-db-backup/db.sqlite3`.
+  The timing happens to cooperate, since the consistent dump is written at 03:50 and the image is
+  taken hours later.
+
+### Changed
+
+- Inbound IPv6 is settled and `docs/ssh-hardening.md` says so. RIPEstat reports `2a02:c206::/32`
+  announced by AS51167 and seen by 322 of 322 RIS peers since 2020, the Contabo panel address matches
+  the host's netplan exactly and its MAC derives to the link-local address the host shows, outbound
+  works 6 of 6, and the ICMPv6 `Address unreachable` originates from Contabo's own router. A packet
+  cannot elicit an error from the destination network's router without reaching it, so the single
+  vantage point was sufficient after all. Everything up to Contabo's edge works and their last hop to
+  the VM does not.
+- `TODO.md` item 7.4 becomes "open a Contabo ticket" with the evidence, rather than "test it".
+- `TODO.md` restore-drill item notes that the Contabo backup has never been restore-tested either, and
+  that it restores only as a whole VM.
+
 ## [1.15.0] - 2026-09-08
 
 ### Added

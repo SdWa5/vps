@@ -269,6 +269,37 @@ Note that `ip6tables-save` writes an **empty file** on this host, exiting 0. The
 and so looks normal. An empty restore file is a silent no-op, which is why the IPv6 baseline above is
 written by hand. Validate both with `iptables-restore --test` before trusting them.
 
+## The `admin` account, and why uid 1000 is not free
+
+Settled 2026-09-08. It gets **neither an SSH key nor deletion**, and the reason is a uid collision
+that is easy to miss.
+
+**The Dolibarr image defines its own `www-data` as uid 1000.** On the host that maps to `admin`, and
+3461 files totalling 64 MB under `dolibarr-documents-data` and `dolibarr-custom-data` are owned by
+it. Deleting the account frees uid 1000, `adduser` hands out the lowest free uid, and the next
+account created on this host would silently inherit ownership of every Dolibarr document. The account
+therefore stays, purely to reserve the uid. Its GECOS field says so, because `getent passwd` is where
+someone will look.
+
+**It does not need a key.** Last interactive login was 18 June 2025. Administration is root over SSH
+with a key, and break-glass is the Contabo console as root, whose password Contabo can reset from the
+panel.
+
+**The collision is also the risk.** Host uid 1000 is a public-facing container's web server uid, and
+that uid was in the host's `sudo` group. Anything that achieved host execution as uid 1000 would have
+inherited that. What changed:
+
+| | Before | After |
+|---|---|---|
+| groups | `admin sudo www-data users` | `admin users` |
+| shell | `/bin/bash` | `/usr/sbin/nologin` |
+| password | usable | locked |
+| `authorized_keys` | none | none |
+
+Locking the password and changing the shell does not touch the containers. They resolve uid 1000
+through their own `/etc/passwd`, never the host's. Verified afterwards: 10 uid 1000 processes still
+running, all 3461 files still owned, Dolibarr still returning 200, all three containers healthy.
+
 ## Break-glass
 
 **The Contabo console is the fallback and nothing in this document affects it.** It logs in through
@@ -276,7 +307,8 @@ getty and PAM rather than sshd, so `PasswordAuthentication no` does not touch it
 lost:
 
 1. Contabo panel, reset the root password if needed, open the VNC console.
-2. Log in as root or `admin`.
+2. Log in as root. `admin` cannot be used since 2026-09-08, see the section on it below. Contabo
+   can reset the root password from the panel, so this route never depends on a stored credential.
 3. Append a fresh public key to `/root/.ssh/authorized_keys`.
 
 That is why disabling SSH password authentication costs nothing in recoverability. SSH passwords
@@ -341,7 +373,5 @@ test never authenticates at all.
   the workstation is no longer the only holder, but a rescue console cannot fetch a vault item and
   every client is logged out for a while after a KDF change. The Contabo console stays the break-glass
   behind both.
-- `admin` can no longer log in over SSH, because it has no `authorized_keys`. That is intended.
-  If it should be reachable, give it a key rather than re-enabling passwords.
 - IPv6 is unreachable from outside, and the cause is upstream of this host rather than in its
   configuration. Worth resolving before any AAAA record is published. See the firewall section.

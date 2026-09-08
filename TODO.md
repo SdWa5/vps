@@ -60,9 +60,12 @@
        has a single owner and holds a small number of ciphers, and emergency_access still has zero
        rows, so until a grantee is confirmed, losing stefan's account loses the org data. verify with
        `SELECT COUNT(*) FROM emergency_access;` (ca. 30 Minuten)
-    4. inbound ipv6 is intermittent and the cause is unknown. it worked on 2026-09-08 at 0% loss with
-       a successful `ssh -6` login, and failed completely an hour earlier from a different mullvad
-       relay with `address unreachable` from contabo's router. untested hypothesis is neighbour cache
-       expiry, since nothing here emits ipv6 and no AAAA record points at the host. test it by leaving
-       v6 idle for an hour and attempting inbound before any outbound packet. do not open a contabo
-       ticket on the current evidence (ca. 30 Minuten)
+    4. `DOCKER-USER` is an empty `RETURN`, so the host firewall cannot filter a published container
+       port. a published port is DNAT'd in nat/PREROUTING and traverses FORWARD, never INPUT. two
+       services publish on all interfaces, `minecraft` 25565 on purpose and `ollama` 11434 with no
+       auth, both profile-gated and currently down. closing this means rules in `DOCKER-USER` that
+       keep 25565 reachable, so a blanket drop is wrong (ca. 45 Minuten)
+    5. inbound ipv6 works, including cold after 25 minutes idle, so the neighbour-cache hypothesis is
+       refuted. one transient failure on 2026-09-08 was never reproduced and its cause is unknown. do
+       not open a contabo ticket. if it recurs, capture the network path in use at the time
+       (ca. 10 Minuten)

@@ -50,9 +50,13 @@ are reported in one line rather than one per run, so a single mail carries the w
 
 IPv6 is a WARN rather than a CRIT because no AAAA record is published for either hostname, so nothing
 resolves to the host over IPv6 and an open v6 policy is a gap that matters once that changes. Inbound
-IPv6 does reach the host and an `ssh -6` login succeeds, though intermittently, see the firewall
-section of [ssh-hardening.md](ssh-hardening.md). Raise this to CRIT if an AAAA record is ever
-published, because at that point the v6 rules carry real traffic.
+IPv6 does reach the host, including cold after 25 minutes idle, and an `ssh -6` login succeeds, see
+the firewall section of [ssh-hardening.md](ssh-hardening.md). Raise this to CRIT if an AAAA record is
+ever published, because at that point the v6 rules carry real traffic.
+
+Note what this check does **not** cover. It reads the `INPUT` chain, and a published container port
+never traverses `INPUT`, so a container exposed on `0.0.0.0` passes this check while being public.
+`DOCKER-USER` is an empty `RETURN` on this host.
 
 ### Reminder backoff
 

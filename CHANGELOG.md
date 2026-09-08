@@ -6,6 +6,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.18.0] - 2026-09-08
+
+### Fixed
+
+- **`docs/ssh-hardening.md` claimed the firewall covers a container published on `0.0.0.0`. It does
+  not and cannot.** A published port is DNAT'd in `nat/PREROUTING` and traverses `FORWARD`, never
+  `INPUT`, and `DOCKER-USER` is an empty `RETURN` on this host. The `INPUT DROP` policy is therefore
+  invisible to container traffic. The document now states what the firewall does and does not buy,
+  namely host daemons yes and container publishes no.
+- The same paragraph asserted that every Docker publish binds `127.0.0.1` and that this compose file
+  never published on all interfaces. That was measured from running containers and generalised to the
+  file. `minecraft` publishes `25565:25565` and `ollama` publishes `11434:11434` on all interfaces,
+  both profile-gated and down at the time.
+- `docs/monitoring.md` records that `check_firewall` reads `INPUT` and so cannot see a container
+  exposed on `0.0.0.0`.
+
+### Changed
+
+- The IPv6 neighbour-cache hypothesis from 1.17.0 is **refuted by test**. IPv6 was left idle for 25
+  minutes, in a window excluding the `:17` health-check cron, and inbound was probed cold with all
+  control traffic forced to IPv4. Ping 0% loss and `ssh -6` reachable, identical to the warm probe. The
+  single earlier failure was transient with an unknown cause, and the docs say not to open a provider
+  ticket on it.
+- `docs/ssh-hardening.md` explains why a cold inbound ping increments the ICMPv6 rule by one rather
+  than by the number of echo requests, since conntrack treats the exchange as one flow and the rest
+  land on `ESTABLISHED,RELATED`. A counter moving by less than the packets sent is normal.
+
+### Added
+
+- `TODO.md` item for the `DOCKER-USER` gap. Closing it needs rules that keep 25565 reachable, because
+  `minecraft` is published on purpose, so a blanket drop is wrong.
+
 ## [1.17.0] - 2026-09-08
 
 ### Fixed

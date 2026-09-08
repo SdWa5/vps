@@ -174,13 +174,50 @@ change, it was not:
 127.0.0.1:8443  shopware tls
 ```
 
-**Every Docker publish binds `127.0.0.1`.** The usual failure here is a container published on
-`0.0.0.0`, which Docker inserts into its own `DOCKER` chain ahead of any host firewall and so exposes
-regardless of what `INPUT` says. This compose file never did that, so the only unnecessary open port
-was LLMNR.
+**Every *running* Docker publish binds `127.0.0.1`**, which is why nothing was exposed through Docker
+on the day. That is a statement about what was running, not about the compose file, and the two are
+different:
 
-That is why the firewall is defence in depth rather than a repair. It protects against the *next*
-service that binds `0.0.0.0` by accident, not against a hole that was there.
+```
+docker-compose.yml:47    minecraft   "25565:25565"   all interfaces, profile-gated, public on purpose
+docker-compose.yml:179   ollama      "11434:11434"   all interfaces, profile-gated, no auth
+```
+
+Both profiles were down, so neither port was open, and both become public the moment their profile
+starts.
+
+### This firewall does not filter published container ports, and cannot
+
+Stated plainly because the opposite is the intuitive reading of a `DROP` policy on `INPUT`.
+
+A published port is DNAT'd in `nat/PREROUTING` and the packet then traverses **`FORWARD`**, never
+`INPUT`. Measured on the host:
+
+```
+nat PREROUTING : -A PREROUTING -m addrtype --dst-type LOCAL -j DOCKER
+FORWARD        : -A FORWARD -j DOCKER-USER
+                 -A FORWARD -j DOCKER-ISOLATION-STAGE-1
+DOCKER-USER    : -A DOCKER-USER -j RETURN          <- empty pass-through
+```
+
+`DOCKER-USER` is the only hook Docker leaves for an operator, and it is an empty `RETURN` here. So an
+`INPUT DROP` policy is invisible to container traffic. The script flushes `INPUT` alone and leaves
+Docker's chains untouched, which is deliberate and documented below, and the direct consequence is
+that it **cannot** cover a container published on `0.0.0.0`.
+
+What the firewall therefore does and does not buy:
+
+| | Covered |
+|---|---|
+| A host daemon binding `0.0.0.0`, as LLMNR did | yes |
+| A container published on `0.0.0.0` | **no** |
+
+So it is defence in depth for host processes only. Closing the container half means rules in
+`DOCKER-USER`, which is a separate change, because `minecraft` is published on purpose and a blanket
+drop there would break it. Tracked in [TODO.md](../TODO.md).
+
+Credit where due. This was caught by a parallel session reading the same file, after this document had
+already asserted the opposite in the sentence above it.
 
 ### LLMNR
 
@@ -234,22 +271,33 @@ inbound    ssh -6 root@2a02:c206:3015:7801::1 logs in
 `curl -6 https://[2a02:...]/` returns `000` and that is **not** a network failure. A literal-IP URL
 sends no SNI and Caddy closes the handshake, which is correct behaviour.
 
-**Inbound is intermittent, and that is the open question.** An identical test earlier the same day
-failed completely, from a different Mullvad relay, with `Destination unreachable: Address unreachable`
-returned by `2a02:c205::1eaf`. That address is verified as Contabo GmbH, AS51167, the same ASN that
-announces this VPS's own prefix. During that window every `ip6tables` counter stayed at zero, and
-during the successful window `tcp dpt:22` and `tcp dpt:443` each counted a SYN and the ICMPv6 rule
-rose by 11. So the difference is real and measured on the host, not a client artefact.
+**One transient failure was seen and never reproduced.** An identical test earlier the same day failed
+completely, from a different Mullvad relay, with `Destination unreachable: Address unreachable`
+returned by `2a02:c205::1eaf`, which is verified as Contabo GmbH on AS51167.
 
-A plausible mechanism, **not yet tested**, is neighbour cache expiry. Nothing on this host normally
-emits IPv6, since no AAAA record points at it, so Contabo's router has no reason to hold a neighbour
-entry for the VM. Inbound would then fail until something makes the VM transmit and refresh it. The
-successful test followed a batch of outbound pings from the VM, which fits, and that is correlation
-rather than cause.
+The obvious mechanism was neighbour cache expiry, since nothing here normally emits IPv6 and Contabo's
+router would have no reason to hold an entry for the VM. **That hypothesis was tested and is refuted.**
+IPv6 was left idle for 25 minutes, in a window chosen to exclude the hourly health-check cron at
+`:17`, and inbound was then probed cold with every control connection forced to IPv4 so it could not
+refresh anything:
 
-To test it, leave IPv6 idle on the host for an hour, then attempt inbound **without** generating any
-outbound v6 traffic first. If inbound fails and starts working after a single outbound ping, the
-mechanism is confirmed and the fix is a keepalive rather than a support ticket.
+```
+after 25 min idle, before any outbound packet from the VM:
+  ping    0% packet loss
+  ssh -6  reachable
+after making the VM transmit once:
+  ping    0% packet loss
+  ssh -6  reachable
+```
+
+Cold and warm behave identically, so the single failure was transient and its cause is unknown. Do not
+open a provider ticket on it. If it recurs, capture the relay or path in use at the time, because that
+is the variable this experiment could not control.
+
+Reading the counters is what makes this trustworthy. A cold inbound ping increments the ICMPv6 rule by
+exactly **one**, not by the number of echo requests, because conntrack treats the exchange as one flow
+and the rest land on `ESTABLISHED,RELATED`. An SSH login likewise adds one packet to `tcp dpt:22`. A
+counter that moves by less than the packets sent is normal here and is not evidence of loss.
 
 ### What this cost, and the rule that comes out of it
 

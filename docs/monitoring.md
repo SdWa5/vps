@@ -55,6 +55,22 @@ from 60 seconds to a month, so one task being far behind is normal, while the ne
 means nothing is running at all. The timestamps are ISO 8601 with an offset, so the host's timezone
 cannot misread them, which is the same trap the backup check fell into.
 
+**After an outage the scheduler catches up, and that looks like a defect without being one.** On the
+first two worker runs after the 47-day gap, `shopware.invalidate_cache` ran twice inside 97 seconds
+despite its 300-second interval. The reason is that Shopware clamps a task's next execution to *now*
+when `last + interval` is still in the past, which is the normal case for a task 47 days overdue. So
+the first run leaves the task immediately due again, and the second one finally puts it in the future.
+Measured across three consecutive runs: afterwards `shopware.invalidate_cache` sat at +300 s,
+`log_entry.cleanup` at the next day and `app.system_heartbeat` at the next week, and a further run
+changed nothing. **Do not chase this if a fresh deployment appears to run everything twice.**
+
+**One portability trap, because it cost a wrong CRIT on the first deploy.** The check parses the task
+table with `awk`, and **the host's `awk` is `mawk`, which does not honour interval expressions**.
+Measured 2026-09-08: `/^[0-9]{4}-/` matches nothing there while `/^[0-9][0-9][0-9][0-9]-/` matches. The
+test suite cannot catch this, because `tests/run.sh` runs bats in an Alpine container whose busybox
+`awk` does support intervals, and the workstation has GNU awk. Three implementations are in play and
+only the host's decides, so anything written here stays inside POSIX `awk`.
+
 `monitoring/shopware-worker.sh` is what runs those tasks now, every minute under `flock`. Shopware's
 own documentation warns that cron-driven workers pile up, because cron does not wait for the previous
 run, so `flock -n` makes a run whose predecessor is still going exit immediately. The admin worker is

@@ -6,6 +6,60 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.27.0] - 2026-09-08
+
+### Added
+
+- **`monitoring/shopware-worker.sh` runs Shopware's scheduled tasks and consumes its message queue.**
+  Nothing had, since 2026-07-23, so every task's next execution was 47 days in the past, cache
+  invalidation was dead on a 300-second interval, every cleanup task was dead, the sitemap's `lastmod`
+  was frozen at 2026-07-22 and 9 messages sat unconsumed. It runs every minute from
+  `/etc/cron.d/shopware-worker`, silent on success and one mail on failure.
+- Three details in it are deliberate. **`flock -n` is not decoration**, because Shopware's own
+  documentation warns that cron-driven workers pile up: cron does not wait for the previous run and a
+  message outliving the time limit keeps its worker alive. **The `failed` transport is consumed too**,
+  because without it a failed message is never retried. And **the tasks run before the consumer**, so a
+  message a task enqueues is picked up in the same minute rather than the next.
+- `shopware-html-data/config/packages/shopware.yaml` turns the admin worker off, which Shopware
+  requires once a CLI worker exists so the two do not both run.
+- **The `shopware_tasks` check in `monitoring/vps-health.sh`, which matters more than the fix.** This
+  outage went unnoticed for 47 days because nothing watched it. The check reads
+  `scheduled-task:list` itself rather than any symptom, and takes the **newest** last-execution across
+  all tasks, because the intervals run from 60 seconds to a month so a single old task proves nothing.
+  CRIT past `SHOPWARE_TASK_MAX_AGE_HOURS`, default 2.
+- 15 tests, taking the suite from 73 to 88. `tests/shopware-worker.bats` covers a healthy run, both
+  command failures, a stopped container, the transport list and the ordering of the two steps.
+  `tests/vps-health.bats` gains a 48-hour outage, a list where only the newest task is recent, an
+  unreadable list, a list where nothing has ever run, and a fixture whose timestamp is UTC while the
+  test runs in the host's zone, which is the same trap the backup check fell into.
+
+### Fixed
+
+- `README.md` and `docs/monitoring.md` said "three cron jobs". There are four.
+
+### Security
+
+- **Five Shopware AG service apps are installed and four are active**, namely `ShopwarePayments`,
+  `Swag3DModelPipeline`, `SwagAIImageEditor` and `SwagCopilot`, with `ShopwareNexusIngestionService`
+  present but inactive. Found while draining the queue by hand: consuming one message showed
+  `UpdateServiceMessage` calling `registry.services.shopware.io` and updating `ShopwarePayments`. They
+  install and update themselves through the `services.install` task. None appears in
+  `docs/shopware/privacy-tos-review-2026-07-22.md`, so whether a non-profit wants an AI image editor, a
+  Copilot and an event ingestion service active on its shop is now filed as item 1 of
+  `docs/shopware/TODO.md` rather than sitting unnoticed.
+
+### Removed
+
+- `docs/shopware/TODO.md` item 1, the missing task runner, done here. Item 8's sitemap half is closed
+  too, since the sitemap regenerates again, leaving only the Search Console submission and the meta
+  titles.
+
+### Deployment
+
+- `/etc/cron.d/shopware-worker` has to be installed, and `bin/console cache:clear` run once so the
+  admin worker setting takes effect. The queue holds 21 messages, mostly thumbnail jobs, and the worker
+  drains them a minute at a time.
+
 ## [1.26.0] - 2026-09-08
 
 ### Security

@@ -38,6 +38,10 @@ EXPECTED_CONTAINERS="${EXPECTED_CONTAINERS:-vaultwarden shopware dolibarr doliba
 HEALTH_URLS="${HEALTH_URLS:-vaultwarden=https://vault.sdwa5.org/alive shopware=https://sdwa5.org/ dolibarr=https://erp.sdwa5.org/}"
 BACKUP_MAX_AGE_HOURS="${BACKUP_MAX_AGE_HOURS:-26}"
 DB_BACKUP_MAX_AGE_HOURS="${DB_BACKUP_MAX_AGE_HOURS:-26}"
+# Shopware's shortest scheduled task interval is 60 seconds, so two hours is
+# generous and still catches an outage the same morning. The one this check
+# exists for ran unnoticed for 47 days.
+SHOPWARE_TASK_MAX_AGE_HOURS="${SHOPWARE_TASK_MAX_AGE_HOURS:-2}"
 VAULTWARDEN_RELEASE_API="${VAULTWARDEN_RELEASE_API:-https://api.github.com/repos/dani-garcia/vaultwarden/releases/latest}"
 FIREWALL_PORTS="${FIREWALL_PORTS:-22 80 443}"
 
@@ -83,6 +87,47 @@ check_containers() {
         printf 'OK\tAll %s expected containers running\n' "$(wc -w <<< "$EXPECTED_CONTAINERS")"
     else
         printf 'CRIT\t%s\n' "$(IFS='; '; echo "${problems[*]}")"
+    fi
+}
+
+# Shopware's scheduled tasks stop silently. Nothing in the shop, the container
+# or the logs says so, and the only visible symptoms are indirect: a sitemap that
+# stops advancing, a cache that stops being invalidated, tables that stop being
+# pruned. That is why this reads the task list itself rather than any symptom.
+#
+# The newest last-execution across all tasks is the measure. A single task can
+# legitimately be far behind, because the intervals range from 60 seconds to a
+# month, but if the newest of them is old then nothing is running at all.
+check_shopware_tasks() {
+    local list newest newest_ts age_hours
+
+    list="$(docker exec shopware php bin/console scheduled-task:list 2>&1)" || {
+        printf 'CRIT\tCannot read Shopware scheduled tasks: %s\n' "$(head -1 <<< "$list")"
+        return
+    }
+
+    # The table's third column is the last execution, ISO 8601 with an offset,
+    # so it sorts lexicographically and cannot be misread by the host timezone.
+    newest="$(awk -F'|' 'NF>4 {gsub(/ /, "", $4); if ($4 ~ /^[0-9]{4}-/) print $4}' <<< "$list" | sort | tail -1)"
+
+    if [[ -z "$newest" ]]; then
+        printf 'CRIT\tNo Shopware scheduled task has ever run\n'
+        return
+    fi
+
+    newest_ts="$(date -d "$newest" +%s 2>/dev/null)"
+    if [[ -z "$newest_ts" ]]; then
+        printf 'CRIT\tCould not parse the newest Shopware task timestamp: %s\n' "$newest"
+        return
+    fi
+
+    age_hours=$(( ($(now) - newest_ts) / 3600 ))
+
+    if (( age_hours >= SHOPWARE_TASK_MAX_AGE_HOURS )); then
+        printf 'CRIT\tShopware scheduled tasks last ran %sh ago (%s), expected within %sh. The worker is not running\n' \
+            "$age_hours" "$newest" "$SHOPWARE_TASK_MAX_AGE_HOURS"
+    else
+        printf 'OK\tShopware scheduled tasks ran %sh ago (%s)\n' "$age_hours" "$newest"
     fi
 }
 
@@ -352,12 +397,14 @@ completely silent. Repeat reminders for an unchanged problem back off: 1, 2, 4,
   vps-health.sh --test-mail  send one mail to every recipient and exit
   vps-health.sh --help       this text
 
-Checks: disk, containers, restic backup age, Vaultwarden database dump age,
-public HTTP endpoints, Caddy, Vaultwarden version drift.
+Checks: disk, containers, restic backup age, Shopware scheduled task age,
+Vaultwarden database dump age, public HTTP endpoints, Caddy, Vaultwarden
+version drift.
 
 Environment overrides (also honoured from the compose .env): DISK_WARN,
 DISK_CRIT, EXPECTED_CONTAINERS, HEALTH_URLS, BACKUP_MAX_AGE_HOURS,
-DB_BACKUP_MAX_AGE_HOURS, FIREWALL_PORTS, STATE_DIR, FAKE_NOW.
+DB_BACKUP_MAX_AGE_HOURS, SHOPWARE_TASK_MAX_AGE_HOURS, FIREWALL_PORTS,
+STATE_DIR, FAKE_NOW.
 USAGE
 }
 
@@ -391,6 +438,7 @@ run_checks() {
     emit disk                  "$(check_disk)"
     emit containers            "$(check_containers)"
     emit backup                "$(check_backup)"
+    emit shopware_tasks        "$(check_shopware_tasks)"
     emit vaultwarden_db_backup "$(check_vaultwarden_db_backup)"
     emit http                  "$(check_http)"
     emit caddy                 "$(check_caddy)"

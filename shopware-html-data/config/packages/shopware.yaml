@@ -1,0 +1,15 @@
+# The admin worker is off because a CLI worker exists.
+#
+# Shopware's admin worker runs scheduled tasks and consumes the message queue
+# from the administration's own browser session, so both stop the moment nobody
+# has the admin open. That is what happened here: measured on 2026-09-08,
+# nothing had run since 2026-07-23, every task's next execution was 47 days in
+# the past, cache invalidation was dead on a 300-second interval and the
+# sitemap's lastmod was frozen at 2026-07-22.
+#
+# monitoring/shopware-worker.sh is the CLI worker Shopware's documentation asks
+# for, run every minute from /etc/cron.d/shopware-worker. Shopware requires the
+# admin worker to be off once that exists, so the two do not both run.
+shopware:
+    admin_worker:
+        enable_admin_worker: false

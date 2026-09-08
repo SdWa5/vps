@@ -1,6 +1,6 @@
 # Monitoring
 
-Three cron jobs, no dashboard, no extra container, no external monitoring service.
+Four cron jobs, no dashboard, no extra container, no external monitoring service.
 All live in [`monitoring/`](../monitoring/) and are deployed to `/opt/docker/monitoring/`.
 
 | Job | Script | Schedule | Sends mail when |
@@ -8,6 +8,7 @@ All live in [`monitoring/`](../monitoring/) and are deployed to `/opt/docker/mon
 | Health check | `vps-health.sh` | hourly, `:17` | something is wrong or has just recovered |
 | Vaultwarden database copy | `vaultwarden-db-backup.sh` | daily 03:50 | the dump failed or could not be verified |
 | Vaultwarden update | `vaultwarden-autoupdate.sh` | Sunday 03:00 | an update was applied, an update failed, or the health check stopped running |
+| Shopware worker | `shopware-worker.sh` | every minute, under `flock` | the scheduled tasks or the queue consumer failed, or the container is down |
 
 **A healthy system sends nothing.** There is no all-green digest.
 
@@ -37,10 +38,29 @@ auto-update.
 | `http` | `vault.sdwa5.org/alive`, `sdwa5.org` or `erp.sdwa5.org` returns anything but 200 |
 | `caddy` | `systemctl is-active caddy` is not `active` |
 | `firewall` | the IPv4 `INPUT` policy is not `DROP`, fail2ban's jump is gone, or a port in `FIREWALL_PORTS` (22 80 443) is no longer accepted. An open IPv6 policy is a WARN rather than a CRIT |
+| `shopware_tasks` | the newest Shopware scheduled task ran longer than `SHOPWARE_TASK_MAX_AGE_HOURS` (2) ago, the task list cannot be read, or no task has ever run |
 | `vaultwarden_version` | the running version is behind the newest GitHub release |
 
 A container reporting `starting` is not an alert, that is a normal `start_period`. GitHub being
 unreachable is not an alert either, otherwise the recipient learns to ignore this mail.
+
+The Shopware task check exists because that failure is silent in a different way. Shopware's scheduled
+tasks stop without any error, and the only symptoms are indirect: a sitemap that stops advancing, a
+cache that stops being invalidated, tables that stop being pruned. **Measured 2026-09-08, nothing had
+run them since 2026-07-23**, which is 47 days, and nothing noticed. So the check reads
+`scheduled-task:list` itself rather than any symptom.
+
+It takes the **newest** last-execution across all tasks rather than the oldest. The intervals range
+from 60 seconds to a month, so one task being far behind is normal, while the newest of them being old
+means nothing is running at all. The timestamps are ISO 8601 with an offset, so the host's timezone
+cannot misread them, which is the same trap the backup check fell into.
+
+`monitoring/shopware-worker.sh` is what runs those tasks now, every minute under `flock`. Shopware's
+own documentation warns that cron-driven workers pile up, because cron does not wait for the previous
+run, so `flock -n` makes a run whose predecessor is still going exit immediately. The admin worker is
+turned off in `shopware-html-data/config/packages/shopware.yaml`, because Shopware requires that once
+a CLI worker exists. See
+[shopware/infrastructure.md](shopware/infrastructure.md#runtime-what-runs-shopwares-background-work).
 
 The backup check **asks the repository rather than the container log**, and it is worth saying why,
 because it was the log until 2026-09-08 and that produced two false alarms.
@@ -241,6 +261,7 @@ apt install sqlite3
 install -m 644 -o root -g root monitoring/cron.d/vps-health              /etc/cron.d/vps-health
 install -m 644 -o root -g root monitoring/cron.d/vaultwarden-db-backup   /etc/cron.d/vaultwarden-db-backup
 install -m 644 -o root -g root monitoring/cron.d/vaultwarden-autoupdate  /etc/cron.d/vaultwarden-autoupdate
+install -m 644 -o root -g root monitoring/cron.d/shopware-worker         /etc/cron.d/shopware-worker
 mkdir -p /var/lib/vps-health
 /opt/docker/monitoring/vaultwarden-db-backup.sh
 /opt/docker/monitoring/vps-health.sh --test-mail

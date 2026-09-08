@@ -1,14 +1,14 @@
 # Shopware TODO
 
-1. **Nothing runs Shopware's scheduled tasks or its message queue, and nothing has since 2026-07-23.**
-   Measured 2026-09-08 and written up in [infrastructure.md](infrastructure.md#runtime-nothing-runs-shopwares-background-work).
-   There is no host cron entry, no container crontab entry, no running `scheduled-task:run` or
-   `messenger:consume`, and no worker service in `docker-compose.yml`. So every scheduled task has its
-   next execution 47 days in the past, cache invalidation is dead, every cleanup task is dead, and 9
-   messages sit unconsumed in the `async` transport. **The stale sitemap in item 8 is a symptom of
-   this.** The fix is a cron or a worker service running `scheduled-task:run` and `messenger:consume`
-   once a minute, plus turning the admin worker off. It needs a decision about where that process
-   lives, and it touches a live internet-facing shop (ca. 1 Stunde 30 Minuten)
+1. **Five Shopware AG service apps are installed and four are active**, namely `ShopwarePayments`,
+   `Swag3DModelPipeline`, `SwagAIImageEditor` and `SwagCopilot`, with `ShopwareNexusIngestionService`
+   present but inactive. Found 2026-09-08 while draining the message queue. They install and update
+   themselves through the `services.install` scheduled task and phone home to
+   `registry.services.shopware.io`. None of them appears in
+   [privacy-tos-review-2026-07-22.md](privacy-tos-review-2026-07-22.md), so whether a non-profit wants
+   an AI image editor, a Copilot and an event ingestion service active on its shop is open. Decide per
+   app, then either deactivate the unwanted ones or cover them in the same privacy pass as item 14
+   (`decision`)
 2. update email templates (order confirmation etc. still default Shopware copy)
     1. dont get too fancy (e.g. with corporate or blogging style expressions)
     2. en and de
@@ -48,13 +48,13 @@
           non-profit should get right on paper.
 7. Checkout end-to-end test — no real order flow tested yet
    (deferred — not selling products yet)
-8. SEO — **the "no sitemap" half was wrong, re-measured 2026-09-08.** A sitemap exists at
+8. SEO — **the sitemap is fine and regenerating again.** Re-measured 2026-09-08: it exists at
    `https://sdwa5.org/sitemap.xml`, returns HTTP 200, is a valid `sitemapindex`, holds **32 URLs** covering the
    homepage, 13 CMS pages, 5 category listings and 13 products, and `robots.txt` advertises it **twice**, for the
-   default and the `/de/` sales channel. What is actually wrong is that its `lastmod` is **2026-07-22**, because
-   `shopware.sitemap_generate` has not run since then, which is item 1. Whether it has ever been submitted to
-   Google Search Console is unknown from here and needs the account. The meta titles and descriptions still need
-   checking, which was not measured
+   default and the `/de/` sales channel. Its `lastmod` was frozen at 2026-07-22 because
+   `shopware.sitemap_generate` had stopped, and the worker now runs it again. **What is left is whether it has ever
+   been submitted to Google Search Console**, which needs the account and cannot be answered from the host, plus the
+   meta titles and descriptions, which were never measured
 9. Switch store-installed plugins to composer install — FroshLazySizes, FroshPlatformFilterSearch, SwagPlatformSecurity,
    FroshShopmon are currently installed via the Shopware Store plugin manager and not in
    `composer.json`/`composer.lock` (unlike FroshPlatformThumbnailProcessor, FroshPlatformMailArchive). Their source is

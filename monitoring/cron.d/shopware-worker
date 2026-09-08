@@ -1,0 +1,8 @@
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=""
+# Every minute, under flock. Shopware's own documentation warns that cron-driven
+# workers pile up, because cron does not wait for the previous run and a message
+# that outlives the time limit keeps its worker alive. `-n` makes a run whose
+# predecessor is still going exit immediately rather than queue behind it.
+* * * * * root /usr/bin/flock -n /run/lock/shopware-worker.lock /opt/docker/monitoring/shopware-worker.sh 2>&1 | logger -t shopware-worker

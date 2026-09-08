@@ -54,13 +54,10 @@
        last seen 2026-09-07. argon2id is per-account and only its holder can change it, so this is a
        message to that person rather than an action here. the other two pbkdf2 accounts hold 0 items
        (ca. 15 Minuten)
-    3. the sdwa5 org has a single owner and holds a small number of ciphers, and emergency_access
-       has zero rows. losing stefan's account loses the org data. either promote the second active
-       account to owner or enrol a takeover grantee, both of which hand that person full access
-       (ca. 45 Minuten)
-    4. two dormant vaultwarden accounts hold 0 items. one logged in once on 2026-06-20, the other has
-       never logged in and is still only invited to the org. decide whether they are deleted or kept
-       (ca. 15 Minuten)
-    5. inbound ipv6 to the host is unverified rather than broken. outbound works, no AAAA record is
+    3. finish the emergency access enrolment with the new member, in progress since 2026-09-08. the sdwa5 org
+       has a single owner and holds a small number of ciphers, and emergency_access still has zero
+       rows, so until a grantee is confirmed, losing stefan's account loses the org data. verify with
+       `SELECT COUNT(*) FROM emergency_access;` (ca. 30 Minuten)
+    4. inbound ipv6 to the host is unverified rather than broken. outbound works, no AAAA record is
        published, and the client used for testing had ipv6 blocked by mullvad. settle it from a host
        with working ipv6 before publishing an AAAA record (ca. 15 Minuten)

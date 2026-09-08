@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.26.0] - 2026-09-08
+
+### Security
+
+- **Nothing runs Shopware's scheduled tasks or its message queue, and nothing has since 2026-07-23.**
+  Found while measuring the SEO item in `docs/shopware/TODO.md`. There is no host cron entry, no
+  container crontab entry beyond Debian's own, no running `scheduled-task:run` or `messenger:consume`,
+  and no worker service in `docker-compose.yml`. Every scheduled task's next execution is therefore 47
+  days in the past, **`shopware.invalidate_cache` is dead on a 300-second interval**, every cleanup
+  task is dead so `log_entry`, `cart`, `payment_token`, `sales_channel_context`, `version` and
+  `import_export_file` grow unpruned, and 9 messages sit unconsumed in the `async` transport with 0
+  failed. Written up in `docs/shopware/infrastructure.md` and filed as item 1 of
+  `docs/shopware/TODO.md` at ca. 1 Stunde 30 Minuten, because the fix needs a decision about where
+  that process lives and it touches a live internet-facing shop.
+- The likely mechanism is recorded as a **hypothesis rather than a measurement**: all tasks stop at
+  the same moment and `shopware.invalidate_cache` shows a last run four minutes before its next due
+  time, which is what the admin worker looks like, since it only runs tasks while somebody has the
+  administration open. The effective `enable_admin_worker` value could not be read, because
+  `bin/console debug:config` fails with "Impossible to call set() on a frozen ParameterBag" in this
+  build.
+
+### Fixed
+
+- **`docs/shopware/TODO.md` said "no sitemap submitted". A sitemap exists.** Re-measured: HTTP 200 at
+  `https://sdwa5.org/sitemap.xml`, a valid `sitemapindex`, **32 URLs** covering the homepage, 13 CMS
+  pages, 5 category listings and 13 products, and `robots.txt` advertises it twice, for the default and
+  the `/de/` sales channel. What is actually wrong is its `lastmod` of 2026-07-22, which is the same
+  date the sitemap task last ran, so the stale sitemap is a symptom of the item above rather than a
+  separate problem. Whether it has ever been submitted to Google Search Console is unknown from here.
+- The storefront search item is now measured rather than suspected. `?search=Hoodie` returns products,
+  while `Membership`, `Hardware`, `Impressum`, `Datenschutz` and `Gallery` return nothing, although all
+  five exist as CMS pages and all five are in the sitemap. So it is product-only as suspected, core has
+  no CMS-page search, and whether a free plugin exists is the open question.
+- `docs/shopware/infrastructure.md` said the shop is reverse-proxied via nginx. It is **Caddy**.
+- `docs/shopware/TODO.md` items are renumbered after the insertion, and the internal reference from the
+  preorder item to the legal-wording item was corrected from 13 to 14.
+
 ## [1.25.0] - 2026-09-08
 
 ### Added

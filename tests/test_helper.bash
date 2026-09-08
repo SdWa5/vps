@@ -52,15 +52,42 @@ set_db_backup_fresh() {
 }
 
 # The backup check compares against now(), which honours FAKE_NOW, so the fake
-# restic log has to move with the fake clock.
+# snapshot list has to move with the fake clock.
+#
+# The timestamp is deliberately written in **UTC** while the tests run in
+# whatever zone the host is in. That is the shape of the bug this replaced: the
+# old check read a UTC log timestamp with a local `date -d` and every backup
+# came out two hours older than it was. An RFC3339 timestamp with an explicit
+# offset cannot be misread that way, and a fixture in a foreign zone is what
+# proves it.
 set_backup_fresh() {
-    local ref started finished
+    local ref snapshots
     ref="${FAKE_NOW:-$(date +%s)}"
-    started="$(date -d "@$(( ref - 3660 ))" '+%Y-%m-%d %H:%M:%S')"
-    finished="$(date -d "@$(( ref - 3600 ))" '+%Y-%m-%d %H:%M:%S')"
+    snapshots="$(restic_snapshots_json "$(( ref - 3600 ))")"
+    export STUB_RESTIC_SNAPSHOTS="$snapshots"
+
+    # The log is now only an early warning for an explicit failure, so the
+    # default fixture is a plain successful run.
+    local started finished
+    started="$(date -u -d "@$(( ref - 3660 ))" '+%Y-%m-%d %H:%M:%S')"
+    finished="$(date -u -d "@$(( ref - 3600 ))" '+%Y-%m-%d %H:%M:%S')"
     export STUB_RESTIC_LOG="Starting Backup at $started
 Backup Successful
 Finished Backup at $finished after 47 seconds"
+}
+
+# A restic `snapshots --json` array, newest last, for the epoch seconds given.
+# Emits UTC with a `Z` offset, exactly as restic does.
+restic_snapshots_json() {
+    local out='[' first=1 ts
+    for ts in "$@"; do
+        [[ $first -eq 1 ]] || out+=','
+        first=0
+        out+="{\"time\":\"$(date -u -d "@$ts" '+%Y-%m-%dT%H:%M:%S.000000000Z')\""
+        out+=',"tree":"deadbeef","paths":["/data"],"hostname":"testhost"'
+        out+=',"username":"root","id":"abcdef0123456789","short_id":"abcdef01"}'
+    done
+    printf '%s]\n' "$out"
 }
 
 health() {

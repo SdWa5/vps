@@ -17,10 +17,21 @@ case "${1:-}" in
         printf '%s\n' "${STUB_RESTIC_LOG:-}"
         ;;
     exec)
-        # docker exec vaultwarden /vaultwarden --version
-        [[ -z "${STUB_VW_VERSION:-}" ]] && exit 1
-        echo "Vaultwarden ${STUB_VW_VERSION}"
-        echo "Web-Vault ${STUB_WEB_VAULT_VERSION:-2026.7.0}"
+        if [[ "$*" == *"restic snapshots"* ]]; then
+            # docker exec restic restic snapshots --json
+            # Unset means the repository cannot be reached, which is a different
+            # failure from an empty repository (set to an empty JSON array).
+            [[ -z "${STUB_RESTIC_SNAPSHOTS+set}" ]] && {
+                echo "Fatal: unable to open config file"
+                exit 1
+            }
+            printf '%s\n' "$STUB_RESTIC_SNAPSHOTS"
+        else
+            # docker exec vaultwarden /vaultwarden --version
+            [[ -z "${STUB_VW_VERSION:-}" ]] && exit 1
+            echo "Vaultwarden ${STUB_VW_VERSION}"
+            echo "Web-Vault ${STUB_WEB_VAULT_VERSION:-2026.7.0}"
+        fi
         ;;
 esac
 exit 0

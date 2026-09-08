@@ -6,6 +6,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.22.0] - 2026-09-08
+
+### Fixed
+
+- **`check_backup` asked the container log and now asks the repository.** Reading the log produced two
+  false alarms, both found on 2026-09-08.
+  - A container recreation wipes the log, and an empty log cannot be told apart from a backup that
+    never ran. Adding `init: true` to the restic service in 1.21.0 was itself enough to fire
+    `CRIT No completed restic backup found in the last 400 log lines` against a repository that was
+    entirely healthy. That alarm was real and its subject was not.
+  - **The log prints UTC and the host read it as Europe/Berlin.** The restic container has no `TZ`,
+    so its `Finished Backup at` lines are UTC, while `date -d` on a bare timestamp uses the host's
+    zone. Every backup was therefore computed **two hours older than it was**, measured: a snapshot
+    two hours old came out as four. Against a 24-hour cycle and a 26-hour threshold that leaves no
+    slack at all, and it placed a false CRIT window at exactly the hour the next run starts. This one
+    had never been noticed, because it fires on a healthy backup with nothing visibly wrong.
+- `restic snapshots --json` answers both. It is the authoritative answer to whether a backup exists
+  rather than a claim in a log that a recreation can erase, and its timestamps are RFC3339 with an
+  explicit offset, so the host's zone cannot misread them. The newest snapshot is taken as the maximum
+  of the returned timestamps rather than the last element, so the check no longer depends on restic's
+  ordering.
+- The log is still read, but only as an early warning for an explicitly failed run. It can no longer
+  raise an alarm by being absent.
+- **`docs/monitoring.md` carried the same wrong schedule arithmetic twice.** It said the database copy
+  runs "ten minutes before restic at 04:00" and that the Vaultwarden update runs "one hour before" it.
+  Both crons are host time and Europe/Berlin while restic's is container time and UTC, so the real
+  gaps are 2 hours 10 minutes and 5 hours. The ordering holds in both cases, so nothing was broken,
+  but it held by arithmetic nobody had checked across two timezones.
+
+### Added
+
+- Six tests for the backup check, including two that name the bugs they guard. One feeds a container
+  log containing only the four lines a fresh container writes and asserts silence. The other asserts
+  the computed age of a snapshot whose timestamp is UTC while the test runs in the host's zone, so a
+  check that ignored the offset would read 3h where the fixture says 1h.
+- `tests/test_helper.bash` gained `restic_snapshots_json`, which builds a `snapshots --json` array
+  from epoch seconds and emits UTC with a `Z` offset exactly as restic does. The fixture is
+  deliberately in a foreign timezone, because that is the shape of the bug it replaced.
+- The remaining cases cover an unreachable repository, a repository with no snapshots at all, and a
+  list returned out of order.
+
 ## [1.21.1] - 2026-09-08
 
 ### Fixed

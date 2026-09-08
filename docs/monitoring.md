@@ -32,7 +32,7 @@ auto-update.
 |-------|-------------|
 | `disk` | `/` at or above `DISK_WARN` (85 %) as WARN, `DISK_CRIT` (92 %) as CRIT |
 | `containers` | any of vaultwarden, shopware, dolibarr, dolibarr_db, dolibarr_cron, restic is missing, stopped or `unhealthy` |
-| `backup` | the last restic run failed, or finished more than `BACKUP_MAX_AGE_HOURS` (26) ago |
+| `backup` | the newest snapshot **in the repository** is older than `BACKUP_MAX_AGE_HOURS` (26), the repository cannot be reached or holds no snapshots at all, or the container log reports an explicitly failed run |
 | `vaultwarden_db_backup` | the consistent database copy is missing, or older than `DB_BACKUP_MAX_AGE_HOURS` (26) |
 | `http` | `vault.sdwa5.org/alive`, `sdwa5.org` or `erp.sdwa5.org` returns anything but 200 |
 | `caddy` | `systemctl is-active caddy` is not `active` |
@@ -41,6 +41,24 @@ auto-update.
 
 A container reporting `starting` is not an alert, that is a normal `start_period`. GitHub being
 unreachable is not an alert either, otherwise the recipient learns to ignore this mail.
+
+The backup check **asks the repository rather than the container log**, and it is worth saying why,
+because it was the log until 2026-09-08 and that produced two false alarms.
+
+* **A container recreation wipes the log**, and an empty log cannot be told apart from a backup that
+  never ran. Adding `init: true` to the restic service was enough to fire a CRIT against a repository
+  that was entirely healthy.
+* **The log prints UTC and the host reads it as Europe/Berlin.** `date -d` on a bare timestamp uses
+  the local zone, so every backup was computed **two hours older than it was**. Against a 24-hour
+  cycle and a 26-hour threshold that leaves no slack, and it put a false CRIT window at exactly the
+  hour the next run starts.
+
+`restic snapshots --json` answers both. It is the authoritative answer to whether a backup exists,
+rather than a claim in a log that a recreation can erase, and its timestamps are RFC3339 with an
+explicit offset so the host's zone cannot misread them. The newest snapshot is taken as the maximum
+of the returned timestamps rather than the last element, so the check does not depend on restic's
+ordering. The log is still read, but only as an early warning for an explicitly failed run, and it can
+no longer raise an alarm by being absent.
 
 The firewall check exists because that failure is silent. Anything that flushes `INPUT`, including
 the firewall unit's own restart, removes fail2ban's jump, and the chain still looks plausible
@@ -119,8 +137,11 @@ check is discarded rather than published, because a copy that cannot be read bac
 Vaultwarden keeps serving throughout. The backup API takes a read lock per page batch instead of
 stopping the container, so unlike the update job this one needs no downtime.
 
-The job runs at 03:50, ten minutes before restic at 04:00, so every snapshot contains a database that
-is safe to restore. The hot copy in `vaultwarden-data/` stays in the snapshot as well. It costs
+The job runs at 03:50 **host time**, which is Europe/Berlin, so 01:50 UTC. restic runs at 04:00
+**inside its container**, which has no `TZ` and therefore runs UTC. The gap is 2 hours 10 minutes and
+not the ten minutes this document used to claim, and it is 3 hours 10 minutes under CET. The ordering
+holds in both, so every snapshot does contain a database that is safe to restore, but it holds by
+arithmetic across two timezones. Any change to either schedule has to be reasoned about in UTC. The hot copy in `vaultwarden-data/` stays in the snapshot as well. It costs
 nothing and sits next to the consistent one, so a restore has both.
 
 `sqlite3` has to be installed on the host. Without it the job mails and exits non-zero rather than
@@ -161,8 +182,9 @@ again, which is the exact failure this job was built to prevent.
 Only Vaultwarden is auto-updated. Shopware, Dolibarr and MariaDB stay manual, tracked in
 [TODO.md](../TODO.md).
 
-The job runs Sunday 03:00, one hour before the restic backup at 04:00, so the daily backup always
-captures the post-update state.
+The job runs Sunday 03:00 host time, so 01:00 UTC, and restic runs 04:00 UTC. That is five hours
+before rather than the one hour this document used to claim, because the two crons live in different
+timezones. The intent holds either way, so the daily backup does capture the post-update state.
 
 ## The two jobs watch each other
 

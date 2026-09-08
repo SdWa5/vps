@@ -1,0 +1,53 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  # tests/run.sh runs bats and shellcheck inside containers, so the runner needs
+  # nothing installed beyond the Docker it already has. Running the script
+  # rather than reimplementing it here keeps CI and a local run identical.
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - run: tests/run.sh
+
+  # Secret scanning, on the working tree and on the full history.
+  #
+  # The gitleaks CLI is used directly rather than gitleaks/gitleaks-action,
+  # because that action requires a paid-tier licence key for repositories owned
+  # by a GitHub Organization, and moving these repositories into an `sdwa5`
+  # organization is the plan. The CLI itself is MIT and needs no key.
+  #
+  # This repository is the reason the check exists. Two real secrets were
+  # committed in c516d41 and only found on 2026-09-08, by which time they had
+  # been in the history for weeks. See docs/minecraft.md.
+  secrets:
+    runs-on: ubuntu-latest
+    env:
+      GITLEAKS_VERSION: 8.30.1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The history scan needs the history.
+          fetch-depth: 0
+
+      - name: Install gitleaks
+        run: |
+          curl -sSfL -o /tmp/gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
+          /tmp/gitleaks version
+
+      - name: Scan the working tree
+        run: /tmp/gitleaks dir . --redact --no-banner --config .gitleaks.toml
+
+      - name: Scan the full history
+        run: /tmp/gitleaks git . --redact --no-banner --config .gitleaks.toml

@@ -1,0 +1,28 @@
+# Secret scanning configuration for sdwa5-vps.
+#
+# Extends the upstream rule set rather than replacing it, so new rules arrive
+# with a gitleaks upgrade instead of having to be copied in here.
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Shopware plugin hash manifests, which are not secrets"
+# checksum.json is {"algorithm": ..., "hashes": {filename: digest, ...}}. Every
+# value is a fixed-length hex digest, so the generic high-entropy rule flags ten
+# of them. The file is store-installed plugin content, tracked because those
+# plugins are not managed through composer.
+paths = ['''^shopware-html-data/custom/plugins/[^/]+/checksum\.json$''']
+
+[[allowlists]]
+description = "Commit c516d41, reviewed in full and remediated"
+# That single commit imported the Minecraft data directory and is the only
+# commit in this repository's history with a real finding. It held exactly
+# twelve: ten from the plugin hash manifest above, and two genuine secrets in
+# minecraft-data/server.properties, both rotated on the host on 2026-09-08.
+# The file is no longer tracked. See docs/minecraft.md.
+#
+# Allowlisted by commit rather than by path on purpose. A `paths` entry makes
+# gitleaks skip reading the file at all, which would also blind the
+# working-tree scan to a secret arriving there in future. Scoping it to this
+# one immutable, fully reviewed commit hides nothing else.
+commits = ["c516d4129deca57e6904c846bbf2c74a642c9059"]

@@ -176,7 +176,12 @@ services:
     profiles: ["ollama"]
     logging: *default-logging
     ports:
-      - "11434:11434"
+      # Loopback only. Ollama has no authentication of any kind, so an
+      # all-interfaces publish would be an open model server on a public VPS.
+      # The host firewall cannot save this: a published port is DNAT'd and
+      # traverses FORWARD, where DOCKER-USER is an empty pass-through, so the
+      # INPUT DROP policy never sees it. See docs/ssh-hardening.md.
+      - "127.0.0.1:11434:11434"
     volumes:
       - ./ollama-data:/root/.ollama
 

@@ -6,6 +6,68 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.19.0] - 2026-09-08
+
+### Security
+
+- **`minecraft-data/server.properties` was tracked and held two live secrets**, a 24-character
+  `rcon.password` and a 40-character `management-server-secret`, committed in `c516d41` and found on
+  2026-09-08 while checking what going public would publish. Both were rotated on the host and the
+  file is no longer tracked. A public repository publishes every past commit at once, so a scrubbed
+  `HEAD` would not have helped, and rotation is the fix rather than a history rewrite.
+- Neither secret was ever reachable from outside. `rcon.port` is `25575` and is not published to the
+  host, so RCON answers only inside the container network, and `management-server-enabled` is `false`
+  with `management-server-port` at `0`. This was a publication problem, not an exposure.
+- **`rcon.password` was never configuration in the first place.** The image's
+  `scripts/start-configuration` generates it with `openssl rand -hex 12` whenever `RCON_PASSWORD` is
+  unset, and it is unset in `docker-compose.yml`. The committed value was 24 lowercase hex
+  characters, which is exactly that, so it was ephemeral image output that had been committed once
+  and then republished on every clone.
+- `ollama` published `11434:11434` on all interfaces with no authentication of any kind, and now
+  binds `127.0.0.1`. The host firewall could not have covered this: a published port is DNAT'd and
+  traverses `FORWARD`, where `DOCKER-USER` is an empty `RETURN`, so the `INPUT DROP` policy never
+  sees it. Profile-gated and down, so nothing was open, but it would have been public the moment the
+  profile started.
+
+### Added
+
+- Continuous integration, in `.github/workflows/tests.yml`. This repository had no CI. The `tests`
+  job runs `tests/run.sh`, which already runs bats and shellcheck inside containers, so CI and a
+  local run are the same thing. The `secrets` job scans the working tree and the full history with
+  gitleaks.
+- `.gitleaks.toml`. It allowlists Shopware plugin `checksum.json` files, whose values are hex digests
+  that a high-entropy rule reads as ten secrets, and it allowlists commit `c516d41`, which was
+  reviewed in full and remediated. The commit is allowlisted rather than the path, because a `paths`
+  entry stops gitleaks reading the file at all and would blind the working-tree scan to anything
+  arriving there later.
+- `minecraft-data/server.properties.example` carries every key with the two secrets blanked, so the
+  server's actual settings stay documented now that the real file is untracked.
+- `docker-compose.projects.yml` gained its own `x-logging` anchor and a `logging:` on all four
+  services. YAML anchors do not cross files, so the one in `docker-compose.yml` could not be
+  referenced. Without a cap a container's json-file log grows without bound, which is what filled the
+  disk in July 2026. Those four containers have never been created on the host, so this is
+  preventive.
+
+### Changed
+
+- The secret scanner is the gitleaks CLI rather than `gitleaks/gitleaks-action`. That action requires
+  a licence key for repositories owned by a GitHub Organization, and moving these repositories into
+  an `sdwa5` organization is the plan, so the action would stop working at exactly the wrong moment.
+
+### Removed
+
+- `TODO.md` items 1.5, 6.2 and 6.4, all implemented here. Item 7.4 is restated: `ollama` is no longer
+  an all-interfaces publish, so `minecraft` 25565 is the only one left and that one is deliberate,
+  which turns the `DOCKER-USER` gap into defence in depth rather than a live hole.
+
+### Deployment
+
+- **Pulling this commit on the host deletes `/opt/docker/minecraft-data/server.properties`**, because
+  the commit records a deletion and git applies that to the working tree whatever `.gitignore` says
+  afterwards. Copy it aside before the pull and put it back after. The image regenerates one from the
+  environment, but the keys that come from neither the environment nor a default would silently fall
+  back.
+
 ## [1.18.0] - 2026-09-08
 
 ### Fixed

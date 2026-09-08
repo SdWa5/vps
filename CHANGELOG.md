@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.29.1] - 2026-09-09
+
+### Fixed
+
+- **The `.gitleaks.toml` allowlist pointed at a commit SHA that the history rewrite changed**, so the
+  two Minecraft secrets in `minecraft-data/server.properties` became findings again and the history
+  scan went from clean to failing. Updated to the rewritten SHA, `9f800d7`.
+- The comment now says plainly that **a commit SHA is not immutable and this one has already moved
+  once**, that anything rewriting history has to update the line, and how to find the commit again
+  with `git log --diff-filter=A -- minecraft-data/server.properties`. The ten Shopware plugin
+  checksum findings were unaffected, because those are allowlisted by path.
+
 ## [1.29.0] - 2026-09-08
 
 ### Security

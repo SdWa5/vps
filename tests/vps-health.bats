@@ -86,17 +86,62 @@ setup() {
 }
 
 @test "a stale restic backup is critical" {
-    STUB_RESTIC_LOG="Backup Successful
-Finished Backup at $(date -d '-30 hours' '+%Y-%m-%d %H:%M:%S') after 47 seconds" health
+    STUB_RESTIC_SNAPSHOTS="$(restic_snapshots_json "$(( $(date +%s) - 30 * 3600 ))")" health
     [ "$(mail_count)" -eq 1 ]
-    [[ "$(mail_body)" == *"restic backup is 30h old"* ]]
+    [[ "$(mail_body)" == *"snapshot is 30h old"* ]]
 }
 
-@test "a failed restic run is critical even when it is recent" {
+@test "a failed restic run is critical even when a recent snapshot exists" {
     STUB_RESTIC_LOG="Backup Failed
-Finished Backup at $(date '+%Y-%m-%d %H:%M:%S') after 3 seconds" health
+Finished Backup at $(date -u '+%Y-%m-%d %H:%M:%S') after 3 seconds" health
     [ "$(mail_count)" -eq 1 ]
-    [[ "$(mail_body)" == *"did not succeed"* ]]
+    [[ "$(mail_body)" == *"reported failure"* ]]
+}
+
+# --- the two bugs this check replaced -------------------------------------
+
+# Regression for 2026-09-08. Adding `init: true` to the restic service
+# recreated the container, which wiped its log, and the old check read the log
+# and could not tell an empty log from a backup that never ran. It fired a CRIT
+# against a repository that was entirely healthy.
+@test "a wiped container log is not an alert when the repository is fresh" {
+    STUB_RESTIC_LOG="Starting container ...
+Check Repo status 0
+Setup backup cron job with cron expression BACKUP_CRON: 0 4 * * *
+Container started." health
+    [ "$(mail_count)" -eq 0 ]
+}
+
+# Regression for the same day. The container has no TZ and logs in UTC, the host
+# is Europe/Berlin, and the old check parsed the one with the other's `date -d`.
+# Every backup read two hours older than it was, which against a 24-hour cycle
+# and a 26-hour threshold left no slack and put a false CRIT at exactly the hour
+# the next run starts. The fixture is UTC while the test runs in the host's zone,
+# so a check that ignored the offset would compute 3h here instead of 1h.
+@test "a snapshot timestamp is read in its own timezone, not the host's" {
+    TZ='Europe/Berlin' health --dry-run
+    [[ "$output" == *"Newest restic snapshot 1h ago"* ]]
+}
+
+@test "an unreachable restic repository is critical" {
+    unset STUB_RESTIC_SNAPSHOTS
+    health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"Cannot query the restic repository"* ]]
+}
+
+@test "an empty restic repository is critical" {
+    STUB_RESTIC_SNAPSHOTS='[]' health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"no snapshots at all"* ]]
+}
+
+@test "the newest snapshot decides, not the order restic returned them in" {
+    local now newest oldest
+    now="$(date +%s)"
+    STUB_RESTIC_SNAPSHOTS="$(restic_snapshots_json "$(( now - 3600 ))" "$(( now - 40 * 3600 ))")" \
+        health --dry-run
+    [[ "$output" == *"Newest restic snapshot 1h ago"* ]]
 }
 
 @test "a missing Vaultwarden database dump is critical" {

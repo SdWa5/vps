@@ -87,34 +87,58 @@ check_containers() {
 }
 
 check_backup() {
-    local log last_result last_finish finish_ts age_hours
-    log="$(docker logs --tail 400 restic 2>&1)" || {
-        printf 'CRIT\tCannot read restic container logs\n'
+    local json newest newest_ts age_hours log last_result
+
+    # Ask the repository, not the container log. Two bugs came from reading the
+    # log, both found on 2026-09-08:
+    #
+    #   1. A container recreation wipes it, and an empty log is indistinguishable
+    #      from a backup that never ran. Adding `init: true` to the restic
+    #      service was enough to fire a CRIT on a perfectly healthy repository.
+    #   2. The log prints its timestamps in the container's timezone, which is
+    #      UTC because no TZ is set there, while `date -d` evaluated them on the
+    #      host in Europe/Berlin. Every backup therefore read two hours older
+    #      than it was, which against a 24-hour cycle and a 26-hour threshold
+    #      left no slack at all and put a false CRIT window at exactly the hour
+    #      the next run starts.
+    #
+    # `restic snapshots --json` fixes both. It is the authoritative answer to
+    # "does a backup exist", and its timestamps are RFC3339 with an explicit
+    # offset, so they cannot be misread by the host's timezone.
+    json="$(docker exec restic restic snapshots --json 2>&1)" || {
+        printf 'CRIT\tCannot query the restic repository: %s\n' "$(head -1 <<< "$json")"
         return
     }
 
+    # Take the maximum rather than the last element, so this does not depend on
+    # restic's ordering. An RFC3339 timestamp sorts lexicographically.
+    newest="$(grep -oE '"time":"[^"]+"' <<< "$json" | cut -d'"' -f4 | sort | tail -1)"
+
+    if [[ -z "$newest" ]]; then
+        printf 'CRIT\tThe restic repository holds no snapshots at all\n'
+        return
+    fi
+
+    newest_ts="$(date -d "$newest" +%s 2>/dev/null)"
+    if [[ -z "$newest_ts" ]]; then
+        printf 'CRIT\tCould not parse the newest restic snapshot timestamp: %s\n' "$newest"
+        return
+    fi
+
+    age_hours=$(( ($(now) - newest_ts) / 3600 ))
+
+    # The log is now only an early warning. It can say "the last attempt failed"
+    # sooner than the age threshold would notice, but it can no longer raise an
+    # alarm merely by being absent.
+    log="$(docker logs --tail 400 restic 2>/dev/null || true)"
     last_result="$(grep -E '^(Backup|Restic) (Successful|Failed)' <<< "$log" | tail -1)"
-    last_finish="$(grep -oE 'Finished Backup at [0-9-]+ [0-9:]+' <<< "$log" | tail -1 | sed 's/^Finished Backup at //')"
 
-    if [[ -z "$last_finish" ]]; then
-        printf 'CRIT\tNo completed restic backup found in the last 400 log lines\n'
-        return
-    fi
-
-    finish_ts="$(date -d "$last_finish" +%s 2>/dev/null)"
-    if [[ -z "$finish_ts" ]]; then
-        printf 'CRIT\tCould not parse restic backup timestamp: %s\n' "$last_finish"
-        return
-    fi
-
-    age_hours=$(( ($(now) - finish_ts) / 3600 ))
-
-    if [[ "$last_result" != *Successful ]]; then
-        printf 'CRIT\tLast restic run did not succeed: %s (finished %s)\n' "${last_result:-no result line}" "$last_finish"
-    elif (( age_hours >= BACKUP_MAX_AGE_HOURS )); then
-        printf 'CRIT\tLast restic backup is %sh old (%s), expected within %sh\n' "$age_hours" "$last_finish" "$BACKUP_MAX_AGE_HOURS"
+    if (( age_hours >= BACKUP_MAX_AGE_HOURS )); then
+        printf 'CRIT\tNewest restic snapshot is %sh old (%s), expected within %sh\n' "$age_hours" "$newest" "$BACKUP_MAX_AGE_HOURS"
+    elif [[ "$last_result" == *Failed ]]; then
+        printf 'CRIT\tLast restic run reported failure: %s (newest snapshot %sh old)\n' "$last_result" "$age_hours"
     else
-        printf 'OK\tLast restic backup %sh ago (%s)\n' "$age_hours" "$last_finish"
+        printf 'OK\tNewest restic snapshot %sh ago (%s)\n' "$age_hours" "$newest"
     fi
 }
 

@@ -8,12 +8,26 @@ on:
 permissions:
   contents: read
 
+# **A superseded push should stop costing money the moment it is superseded.** This repository's runs are cheap,
+# about a minute, so the saving here is small — it is in place because the rule should be the same in all three
+# SdWa5 repositories rather than because this one is expensive. `sdwa5-3d` is where it pays for itself.
+#
+# **`cancel-in-progress` is off on `main` on purpose.** A merge commit's green run is the thing a release is
+# judged by, and cancelling it because the next merge landed is how a branch ends up with no completed run at all.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   # tests/run.sh runs bats and shellcheck inside containers, so the runner needs
   # nothing installed beyond the Docker it already has. Running the script
   # rather than reimplementing it here keeps CI and a local run identical.
   tests:
     runs-on: ubuntu-latest
+    # GitHub's default is 360 minutes. That default is what let `sdwa5-3d`'s `full` job burn roughly 1644 minutes
+    # across three nightly runs before anybody saw a log, because a job cancelled at the ceiling reports only that
+    # it was cancelled. Two Docker pulls and 104 bats tests have no business anywhere near ten minutes.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
 
@@ -38,6 +52,7 @@ jobs:
   # been in the history for weeks. See docs/minecraft.md.
   secrets:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       GITLEAKS_VERSION: 8.30.1
     steps:

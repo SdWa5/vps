@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.31.1] - 2026-09-12
+
+### Security
+
+- **The two Obmann-Stellvertreter are out of the history, not just out of the tree.** 117 commits
+  rewritten, tree hash unchanged at `e49d1314`, commit count 117 before and after, and zero commits
+  left holding either name. They were in 95 of the 117, in
+  `docs/shopware/privacy-tos-review-2026-07-22.md`.
+- **`Mühlenstraße 24` is kept in all 117 on purpose.** <https://sdwa5.org/Impressum> publishes it
+  today and an Austrian webshop must state a Zustellanschrift by law, so removing it from git while
+  the shop states it would achieve nothing. What went with the names is the `c/o <name>` prefix, so
+  the history no longer says whose home it is.
+- **`.gitleaks.toml`'s allowlisted commit `9f800d7` did not move**, checked rather than assumed, so
+  the history scan is unaffected. It sits earlier than any line this rewrite touched, and a commit
+  only moves when it or an ancestor changes.
+
 ## [1.31.0] - 2026-09-12
 
 ### Added

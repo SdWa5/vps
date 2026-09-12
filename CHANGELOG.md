@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.31.0] - 2026-09-12
+
+### Added
+
+- **A licence.** MIT in `LICENSE` for `monitoring/`, `hardening/`, `minecraft/`, `tests/`, `.github/`,
+  `Caddyfile`, `docker-compose*.yml` and `.env.example`. CC BY-SA 4.0 in `LICENSE-docs` for `docs/`,
+  `README.md`, `CHANGELOG.md` and `TODO.md`. **`shopware-html-data/` is carved out and stated as
+  such**, being store-installed Shopware plugin content that is tracked only because those plugins are
+  not managed through composer, so each carries its own vendor's terms rather than ours.
+
+### Changed
+
+- **The two Obmann-Stellvertreter defer to the ZVR register in
+  `docs/shopware/privacy-tos-review-2026-07-22.md`.** That file drafts Impressum text naming all three
+  board members, and the live Impressum at <https://sdwa5.org/Impressum> names only the Obmann, which
+  is all Austrian law requires. So the draft would have published two names that nothing else does.
+- **The `c/o <name>` prefix is gone from the postal address and the Zustellanschrift**, in both the
+  inline and the `<br>`-separated form. The address itself stays, because the Impressum publishes it
+  by law and removing it from git while the shop states it would achieve nothing.
+
+### Measured, and worth stating plainly
+
+- **The tree is clean and the history is not.** Both names remain in 95 of the 115 commits, in that
+  same file. A rewrite is prepared and was refused by the environment's `[Git Destructive]` guard, so
+  it is outstanding, and it is the last item that cannot be done once this repository is public. See
+  `SdWa5/docs`'s `docs/going-public.md`.
+
 ## [1.30.0] - 2026-09-12
 
 ### Security

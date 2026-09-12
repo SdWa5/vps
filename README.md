@@ -119,3 +119,17 @@ gitleaks git . --redact --config .gitleaks.toml
 The tree scan flags `minecraft-data/server.properties` when you run it on a deploy checkout. That is
 correct and expected: the live file holds a generated `rcon.password`, which is exactly why it is not
 tracked. CI never sees it, because an untracked file is not in the clone.
+
+## Licence
+
+Two licences, because this repository is part tooling and part writing.
+
+- **MIT** ([LICENSE](LICENSE)) for the code and configuration: `monitoring/`, `hardening/`, `minecraft/`, `tests/`, `.github/`, `Caddyfile`,
+  `docker-compose*.yml` and `.env.example`.
+- **CC BY-SA 4.0** ([LICENSE-docs](LICENSE-docs)) for the prose and data: `docs/`, `README.md`, `CHANGELOG.md` and `TODO.md`.
+
+Attribute as "Musikverein Schmeiß die Wand an 5 (SdWa5)" with a link to the repository. Share-alike applies to the prose, so a
+derivative of the documentation stays under the same licence. The code carries no such condition.
+
+**Not ours to license**: `shopware-html-data/`, which is store-installed Shopware plugin content
+tracked because those plugins are not managed through composer. Each carries its own vendor's terms.

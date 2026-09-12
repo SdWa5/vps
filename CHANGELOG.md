@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.30.0] - 2026-09-12
+
+### Security
+
+- **The private email address is gone from the history, not just from the working tree.** 1.24.0 took
+  it out of all five files and said "this removes the address from the working tree and not from the
+  history. One commit's content carried it". The first half was right and the count was wrong.
+  Measured on 2026-09-12: **74 of the 113 commits** carried it, in `README.md`, `monitoring/lib.sh`,
+  `.env.example`, `docs/monitoring.md` and `docs/infrastructure.md` at once, from the first commit on
+  the branch through 1.5.0.
+- **The 2026-09-08 rewrite could not have fixed this and was never meant to.** That one replaced the
+  author and committer fields of every commit, which is a different thing from what a file says.
+  `gitleaks` does not catch it either, in tree or in history, because an email address is not a
+  credential. So it was invisible to both of the measures already in place.
+- **The address was removed together with its separator rather than substituted.** On every one of the
+  six line shapes it ever had it stood next to `ripper@sdwa5.org` as the second recipient, so
+  substituting would have left `ripper@sdwa5.org ripper@sdwa5.org` in the recipient lists and "mail X
+  and X" in the prose, in all 74 commits. `monitoring/lib.sh` now reads
+  `MONITOR_MAIL_TO="${MONITOR_MAIL_TO:-ripper@sdwa5.org}"` throughout the history, which is character
+  for character what 1.24.0 wrote by hand.
+- **The content is provably untouched.** `HEAD`'s tree hash is `c887c21519b3e13ab714735ad46a144abfb1d4f7`
+  before and after, which it must be, since the working tree was already clean. The commit count is
+  113 before and after, zero commits reachable from `origin/main` contain the address, and a grep for
+  a doubled recipient across all five files in all commits finds none.
+- **`.gitleaks.toml`'s commit allowlist survived this rewrite untouched**, and that was checked rather
+  than assumed. `9f800d7` is the second commit on the branch, earlier than the first appearance of the
+  address, so it and all its ancestors kept their hashes. The 2026-09-08 rewrite did move it, which is
+  why the file carries a warning about it.
+
+### Changed
+
+- `.gitleaks.toml` records that the 2026-09-12 rewrite left the allowlisted commit in place, and why,
+  so the next person rewriting history knows the check is "is `9f800d7` still reachable" rather than
+  "update the line".
+
 ## [1.29.2] - 2026-09-11
 
 ### Changed

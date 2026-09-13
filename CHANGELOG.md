@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.32.2] - 2026-09-13
+
+### Removed
+
+- **The dead `id_ed25519_deploy` keypair is off the VPS.** It served the personal repository that was
+  deleted on 2026-09-12 and was replaced by `id_ed25519_sdwa5vps` in 1.32.1. Checked before removing:
+  nothing referenced it outside a same-day backup of `/root/.ssh/config`, and its public half was not
+  in `authorized_keys`, so it granted no inbound access either. `git pull --ff-only` still succeeds.
+
+### Changed
+
+- `TODO.md` item 7.5 keeps the part that is **not** solved by deleting the file. GitHub still refuses
+  that public key everywhere with "key is already in use" although it appears on no repository in the
+  organization and on no account key, so it is registered somewhere neither we nor the API can see.
+  Removing the host's copy does not revoke it, and only Support can.
+
 ## [1.32.1] - 2026-09-13
 
 ### Fixed

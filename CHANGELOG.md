@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.33.0] - 2026-09-13
+
+### Fixed
+
+- **"Key is already in use" is diagnosed, and 1.32.2 recorded it wrongly.** That entry said the key was
+  registered "somewhere neither we nor the API can see" and that only Support could locate it. It is
+  attached to the **soft-deleted** repository. Four observations fit one explanation: on 2026-09-13 the
+  key still authenticated and GitHub greeted it `Hi bestcodename/sdwa5-vps!`, which is the greeting for
+  a deploy key rather than an account key; that repository answers 404; the key is on none of the seven
+  repositories this account can admin and on no account key; and GitHub refuses it everywhere. A
+  deleted repository is restorable for 90 days, so its record and its deploy keys outlive the delete
+  while the REST API already reports 404. The registration lapses around 2026-12-11 on its own.
+- **The key is not a security problem**, and 1.32.2's closing line overstated it. It is read-only, on a
+  repository that serves nothing, and its only private half was removed from the host the same day.
+
+### Added
+
+- `TODO.md` item 7.6: **six deleted repositories are still restorable, so the pre-rewrite history is
+  unreachable rather than destroyed.** The three personal repositories deleted 2026-09-12 and the three
+  `-old` organization repositories deleted 2026-09-13 can all be restored until roughly 2026-12-11,
+  with the private email address in 74 commits and the board members' names in theirs.
+
+  Fetching a pre-rewrite SHA from each new repository returns `not our ref`, with a control fetch
+  proving the test works, which establishes that the live repositories do not serve those objects. That
+  is the risk that mattered and it is closed. It is **not** proof of destruction, and "cache cleared"
+  was written as though it were. Restoring needs owner or organization-admin credentials, so there is
+  no route to it from outside and it blocks no publication decision. What it changes is the accuracy of
+  the claim.
+
 ## [1.32.2] - 2026-09-13
 
 ### Removed

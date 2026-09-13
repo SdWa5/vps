@@ -74,11 +74,33 @@
        refuted. one transient failure on 2026-09-08 was never reproduced and its cause is unknown. do
        not open a contabo ticket. if it recurs, capture the network path in use at the time
        (ca. 10 Minuten)
-    5. **`/opt/docker` on the vps still points at the deleted personal repository** and therefore
-       cannot pull at all. measured 2026-09-13: its `origin` is `git@github.com:bestcodename/sdwa5-vps.git`,
-       which was deleted on 2026-09-12 when the three repositories moved into the org, and its `HEAD`
-       is a pre-rewrite commit that no longer exists anywhere. so the deployment path has been dead
-       since the move and nothing noticed, because deploys are manual. fix with
-       `git remote set-url origin git@github.com:SdWa5/vps.git`, then `fetch` plus `reset --hard`
-       rather than a re-clone, because `/opt/docker` holds the untracked runtime state of the whole
-       stack. **it has to be redone after every history rewrite**, for the same reason (ca. 15 Minuten)
+    5. **DONE on 2026-09-13.** `/opt/docker` had been unable to pull since the 2026-09-12 move: its
+       `origin` still named the deleted personal repository and its `HEAD` was a pre-rewrite commit
+       that existed nowhere. Nothing noticed, because deploys are manual. It now tracks
+       `git@github.com:SdWa5/vps.git` at 1.32.0, `git pull --ff-only` succeeds unattended, and all six
+       containers stayed up throughout, since the change touched only documentation and no compose
+       file, monitoring script or hardening config.
+
+       **Two things had to be fixed before the remote worked, and both are worth keeping.**
+
+       **The organization disallowed deploy keys.** `deploy_keys_enabled_for_repositories` was `false`
+       on `SdWa5`, which is GitHub's default for a new organization, so no key could be added to any
+       repository in it. A personal repository has no such setting, which is why this only appeared
+       after the move. It is now `true`. That is an organization-wide loosening and it is the right
+       one here, because the alternative is a personal access token in a file on a public-facing host,
+       where a deploy key is read-only and reaches exactly one repository.
+
+       **The old deploy key could not be re-registered.** Deleting the personal repository took its
+       deploy key with it, and GitHub then refused the same public key everywhere with
+       "key is already in use" although it appears on no repository and on no account we can see. A
+       fresh keypair `id_ed25519_sdwa5vps` was generated on the host instead and registered read-only,
+       and `/root/.ssh/config` points at it. **The dead `id_ed25519_deploy` pair is still on the host**
+       and nothing references it. Deleting it is one line, and it is left for a human because a
+       private key is not something to remove on a guess (ca. 5 Minuten)
+
+       **A history rewrite breaks this again**, because the host's `HEAD` stops existing. The repair is
+       `fetch` plus `reset --hard` and never a re-clone, since `/opt/docker` carries the untracked
+       runtime state of the whole stack, `minecraft-data` alone being 6.9 GiB. Check the deletions with
+       `git diff --name-status HEAD origin/main` first; a tracked file that has since become untracked,
+       as `minecraft-data/server.properties` once was, gets removed by the reset whatever `.gitignore`
+       says afterwards.

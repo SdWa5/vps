@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.32.1] - 2026-09-13
+
+### Fixed
+
+- **`/opt/docker` on the VPS can pull again.** It had been unable to since the 2026-09-12 move, with
+  `origin` still naming the deleted personal repository and `HEAD` on a pre-rewrite commit that
+  existed nowhere. Nothing noticed, because deploys are manual. It now tracks `SdWa5/vps` at 1.32.0
+  and `git pull --ff-only` succeeds unattended. All six containers stayed up, because the change
+  touched only documentation and no compose file, monitoring script or hardening config.
+- **The organization disallowed deploy keys**, which is GitHub's default for a new organization and
+  has no equivalent on a personal repository, so it only surfaced after the move.
+  `deploy_keys_enabled_for_repositories` is now `true` on `SdWa5`. That is an organization-wide
+  loosening, taken deliberately: the alternative is a personal access token in a file on a
+  public-facing host, where a deploy key is read-only and reaches one repository.
+- **The host's deploy key is rotated.** Deleting the personal repository took the old key with it, and
+  GitHub then refused that public key everywhere with "key is already in use" although it appears on
+  no repository and no account visible to us. A fresh `id_ed25519_sdwa5vps` was generated on the host,
+  registered read-only, and `/root/.ssh/config` repointed. The dead pair is still on the host and is
+  referenced by nothing; `TODO.md` item 7.5 leaves its removal to a human.
+
+### Changed
+
+- `TODO.md` item 7.5 records the repair, and keeps the part that matters next time: a history rewrite
+  breaks this again, the fix is `fetch` plus `reset --hard` and never a re-clone, and the deletions
+  want checking first because a tracked file that has since become untracked is removed by the reset
+  whatever `.gitignore` says afterwards.
+
 ## [1.32.0] - 2026-09-13
 
 From the 2026-09-13 audit of all three repositories. The root repository's

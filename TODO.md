@@ -98,11 +98,41 @@
        2026-09-13, after checking that nothing referenced it and that its public half was not in
        `authorized_keys`, so it granted no inbound access either.
 
-       **GitHub still holds that public key somewhere neither we nor the API can see**, which is what
-       "key is already in use" meant, and deleting the host's copy does not revoke it. It appears on no
-       repository in the organization and on no account key. Only GitHub Support can say where it is
-       and remove it, and it is worth asking, because a key nobody can account for is a key nobody can
-       revoke (`decision`)
+       **The old key is attached to the soft-deleted repository, and that is the whole of "key is
+       already in use".** Diagnosed 2026-09-13 from four observations that one explanation fits: on
+       2026-09-13 the key still authenticated and GitHub greeted it `Hi bestcodename/sdwa5-vps!`, which
+       is the greeting for a deploy key rather than an account key; that repository answers 404; the key
+       is on none of the seven repositories this account can admin and on no account key; and GitHub
+       refuses to register it anywhere. A deleted repository is restorable for 90 days, so its record
+       and its deploy keys survive the delete while the REST API already reports 404.
+
+       It is **not a security problem**. It is a read-only key on a repository that serves nothing, and
+       its only private half was removed from this host on 2026-09-13. The registration lapses on its
+       own when the retention window closes, around **2026-12-11**. The test that confirms the
+       diagnosis is to try adding fingerprint `SHA256:9cc+0NXJEYRo7xyJ2WeTAFQbE94nDbCap3kgNdX39IU` as a
+       deploy key in mid-December; if it is accepted then, this was the cause (`decision`, ca. 5 Minuten)
+
+    6. **Six deleted repositories are still restorable, so the pre-rewrite history is unreachable rather
+       than destroyed.** This is the one place the go-public work overstated itself, corrected
+       2026-09-13. `bestcodename/sdwa5`, `sdwa5-vps` and `sdwa5-3d` were deleted on 2026-09-12, and
+       `SdWa5/docs-old`, `vps-old` and `3d-old` on 2026-09-13. GitHub restores a deleted repository
+       within 90 days, so every one of them can be brought back until roughly **2026-12-11**, with the
+       private email address in 74 commits and the board members' names in theirs.
+
+       **What the verification actually proved.** Fetching a pre-rewrite SHA from each new repository
+       returns `not our ref`, with a control fetch proving the test works. That establishes that the
+       live repositories do not serve those objects, which is the risk that mattered, because a reader
+       holding an old hash cannot pull it. It does not establish destruction, and "cache cleared" was
+       written as though it did.
+
+       **It is not a publication blocker.** Restoring needs owner or organization-admin credentials, so
+       there is no route to it from outside. What it does change is the honesty of the claim: for an
+       exercise about other people's personal data, "GitHub retains a restorable copy until December"
+       is a different sentence from "it is gone". Options are to accept it, to let the window close and
+       verify after 2026-12-12, or to ask GitHub Support to purge the six permanently, which is free,
+       open-ended in time and releases the deploy key above in the same ticket. See
+       <https://github.com/settings/repositories> and the organization's equivalent for what is
+       actually being held (`decision`, ca. 20 Minuten)
 
        **A history rewrite breaks this again**, because the host's `HEAD` stops existing. The repair is
        `fetch` plus `reset --hard` and never a re-clone, since `/opt/docker` carries the untracked

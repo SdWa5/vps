@@ -6,6 +6,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.32.0] - 2026-09-13
+
+From the 2026-09-13 audit of all three repositories. The root repository's
+`docs/going-public.md` certified items as closed that were not, and two of them landed here.
+
+### Security
+
+- **The Vaultwarden pairing that `sdwa5/docs/services.md` removed was restated in this repository's
+  `TODO.md`, with more detail than the table had ever held**, namely which account is on the weaker
+  KDF, how much it holds and when it was last seen. Item 7.2 now says only that one of the three
+  PBKDF2 accounts is in use, and says why the figures are deliberately absent. Item 7.3 loses the
+  cipher, collection and grantee counts and the `SELECT` that reads them, and refers to the new member
+  by role.
+- **`docs/shopware/privacy-tos-review-2026-07-22.md` is removed from the tree and from the history.**
+  It is a dated, itemised list of consumer-protection and data-protection gaps on a live Austrian
+  webshop, written by its own operator, and it was in 99 of this repository's 119 commits. Untracking
+  it alone would have achieved nothing. The document moves to Google Drive and
+  `docs/shopware/TODO.md` item 14 still tracks applying it, without restating what it found.
+- `.env.example` loses the one-liner that read the live SMTP password out of
+  `/opt/docker/vaultwarden-data/config.json`. The instruction to take the value from Vaultwarden
+  stays; the path and the command that prints it do not.
+
+### Fixed
+
+- **`docs/infrastructure.md` and `docs/ollama.md` said the host had no firewall and that an
+  unauthenticated Ollama was reachable on `11434`. Neither has been true since 1.11.0.** Measured on
+  the live host on 2026-09-13: `iptables -P INPUT DROP` and `ip6tables -P INPUT DROP` with only `22`,
+  `80` and `443` accepted, fail2ban's jump at the head of `INPUT`, `DOCKER-USER` ending in
+  `-i eth0 -j DROP` with only `25565` excepted, and nothing listening on `11434` or `25565` at all.
+  Published unchanged, both files would have advertised an opening that the repository had already
+  closed. Rebinding Ollama to `127.0.0.1` is still worth doing and is noted in both files.
+- `docs/infrastructure.md`'s directory tree listed `minecraft-data/server.properties` as tracked. It
+  has not been since 1.25.0, which is the whole point of `server.properties.example`.
+- `TODO.md` item 5.3 said four Minecraft usernames. There are **five** distinct ones, counted
+  2026-09-13, several appearing twice with an offline and an online UUID. The disclosure decision is
+  unchanged; the count was simply wrong.
+
+### Added
+
+- `TODO.md` item 7.5: **`/opt/docker` on the VPS still points at the deleted personal repository** and
+  has been unable to pull since the 2026-09-12 move, which nothing noticed because deploys are manual.
+  Measured 2026-09-13.
+
 ## [1.31.1] - 2026-09-12
 
 ### Security
@@ -35,9 +78,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - **The two Obmann-Stellvertreter defer to the ZVR register in
-  `docs/shopware/privacy-tos-review-2026-07-22.md`.** That file drafts Impressum text naming all three
+  `docs/shopware/privacy-tos-review-2026-07-22.md`.** That file drafted Impressum text naming all three
   board members, and the live Impressum at <https://sdwa5.org/Impressum> names only the Obmann, which
   is all Austrian law requires. So the draft would have published two names that nothing else does.
+  The file itself left the repository and its history in 1.32.0.
 - **The `c/o <name>` prefix is gone from the postal address and the Zustellanschrift**, in both the
   inline and the `<br>`-separated form. The address itself stays, because the Impressum publishes it
   by law and removing it from git while the shop states it would achieve nothing.
@@ -722,9 +766,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
-- `TODO.md` item 7.3 now tracks finishing the emergency access enrolment with the new member, in progress
-  since 2026-09-08, rather than asking which remedy to pick. It names the verification,
-  `SELECT COUNT(*) FROM emergency_access;`, which is still zero.
+- `TODO.md` item 7.3 now tracks finishing the emergency access enrolment with a new member, in
+  progress since 2026-09-08, rather than asking which remedy to pick. It names how to verify that a
+  grantee exists.
 
 ### Removed
 
@@ -747,8 +791,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Changed
 
 - `TODO.md` items 7.2 to 7.4 rewritten from measurement rather than assumption. Of the three accounts
-  on PBKDF2, only one holds anything, with a number of items. The other two hold zero. The single-owner item
-  now names what is at stake, a small number of ciphers, and what the two remedies cost.
+  on PBKDF2, only one is in use and the other two are not. The single-owner item now names what is at
+  stake and what the two remedies cost. The per-account figures behind that are deliberately not
+  written down here, for the reason item 7.2 gives.
 
 ### Added
 
@@ -1162,16 +1207,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- `docs/shopware/privacy-tos-review-2026-07-22.md`: in-depth AI-assisted DSGVO/AGB
+- `docs/shopware/privacy-tos-review-2026-07-22.md`: an in-depth AI-assisted DSGVO/AGB
   compliance review of the live Impressum, Datenschutzerklärung, AGB, and Widerrufsrecht
   CMS pages plus the cookie-consent banner wording — best-effort, not legal advice (a
   professional lawyer review is out of budget). Four independent Opus review passes with
   live web verification of volatile facts (EU ODR platform status, EU-US Data Privacy
   Framework, UK adequacy decision), cross-checked against each other and the org's own
-  docs. Flags a repealed-statute citation on the Impressum, undisclosed third-party
-  embeds/processors on the Datenschutzerklärung, a self-contradicting Widerrufsrecht
-  page, cross-page KSchG inconsistency, and the central open question of whether the
-  shop's €0-donation mechanic is legally a gift or a disguised sale.
+  docs. **The document and its findings moved to Google Drive on 2026-09-13 and are no
+  longer in this repository or its history — see 1.32.0.** The work item that applies them
+  is item 6 of `docs/shopware/TODO.md`.
 
 ### Changed
 

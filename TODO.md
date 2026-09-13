@@ -34,11 +34,14 @@
        `minecraft-data/` arrived in one commit, `c516d41`, and none has been edited since, so nothing
        there is hand-maintained. untracking the translations is cleanup with no security value, and it
        makes the next `git pull` on the host delete them, so it is not free (ca. 15 Minuten)
-    3. `ops.json` and `whitelist.json` are tracked and hold four Minecraft usernames with their UUIDs.
-       going public discloses them. the same four usernames are already in `docker-compose.yml` under
-       `OPS` and `WHITELIST`, which is where the image reads them from, so untracking the two JSON
-       files alone would change nothing. these are pseudonyms rather than real names and no
-       credential, so it is a disclosure decision for the owner and not a leak (`decision`)
+    3. `ops.json` and `whitelist.json` are tracked and hold **five** distinct Minecraft usernames with
+       their UUIDs, not four. counted on 2026-09-13: `bestcodename`, `Boehmb0Ss`, `DCXI`, `Emirgfk`
+       and `NABI`, several of them appearing twice with an offline and an online uuid. the same names
+       are already in `docker-compose.yml` under `OPS` and `WHITELIST`, which is where the image reads
+       them from, so untracking the two json files alone would change nothing. these are pseudonyms
+       rather than real names and no credential, so it is a disclosure decision for the owner and not
+       a leak. **one of the five reads like a surname with digits in it**, which is the only one worth
+       a second look before this is settled (`decision`)
 6. reliability follow-ups from the 2026-09-01 monitoring work ([docs/monitoring.md](docs/monitoring.md))
     1. **the mechanism is settled and built** — every image is pinned as of 2026-09-08, see
        [docs/maintenance.md](docs/maintenance.md#image-versions). what is left is the **cadence**: who
@@ -57,15 +60,25 @@
     1. a second copy of `id_ed25519_sdwa5` on the notebook. the key is in vaultwarden since 2026-09-08,
        so the workstation is no longer the only holder, but a rescue console cannot fetch a vault item
        and every client is logged out for a while after a kdf change (ca. 15 Minuten)
-    2. one vaultwarden account still on pbkdf2 has anything to protect, holding a number of items and
-       last seen 2026-09-07. argon2id is per-account and only its holder can change it, so this is a
-       message to that person rather than an action here. the other two pbkdf2 accounts hold 0 items
-       (ca. 15 Minuten)
-    3. finish the emergency access enrolment with the new member, in progress since 2026-09-08. the sdwa5 org
-       has a single owner and holds a small number of ciphers, and emergency_access still has zero
-       rows, so until a grantee is confirmed, losing stefan's account loses the org data. verify with
-       `SELECT COUNT(*) FROM emergency_access;` (ca. 30 Minuten)
+    2. one of the three pbkdf2 accounts is in active use and the other two are not. argon2id is
+       per-account and only its holder can change it, so this is a message to that person rather than
+       an action here. **the per-account figures are deliberately not written down**, here or in
+       `sdwa5/docs/services.md`: which account holds how much on the weaker kdf, read beside a
+       reachable `vault.sdwa5.org`, names the soft target and prices it. the admin panel has them for
+       anybody who should (ca. 15 Minuten)
+    3. finish the emergency access enrolment with the new member, in progress since 2026-09-08. the
+       sdwa5 org has a single owner, so until a takeover grantee is confirmed, losing that account
+       loses the org data. the grantee count is the thing to check in the admin panel; the cipher and
+       collection counts are not written down here for the same reason as 7.2 (ca. 30 Minuten)
     4. inbound ipv6 works, including cold after 25 minutes idle, so the neighbour-cache hypothesis is
        refuted. one transient failure on 2026-09-08 was never reproduced and its cause is unknown. do
        not open a contabo ticket. if it recurs, capture the network path in use at the time
        (ca. 10 Minuten)
+    5. **`/opt/docker` on the vps still points at the deleted personal repository** and therefore
+       cannot pull at all. measured 2026-09-13: its `origin` is `git@github.com:bestcodename/sdwa5-vps.git`,
+       which was deleted on 2026-09-12 when the three repositories moved into the org, and its `HEAD`
+       is a pre-rewrite commit that no longer exists anywhere. so the deployment path has been dead
+       since the move and nothing noticed, because deploys are manual. fix with
+       `git remote set-url origin git@github.com:SdWa5/vps.git`, then `fetch` plus `reset --hard`
+       rather than a re-clone, because `/opt/docker` holds the untracked runtime state of the whole
+       stack. **it has to be redone after every history rewrite**, for the same reason (ca. 15 Minuten)

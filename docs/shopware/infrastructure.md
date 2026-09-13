@@ -71,6 +71,6 @@ That surfaced something separate worth a look. **Five Shopware AG service apps a
 are active**, namely `ShopwarePayments`, `Swag3DModelPipeline`, `SwagAIImageEditor` and `SwagCopilot`,
 with `ShopwareNexusIngestionService` present but inactive. They install and update themselves through
 the `services.install` task and phone home to Shopware's registry. None of that is in
-[privacy-tos-review-2026-07-22.md](privacy-tos-review-2026-07-22.md), so whether a non-profit wants an
+the 2026-07-22 legal review, which now lives in Google Drive, so whether a non-profit wants an
 AI image editor, a Copilot and an event ingestion service active on its shop is an open question rather
 than a settled one. Filed in [TODO.md](TODO.md).

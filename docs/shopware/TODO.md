@@ -5,7 +5,7 @@
    present but inactive. Found 2026-09-08 while draining the message queue. They install and update
    themselves through the `services.install` scheduled task and phone home to
    `registry.services.shopware.io`. None of them appears in
-   [privacy-tos-review-2026-07-22.md](privacy-tos-review-2026-07-22.md), so whether a non-profit wants
+   the 2026-07-22 legal review, which now lives in Google Drive, so whether a non-profit wants
    an AI image editor, a Copilot and an event ingestion service active on its shop is open. Decide per
    app, then either deactivate the unwanted ones or cover them in the same privacy pass as item 14
    (`decision`)
@@ -74,7 +74,10 @@
     3. Artists & Friends
         1. add links
         2. asked in SdWa5 Family Whatsapp group who wants to be featured -> wait for responses
-14. Apply legal-page wording fixes from
-    [privacy-tos-review-2026-07-22.md](privacy-tos-review-2026-07-22.md) — pending Obmann/board sign-off, in
-    particular the €0-donation-mechanic characterization decision (Path 1 vs. Path 2 in that doc's section A1),
-    before editing the live Datenschutz/AGB/Impressum/Widerrufsrecht CMS pages.
+14. Apply the legal-page wording fixes from the 2026-07-22 review before editing the live
+    Datenschutz, AGB, Impressum and Widerrufsrecht CMS pages. **The review itself lives in Google
+    Drive and deliberately not here**, decided 2026-09-13: it is a dated, itemised list of gaps on a
+    live Austrian webshop written by its own operator, and in a public repository that is a ready-made
+    checklist for anybody minded to send an Abmahnung. Its findings are therefore not restated in this
+    file either. One of them is a characterization decision that needs the Obmann or the board rather
+    than a wording patch, and that is the item this one waits on (`decision`)

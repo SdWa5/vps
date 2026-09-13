@@ -21,7 +21,7 @@ flowchart LR
             P2DB[("MariaDB")]
             P3["Dolibarr Project 3<br/>127.0.0.1:8004"]
             P3DB[("MariaDB")]
-            OL["Ollama<br/>0.0.0.0:11434 · no auth"]
+            OL["Ollama<br/>127.0.0.1 via DOCKER-USER · inactive"]
             MC["Minecraft<br/>0.0.0.0:25565 · profile, inactive"]
             RS["Restic backup<br/>daily 04:00 · source /opt/docker (ro)"]
         end
@@ -41,7 +41,6 @@ flowchart LR
     U -- " erp.sdwa5.org " --> C
     U -- " project2/project3.sdwa5.org " --> C
     U -- " ssh :22 (key-only) " --> SSHD
-    U -. " :11434 " .-> OL
     U -. " :25565 " .-> MC
     C --> SW & VW & DL
     C --> P2 & P3
@@ -68,7 +67,7 @@ Domain → port mapping lives in the [Caddyfile](../Caddyfile); backup detail in
 | Dolibarr SdWa5 cron | dolibarr/dolibarr:latest     | —               | —                          | docker-compose.yml                      |
 | Dolibarr Project 2  | dolibarr/dolibarr:latest     | 8003            | https://project2.sdwa5.org | docker-compose.projects.yml             |
 | Dolibarr Project 3  | dolibarr/dolibarr:latest     | 8004            | https://project3.sdwa5.org | docker-compose.projects.yml             |
-| Ollama              | ollama/ollama:latest         | 11434           | (no domain, port open)     | docker-compose.yml                      |
+| Ollama              | ollama/ollama:latest         | 11434           | (no domain, firewalled)    | docker-compose.yml                      |
 | Restic backup       | lobaro/restic-backup-docker  | —               | —                          | docker-compose.yml                      |
 | Minecraft           | itzg/minecraft-server:latest | 25565           | —                          | docker-compose.yml (profile: minecraft) |
 
@@ -82,9 +81,16 @@ Cron jobs (host, not Docker) — see [monitoring.md](monitoring.md):
 
 Reverse proxy: **Caddy** (systemd service, not in Docker) — see [caddy.md](caddy.md)
 
-Host access: **sshd on :22, key-only** since 2026-09-07, with fail2ban. No firewall, so
-`iptables -P INPUT ACCEPT` still applies and any port a service opens is public. See
+Host access: **sshd on :22, key-only** since 2026-09-07, with fail2ban. See
 [ssh-hardening.md](ssh-hardening.md).
+
+**The host is default-deny on both IP families** since 1.11.0, and this paragraph said the opposite
+until 2026-09-13. Measured on the live host on that date: `iptables -P INPUT DROP` and
+`ip6tables -P INPUT DROP`, with `22`, `80` and `443` the only accepted inbound ports, fail2ban's jump
+at the head of `INPUT`, and `DOCKER-USER` dropping everything arriving from `eth0` toward a container
+except `25565`. So a container that publishes on `0.0.0.0` is **not** reachable from outside unless
+[`hardening/firewall/sdwa5-firewall.sh`](../hardening/firewall/sdwa5-firewall.sh) names its port, which
+is the whole point of that chain.
 
 ## Directory layout (`/opt/docker/`)
 
@@ -117,7 +123,8 @@ Host access: **sshd on :22, key-only** since 2026-09-07, with fail2ban. No firew
 ├── vaultwarden-data/               # gitignored — Vaultwarden data
 ├── ollama-data/                    # gitignored — Ollama model cache
 ├── minecraft-data/                 # partially tracked — Minecraft world data
-│   ├── server.properties, eula.txt, ops.json, whitelist.json, banned-*.json, config/   # tracked
+│   ├── server.properties.example, eula.txt, ops.json, whitelist.json, banned-*.json, config/  # tracked
+│   ├── server.properties           # gitignored — holds generated secrets, see minecraft.md
 │   │   (except config/Discord-Integration.toml — contains the bot token, stays gitignored)
 │   └── world/, backup/, mods/, logs/, versions/, libraries/, cache/   # gitignored (data/rebuildable)
 └── rclone-config/                  # gitignored — rclone.conf with OAuth tokens
@@ -176,8 +183,12 @@ docker exec shopware php bin/console cache:clear
 
 ## Notes
 
-- Ollama port 11434 is bound to `0.0.0.0` (public). No auth. Consider firewall rule or binding to localhost if not
-  needed externally.
+- Ollama binds `0.0.0.0:11434` and has no auth, **and the firewall is what stops that mattering**.
+  `DOCKER-USER` drops anything arriving from `eth0` toward a container unless the port is named there,
+  and `11434` is not. Measured 2026-09-13: the container is profile-gated and nothing is listening on
+  that port at all. Rebinding to `127.0.0.1:11434` in `docker-compose.yml` would make the container
+  safe on its own rather than safe by the chain around it, and it is still worth doing before Ollama is
+  ever started again.
 - `docker/nginx/` and `docker/php/` dirs exist but are empty — historical artifact from initial setup.
 - `shopware-data/` is a legacy volume mount, unused since migration to `shopware-html-data/`.
 - Minecraft is fully configured but excluded from default `up` via compose profile `minecraft`;

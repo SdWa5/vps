@@ -94,9 +94,15 @@
        deploy key with it, and GitHub then refused the same public key everywhere with
        "key is already in use" although it appears on no repository and on no account we can see. A
        fresh keypair `id_ed25519_sdwa5vps` was generated on the host instead and registered read-only,
-       and `/root/.ssh/config` points at it. **The dead `id_ed25519_deploy` pair is still on the host**
-       and nothing references it. Deleting it is one line, and it is left for a human because a
-       private key is not something to remove on a guess (ca. 5 Minuten)
+       and `/root/.ssh/config` points at it. The dead `id_ed25519_deploy` pair was removed from the host on
+       2026-09-13, after checking that nothing referenced it and that its public half was not in
+       `authorized_keys`, so it granted no inbound access either.
+
+       **GitHub still holds that public key somewhere neither we nor the API can see**, which is what
+       "key is already in use" meant, and deleting the host's copy does not revoke it. It appears on no
+       repository in the organization and on no account key. Only GitHub Support can say where it is
+       and remove it, and it is worth asking, because a key nobody can account for is a key nobody can
+       revoke (`decision`)
 
        **A history rewrite breaks this again**, because the host's `HEAD` stops existing. The repair is
        `fetch` plus `reset --hard` and never a re-clone, since `/opt/docker` carries the untracked

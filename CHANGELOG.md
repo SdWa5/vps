@@ -6,6 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.36.1] - 2026-09-14
+
+### Changed
+
+- **The address change is applied.** Both rollout scripts ran with `--apply` on the live systems.
+  Dolibarr: 2 records written and 1 already current. Shopware: all 8 targets written, then
+  `cache:pool:clear cache.http` on the VPS. Verified by reading back: `/Impressum/`,
+  `/Datenschutz/` and their lowercase twins carry Egitlweg 6 and no longer carry the old address,
+  and the three ERP records read back correct.
+- **`/Datenschutz/` kept serving the old address after the write while `/datenschutz` did not.** Two
+  cache keys for the same page, one hit and one miss. The cache clear resolved it, which is why the
+  Shopware script prints that command instead of leaving it implicit.
+
+### Fixed
+
+- `TODO.md` item 2.3 claimed the ERP member list disagreed with the Vereinsregister because a former member
+  Member A was still listed. **That was wrong.** Three of the seven members carry `statut=0`,
+  Member B, Member A and Member C, so they are deactivated former members and the list is
+  correct. Four members are active. The item is removed.
+- `TODO.md` item 2.5 asked whether Example Supplies should be a member rather than a thirdparty. He is a
+  thirdparty on purpose, so the item is removed.
+- The remaining name item now names the correct spelling, `one spelling`, and the one record that is
+  wrong, user id 4.
+
+### Added
+
+- `docs/dolibarr.md`: **writing a member also updates the linked user.** Measured on 2026-09-14, the
+  run wrote `members/2` and then found `users/2` already current, and reading both back confirmed
+  the propagation.
+
 ## [1.36.0] - 2026-09-14
 
 ### Added

@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.34.0] - 2026-09-14
+
+### Added
+
+- **A read-only client for the Dolibarr REST API**, [`tools/dolibarr/doli.sh`](tools/dolibarr/doli.sh),
+  with `status`, `company` and a `get` passthrough. The API key is handed to curl through a config
+  file on stdin, the same way `send_mail` in `monitoring/lib.sh` passes the SMTP password, so it
+  never enters the process list. A test proves that: the fake key appears in the captured config and
+  not in the captured argument list.
+- 13 bats tests in [`tests/doli.bats`](tests/doli.bats), a Dolibarr branch in the shared `curl` stub,
+  and `doli_setup`/`doli` helpers in `tests/test_helper.bash`. `tools/dolibarr/doli.sh` is now in the
+  shellcheck list in `tests/run.sh`. The whole suite is 117 tests and passes.
+- `docs/dolibarr.md` section **API access**: the one-time setup in the Dolibarr UI, why the key is
+  not in `.env.example`, and the three read commands.
+- `TODO.md` item 2.1 and 2.2, recording that the Dolibarr read path now exists and that a write path
+  is deliberately absent. New item 6.4: **`dolibarr_db` has no consistent dump in cron**, only the
+  hot files restic copies, while Vaultwarden has had one since the monitoring work.
+
+### Fixed
+
+- **A disabled API module answers HTTP 200, so a status-code check calls it healthy.** Measured on
+  2026-09-14: `https://erp.sdwa5.org/api/index.php/status` returns 200 with the HTML sentence
+  `Module <b>Api</b> must be enabled.` `doli.sh` inspects the body for it and reports the module as
+  disabled with the path to switch it on, rather than handing a caller HTML it will try to parse.
+
+### Notes
+
+- The API module is **not yet enabled** on the live instance, so the client is unverified against the
+  real ERP. It is verified against a faked API only. Enabling the module and creating the dedicated
+  API user are UI steps.
+
 ## [1.33.0] - 2026-09-13
 
 ### Fixed

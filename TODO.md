@@ -24,6 +24,15 @@
        [monitoring/vaultwarden-autoupdate.sh](monitoring/vaultwarden-autoupdate.sh): health-check
        after apply, and on failure `git reset --hard` to the previous commit plus a loud mail
 2. connect google drive <-> [docs/dolibarr.md](docs/dolibarr.md) <-> shopware if possible
+    1. **the dolibarr half now has a read path.** [tools/dolibarr/doli.sh](tools/dolibarr/doli.sh)
+       reads the rest api with a dedicated api user, see
+       [docs/dolibarr.md](docs/dolibarr.md#api-access). shopware's read side is already documented in
+       [docs/shopware/admin-api.md](docs/shopware/admin-api.md). what is missing is the drive side and
+       a decision on what should actually flow between the three, because "if possible" was never
+       turned into a list of records (`decision`, ca. 2 Stunden)
+    2. writing to dolibarr is deliberately absent. the organisation address and every other setup
+       value is set in the ui today. a write path only earns its place once something needs to happen
+       repeatedly, and then it is a separate idempotent script a human starts (ca. 3 Stunden)
 3. [docs/shopware/TODO.md](docs/shopware/TODO.md)
 4. maybe add nextcloud (docker-compose.yml)
 5. [docs/minecraft.md](docs/minecraft.md)
@@ -56,6 +65,11 @@
     3. monitoring runs on the monitored host, so a dead vps sends nothing and the silence looks
        healthy. an external dead-man's switch would close that gap, deliberately deferred
        (ca. 45 Minuten)
+    4. **`dolibarr_db` has no consistent dump, only hot files.** `monitoring/cron.d/` holds
+       `vaultwarden-db-backup` and nothing equivalent for dolibarr, so restic copies the mariadb data
+       directory while the server is writing to it. the only dolibarr dump is the manual one in
+       [docs/dolibarr.md](docs/dolibarr.md#operations). vaultwarden got this treatment for a reason
+       and dolibarr carries the accounting (ca. 2 Stunden)
 7. security follow-ups from the 2026-09-07 ssh hardening ([docs/ssh-hardening.md](docs/ssh-hardening.md))
     1. a second copy of `id_ed25519_sdwa5` on the notebook. the key is in vaultwarden since 2026-09-08,
        so the workstation is no longer the only holder, but a rescue console cannot fetch a vault item

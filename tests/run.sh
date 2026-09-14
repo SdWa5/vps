@@ -28,6 +28,7 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt koalaman/shellcheck:stable -x \
     monitoring/vaultwarden-db-backup.sh \
     monitoring/shopware-worker.sh \
     hardening/firewall/sdwa5-firewall.sh \
+    tools/dolibarr/doli.sh \
     tests/run.sh \
     tests/test_helper.bash \
     tests/stubs/*

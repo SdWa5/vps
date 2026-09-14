@@ -31,6 +31,39 @@ Admin login for all instances: `admin` (see `*_ADMIN_PASSWORD` in .env)
 - No data dirs created yet on VPS
 - Start with: `docker compose -f docker-compose.projects.yml up -d`
 
+## API access
+
+The REST API is used read-only from a workstation, through `tools/dolibarr/doli.sh`. It is the
+only programmatic way in; the container is bound to `127.0.0.1:8002` and reachable from outside
+the host only through Caddy on `https://erp.sdwa5.org`.
+
+Dolibarr ships the API module **off**. A request against a disabled module answers **HTTP 200**
+with the HTML sentence `Module <b>Api</b> must be enabled.`, so a plain status-code check reports
+it as healthy. `doli.sh` therefore inspects the body as well and says so in plain words.
+
+Setup, done once in the Dolibarr UI:
+
+1. Home → Setup → Modules → enable **API REST**.
+2. Create a dedicated user, **not** `admin`, with only the permissions the reads need, and
+   generate its API key in the user card.
+3. Put the key in `~/.config/sdwa5-dolibarr-token` with mode 600 and in Vaultwarden. Pipe it
+   rather than echo it, for example `xclip -selection clipboard -o > ~/.config/sdwa5-dolibarr-token`.
+
+The key is a client credential and deliberately **not** in `.env.example`: no container reads it,
+so it is not a deployment variable. `doli.sh` hands it to curl through a config file on stdin, the
+same way `send_mail` in `monitoring/lib.sh` passes the SMTP password, so it never enters the
+process list.
+
+```bash
+tools/dolibarr/doli.sh status                      # reachability and auth
+tools/dolibarr/doli.sh company                     # the organisation record on every invoice
+tools/dolibarr/doli.sh get 'thirdparties?limit=5'  # any GET
+```
+
+Writing is out of scope on purpose. A write against the live ERP is a production mutation, so it
+belongs in its own idempotent script that a human starts, which is the split the Shopware work
+uses as well. The organisation address under Home → Setup → Company/Organization is set in the UI.
+
 ## Operations
 
 ```bash

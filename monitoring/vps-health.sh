@@ -21,6 +21,7 @@
 #   HEALTH_URLS                    space-separated "label=url" pairs
 #   BACKUP_MAX_AGE_HOURS           age at which the restic backup counts as stale
 #   DB_BACKUP_MAX_AGE_HOURS        age at which the Vaultwarden db dump counts as stale
+#   VAULTWARDEN_DRIFT_GRACE_HOURS  how long an unapplied Vaultwarden release stays acceptable
 #   FIREWALL_PORTS                 tcp ports the INPUT chain must still accept
 #   STATE_DIR, FAKE_NOW            test hooks
 
@@ -43,6 +44,14 @@ DB_BACKUP_MAX_AGE_HOURS="${DB_BACKUP_MAX_AGE_HOURS:-26}"
 # exists for ran unnoticed for 47 days.
 SHOPWARE_TASK_MAX_AGE_HOURS="${SHOPWARE_TASK_MAX_AGE_HOURS:-2}"
 VAULTWARDEN_RELEASE_API="${VAULTWARDEN_RELEASE_API:-https://api.github.com/repos/dani-garcia/vaultwarden/releases/latest}"
+# How long a new Vaultwarden release may sit unapplied before it is worth a mail.
+#
+# **THIS IS NOT A ROUND NUMBER, IT IS THE UPDATE JOB'S PERIOD PLUS SLACK.** vaultwarden-autoupdate.sh
+# runs daily at 03:00 host time, so a release published just after 03:00 waits almost a full day by
+# design. Warning before that window closes means mailing about every upstream release, which is what
+# happened with 1.37.3 on 2026-09-13. Warning after it means a WARN says the updater is not working,
+# which is the only version of this alert anybody can act on.
+VAULTWARDEN_DRIFT_GRACE_HOURS="${VAULTWARDEN_DRIFT_GRACE_HOURS:-26}"
 FIREWALL_PORTS="${FIREWALL_PORTS:-22 80 443}"
 
 STATE_FILE="$STATE_DIR/state"
@@ -308,8 +317,18 @@ check_firewall() {
         "$(tr ' ' ',' <<<"$FIREWALL_PORTS")"
 }
 
+# **A NEW RELEASE IS NOT A FAULT. AN UNAPPLIED ONE EVENTUALLY IS, AND THE DIFFERENCE IS TIME.**
+#
+# vaultwarden-autoupdate.sh applies a new image daily at 03:00, this check runs hourly. Without a
+# grace window the detector beats the actor by up to a day on every single upstream release and mails
+# about it. That is what happened with 1.37.3: published 2026-09-13 at 15:03 UTC, found here at 17:17
+# local, and two mails had gone out before the updater was ever due again.
+#
+# So drift younger than VAULTWARDEN_DRIFT_GRACE_HOURS reports OK and names the wait, and drift older
+# than it warns. A WARN from this check therefore means the update job is not doing its work, which is
+# a statement somebody can act on, rather than "upstream has shipped", which is not.
 check_vaultwarden_version() {
-    local running latest newest
+    local running response latest published published_ts age_hours newest
 
     # The container prints "Vaultwarden <server>" and "Web-Vault <web vault>".
     # Only the first is comparable against the GitHub release tag.
@@ -320,12 +339,15 @@ check_vaultwarden_version() {
         return
     fi
 
+    # One request, read twice. The age of the release is in the same payload as its tag, so asking
+    # GitHub a second time for it would only add a way for the two answers to disagree.
+    response="$(curl -fsS --max-time 20 "$VAULTWARDEN_RELEASE_API" 2>/dev/null)"
+
     # Take the tag_name value itself. Scraping the response for anything
     # version-shaped also matches the release notes, and the 1.37.2 notes
     # mention 2026.8.0 and 1.37.1, which produced a multi-line result and a
     # false "1.37.2 is behind 1.37.2". Works on pretty and on compact JSON.
-    latest="$(curl -fsS --max-time 20 "$VAULTWARDEN_RELEASE_API" 2>/dev/null \
-        | sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"v\{0,1\}\([0-9][0-9.]*\)".*/\1/p' \
+    latest="$(sed -n 's/.*"tag_name"[[:space:]]*:[[:space:]]*"v\{0,1\}\([0-9][0-9.]*\)".*/\1/p' <<< "$response" \
         | head -1)"
 
     # Anything that is not a plain dotted version is treated as no answer.
@@ -343,8 +365,40 @@ check_vaultwarden_version() {
     newest="$(printf '%s\n%s\n' "$running" "$latest" | sort -V | tail -1)"
     if [[ "$running" == "$latest" || "$newest" == "$running" ]]; then
         printf 'OK\tVaultwarden %s is current (latest %s)\n' "$running" "$latest"
+        return
+    fi
+
+    # RFC3339 with an explicit Z, parsed with date rather than awk. The host's awk is mawk and the
+    # bats container's is busybox, so anything date can do belongs to date here.
+    published="$(sed -n 's/.*"published_at"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' <<< "$response" \
+        | head -1)"
+
+    # **THE EMPTINESS IS TESTED BEFORE date SEES IT, BECAUSE GNU `date -d ""` SUCCEEDS.** It resolves
+    # an empty string to today at 00:00, so a payload with no published_at would have produced a
+    # timestamp a few hours old and reported every such release as comfortably inside the grace
+    # window. Caught by `drift with no readable release date warns rather than being waved through`.
+    published_ts=""
+    if [[ -n "$published" ]]; then
+        published_ts="$(date -u -d "$published" +%s 2>/dev/null)"
+    fi
+
+    # The drift itself is measured and only its age is unknown, so this warns rather than falling
+    # silent. Same line the firewall check takes: a check that cannot see its subject has confirmed
+    # nothing, and here it has already confirmed the part that matters.
+    if [[ -z "$published_ts" ]]; then
+        printf 'WARN\tVaultwarden %s is behind %s, and the release date could not be read so its age is unknown. Clients auto-update and will break against an old server\n' \
+            "$running" "$latest"
+        return
+    fi
+
+    age_hours=$(( ($(now) - published_ts) / 3600 ))
+
+    if (( age_hours < VAULTWARDEN_DRIFT_GRACE_HOURS )); then
+        printf 'OK\tVaultwarden %s is behind %s, released %sh ago. The daily update job takes it at 03:00\n' \
+            "$running" "$latest" "$age_hours"
     else
-        printf 'WARN\tVaultwarden %s is behind %s. Clients auto-update and will break against an old server\n' "$running" "$latest"
+        printf 'WARN\tVaultwarden %s is behind %s, released %sh ago and still not applied, so vaultwarden-autoupdate.sh is not working. Clients auto-update and will break against an old server\n' \
+            "$running" "$latest" "$age_hours"
     fi
 }
 

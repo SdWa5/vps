@@ -6,6 +6,51 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.37.0] - 2026-09-14
+
+### Changed
+
+- **The Vaultwarden update job runs daily instead of Sunday only, because a weekly actor cannot keep
+  up with an hourly detector.** 1.37.3 was published on 2026-09-13 at 15:03 UTC and its image reached
+  Docker Hub at 14:55 UTC. That week's run had already happened at 01:00 UTC, fourteen hours before
+  the image existed, and correctly did nothing. The next attempt would have been 2026-09-20, so the
+  server would have sat behind the Bitwarden clients for a week while `vps-health.sh`, which runs
+  hourly, mailed about it on the backoff schedule. Measured on the host: Vaultwarden 1.37.2, image
+  `sha256:d5b851ab…` built 2026-08-22, no `docker-compose.override.yml`, all four cron entries
+  installed and the health check alive. Nothing was broken. What was missing was a run.
+- **`check_vaultwarden_version` now warns on the age of an unapplied release rather than on the
+  existence of a new one.** New threshold `VAULTWARDEN_DRIFT_GRACE_HOURS`, default 26, which is the
+  update job's period plus two hours of slack, because a release published just after 03:00 waits
+  nearly a full day by design. Below the window the check reports `OK` and names the wait; above it
+  it warns. **A WARN from this check now means the update job is not working**, which is something
+  to act on, where "upstream has shipped" was not. An ordinary upstream release costs no mail at all.
+  The release date is read from the same API response as the tag, so there is no second request and
+  no way for the two answers to disagree.
+- **The stale-health-monitor alarm in `vaultwarden-autoupdate.sh` is rate limited to once a week.**
+  It has no backoff of its own, so while the job was weekly a dead `vps-health.sh` cost one mail a
+  week and daily would have cost one a day for as long as it lasted. The hold is
+  `/var/lib/vps-health/autoupdate-health-alerted`, written only after a mail actually went out, so a
+  failed delivery does not silence the next attempt, and removed the moment the health check reports
+  in again, so a fault that recurs after a recovery alerts at once. Detection drops from a week to a
+  day while the mail cadence stays where it was.
+
+### Fixed
+
+- **A release payload with no `published_at` would have been treated as published today.** GNU
+  `date -d ""` resolves an empty string to today at 00:00 and exits 0, so the age check would have
+  found every such release comfortably inside the grace window and waved real drift through. The
+  emptiness is now tested before `date` sees it. Caught by the test written for it rather than in
+  production.
+
+### Added
+
+- Seven tests. Four cover the grace window, including the turn-over at exactly 26 hours driven by
+  the clock rather than by two fixtures, the override, and drift whose release date cannot be read.
+  Three cover the alarm hold, including that a recovery clears it and that a failed delivery does
+  not count as delivered. The `curl` stub gained a `published_at`, defaulting far enough in the past
+  that every drift case written before the window existed keeps its meaning. 155 tests, all passing,
+  shellcheck clean.
+
 ## [1.36.2] - 2026-09-14
 
 ### Changed

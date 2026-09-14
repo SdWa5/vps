@@ -26,18 +26,19 @@ jobs:
     runs-on: ubuntu-latest
     # GitHub's default is 360 minutes. That default is what let `sdwa5-3d`'s `full` job burn roughly 1644 minutes
     # across three nightly runs before anybody saw a log, because a job cancelled at the ceiling reports only that
-    # it was cancelled. Two Docker pulls and 104 bats tests have no business anywhere near ten minutes.
+    # it was cancelled. Two Docker pulls and 155 bats tests have no business anywhere near ten minutes.
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
 
       - run: tests/run.sh
 
-  # NOTE, 2026-09-08: nothing here has ever executed. Every run in all three
-  # SdWa5 repositories fails within seconds with "The job was not started
-  # because recent account payments have failed or your spending limit needs to
-  # be increased". These repositories are private, so Actions minutes are
-  # metered, and a public repository would get them free and unlimited. See the
+  # NOTE, 2026-09-14: this runs now. The note that stood here said nothing in any of the three SdWa5
+  # repositories had ever executed, because every run failed within seconds with "The job was not
+  # started because recent account payments have failed or your spending limit needs to be
+  # increased", measured 2026-09-08. Runs complete from 2026-09-13 onwards, so this pipeline is
+  # verified on GitHub rather than only locally. The repositories are still private, so the minutes
+  # are still metered and the runner still has two cores where a public one has four. See the
   # go-public item in the root repository's TODO.md.
 
   # Secret scanning, on the working tree and on the full history.

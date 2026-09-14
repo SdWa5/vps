@@ -127,6 +127,13 @@ restic_snapshots_json() {
     printf '%s]\n' "$out"
 }
 
+# An RFC3339 UTC timestamp with a Z offset, as the GitHub release API emits one. Used to place a
+# fake release relative to a fake clock, so a drift test says how old the release is rather than
+# which date it carries.
+iso_utc() {
+    date -u -d "@$1" '+%Y-%m-%dT%H:%M:%SZ'
+}
+
 health() {
     run "$REPO_ROOT/monitoring/vps-health.sh" "$@"
 }

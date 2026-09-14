@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Weekly Vaultwarden update.
+# Daily Vaultwarden update.
 #
 # Bitwarden browser extensions and mobile apps auto-update from the stores. A
 # server left behind stops working with them while the bundled web vault keeps
@@ -8,9 +8,16 @@
 #
 # Only Vaultwarden is updated. Shopware, Dolibarr and MariaDB stay manual.
 #
-# Runs from /etc/cron.d/vaultwarden-autoupdate on Sunday 03:00, one hour before
-# the restic backup at 04:00, so the daily backup always captures the post-update
-# state.
+# Runs from /etc/cron.d/vaultwarden-autoupdate daily at 03:00 host time, which is
+# 01:00 UTC, so it lands before the consistent database copy at 01:50 UTC and the
+# restic backup at 04:00 UTC. Every snapshot therefore holds the post-update state.
+# The three schedules live in two timezones, so that ordering only reads correctly
+# in UTC.
+#
+# It was weekly until 2026-09-14, and weekly could not keep up. 1.37.3 was
+# published fourteen hours after that week's run, so the server would have stayed
+# behind the Bitwarden clients until the following Sunday while the hourly health
+# check mailed about it.
 #
 # Usage:
 #   vaultwarden-autoupdate.sh              pull, snapshot, update, verify
@@ -33,6 +40,13 @@ HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-60}"
 SNAPSHOTS_TO_KEEP="${SNAPSHOTS_TO_KEEP:-3}"
 # vps-health.sh runs hourly. Anything older than this means it stopped.
 HEALTH_STALE_SECONDS="${HEALTH_STALE_SECONDS:-7200}"
+# **THIS JOB BECAME DAILY AND THIS ALARM HAS NO BACKOFF OF ITS OWN, SO IT NEEDED A LIMIT.**
+# While the job ran weekly, a dead vps-health.sh cost one mail a week. Daily would make it one a day
+# for as long as the condition lasts, which is exactly the "mails every day forever" that
+# vps-health.sh's own reminder schedule exists to prevent. Seven days keeps the old cadence while the
+# detection window drops from a week to a day.
+HEALTH_ALERT_INTERVAL_SECONDS="${HEALTH_ALERT_INTERVAL_SECONDS:-604800}"
+HEALTH_ALERT_STAMP="${HEALTH_ALERT_STAMP:-$STATE_DIR/autoupdate-health-alerted}"
 
 DRY_RUN=0
 
@@ -47,35 +61,73 @@ running_version() {
         | grep -oE '^Vaultwarden [0-9]+\.[0-9]+\.[0-9]+' | head -1 | awk '{print $2}'
 }
 
+# True at most once per HEALTH_ALERT_INTERVAL_SECONDS. The stamp is written only when a mail actually
+# went out, so a failed delivery does not silence the next attempt.
+health_alert_due() {
+    local last
+
+    [[ -f "$HEALTH_ALERT_STAMP" ]] || return 0
+    last="$(stat -c %Y "$HEALTH_ALERT_STAMP" 2>/dev/null)" || return 0
+    (( $(now) - last >= HEALTH_ALERT_INTERVAL_SECONDS ))
+}
+
+# Records that the alarm was delivered, so the next run can hold off. mtime is the payload, and it is
+# set explicitly rather than left to touch's idea of now, because FAKE_NOW drives this in tests.
+mark_health_alert_sent() {
+    mkdir -p "$(dirname "$HEALTH_ALERT_STAMP")" 2>/dev/null
+    : > "$HEALTH_ALERT_STAMP"
+    touch -d "@$(now)" "$HEALTH_ALERT_STAMP" 2>/dev/null
+}
+
 # The two cron jobs watch each other. Without an all-green digest, a health
 # script that silently stopped running looks exactly like a healthy server, so
 # this job reports the silence instead.
+#
+# The condition is re-evaluated every run and only the *mail* is rate limited, so recovery is noticed
+# at once: once vps-health.sh writes its stamp again, this returns without touching anything and the
+# next failure alerts immediately rather than waiting out the old interval.
 check_health_monitor() {
     local age
 
     if [[ ! -f "$LAST_RUN_FILE" ]]; then
-        send_mail "[sdwa5] health monitoring has never run" \
+        health_alert_due || return
+        if send_mail "[sdwa5] health monitoring has never run" \
 "vaultwarden-autoupdate.sh could not find $LAST_RUN_FILE on $(hostname).
 
 vps-health.sh has never completed a run, so nothing is watching disk space,
 containers, backups or Vaultwarden version drift.
 
-Check: systemctl status cron; cat /etc/cron.d/vps-health" \
-            || log "health monitoring has never run"
+This alarm repeats at most every $(( HEALTH_ALERT_INTERVAL_SECONDS / 86400 )) days.
+
+Check: systemctl status cron; cat /etc/cron.d/vps-health"; then
+            mark_health_alert_sent
+        else
+            log "health monitoring has never run"
+        fi
         return
     fi
 
     age=$(( $(now) - $(stat -c %Y "$LAST_RUN_FILE") ))
-    (( age < HEALTH_STALE_SECONDS )) && return
+    if (( age < HEALTH_STALE_SECONDS )); then
+        rm -f "$HEALTH_ALERT_STAMP"
+        return
+    fi
 
-    send_mail "[sdwa5] health monitoring has stopped" \
+    health_alert_due || return
+
+    if send_mail "[sdwa5] health monitoring has stopped" \
 "vps-health.sh on $(hostname) last completed $(( age / 3600 ))h ago, at $(cat "$LAST_RUN_FILE").
 It runs hourly, so it has stopped.
 
 Nothing is watching disk space, containers, backups or Vaultwarden version drift.
 
-Check: systemctl status cron; cat /etc/cron.d/vps-health; /opt/docker/monitoring/vps-health.sh --dry-run" \
-        || log "health monitoring has stopped"
+This alarm repeats at most every $(( HEALTH_ALERT_INTERVAL_SECONDS / 86400 )) days.
+
+Check: systemctl status cron; cat /etc/cron.d/vps-health; /opt/docker/monitoring/vps-health.sh --dry-run"; then
+        mark_health_alert_sent
+    else
+        log "health monitoring has stopped"
+    fi
 }
 
 snapshot() {
@@ -132,7 +184,7 @@ OVERRIDE
 
 usage() {
     cat <<'USAGE'
-vaultwarden-autoupdate.sh - weekly Vaultwarden update
+vaultwarden-autoupdate.sh - daily Vaultwarden update
 
 Pulls vaultwarden/server:latest. If the image is unchanged, exits silently.
 Otherwise snapshots vaultwarden-data/, recreates the container and verifies that
@@ -140,6 +192,7 @@ the public /alive endpoint answers 200. On failure it restores the snapshot, pin
 the previous image in docker-compose.override.yml and mails an alert.
 
 Also verifies that vps-health.sh is still running, and mails if it has stopped.
+That alarm repeats at most every 7 days for as long as the condition lasts.
 
   vaultwarden-autoupdate.sh              pull, snapshot, update, verify
   vaultwarden-autoupdate.sh --dry-run    report what would happen, change nothing

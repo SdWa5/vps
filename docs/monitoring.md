@@ -7,7 +7,7 @@ All live in [`monitoring/`](../monitoring/) and are deployed to `/opt/docker/mon
 |-----|--------|----------|-----------------|
 | Health check | `vps-health.sh` | hourly, `:17` | something is wrong or has just recovered |
 | Vaultwarden database copy | `vaultwarden-db-backup.sh` | daily 03:50 | the dump failed or could not be verified |
-| Vaultwarden update | `vaultwarden-autoupdate.sh` | Sunday 03:00 | an update was applied, an update failed, or the health check stopped running |
+| Vaultwarden update | `vaultwarden-autoupdate.sh` | daily 03:00 | an update was applied, an update failed, or the health check stopped running |
 | Shopware worker | `shopware-worker.sh` | every minute, under `flock` | the scheduled tasks or the queue consumer failed, or the container is down |
 
 **A healthy system sends nothing.** There is no all-green digest.
@@ -22,7 +22,7 @@ Two incidents, both silent until they became visible as an outage.
   The browser extension and the mobile app stopped working, the web vault kept going because it
   ships with the server. See [vaultwarden.md](vaultwarden.md).
 
-Both classes are now checked. Version drift is additionally removed at the source by the weekly
+Both classes are now checked. Version drift is additionally removed at the source by the daily
 auto-update.
 
 ## Health check
@@ -39,7 +39,7 @@ auto-update.
 | `caddy` | `systemctl is-active caddy` is not `active` |
 | `firewall` | the IPv4 `INPUT` policy is not `DROP`, fail2ban's jump is gone, a port in `FIREWALL_PORTS` (22 80 443) is no longer accepted, or **`DOCKER-USER` is missing or back to Docker's empty `-j RETURN`**, which leaves every published container port unfiltered. An open IPv6 policy is a WARN rather than a CRIT |
 | `shopware_tasks` | the newest Shopware scheduled task ran longer than `SHOPWARE_TASK_MAX_AGE_HOURS` (2) ago, the task list cannot be read, or no task has ever run |
-| `vaultwarden_version` | the running version is behind the newest GitHub release |
+| `vaultwarden_version` | the running version is behind the newest GitHub release **and that release is older than `VAULTWARDEN_DRIFT_GRACE_HOURS` (26)** |
 
 A container reporting `starting` is not an alert, that is a normal `start_period`. GitHub being
 unreachable is not an alert either, otherwise the recipient learns to ignore this mail.
@@ -211,6 +211,12 @@ sqlite3 /tmp/restore/data/vaultwarden-db-backup/db.sqlite3 'PRAGMA integrity_che
 Vaultwarden runs forward-only database migrations, so a downgrade is not supported and the snapshot
 is the only way back. `vaultwarden-data/` is under 10 MB, so keeping three costs nothing.
 
+**Three snapshots covered three weeks while the job was weekly and now cover three days.** That is a
+deliberate trade and not an oversight: the snapshot exists to undo the update that just happened, and
+anything older than that is restic's job. Note the other half of it, which is that
+`prune_snapshots()` matches every directory named `vaultwarden-data.bak-*` and cannot tell a hand-made
+snapshot from a rotated one. A snapshot somebody wants to keep belongs outside that pattern.
+
 **If a rollback ever fires, `docker-compose.override.yml` must be deleted once the cause is
 understood.** While it exists Vaultwarden stays pinned to an old image and drifts behind the clients
 again, which is the exact failure this job was built to prevent.
@@ -218,15 +224,41 @@ again, which is the exact failure this job was built to prevent.
 Only Vaultwarden is auto-updated. Shopware, Dolibarr and MariaDB stay manual, tracked in
 [TODO.md](../TODO.md).
 
-The job runs Sunday 03:00 host time, so 01:00 UTC, and restic runs 04:00 UTC. That is five hours
-before rather than the one hour this document used to claim, because the two crons live in different
-timezones. The intent holds either way, so the daily backup does capture the post-update state.
+The job runs daily at 03:00 host time, so 01:00 UTC, the consistent database copy follows at 01:50
+UTC and restic runs at 04:00 UTC. The two crons live in different timezones, so that ordering only
+reads correctly in UTC, and any change to one of the three schedules has to be reasoned about there.
+The intent holds, so the daily backup does capture the post-update state.
+
+### Why daily rather than weekly
+
+**A weekly actor cannot keep up with an hourly detector, and the gap between them is what arrives as
+mail.** 1.37.3 was published on 2026-09-13 at 15:03 UTC and its image reached Docker Hub at 14:55
+UTC. The weekly job had run at 01:00 UTC that same day, fourteen hours before the image existed, and
+correctly did nothing. The next attempt would have been 2026-09-20. `vps-health.sh` found the drift
+at 17:17 local time and mailed about it twice before the updater was due again.
+
+So the schedule moved to daily and the version check gained a grace window, and the two numbers are
+tied to each other. `VAULTWARDEN_DRIFT_GRACE_HOURS` is 26, which is this job's period plus two hours
+of slack, because a release published just after 03:00 waits nearly a full day by design. Below the
+window the check reports `OK` and names the wait. Above it the check warns, and **that warning now
+means the update job is not working**, which is something to act on, rather than "upstream has
+shipped", which is not.
+
+The extra runs cost one `docker-compose pull` a day. An unchanged image exits silently.
 
 ## The two jobs watch each other
 
 Without an all-green digest, a health check that silently stopped running looks exactly like a
-healthy server. `vps-health.sh` writes `/var/lib/vps-health/last-run` on every run, and the weekly
+healthy server. `vps-health.sh` writes `/var/lib/vps-health/last-run` on every run, and the daily
 update job mails if that file is missing or older than two hours.
+
+**That alarm has no backoff of its own, so it is rate limited instead.** Weekly, a dead
+`vps-health.sh` cost one mail a week; daily would have cost one a day for as long as it lasted, which
+is the "mails every day forever" the reminder schedule above exists to prevent. The alarm now repeats
+at most every seven days, held by `/var/lib/vps-health/autoupdate-health-alerted`. The stamp is
+written only when a mail actually went out, so a failed delivery does not silence the next attempt,
+and it is removed the moment the health check reports in again, so a fault that recurs after a
+recovery alerts immediately rather than waiting out the old interval.
 
 ## Mail delivery
 

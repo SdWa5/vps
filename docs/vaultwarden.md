@@ -82,11 +82,11 @@ Worth knowing rather than rediscovering:
 ### Doing it again
 
 ```bash
-# to testing, pinned by digest so the weekly auto-update cannot drift the vault onto main
+# to testing, pinned by digest so the daily auto-update cannot drift the vault onto main
 docker pull vaultwarden/server:testing
 docker image inspect -f '{{index .RepoDigests 0}}' vaultwarden/server:testing
 # put that digest in docker-compose.yml AND in IMAGE= in monitoring/vaultwarden-autoupdate.sh,
-# otherwise the weekly job compares the wrong image
+# otherwise the daily job compares the wrong image
 cd /opt/docker && docker-compose stop vaultwarden \
   && cp -a vaultwarden-data "vaultwarden-data.bak-$(date +%Y%m%d-%H%M)" \
   && docker-compose pull vaultwarden && docker-compose up -d vaultwarden
@@ -104,8 +104,14 @@ Upstream states the requirement per release, for example
 [1.37.2](https://github.com/dani-garcia/vaultwarden/discussions/7615) for clients 2026.8.0+.
 
 This is handled automatically since 2026-09-01. `monitoring/vaultwarden-autoupdate.sh` updates the
-container every Sunday and `monitoring/vps-health.sh` warns if the running version ever falls behind
-the newest release. See [monitoring.md](monitoring.md).
+container daily and `monitoring/vps-health.sh` warns if a release stays unapplied for longer than 26
+hours. See [monitoring.md](monitoring.md).
+
+**It was weekly until 2026-09-14, and weekly was not enough.** 1.37.3 was published fourteen hours
+after that week's run, so the server would have stayed on 1.37.2 until the following Sunday while the
+hourly health check mailed about it. The check warns on the age of an unapplied release rather than
+on the existence of a new one, so an ordinary upstream release now costs no mail at all and a warning
+means the update job has stopped working.
 
 ### Runbook: clients broken, web vault fine
 

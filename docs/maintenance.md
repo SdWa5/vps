@@ -90,7 +90,7 @@ its own.
 | `shopware` | `dockware/shopware:6.7.11.1` | Exact. dockware publishes no `6.7` series tag, so a pin here can only be exact. An update is a deliberate bump of the line |
 | `dolibarr`, `dolibarr_cron` | `dolibarr/dolibarr:23.0.2` | Exact. A Dolibarr minor upgrade runs forward-only database migrations, and no restore drill has been done yet. The `23` tag exists and would let 23.x move on its own, which is why it is not used |
 | `dolibarr_db` and the project DBs | `mariadb:12.3` | Minor series. Patch updates inside 12.3 are safe and wanted; crossing a major version is the one-way door |
-| `vaultwarden` | `vaultwarden/server:latest` | Deliberately unpinned. [`monitoring/vaultwarden-autoupdate.sh`](../monitoring/vaultwarden-autoupdate.sh) pulls it weekly and verifies the result, and a pin would silently freeze security updates for a password vault. See [vaultwarden.md](vaultwarden.md) |
+| `vaultwarden` | `vaultwarden/server:latest` | Deliberately unpinned. [`monitoring/vaultwarden-autoupdate.sh`](../monitoring/vaultwarden-autoupdate.sh) pulls it daily and verifies the result, and a pin would silently freeze security updates for a password vault. See [vaultwarden.md](vaultwarden.md) |
 | `restic` | `lobaro/restic-backup-docker:latest` | Nothing to pin to. The repository publishes six tags, the newest version tag is `1.3.1-0.9.6` from 2020, and `latest` has not been pushed since 2021-05-05, so it is frozen in practice |
 | `minecraft`, `ollama` | `:latest` | Profile-gated and not present on the host, so there is no running digest to pin to. For Minecraft the build is decided by the `VERSION` environment variable anyway |
 

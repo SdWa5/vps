@@ -1,12 +1,24 @@
-# Weekly Vaultwarden update. Deploy to /etc/cron.d/vaultwarden-autoupdate
+# Daily Vaultwarden update. Deploy to /etc/cron.d/vaultwarden-autoupdate
 # (root:root, mode 644).
 #
-# Sunday 03:00, one hour before the restic backup at 04:00, so the daily backup
-# always captures the post-update state. Mails only on an actual update or a
-# failure. Also reports if vps-health.sh has stopped running.
+# **DAILY RATHER THAN WEEKLY, BECAUSE A WEEKLY ACTOR CANNOT KEEP UP WITH AN HOURLY DETECTOR.**
+# 1.37.3 was published on 2026-09-13 at 15:03 UTC and its image reached Docker Hub at 14:55 UTC.
+# The weekly job had run at 01:00 UTC that same day, fourteen hours before the image existed, and
+# correctly did nothing. The next attempt would have been 2026-09-20, so the server would have sat
+# behind the Bitwarden clients for a week while vps-health.sh, which runs hourly, mailed about it on
+# the backoff schedule. Daily closes that to at most 24 hours, and the job exits silently when the
+# image is unchanged, so the cost of the extra runs is one docker-compose pull a day.
+#
+# **THE ORDER IS ONLY CORRECT WHEN READ IN UTC, BECAUSE THESE JOBS LIVE IN TWO TIMEZONES.** The host
+# is Europe/Berlin and the restic container has no TZ, so it runs UTC. 03:00 here is 01:00 UTC, the
+# consistent database copy follows at 01:50 UTC, and restic backs up at 04:00 UTC. Every snapshot
+# therefore holds the state after the update. Any change to one of the three schedules has to be
+# reasoned about in UTC.
+#
+# Mails only on an actual update or a failure. Also reports if vps-health.sh has stopped running.
 
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 MAILTO=""
 
-0 3 * * 0 root /opt/docker/monitoring/vaultwarden-autoupdate.sh 2>&1 | logger -t vaultwarden-autoupdate
+0 3 * * * root /opt/docker/monitoring/vaultwarden-autoupdate.sh 2>&1 | logger -t vaultwarden-autoupdate

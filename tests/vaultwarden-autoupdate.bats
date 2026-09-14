@@ -72,6 +72,52 @@ setup() {
     [ "$(mail_count)" -eq 0 ]
 }
 
+# This alarm has no backoff of its own. While the job ran weekly that cost one mail a week, and the
+# move to daily would have made it one a day for as long as the condition lasted.
+
+@test "the stale health monitor alarm does not repeat on the next day's run" {
+    touch -d '-4 hours' "$STATE_DIR/last-run"
+    autoupdate
+    [ "$(mail_count)" -eq 1 ]
+    autoupdate
+    [ "$(mail_count)" -eq 1 ]
+}
+
+@test "the stale health monitor alarm comes back after a week" {
+    touch -d '-4 hours' "$STATE_DIR/last-run"
+    autoupdate
+    [ "$(mail_count)" -eq 1 ]
+    touch -d '-8 days' "$STATE_DIR/autoupdate-health-alerted"
+    autoupdate
+    [ "$(mail_count)" -eq 2 ]
+}
+
+@test "a recovered health monitor clears the hold, so the next failure alerts at once" {
+    # Otherwise a problem that fixes itself and comes back two days later stays silent for five more,
+    # which is the same trap vps-health.sh's own backoff avoids by resetting on recovery.
+    touch -d '-4 hours' "$STATE_DIR/last-run"
+    autoupdate
+    [ "$(mail_count)" -eq 1 ]
+
+    date '+%Y-%m-%d %H:%M:%S' > "$STATE_DIR/last-run"
+    autoupdate
+    [ "$(mail_count)" -eq 1 ]
+
+    touch -d '-4 hours' "$STATE_DIR/last-run"
+    autoupdate
+    [ "$(mail_count)" -eq 2 ]
+}
+
+@test "a failed alarm delivery does not count as delivered" {
+    # The stamp is written only after send_mail returns success, so a broken SMTP path leaves the
+    # alarm due rather than swallowing it for a week.
+    touch -d '-4 hours' "$STATE_DIR/last-run"
+    STUB_MAIL_RC=1 autoupdate
+    [ ! -f "$STATE_DIR/autoupdate-health-alerted" ]
+    autoupdate
+    [[ "$(mail_body)" == *"health monitoring has stopped"* ]]
+}
+
 @test "an unknown option is rejected" {
     autoupdate --nonsense
     [ "$status" -eq 2 ]

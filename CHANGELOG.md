@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.34.1] - 2026-09-14
+
+### Changed
+
+- **The shop identity carries the new postal address.** `docs/shopware/shop-config.md` now reads
+  Egitlweg 6, 5322 Hof bei Salzburg, Österreich, which replaced Mühlenstraße 24, 5121 Ostermiething
+  on 2026-09-14 by resolution of the Vorstand.
+- The same section now says where the storefront legal pages actually live, which is the Shopware
+  database rather than this repository, and why the AGB still name Ostermiething as the place of
+  jurisdiction. Only the postal address changed. The registered Sitz is still Ostermiething until
+  the Statutenänderung is filed and not forbidden, so the jurisdiction clause is correct as it
+  stands and changes later, not now.
+
 ## [1.34.0] - 2026-09-14
 
 ### Added

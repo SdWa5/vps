@@ -4,8 +4,12 @@
 
 - Display name: Scheiß die Wand an 5 (SdWa5)
 - Legal name: Musikverein Schmeiß die Wand an 5
-- Address: Mühlenstraße 24, 5121 Ostermiething, Österreich
+- Address: Egitlweg 6, 5322 Hof bei Salzburg, Österreich (since 2026-09-14)
 - ZVR: 1115343752 · Obmann: Stefan Ripper
+- The storefront Impressum, Datenschutz and AGB pages live in the Shopware database, not here.
+  The AGB still name Ostermiething as the place of jurisdiction, and that is correct until the
+  seat moves: the registered Sitz is still Ostermiething and only the postal address changed.
+  See the parent repo's [`docs/organization.md`](../../../docs/organization.md).
 - Email: shop@sdwa5.org
 - Language: English primary, German enabled in storefront SC
 - Single domain sdwa5.org with language switcher (no separate de.sdwa5.org)

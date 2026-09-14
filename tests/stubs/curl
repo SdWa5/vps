@@ -1,6 +1,24 @@
 #!/usr/bin/env bash
-# Fake curl. Distinguishes the three call shapes the scripts make.
+# Fake curl. Distinguishes the call shapes the scripts make.
 args="$*"
+
+# Dolibarr REST API. Must come before the mail and http_code branches, because
+# doli.sh also pipes a config file into stdin and also asks for %{http_code}.
+#
+# The config on stdin is captured so a test can prove the key travelled in a
+# header and never in the argument list.
+if [[ "$args" == *"/api/index.php"* ]]; then
+    cat > "${STUB_DOLI_CONFIG:-/dev/null}"
+    printf '%s' "$args" > "${STUB_DOLI_ARGS:-/dev/null}"
+    # A brace-heavy default inside ${...:-} needs escaping and the escape then
+    # leaks into the output, so the fallback is a plain assignment.
+    doli_body="${STUB_DOLI_BODY:-}"
+    [[ -n "$doli_body" ]] || doli_body='{"success":{"code":200}}'
+    printf '%s' "$doli_body"
+    # --write-out appends the status on its own line, exactly as doli.sh asks.
+    printf '\n%s' "${STUB_DOLI_CODE:-200}"
+    exit "${STUB_DOLI_RC:-0}"
+fi
 
 # Mail delivery: send_mail pipes a config file into stdin.
 if [[ "$args" == *"--config -"* ]]; then

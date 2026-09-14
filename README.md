@@ -78,6 +78,9 @@ systemctl reload caddy
 
 # Health check on demand (see docs/monitoring.md)
 /opt/docker/monitoring/vps-health.sh --dry-run
+
+# Read the Dolibarr ERP from a workstation (see docs/dolibarr.md)
+tools/dolibarr/doli.sh status
 ```
 
 ## Monitoring
@@ -104,8 +107,8 @@ getty and PAM rather than sshd. See [docs/ssh-hardening.md](docs/ssh-hardening.m
 tests/run.sh
 ```
 
-Runs the bats suite for the monitoring scripts plus shellcheck, both inside Docker. Nothing has to be
-installed on the host.
+Runs the bats suite for the monitoring scripts and `tools/`, plus shellcheck, both inside Docker.
+Nothing has to be installed on the host.
 
 [`.github/workflows/tests.yml`](.github/workflows/tests.yml) runs the same script on every push, so
 CI and a local run are the same thing, and adds a secret scan over the working tree and the full
@@ -124,7 +127,7 @@ tracked. CI never sees it, because an untracked file is not in the clone.
 
 Two licences, because this repository is part tooling and part writing.
 
-- **MIT** ([LICENSE](LICENSE)) for the code and configuration: `monitoring/`, `hardening/`, `minecraft/`, `tests/`, `.github/`, `Caddyfile`,
+- **MIT** ([LICENSE](LICENSE)) for the code and configuration: `monitoring/`, `hardening/`, `minecraft/`, `tools/`, `tests/`, `.github/`, `Caddyfile`,
   `docker-compose*.yml` and `.env.example`.
 - **CC BY-SA 4.0** ([LICENSE-docs](LICENSE-docs)) for the prose and data: `docs/`, `README.md`, `CHANGELOG.md` and `TODO.md`.
 

@@ -151,6 +151,21 @@ db_backup() {
     run "$REPO_ROOT/monitoring/vaultwarden-db-backup.sh" "$@"
 }
 
+# tools/dolibarr/doli.sh against the faked API. The key file is a fixture, so no
+# test ever touches the real one under ~/.config.
+doli_setup() {
+    export DOLIBARR_URL="https://erp.example.org"
+    export DOLIBARR_TOKEN_FILE="$BATS_TEST_TMPDIR/dolibarr-token"
+    printf 'fake-api-key-0123456789' > "$DOLIBARR_TOKEN_FILE"
+    chmod 600 "$DOLIBARR_TOKEN_FILE"
+    export STUB_DOLI_CONFIG="$BATS_TEST_TMPDIR/doli-config"
+    export STUB_DOLI_ARGS="$BATS_TEST_TMPDIR/doli-args"
+}
+
+doli() {
+    run "$REPO_ROOT/tools/dolibarr/doli.sh" "$@"
+}
+
 mail_count() {
     [[ -f "$STUB_MAIL_LOG" ]] || { echo 0; return; }
     # grep -c prints 0 and exits 1 when nothing matches, which is not an error here.

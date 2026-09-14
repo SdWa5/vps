@@ -30,9 +30,20 @@
        [docs/shopware/admin-api.md](docs/shopware/admin-api.md). what is missing is the drive side and
        a decision on what should actually flow between the three, because "if possible" was never
        turned into a list of records (`decision`, ca. 2 Stunden)
-    2. writing to dolibarr is deliberately absent. the organisation address and every other setup
-       value is set in the ui today. a write path only earns its place once something needs to happen
-       repeatedly, and then it is a separate idempotent script a human starts (ca. 3 Stunden)
+    2. **the write path exists now for person records**, see
+       [tools/dolibarr/set-address.sh](tools/dolibarr/set-address.sh). setup values stay a ui job,
+       because `/setup/company` is `GET` only, measured against the live instance on 2026-09-14
+    3. **the member list disagrees with the vereinsregister.** tamara emmersberger is still one of
+       the seven members in the erp although she left the verein and was replaced as
+       obmann-stellvertreterin on 18.04.2024, which the wahlanzeige in drive documents. either she
+       stayed an ordinary member after resigning the office, or the record was never closed. someone
+       who knows has to say which (`decision`, ca. 20 Minuten)
+    4. **one person is spelled two ways**, `one spelling` in the member list and `another spelling` in the
+       user list. same human, two records, and any report grouping by name splits them
+       (ca. 15 Minuten)
+    5. leon staber is a **thirdparty** and not a member, although he shares the verein's new postal
+       address. if he is a member, the member list is missing him; if he is not, nothing is wrong.
+       worth one look while the address work is open (`decision`, ca. 10 Minuten)
 3. [docs/shopware/TODO.md](docs/shopware/TODO.md)
 4. maybe add nextcloud (docker-compose.yml)
 5. [docs/minecraft.md](docs/minecraft.md)

@@ -10,13 +10,37 @@ args="$*"
 if [[ "$args" == *"/api/index.php"* ]]; then
     cat > "${STUB_DOLI_CONFIG:-/dev/null}"
     printf '%s' "$args" > "${STUB_DOLI_ARGS:-/dev/null}"
-    # A brace-heavy default inside ${...:-} needs escaping and the escape then
-    # leaks into the output, so the fallback is a plain assignment.
-    doli_body="${STUB_DOLI_BODY:-}"
+
+    doli_method="GET"
+    doli_path=""
+    doli_data=""
+    prev=""
+    for a in "$@"; do
+        [[ "$prev" == "-X" ]] && doli_method="$a"
+        [[ "$prev" == "--data" ]] && doli_data="$a"
+        [[ "$a" == *"/api/index.php/"* ]] && doli_path="${a#*/api/index.php/}"
+        prev="$a"
+    done
+    printf '%s %s %s\n' "$doli_method" "$doli_path" "$doli_data" >> "${STUB_DOLI_LOG:-/dev/null}"
+
+    # Per-path fixtures from STUB_DOLI_DIR when it is set; otherwise the single
+    # STUB_DOLI_BODY, which is all doli.bats needs.
+    doli_body=""
+    if [[ -n "${STUB_DOLI_DIR:-}" ]]; then
+        doli_file="$STUB_DOLI_DIR/${doli_path//\//_}"
+        if [[ "$doli_method" != "GET" ]]; then
+            # A Dolibarr write answers with the id of the updated record.
+            doli_body='2'
+        elif [[ -r "$doli_file" ]]; then
+            doli_body="$(cat "$doli_file")"
+        fi
+    fi
+    [[ -n "$doli_body" ]] || doli_body="${STUB_DOLI_BODY:-}"
     [[ -n "$doli_body" ]] || doli_body='{"success":{"code":200}}'
     printf '%s' "$doli_body"
-    # --write-out appends the status on its own line, exactly as doli.sh asks.
-    printf '\n%s' "${STUB_DOLI_CODE:-200}"
+
+    # Only doli.sh asks for the status code, and only it expects the extra line.
+    [[ "$args" == *"%{http_code}"* ]] && printf '\n%s' "${STUB_DOLI_CODE:-200}"
     exit "${STUB_DOLI_RC:-0}"
 fi
 

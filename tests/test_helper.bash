@@ -166,6 +166,36 @@ doli() {
     run "$REPO_ROOT/tools/dolibarr/doli.sh" "$@"
 }
 
+# tools/dolibarr/set-address.sh against the faked ERP. Fixtures carry the old
+# address, so the default run is the one that has work to do.
+doli_address_setup() {
+    doli_setup
+    export STUB_DOLI_DIR="$BATS_TEST_TMPDIR/doli"
+    export STUB_DOLI_LOG="$BATS_TEST_TMPDIR/doli.log"
+    mkdir -p "$STUB_DOLI_DIR"
+    : > "$STUB_DOLI_LOG"
+
+    doli_fixture members_2 "$(jq -n '{id:"2",lastname:"Example",firstname:"Ada",address:"Mühlenstraße 24",zip:"5121",town:"Ostermiething"}')"
+    doli_fixture users_2   "$(jq -n '{id:"2",lastname:"Example",firstname:"Ada",address:"Mühlenstraße 24",zip:"5121",town:"Ostermiething"}')"
+    doli_fixture thirdparties_10 "$(jq -n '{id:"10",name:"Example Supplies",address:"Egitlweg 6",zip:"5322",town:"Elsenwang"}')"
+}
+
+doli_fixture() {
+    printf '%s' "$2" > "$STUB_DOLI_DIR/$1"
+}
+
+doli_set_address() {
+    run "$REPO_ROOT/tools/dolibarr/set-address.sh" "$@"
+}
+
+doli_requests() {
+    cat "$STUB_DOLI_LOG"
+}
+
+doli_put_count() {
+    grep -c '^PUT ' "$STUB_DOLI_LOG" || true
+}
+
 # tools/shopware/set-address.sh against the faked admin API. Fixtures carry the
 # old address, so the default run is the one that has work to do.
 sw_setup() {

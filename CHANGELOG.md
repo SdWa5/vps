@@ -6,6 +6,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.36.0] - 2026-09-14
+
+### Added
+
+- **[`tools/dolibarr/set-address.sh`](tools/dolibarr/set-address.sh)**, which rolls the new postal
+  address through the three ERP person records that carry it. Dry-run by default, `--apply` writes,
+  idempotent. Record ids are pinned **and** the surname on the record is verified before a write; a
+  mismatch aborts, because a pinned id alone would rewrite whoever sits at that id after a merge.
+- 13 bats tests in [`tests/dolibarr-set-address.bats`](tests/dolibarr-set-address.bats), including
+  the guard above and a test that the organisation record is never written. The shared `curl` stub's
+  Dolibarr branch now serves per-path fixtures and logs every request. The suite is 145 tests.
+- `docs/dolibarr.md` section **Changing the postal address**.
+- `TODO.md` items 2.3 to 2.5, three data-quality findings from reading the ERP.
+
+### Fixed
+
+- **The API client is now verified against the live ERP**, not only against a faked one. 1.34.0
+  shipped unverified because the API module was off. `doli.sh status` returns Dolibarr 23.0.2.
+- **A successful Dolibarr `PUT` answers with the record id, a bare number.** `has("error")` on a
+  number is a jq error, so the first draft of the success check called every successful write a
+  failure and aborted after the first record. Caught by the tests before any `--apply` run.
+
+### Notes
+
+- **`/setup/company` exposes `GET` only**, read off the live instance's `explorer/swagger.json` on
+  2026-09-14. The organisation's own address is therefore a UI step under Home, Setup,
+  Company/Organization, and the script says so instead of pretending to cover it.
+- The Example Supplies record needed only its **town** corrected, from `Elsenwang` to `Hof bei Salzburg`.
+  That record is where the wrong town entered the documentation in the first place. Elsenwang is a
+  hamlet inside the municipality of Hof bei Salzburg and not a postal town.
+- Nothing has been written to the ERP yet. The dry run reports 3 records to change.
+
 ## [1.35.0] - 2026-09-14
 
 ### Added

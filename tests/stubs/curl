@@ -20,6 +20,45 @@ if [[ "$args" == *"/api/index.php"* ]]; then
     exit "${STUB_DOLI_RC:-0}"
 fi
 
+# Shopware admin API. Canned responses come from files in STUB_SW_DIR named
+# after the request path with slashes turned into underscores; anything without
+# a file answers with an empty result set. Every request is appended to
+# STUB_SW_LOG as "METHOD PATH BODY", which is how a test proves that a dry run
+# issued no PATCH.
+if [[ "$args" == *"/api/oauth/token"* ]]; then
+    cat > /dev/null
+    # STUB_SW_NO_TOKEN rehearses a refused grant, which must stop the script
+    # before it touches anything.
+    [[ -n "${STUB_SW_NO_TOKEN:-}" ]] && { printf '{"errors":[{"status":"401"}]}'; exit 0; }
+    printf '{"access_token":"fake-token","token_type":"Bearer","expires_in":600}'
+    exit 0
+fi
+if [[ "$args" == *"/api/"* && -n "${STUB_SW_DIR:-}" ]]; then
+    sw_method="GET"
+    sw_path=""
+    sw_body=""
+    prev=""
+    for a in "$@"; do
+        [[ "$prev" == "-X" ]] && sw_method="$a"
+        [[ "$prev" == "--data" ]] && sw_body="$a"
+        [[ "$a" == http*://*/api/* ]] && sw_path="/api/${a#*/api/}"
+        prev="$a"
+    done
+    printf '%s %s %s\n' "$sw_method" "$sw_path" "$sw_body" >> "${STUB_SW_LOG:-/dev/null}"
+
+    sw_file="$STUB_SW_DIR/${sw_path//\//_}"
+    if [[ "$sw_method" != "GET" && "$sw_method" != "POST" ]]; then
+        # A successful Shopware write answers 204 with an empty body.
+        exit 0
+    fi
+    if [[ -r "$sw_file" ]]; then
+        cat "$sw_file"
+    else
+        printf '{"data":[],"total":0}'
+    fi
+    exit 0
+fi
+
 # Mail delivery: send_mail pipes a config file into stdin.
 if [[ "$args" == *"--config -"* ]]; then
     cat > /dev/null

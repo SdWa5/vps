@@ -33,9 +33,6 @@
     2. **the write path exists now for person records**, see
        [tools/dolibarr/set-address.sh](tools/dolibarr/set-address.sh). setup values stay a ui job,
        because `/setup/company` is `GET` only, measured against the live instance on 2026-09-14
-    3. **one person is spelled two ways.** the member record says `one spelling` and that one is
-       correct; user id 4 says `another spelling`. same human, two records, and any report grouping by
-       name splits them. one `PUT users/4` with the right `lastname` closes it (ca. 10 Minuten)
 3. [docs/shopware/TODO.md](docs/shopware/TODO.md)
 4. maybe add nextcloud (docker-compose.yml)
 5. [docs/minecraft.md](docs/minecraft.md)

@@ -1,6 +1,6 @@
 1. automatic provisioning and deployment (ca. 16 Stunden)
 
-    today only the vaultwarden **image** updates itself, weekly, via
+    today only the vaultwarden **image** updates itself, daily, via
     [monitoring/vaultwarden-autoupdate.sh](monitoring/vaultwarden-autoupdate.sh). everything in this
     repo, so compose files, monitoring scripts and cron entries, reaches the vps only when someone
     runs `git pull` in `/opt/docker` by hand. a merged commit therefore does nothing until deployed

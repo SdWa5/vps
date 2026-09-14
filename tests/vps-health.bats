@@ -384,6 +384,77 @@ Container started." health
     [[ "$(mail_body)" == *"Could not determine the running Vaultwarden version"* ]]
 }
 
+# --- version drift grace window -------------------------------------------
+#
+# The detector runs hourly and the updater runs daily, so every upstream release is briefly visible
+# here as drift. Mailing about that is mailing about somebody else's release schedule. 1.37.3 cost
+# two mails on 2026-09-13 before vaultwarden-autoupdate.sh was ever due again.
+
+@test "a release younger than the grace window is not an alert" {
+    local t0=1800000000
+    STUB_VW_VERSION=1.37.2 STUB_GITHUB_TAG=1.37.3 \
+    STUB_GITHUB_PUBLISHED="$(iso_utc $(( t0 - 3600 )))" \
+        health_at $t0
+    [ "$(mail_count)" -eq 0 ]
+    STUB_VW_VERSION=1.37.2 STUB_GITHUB_TAG=1.37.3 \
+    STUB_GITHUB_PUBLISHED="$(iso_utc $(( t0 - 3600 )))" \
+        health_at $t0 --dry-run
+    [[ "$output" == *"is behind 1.37.3, released 1h ago"* ]]
+}
+
+@test "a release older than the grace window is the alert" {
+    local t0=1800000000
+    STUB_VW_VERSION=1.37.2 STUB_GITHUB_TAG=1.37.3 \
+    STUB_GITHUB_PUBLISHED="$(iso_utc $(( t0 - 26 * 3600 )))" \
+        health_at $t0
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"1.37.2 is behind 1.37.3"* ]]
+    [[ "$(mail_body)" == *"vaultwarden-autoupdate.sh is not working"* ]]
+}
+
+@test "the grace window turns over at exactly 26 hours" {
+    # One hour either side of the threshold, same drift, same stubs. What is being tested is the
+    # arithmetic, so the clock moves rather than the fixtures.
+    local t0=1800000000
+    STUB_VW_VERSION=1.37.2 STUB_GITHUB_TAG=1.37.3 \
+    STUB_GITHUB_PUBLISHED="$(iso_utc $(( t0 - 25 * 3600 - 3599 )))" \
+        health_at $t0
+    [ "$(mail_count)" -eq 0 ]
+
+    STUB_VW_VERSION=1.37.2 STUB_GITHUB_TAG=1.37.3 \
+    STUB_GITHUB_PUBLISHED="$(iso_utc $(( t0 - 26 * 3600 )))" \
+        health_at $t0
+    [ "$(mail_count)" -eq 1 ]
+}
+
+@test "the grace window is overridable, which is how a shorter update cycle is configured" {
+    local t0=1800000000
+    VAULTWARDEN_DRIFT_GRACE_HOURS=1 \
+    STUB_VW_VERSION=1.37.2 STUB_GITHUB_TAG=1.37.3 \
+    STUB_GITHUB_PUBLISHED="$(iso_utc $(( t0 - 2 * 3600 )))" \
+        health_at $t0
+    [ "$(mail_count)" -eq 1 ]
+}
+
+@test "drift with no readable release date warns rather than being waved through" {
+    # The drift itself is measured here and only its age is missing, so the grace window has nothing
+    # to apply. Falling back to OK would hide a real gap behind a parsing failure.
+    STUB_VW_VERSION=1.36.0 \
+    STUB_GITHUB_JSON='{"tag_name":"1.37.3","body":"no dates in this one"}' \
+    STUB_GITHUB_TAG="" health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"1.36.0 is behind 1.37.3"* ]]
+    [[ "$(mail_body)" == *"age is unknown"* ]]
+}
+
+@test "a current version is never asked how old its release is" {
+    # The comparison short-circuits before the date is read, so a payload without one stays quiet.
+    STUB_VW_VERSION=1.37.2 \
+    STUB_GITHUB_JSON='{"tag_name":"1.37.2"}' \
+    STUB_GITHUB_TAG="" health
+    [ "$(mail_count)" -eq 0 ]
+}
+
 # --- backoff --------------------------------------------------------------
 
 @test "a repeat within the first day sends no reminder" {

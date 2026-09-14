@@ -38,7 +38,7 @@ All secrets live in `.env` — never committed. See `.env.example` for required 
 `docs/` here holds the technical/ops documentation (*how* services run:
 Docker, configs, operations). Org-level documentation (*what* they are used
 for and *why*) lives in the parent repo's
-[`docs/`](https://github.com/bestcodename/sdwa5/tree/master/docs).
+[`docs/`](https://github.com/SdWa5/docs/tree/main/docs).
 
 See `docs/` for per-service documentation:
 

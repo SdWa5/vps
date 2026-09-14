@@ -166,6 +166,53 @@ doli() {
     run "$REPO_ROOT/tools/dolibarr/doli.sh" "$@"
 }
 
+# tools/shopware/set-address.sh against the faked admin API. Fixtures carry the
+# old address, so the default run is the one that has work to do.
+sw_setup() {
+    export SW_API_URL="https://shop.example.org"
+    export SW_API_CLIENT_ID="fake-client"
+    export SW_API_CLIENT_SECRET="fake-secret"
+    export STUB_SW_DIR="$BATS_TEST_TMPDIR/sw"
+    export STUB_SW_LOG="$BATS_TEST_TMPDIR/sw.log"
+    mkdir -p "$STUB_SW_DIR"
+    : > "$STUB_SW_LOG"
+
+    sw_fixture_slot "Musikverein, Mühlenstraße 24, 5121 Ostermiething, Österreich"
+    sw_fixture_system_config "Mühlenstraße 24<br>5121 Ostermiething<br>Österreich"
+    sw_fixture_documents "Example Company" ""
+}
+
+# Every slot lookup hits the same path, so one fixture answers all three.
+sw_fixture_slot() {
+    printf '{"data":[{"config":{"content":{"value":%s,"source":"static"},"verticalAlign":{"value":null}}}],"total":1}' \
+        "$(printf '%s' "$1" | jq -Rs .)" > "$STUB_SW_DIR/_api_search_cms-slot-translation"
+}
+
+sw_fixture_system_config() {
+    printf '{"data":[{"id":"cfg1","configurationKey":"core.basicInformation.address","configurationValue":%s}],"total":1}' \
+        "$(printf '%s' "$1" | jq -Rs .)" > "$STUB_SW_DIR/_api_search_system-config"
+}
+
+sw_fixture_documents() {
+    local name="$1" addr="$2"
+    jq -n --arg n "$name" --arg a "$addr" \
+        '{data:[{id:"doc1",name:"invoice",config:{companyName:$n,companyAddress:$a,pageSize:"a4"}}],total:1}' \
+        > "$STUB_SW_DIR/_api_search_document-base-config"
+}
+
+set_address() {
+    run "$REPO_ROOT/tools/shopware/set-address.sh" "$@"
+}
+
+# Requests the script actually sent, one per line as "METHOD PATH BODY".
+sw_requests() {
+    cat "$STUB_SW_LOG"
+}
+
+sw_patch_count() {
+    grep -c '^PATCH ' "$STUB_SW_LOG" || true
+}
+
 mail_count() {
     [[ -f "$STUB_MAIL_LOG" ]] || { echo 0; return; }
     # grep -c prints 0 and exits 1 when nothing matches, which is not an error here.

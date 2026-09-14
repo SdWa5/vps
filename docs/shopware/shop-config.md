@@ -9,10 +9,39 @@
 - The storefront Impressum, Datenschutz and AGB pages live in the Shopware database, not here.
   The AGB still name Ostermiething as the place of jurisdiction, and that is correct until the
   seat moves: the registered Sitz is still Ostermiething and only the postal address changed.
-  See the parent repo's [`docs/organization.md`](../../../docs/organization.md).
+  See the parent repo's
+  [`docs/organization.md`](https://github.com/SdWa5/docs/blob/main/docs/organization.md).
 - Email: shop@sdwa5.org
 - Language: English primary, German enabled in storefront SC
 - Single domain sdwa5.org with language switcher (no separate de.sdwa5.org)
+
+## Changing the postal address
+
+Four places in the live shop hold it and none of them is in this repository:
+the Impressum, Datenschutz and AGB CMS pages, and `core.basicInformation.address`.
+The four document templates hold the sender block invoices carry.
+
+[`tools/shopware/set-address.sh`](../../tools/shopware/set-address.sh) rolls a change
+through all of them. It is **dry-run by default** and a human starts it, because writes against the
+live shop are production mutations and Claude Code's auto-mode classifier blocks them.
+
+```bash
+tools/shopware/set-address.sh            # what would change
+tools/shopware/set-address.sh --apply    # write it
+docker exec shopware bin/console cache:pool:clear cache.http   # on the VPS, afterwards
+```
+
+Every target is read first and skipped when it already carries the new value, so a second run is a
+no-op and a half-finished run can simply be repeated. Slot and language ids are pinned in the script
+and were read on 2026-09-14; rebuilding a page means re-reading them.
+
+The **place of jurisdiction** is deliberately untouched. It follows the Sitz, not the postal
+address, and the registered Sitz is still Ostermiething.
+
+Measured on 2026-09-14, before the first run: all four document templates still carried Shopware's
+stock `companyName: "Example Company"` with an empty `companyAddress`. The shop has **zero orders and
+zero generated documents**, so nothing wrong was ever printed, but the first invoice would have
+carried it. The script fixes that in the same pass.
 
 ## Languages & domains
 

@@ -6,6 +6,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.35.0] - 2026-09-14
+
+### Added
+
+- **[`tools/shopware/set-address.sh`](tools/shopware/set-address.sh)**, which rolls the
+  organisation's postal address through the eight places in the live shop that hold it: the
+  Impressum, Datenschutz and AGB CMS slots, `core.basicInformation.address`, and the sender block in
+  all four document templates. Dry-run by default, `--apply` writes. Every target is read first and
+  skipped when already current, so a second run is a no-op and a half-finished run can be repeated.
+- 15 bats tests in [`tests/shopware-set-address.bats`](tests/shopware-set-address.bats) and a
+  Shopware branch in the shared `curl` stub that serves canned responses and records every request,
+  which is how the dry run is proven to issue no `PATCH`. The suite is now 132 tests.
+- `docs/shopware/shop-config.md` section **Changing the postal address**.
+
+### Fixed
+
+- **A successful Shopware write answers 204 with an empty body, and `jq -e` on empty input exits 4.**
+  The first draft of the success check therefore called every successful write a failure and aborted
+  after the first one. Caught by the test suite before the script ever ran with `--apply`.
+- `tests/run.sh` installs `jq` into the bats container alongside `coreutils`. The Alpine image ships
+  neither, and both the script and its fixtures build their JSON with `jq`.
+
+### Notes
+
+- **Measured on 2026-09-14: all four document templates still carried Shopware's stock
+  `companyName: "Example Company"` with an empty `companyAddress`.** The shop has zero orders and
+  zero generated documents, so nothing wrong has been printed, but the first invoice would have
+  carried it. The script corrects it in the same pass.
+- The place of jurisdiction in the AGB and in the document templates is deliberately untouched. It
+  follows the Sitz, and the registered Sitz is still Ostermiething until the Statutenänderung is
+  filed and not forbidden.
+- Nothing has been written to the shop yet. The dry run reports 8 targets to change.
+
+### Changed
+
+- `README.md` pointed the reader at `github.com/bestcodename/sdwa5` for the org-level documentation.
+  That repository was **deleted on 2026-09-12** during the move into the SdWa5 organization, so the
+  link was dead. It now points at `github.com/SdWa5/docs`.
+
 ## [1.34.1] - 2026-09-14
 
 ### Changed

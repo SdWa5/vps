@@ -6,7 +6,8 @@
 # The bats image is Alpine and ships busybox date, which cannot parse the
 # timestamp formats the scripts read out of the restic log. GNU coreutils is
 # installed into the throwaway container so the test environment matches the
-# Debian VPS.
+# Debian VPS. jq comes along for the same reason: tools/shopware/set-address.sh
+# builds its JSON payloads with it, and so do that suite's fixtures.
 #
 # Usage: tests/run.sh [bats arguments]
 
@@ -17,7 +18,7 @@ cd "$REPO_ROOT"
 
 echo "== bats =="
 docker run --rm -v "$REPO_ROOT:/code" -w /code --entrypoint sh bats/bats:latest \
-    -c "apk add --no-cache coreutils >/dev/null 2>&1 && bats ${*:-tests/}"
+    -c "apk add --no-cache coreutils jq >/dev/null 2>&1 && bats ${*:-tests/}"
 
 echo
 echo "== shellcheck =="
@@ -29,6 +30,7 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt koalaman/shellcheck:stable -x \
     monitoring/shopware-worker.sh \
     hardening/firewall/sdwa5-firewall.sh \
     tools/dolibarr/doli.sh \
+    tools/shopware/set-address.sh \
     tests/run.sh \
     tests/test_helper.bash \
     tests/stubs/*

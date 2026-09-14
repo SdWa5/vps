@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.36.2] - 2026-09-14
+
+### Changed
+
+- **The address rollout is complete and both scripts are now no-ops.** `tools/dolibarr/set-address.sh`
+  reports 3 records already current and `tools/shopware/set-address.sh` reports 8, which is the
+  idempotence the two were built for. The organisation record in Dolibarr was set in the UI, the one
+  step neither script can take because `/setup/company` is `GET` only.
+- The two ERP records still holding an Ostermiething address are **a third party** and its
+  contact, both at its own address. That is a third party's own address and correctly untouched.
+
+### Fixed
+
+- `TODO.md` item 2.3, the two spellings of one surname, is resolved and deleted. Member 7 and user 4
+  now both read `one spelling` and are linked, `user_id` 4 and `fk_member` 7.
+
 ## [1.36.1] - 2026-09-14
 
 ### Changed

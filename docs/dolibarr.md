@@ -88,6 +88,9 @@ The Example Supplies record needed only its **town** corrected, from `Elsenwang`
 Elsenwang is a hamlet inside that municipality and not a postal town, and this record is where the
 wrong town entered the documentation in the first place.
 
+The organisation's own record was set in the UI on 2026-09-14 and carries the new address, so a
+dry run of the script now reports nothing to change anywhere.
+
 **Writing a member also updates the linked user.** Measured on 2026-09-14: the run wrote `members/2`
 and then found `users/2` already current, and reading both back confirmed it. Dolibarr propagates
 the address from the member to the user it is linked to. The script still visits both, because the

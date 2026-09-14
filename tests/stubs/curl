@@ -24,15 +24,30 @@ if [[ "$args" == *"/api/index.php"* ]]; then
     printf '%s %s %s\n' "$doli_method" "$doli_path" "$doli_data" >> "${STUB_DOLI_LOG:-/dev/null}"
 
     # Per-path fixtures from STUB_DOLI_DIR when it is set; otherwise the single
-    # STUB_DOLI_BODY, which is all doli.bats needs.
+    # STUB_DOLI_BODY, which is all doli.bats needs. The query string is dropped
+    # from the fixture name, so one `projects` fixture answers `projects?limit=500`
+    # as well; the log keeps the path as it was sent.
     doli_body=""
     if [[ -n "${STUB_DOLI_DIR:-}" ]]; then
-        doli_file="$STUB_DOLI_DIR/${doli_path//\//_}"
-        if [[ "$doli_method" != "GET" ]]; then
+        doli_key="${doli_path%%\?*}"
+        doli_file="$STUB_DOLI_DIR/${doli_key//\//_}"
+        if [[ "$doli_method" == "POST" ]]; then
+            # A create answers with the id of the new record, and every call has
+            # to hand back a different one, because sync-pm.sh posts a project
+            # and then posts tasks against the id it got back.
+            doli_counter="$STUB_DOLI_DIR/.next-id"
+            [[ -r "$doli_counter" ]] || printf '%s' "${STUB_DOLI_NEXT_ID:-100}" > "$doli_counter"
+            doli_body="$(cat "$doli_counter")"
+            printf '%s' "$(( doli_body + 1 ))" > "$doli_counter"
+        elif [[ "$doli_method" != "GET" ]]; then
             # A Dolibarr write answers with the id of the updated record.
             doli_body='2'
         elif [[ -r "$doli_file" ]]; then
             doli_body="$(cat "$doli_file")"
+        else
+            # Dolibarr answers an unknown record and an empty collection alike,
+            # with a 404 object rather than with an empty array.
+            doli_body='{"error":{"code":404,"message":"Not Found"}}'
         fi
     fi
     [[ -n "$doli_body" ]] || doli_body="${STUB_DOLI_BODY:-}"

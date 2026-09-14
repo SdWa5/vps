@@ -31,6 +31,7 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt koalaman/shellcheck:stable -x \
     hardening/firewall/sdwa5-firewall.sh \
     tools/dolibarr/doli.sh \
     tools/dolibarr/set-address.sh \
+    tools/dolibarr/sync-pm.sh \
     tools/shopware/set-address.sh \
     tests/run.sh \
     tests/test_helper.bash \

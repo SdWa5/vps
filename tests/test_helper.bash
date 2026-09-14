@@ -203,6 +203,61 @@ doli_put_count() {
     grep -c '^PUT ' "$STUB_DOLI_LOG" || true
 }
 
+# tools/dolibarr/sync-pm.sh against the faked ERP. The ERP starts with the two
+# projects the real one has and no tasks at all, which is the state measured on
+# 2026-09-14, and the spec is a file under the test's own tmpdir.
+doli_pm_setup() {
+    doli_setup
+    export STUB_DOLI_DIR="$BATS_TEST_TMPDIR/doli"
+    export STUB_DOLI_LOG="$BATS_TEST_TMPDIR/doli.log"
+    mkdir -p "$STUB_DOLI_DIR"
+    : > "$STUB_DOLI_LOG"
+
+    export DOLIBARR_PM_SPEC="$BATS_TEST_TMPDIR/pm-spec.json"
+
+    doli_pm_projects "$(jq -n '[
+        {id:"3",title:"Inventur",description:"Inventur",date_start:1759104000,date_end:"",
+         public:"0",statut:"1",usage_task:1},
+        {id:"4",title:"Buero",description:"Buero",date_start:1759104000,date_end:"",
+         public:"0",statut:"1",usage_task:1}
+    ]')"
+    doli_pm_tasks '[]'
+
+    # The new project comes first, so the id the stub hands back for its create
+    # is the first one it hands out and a test can name it.
+    doli_pm_spec "$(jq -n '{projects:[
+        {title:"Krampustek", description:"Next event", date_start:"2026-09-19",
+         date_end:"2026-09-19", public:0,
+         tasks:[{label:"Rendering", date_end:"2026-09-19"}]},
+        {title:"Inventur", tasks:[{label:"Eurokisten kaufen"}]}
+    ]}')"
+}
+
+# The project list the faked ERP answers with. One fixture serves every query
+# string, because the stub drops it from the fixture name.
+doli_pm_projects() {
+    doli_fixture projects "$1"
+}
+
+# Every task in the faked ERP, as one list. The script reads the global task
+# endpoint rather than projects/{id}/tasks, because that one hides the tasks of
+# a project the API user is not a contact on.
+doli_pm_tasks() {
+    doli_fixture tasks "$1"
+}
+
+doli_pm_spec() {
+    printf '%s' "$1" > "$DOLIBARR_PM_SPEC"
+}
+
+doli_sync_pm() {
+    run "$REPO_ROOT/tools/dolibarr/sync-pm.sh" "$@"
+}
+
+doli_post_count() {
+    grep -c '^POST ' "$STUB_DOLI_LOG" || true
+}
+
 # tools/shopware/set-address.sh against the faked admin API. Fixtures carry the
 # old address, so the default run is the one that has work to do.
 sw_setup() {

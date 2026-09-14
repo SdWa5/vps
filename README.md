@@ -81,6 +81,9 @@ systemctl reload caddy
 
 # Read the Dolibarr ERP from a workstation (see docs/dolibarr.md)
 tools/dolibarr/doli.sh status
+
+# Show what the project/task backlog would change in the ERP (--apply writes)
+tools/dolibarr/sync-pm.sh
 ```
 
 ## Monitoring

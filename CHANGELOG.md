@@ -6,6 +6,57 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.38.0] - 2026-09-15
+
+### Added
+
+- **`tools/dolibarr/sync-pm.sh`, a write path for the ERP's projects and tasks.** The organisation's
+  operational backlog was captured in Google Tasks and had no home. It now lives in the Dolibarr
+  Projects module, and the repositories' `TODO.md` files stay technical. The script reads a JSON
+  spec and makes the ERP match it: dry-run by default, `--apply` writes, a human starts it, the same
+  split `tools/dolibarr/set-address.sh` uses. Measured against the live instance on 2026-09-14, the
+  ERP held five projects and **zero** tasks, so nothing existed to collide with.
+- **The spec is `tools/dolibarr/pm-spec.json` and is gitignored**, with
+  `tools/dolibarr/pm-spec.example.json` as the committed shape. The real backlog names people and
+  links private documents, and all three repositories are going public. This is the same reason the
+  API key is not in `.env.example`.
+- **23 tasks across five projects and two new projects**, Krampustek and BGTek. Applied to the live
+  instance on 2026-09-15: seven projects, all open with `usage_task` 1, and 23 tasks. A run against
+  that state reports `0 to create, 0 to update, 28 already current`.
+- `tests/dolibarr-sync-pm.bats`, 28 cases, including the idempotency claim: a second run over an ERP
+  that already matches writes nothing.
+
+### Changed
+
+- **`tests/stubs/curl` answers a Dolibarr `POST` with a fresh id per call** instead of a fixed `2`,
+  because `sync-pm.sh` creates a project and then posts tasks against the id it got back. It also
+  drops the query string when it looks a fixture up, so one `projects` fixture answers
+  `projects?limit=500`, and it answers a GET with no fixture with a 404 object, which is what
+  Dolibarr does for an unknown record and an empty collection alike.
+
+### Fixed
+
+- **Six facts about the Dolibarr REST API that the script had to be built around**, read off the
+  23.0 source and confirmed against the live instance. Three of them were found by the first apply,
+  whose second run reported four records to create and one to update instead of nothing, and all six
+  are written up in `docs/dolibarr.md`.
+  - `ref: "auto"` is **not** optional on a create, because `Task::create()` writes a null ref for an
+    empty value.
+  - **`GET /projects/{id}/tasks` hides the tasks of a project the API user is not a contact on**,
+    even for an admin key, and a project created over this API has no contacts, because the contact
+    endpoint exposes `DELETE` and no `POST`. Measured: project 6 held one task, the global list saw
+    it, the per-project endpoint returned `[]`, and neither validating the project nor switching
+    `usage_task` on changed that. The script reads the global task list and filters by `fk_project`.
+    Assigning a project leader stays a UI step.
+  - **A project created over the API is a draft with `usage_task` 0**, where every project made in
+    the UI is open with tasks enabled. The script sets `usage_task` on create and validates, which
+    needs `{"notrigger": 0}` or answers 400.
+  - A list endpoint answers an empty collection with a 404 object rather than with an empty array.
+  - Numbers come back as strings and an unset number comes back as `null`, so a naive comparison
+    would rewrite `progress` on every run.
+  - **Dolibarr HTML-escapes what it stores**, so `Allen & Heath` reads back as `Allen &amp; Heath`
+    and that one task was rewritten on every run until both sides were decoded.
+
 ## [1.37.0] - 2026-09-14
 
 ### Changed

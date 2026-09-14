@@ -33,6 +33,13 @@
     2. **the write path exists now for person records**, see
        [tools/dolibarr/set-address.sh](tools/dolibarr/set-address.sh). setup values stay a ui job,
        because `/setup/company` is `GET` only, measured against the live instance on 2026-09-14
+    3. **the projects and tasks write path exists too**, see
+       [tools/dolibarr/sync-pm.sh](tools/dolibarr/sync-pm.sh) and
+       [docs/dolibarr.md](docs/dolibarr.md#projects-and-tasks). the backlog is a gitignored json
+       spec, because the real one names people and links private documents. the script creates and
+       updates and never deletes, so closing a task stays a ui job. what is still missing on this
+       side is a read back out, meaning nothing tells anyone that a task got closed in the ui
+       (ca. 1 Stunde)
 3. [docs/shopware/TODO.md](docs/shopware/TODO.md)
 4. maybe add nextcloud (docker-compose.yml)
 5. [docs/minecraft.md](docs/minecraft.md)

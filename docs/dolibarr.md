@@ -97,6 +97,69 @@ the address from the member to the user it is linked to. The script still visits
 link is a property of those two records rather than a guarantee, and a visit to an already-current
 record costs one GET and reports a skip.
 
+## Projects and tasks
+
+The organisation's operational backlog lives in the Projects module rather than in the repositories'
+`TODO.md` files, which stay technical. [`tools/dolibarr/sync-pm.sh`](../tools/dolibarr/sync-pm.sh)
+rolls it in from a JSON spec.
+
+```bash
+tools/dolibarr/sync-pm.sh            # what would change
+tools/dolibarr/sync-pm.sh --apply    # write it
+```
+
+Dry-run by default and a human starts it, because a write against the live ERP is a production
+mutation. That is the same split [`set-address.sh`](../tools/dolibarr/set-address.sh) uses.
+
+**The spec is `tools/dolibarr/pm-spec.json` and it is gitignored.** The real backlog names people and
+links private documents, and these repositories are going public.
+[`pm-spec.example.json`](../tools/dolibarr/pm-spec.example.json) is the committed shape, and
+`DOLIBARR_PM_SPEC` points the script at a different file.
+
+How it matches and what it writes:
+
+- A **project** is matched by its exact `title`, a **task** by its exact `label` within its project.
+  Renaming either in the spec creates a second record rather than renaming the first.
+- Only the fields an entry names are written. A value set by hand in the UI survives unless the spec
+  names that field, so an entry can carry nothing but a title and a task list.
+- **Nothing is ever deleted**, and a project the spec does not name is never read or written.
+  Dropping an item from the spec leaves the ERP alone, and closing a task stays a UI job.
+- A title that differs from an existing one only in case aborts the run. The API offers no way to
+  undo the duplicate project it would otherwise create.
+
+### What the API does that the script had to be built around
+
+Read off the Dolibarr 23.0 source and confirmed against the live instance on 2026-09-14 and
+2026-09-15. Every one of these was found by a run that was not idempotent.
+
+- `POST /projects` requires `ref` and `title`, `POST /tasks` requires `ref`, `label` and
+  `fk_project`. **`ref: "auto"`** makes Dolibarr run its numbering module; `Task::create()` writes a
+  null ref for an empty value, so `"auto"` is not optional. A `PUT` validates nothing and takes a
+  partial payload.
+- **`GET /projects/{id}/tasks` answers an empty list for a project the API user is not a contact
+  on**, even for an admin key, and **a project created over this API has no contacts**, because
+  `/projects/{id}/contact/{contactid}/{type}` exposes `DELETE` and no `POST`. Measured on
+  2026-09-15: project 6 held one task, `GET /tasks` saw it, `GET /projects/6/tasks` returned `[]`,
+  and neither validating the project nor switching `usage_task` on changed that. The script
+  therefore reads the **global** task list once and filters it by `fk_project`. Assigning a project
+  leader remains a UI step, the same class of gap as `/setup/company` being `GET` only.
+- **A project created over the API is a draft** (`statut` 0) with `usage_task` 0, where every
+  project made in the UI is open with tasks enabled. The script sets `usage_task` on create and
+  calls `POST /projects/{id}/validate`, which needs `{"notrigger": 0}` in the body or answers 400
+  and names the field.
+- A **list endpoint answers an empty collection with a 404 object**, not with an empty array, so
+  "no tasks yet" arrives looking like a failure.
+- Dolibarr hands numbers back as strings and an unset number back as `null`. Numbers are therefore
+  compared numerically and an unset one counts as zero, which is what makes a second run a no-op.
+- **Dolibarr HTML-escapes what it stores**, so `Allen & Heath` reads back as `Allen &amp; Heath`.
+  Both sides are decoded before they are compared, or a description holding an ampersand would be
+  rewritten on every run.
+
+Dates are written as `YYYY-MM-DD` in the spec and stored as epoch seconds.
+
+Measured on 2026-09-15 after the first apply: seven projects, all open with `usage_task` 1, and 23
+tasks. A run against that state reports `0 to create, 0 to update, 28 already current`.
+
 ## Operations
 
 ```bash

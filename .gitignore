@@ -82,3 +82,8 @@ docker/
 
 # Backup of original compose before credential extraction
 docker-compose.bak.yml
+
+# The real PM backlog names people and links private documents, and these
+# repositories are going public. tools/dolibarr/pm-spec.example.json is the
+# committed shape.
+tools/dolibarr/pm-spec.json

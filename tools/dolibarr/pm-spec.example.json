@@ -1,0 +1,39 @@
+{
+  "_comment": [
+    "The backlog tools/dolibarr/sync-pm.sh rolls into the ERP. Copy this file to",
+    "pm-spec.json, which is gitignored because the real backlog names people and",
+    "links private documents, and these repositories are going public.",
+    "",
+    "A project is matched by its exact title and a task by its exact label, so",
+    "renaming either creates a second record rather than renaming the first one.",
+    "Only the fields an entry names are written; everything else on the record is",
+    "left as the UI has it. Dates are YYYY-MM-DD. Nothing is ever deleted."
+  ],
+  "projects": [
+    {
+      "title": "An existing project",
+      "tasks": [
+        { "label": "A task that only needs a label" },
+        {
+          "label": "A task with a deadline",
+          "description": "What has to happen, and what it depends on.",
+          "date_end": "2026-12-31"
+        }
+      ]
+    },
+    {
+      "title": "A project that does not exist yet",
+      "description": "What this project is for.",
+      "date_start": "2026-01-01",
+      "date_end": "2026-01-02",
+      "public": 0,
+      "tasks": [
+        {
+          "label": "A task that has started",
+          "description": "Progress is a percentage.",
+          "progress": 50
+        }
+      ]
+    }
+  ]
+}

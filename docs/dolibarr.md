@@ -64,6 +64,30 @@ Writing is out of scope on purpose. A write against the live ERP is a production
 belongs in its own idempotent script that a human starts, which is the split the Shopware work
 uses as well. The organisation address under Home → Setup → Company/Organization is set in the UI.
 
+## Changing the postal address
+
+Three person records carry it and all three are writable over the REST API. The organisation's own
+record is **not**: `/setup/company` exposes `GET` only, read off the live instance's
+`explorer/swagger.json` on 2026-09-14, so that one is a UI step under Home, Setup,
+Company/Organization.
+
+[`tools/dolibarr/set-address.sh`](../tools/dolibarr/set-address.sh) rolls the change through the
+three writable ones. Dry-run by default, `--apply` writes, and a human starts it because a write
+against the live ERP is a production mutation.
+
+```bash
+tools/dolibarr/set-address.sh            # what would change
+tools/dolibarr/set-address.sh --apply    # write it
+```
+
+Record ids are pinned **and** the surname on the record is verified before anything is written. A
+pinned id alone would silently rewrite whoever sits at that id after a merge or a re-import, and a
+name lookup alone could match the wrong person. A mismatch aborts the run.
+
+The Example Supplies record needed only its **town** corrected, from `Elsenwang` to `Hof bei Salzburg`.
+Elsenwang is a hamlet inside that municipality and not a postal town, and this record is where the
+wrong town entered the documentation in the first place.
+
 ## Operations
 
 ```bash

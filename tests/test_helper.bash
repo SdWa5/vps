@@ -182,6 +182,19 @@ doli_address_setup() {
     mkdir -p "$STUB_DOLI_DIR"
     : > "$STUB_DOLI_LOG"
 
+    # **THE REAL RECORD LIST IS GITIGNORED BECAUSE IT NAMES PEOPLE**, so the tests
+    # bring their own. These placeholders exercise the same three shapes: two
+    # person records that need street, postcode and town, and one that needs its
+    # town alone.
+    export DOLIBARR_ADDRESS_RECORDS="$BATS_TEST_TMPDIR/address-records.json"
+    cat > "$DOLIBARR_ADDRESS_RECORDS" <<'RECORDS'
+[
+  { "endpoint": "members",      "id": "2",  "expect": "Example",          "label": "member Ada Example" },
+  { "endpoint": "users",        "id": "2",  "expect": "Example",          "label": "user Ada Example" },
+  { "endpoint": "thirdparties", "id": "10", "expect": "Example Supplies", "label": "thirdparty Example Supplies", "town_only": 1 }
+]
+RECORDS
+
     doli_fixture members_2 "$(jq -n '{id:"2",lastname:"Example",firstname:"Ada",address:"Mühlenstraße 24",zip:"5121",town:"Ostermiething"}')"
     doli_fixture users_2   "$(jq -n '{id:"2",lastname:"Example",firstname:"Ada",address:"Mühlenstraße 24",zip:"5121",town:"Ostermiething"}')"
     doli_fixture thirdparties_10 "$(jq -n '{id:"10",name:"Example Supplies",address:"Egitlweg 6",zip:"5322",town:"Elsenwang"}')"

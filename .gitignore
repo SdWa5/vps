@@ -87,3 +87,8 @@ docker-compose.bak.yml
 # repositories are going public. tools/dolibarr/pm-spec.example.json is the
 # committed shape.
 tools/dolibarr/pm-spec.json
+
+# The address rollout pins each ERP id to the surname that id must carry, and a
+# surname is personal data. tools/dolibarr/address-records.example.json is the
+# committed shape.
+tools/dolibarr/address-records.json

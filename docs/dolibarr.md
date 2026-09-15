@@ -84,9 +84,10 @@ Record ids are pinned **and** the surname on the record is verified before anyth
 pinned id alone would silently rewrite whoever sits at that id after a merge or a re-import, and a
 name lookup alone could match the wrong person. A mismatch aborts the run.
 
-The Example Supplies record needed only its **town** corrected, from `Elsenwang` to `Hof bei Salzburg`.
-Elsenwang is a hamlet inside that municipality and not a postal town, and this record is where the
-wrong town entered the documentation in the first place.
+One record needed only its **town** corrected, from `Elsenwang` to `Hof bei Salzburg`. Elsenwang is a
+hamlet inside that municipality and not a postal town, and this record is where the wrong town entered
+the documentation in the first place. Which record it is stands in the gitignored
+`tools/dolibarr/address-records.json` rather than here, because it is a person.
 
 The organisation's own record was set in the UI on 2026-09-14 and carries the new address, so a
 dry run of the script now reports nothing to change anywhere.

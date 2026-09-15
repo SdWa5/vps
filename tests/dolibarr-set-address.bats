@@ -63,8 +63,8 @@ setup() {
     [[ "$output" != *"Ostermiething"* ]]
 }
 
-# Example Supplies's street and postcode were already right. Rewriting them would be
-# noise, and a wrong street in the payload would be a real defect.
+# The thirdparty's street and postcode were already right. Rewriting them would
+# be noise, and a wrong street in the payload would be a real defect.
 @test "the thirdparty gets only its town corrected" {
     doli_set_address --apply
     run doli_requests
@@ -96,12 +96,20 @@ setup() {
 # A pinned id alone would rewrite whoever sits at that id after a merge or a
 # re-import. This is the guard that stops it.
 @test "an id holding a different person is refused instead of rewritten" {
-    doli_fixture members_2 "$(jq -n '{id:"2",lastname:"Member A",address:"Irgendwo 1",zip:"1010",town:"Wien"}')"
+    doli_fixture members_2 "$(jq -n '{id:"2",lastname:"Somebody",address:"Irgendwo 1",zip:"1010",town:"Wien"}')"
     doli_set_address --apply
     [ "$status" -eq 1 ]
     [[ "$output" == *"Refusing to write"* ]]
-    [[ "$output" == *"Member A"* ]]
+    [[ "$output" == *"Somebody"* ]]
     [ "$(doli_put_count)" -eq 0 ]
+}
+
+@test "a missing record list explains itself" {
+    export DOLIBARR_ADDRESS_RECORDS="$BATS_TEST_TMPDIR/does-not-exist.json"
+    doli_set_address
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"no record list at"* ]]
+    [[ "$output" == *"address-records.example.json"* ]]
 }
 
 @test "a missing record fails loudly" {

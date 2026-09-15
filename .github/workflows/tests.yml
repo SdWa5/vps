@@ -2,8 +2,11 @@ name: Tests
 
 on:
   push:
-  pull_request:
   workflow_dispatch:
+  # **NO `pull_request` TRIGGER, WHICH MATTERS ONCE THIS REPOSITORY IS PUBLIC.** A public repository
+  # lets anyone open a pull request, and this workflow runs `tests/run.sh`, which starts containers
+  # with the repository bind-mounted. That would be a stranger's code executing on a runner. The same
+  # rule holds in sdwa5-3d.
 
 permissions:
   contents: read
@@ -48,9 +51,13 @@ jobs:
   # by a GitHub Organization, and moving these repositories into an `sdwa5`
   # organization is the plan. The CLI itself is MIT and needs no key.
   #
-  # This repository is the reason the check exists. Two real secrets were
-  # committed in c516d41 and only found on 2026-09-08, by which time they had
-  # been in the history for weeks. See docs/minecraft.md.
+  # This repository is the reason the check exists. Two real secrets were committed with the Minecraft
+  # data directory and only found on 2026-09-08, by which time they had been in the history for weeks.
+  # They were removed from the history on 2026-09-15. See docs/minecraft.md.
+  #
+  # **NO COMMIT HASH IS QUOTED HERE ON PURPOSE.** Every rewrite of this history invalidates one, and
+  # this repository has had four. The commit is findable with
+  # `git log --all --diff-filter=A -- minecraft-data/`.
   secrets:
     runs-on: ubuntu-latest
     timeout-minutes: 15

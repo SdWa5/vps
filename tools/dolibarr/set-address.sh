@@ -19,7 +19,10 @@
 #   tools/dolibarr/set-address.sh --apply    write it
 #   tools/dolibarr/set-address.sh --help
 #
-# Environment: the same DOLIBARR_URL and DOLIBARR_TOKEN_FILE that doli.sh reads.
+# Environment: the same DOLIBARR_URL and DOLIBARR_TOKEN_FILE that doli.sh reads,
+#   plus DOLIBARR_ADDRESS_RECORDS, the record list, default
+#   tools/dolibarr/address-records.json. It is gitignored because it names
+#   people; address-records.example.json is the committed shape.
 
 set -uo pipefail
 
@@ -27,6 +30,8 @@ DOLIBARR_URL="${DOLIBARR_URL:-https://erp.sdwa5.org}"
 DOLIBARR_TOKEN_FILE="${DOLIBARR_TOKEN_FILE:-$HOME/.config/sdwa5-dolibarr-token}"
 DOLI_CURL_TIMEOUT="${DOLI_CURL_TIMEOUT:-30}"
 API_ROOT="$DOLIBARR_URL/api/index.php"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DOLIBARR_ADDRESS_RECORDS="${DOLIBARR_ADDRESS_RECORDS:-$SCRIPT_DIR/address-records.json}"
 
 NEW_ADDRESS="Egitlweg 6"
 NEW_ZIP="5322"
@@ -34,7 +39,7 @@ NEW_TOWN="Hof bei Salzburg"
 
 APPLY=0
 
-usage() { sed -n '3,23p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '3,26p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
 die() { printf 'set-address.sh: %s\n' "$*" >&2; exit 1; }
 
 case "${1:-}" in
@@ -123,13 +128,24 @@ printf 'Dolibarr at %s\n' "$DOLIBARR_URL"
 (( APPLY )) || printf 'Dry run. Nothing is written. Pass --apply to write.\n'
 printf '\n'
 
-update_record "members"      "2"  "Example" "member Ada Example"
-update_record "users"        "2"  "Example" "user Ada Example"
-# Example Supplies's street and postcode were already right; only the town was wrong,
-# and that wrong town is where "Elsenwang" entered the documentation in the
-# first place. Elsenwang is a hamlet inside the municipality of Hof bei
-# Salzburg, so it is not a postal town.
-update_record "thirdparties" "10" "Example Supplies"   "thirdparty Example Supplies" 1
+# **WHICH RECORDS THESE ARE IS NOT COMMITTED.** The list pins an ERP id to the
+# surname that id must carry, and a surname is personal data in a repository that
+# is going public. It therefore lives beside the script and is gitignored, the
+# same split sync-pm.sh uses for pm-spec.json.
+#
+# One entry carries `town_only`. That record's street and postcode were already
+# right and only its town was wrong, which is also where "Elsenwang" entered the
+# documentation. Elsenwang is a hamlet inside the municipality of Hof bei
+# Salzburg, so it is not a postal town. Rewriting a street that is already
+# correct would be noise, and a wrong street in the payload would be a defect.
+[[ -r "$DOLIBARR_ADDRESS_RECORDS" ]] \
+    || die "no record list at $DOLIBARR_ADDRESS_RECORDS. Copy address-records.example.json and fill it in."
+
+while IFS=$'\t' read -r endpoint id expect label town_only; do
+    [[ -n "$endpoint" ]] || continue
+    update_record "$endpoint" "$id" "$expect" "$label" "${town_only:-0}"
+done < <(jq -r '.[] | [.endpoint, .id, .expect, .label, (.town_only // 0)] | @tsv' \
+             "$DOLIBARR_ADDRESS_RECORDS")
 
 printf '\n%d to change, %d already current.\n' "$CHANGED" "$SKIPPED"
 printf '\nThe organisation record is not part of this. /setup/company is GET only,\n'

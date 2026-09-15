@@ -138,4 +138,6 @@ Attribute as "Musikverein Schmeiß die Wand an 5 (SdWa5)" with a link to the rep
 derivative of the documentation stays under the same licence. The code carries no such condition.
 
 **Not ours to license**: `shopware-html-data/`, which is store-installed Shopware plugin content
-tracked because those plugins are not managed through composer. Each carries its own vendor's terms.
+tracked because those plugins are not managed through composer, and `minecraft-data/`, which is server
+and mod configuration produced by the image and its mods, including 27 LuckPerms translation files.
+Each carries its own vendor's terms.

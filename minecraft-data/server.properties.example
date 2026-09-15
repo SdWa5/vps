@@ -12,7 +12,9 @@
 #                              management-server-enabled is false and
 #                              management-server-port is 0.
 #
-# Both were committed once, in c516d41, and both were rotated on 2026-09-08.
+# Both were committed once, with the Minecraft data directory, both were rotated
+# on 2026-09-08, and that commit's copy of this file was removed from the
+# history on 2026-09-15.
 # rcon.port is not published to the host, so RCON is reachable only from inside
 # the container network even when enable-rcon is true.
 #

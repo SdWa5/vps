@@ -47,7 +47,7 @@
        this functionality, but it had a bug; that should be fixed by now)
     2. 35 of the 63 tracked files under `minecraft-data/config/` are luckperms translation files,
        downloaded artifacts in 27 languages rather than configuration. every file under
-       `minecraft-data/` arrived in one commit, `c516d41`, and none has been edited since, so nothing
+       `minecraft-data/` arrived in one commit and none has been edited since, so nothing
        there is hand-maintained. untracking the translations is cleanup with no security value, and it
        makes the next `git pull` on the host delete them, so it is not free (ca. 15 Minuten)
     3. `ops.json` and `whitelist.json` are tracked and hold **five** distinct Minecraft usernames with

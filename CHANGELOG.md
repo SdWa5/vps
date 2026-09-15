@@ -6,6 +6,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.39.0] - 2026-09-15
+
+### Security
+
+- **The ERP address rollout named real people in the repository, and the audit of 2026-09-15 found
+  it.** `tools/dolibarr/set-address.sh` pinned three ERP ids to the surnames those ids must carry,
+  and the tests carried the same names as fixtures. The guard is worth keeping, because a pinned id
+  alone would rewrite whoever sits at that id after a re-import, but a surname is personal data in a
+  repository that is going public. The record list now lives in a gitignored
+  `tools/dolibarr/address-records.json`, with `address-records.example.json` as the committed shape.
+  That is the split `sync-pm.sh` already uses for `pm-spec.json`, and `.gitignore` gives the same
+  reason. The tests bring their own list with placeholder names, so they exercise all three record
+  shapes unchanged.
+- **The changelog and `docs/dolibarr.md` retold the ERP member list by name.** Five further people
+  were named, three of them deactivated former members, one an external third party, together with
+  that third party's own postal address. None of them holds an office and nothing in
+  `docs/going-public.md` ever covered them. All are replaced by roles and record ids.
+- **`.gitleaks.toml` scopes the plugin-manifest allowlist to the rule instead of to the path.** A
+  bare `paths` entry stops gitleaks reading the file at all, which would blind the scan to a secret
+  arriving there later; the file argued that itself and then did it anyway. Measured on 2026-09-15
+  with a planted key: without any allowlist the manifest yields eleven findings, with the new
+  rule-scoped one it still yields the planted key and loses only the ten digests.
+- **The commit allowlist is gone**, because `minecraft-data/server.properties` is being removed from
+  the entire history in the same pass. There is nothing left to exempt and no commit hash to keep in
+  step with the next rewrite.
+- **`pull_request` is no longer a trigger.** A public repository lets anyone open a pull request, and
+  this workflow runs `tests/run.sh`, which starts containers with the repository bind-mounted. That
+  would be a stranger's code executing on a runner. `sdwa5-3d` already holds the same rule.
+
+### Fixed
+
+- **`minecraft-data/` fell under neither licence clause**, although it is 64 tracked files and holds
+  1.5 MB of LuckPerms translations produced by third parties. `README.md` now names it alongside
+  `shopware-html-data/` as not ours to license.
+- **Six places quoted a commit hash that no longer exists.** `c516d41` was invalidated by the rewrite
+  of 2026-09-08 and the text was never updated, so `.gitleaks.toml` said so itself while the other
+  five kept the dead reference. All six now describe the commit instead, because every rewrite
+  invalidates a hash and this history has had four.
+
 ## [1.38.0] - 2026-09-15
 
 ### Added
@@ -110,13 +149,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   reports 3 records already current and `tools/shopware/set-address.sh` reports 8, which is the
   idempotence the two were built for. The organisation record in Dolibarr was set in the UI, the one
   step neither script can take because `/setup/company` is `GET` only.
-- The two ERP records still holding an Ostermiething address are **a third party** and its
-  contact, both at its own address. That is a third party's own address and correctly untouched.
+- Two ERP records still hold an Ostermiething address. They are a third party and its contact, and
+  that is the third party's own address rather than ours, so both are correctly untouched. Which
+  records they are is in the ERP rather than here.
 
 ### Fixed
 
 - `TODO.md` item 2.3, the two spellings of one surname, is resolved and deleted. Member 7 and user 4
-  now both read `one spelling` and are linked, `user_id` 4 and `fk_member` 7.
+  now read the same spelling and are linked, `user_id` 4 and `fk_member` 7.
 
 ## [1.36.1] - 2026-09-14
 
@@ -133,14 +173,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 
-- `TODO.md` item 2.3 claimed the ERP member list disagreed with the Vereinsregister because a former member
-  Member A was still listed. **That was wrong.** Three of the seven members carry `statut=0`,
-  Member B, Member A and Member C, so they are deactivated former members and the list is
-  correct. Four members are active. The item is removed.
-- `TODO.md` item 2.5 asked whether Example Supplies should be a member rather than a thirdparty. He is a
+- `TODO.md` item 2.3 claimed the ERP member list disagreed with the Vereinsregister because a former
+  member was still listed. **That was wrong.** Three of the seven members carry `statut=0`, so they
+  are deactivated former members and the list is correct. Four members are active. The item is
+  removed.
+- `TODO.md` item 2.5 asked whether one record should be a member rather than a thirdparty. It is a
   thirdparty on purpose, so the item is removed.
-- The remaining name item now names the correct spelling, `one spelling`, and the one record that is
-  wrong, user id 4.
+- The remaining name item now names the record that is wrong, user id 4, rather than the spelling
+  itself.
 
 ### Added
 
@@ -175,9 +215,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - **`/setup/company` exposes `GET` only**, read off the live instance's `explorer/swagger.json` on
   2026-09-14. The organisation's own address is therefore a UI step under Home, Setup,
   Company/Organization, and the script says so instead of pretending to cover it.
-- The Example Supplies record needed only its **town** corrected, from `Elsenwang` to `Hof bei Salzburg`.
-  That record is where the wrong town entered the documentation in the first place. Elsenwang is a
-  hamlet inside the municipality of Hof bei Salzburg and not a postal town.
+- One record needed only its **town** corrected, from `Elsenwang` to `Hof bei Salzburg`. That record
+  is where the wrong town entered the documentation in the first place. Elsenwang is a hamlet inside
+  the municipality of Hof bei Salzburg and not a postal town.
 - Nothing has been written to the ERP yet. The dry run reports 3 records to change.
 
 ## [1.35.0] - 2026-09-14
@@ -930,8 +970,8 @@ From the 2026-09-13 audit of all three repositories. The root repository's
 ### Security
 
 - **`minecraft-data/server.properties` was tracked and held two live secrets**, a 24-character
-  `rcon.password` and a 40-character `management-server-secret`, committed in `c516d41` and found on
-  2026-09-08 while checking what going public would publish. Both were rotated on the host and the
+  `rcon.password` and a 40-character `management-server-secret`, committed with the Minecraft data
+  directory and found on 2026-09-08 while checking what going public would publish. Both were rotated on the host and the
   file is no longer tracked. A public repository publishes every past commit at once, so a scrubbed
   `HEAD` would not have helped, and rotation is the fix rather than a history rewrite.
 - Neither secret was ever reachable from outside. `rcon.port` is `25575` and is not published to the
@@ -955,10 +995,10 @@ From the 2026-09-13 audit of all three repositories. The root repository's
   local run are the same thing. The `secrets` job scans the working tree and the full history with
   gitleaks.
 - `.gitleaks.toml`. It allowlists Shopware plugin `checksum.json` files, whose values are hex digests
-  that a high-entropy rule reads as ten secrets, and it allowlists commit `c516d41`, which was
-  reviewed in full and remediated. The commit is allowlisted rather than the path, because a `paths`
-  entry stops gitleaks reading the file at all and would blind the working-tree scan to anything
-  arriving there later.
+  that a high-entropy rule reads as ten secrets, and it allowlists the one commit that was reviewed in
+  full and remediated. The commit is allowlisted rather than the path, because a `paths` entry stops
+  gitleaks reading the file at all and would blind the working-tree scan to anything arriving there
+  later.
 - `minecraft-data/server.properties.example` carries every key with the two secrets blanked, so the
   server's actual settings stay documented now that the real file is untracked.
 - `docker-compose.projects.yml` gained its own `x-logging` anchor and a `logging:` on all four

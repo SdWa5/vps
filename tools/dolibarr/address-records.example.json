@@ -1,0 +1,21 @@
+[
+  {
+    "endpoint": "members",
+    "id": "2",
+    "expect": "Example",
+    "label": "member Ada Example"
+  },
+  {
+    "endpoint": "users",
+    "id": "2",
+    "expect": "Example",
+    "label": "user Ada Example"
+  },
+  {
+    "endpoint": "thirdparties",
+    "id": "10",
+    "expect": "Example Supplies",
+    "label": "thirdparty Example Supplies",
+    "town_only": 1
+  }
+]

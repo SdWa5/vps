@@ -80,8 +80,8 @@ Server config is tracked in the repo: `eula.txt`, `ops.json`, `whitelist.json`,
 `banned-players.json`, `banned-ips.json`, and `config/` (mod configs). `config/Discord-Integration.toml`
 stays gitignored — it holds the Discord bot token.
 
-**`server.properties` is not tracked, and it never should have been.** It was committed once, in
-`c516d41`, and it carries two machine-generated secrets. `rcon.password` is regenerated on every
+**`server.properties` is not tracked, and it never should have been.** It was committed once, with
+the Minecraft data directory, and it carries two machine-generated secrets. `rcon.password` is regenerated on every
 container start, because the image's `scripts/start-configuration` runs `openssl rand -hex 12`
 whenever `RCON_PASSWORD` is unset and it is unset in
 [docker-compose.yml](../docker-compose.yml) — the committed value was 24 lowercase hex characters,

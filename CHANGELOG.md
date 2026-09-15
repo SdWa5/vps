@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.39.2] - 2026-09-15
+
+### Security
+
+- **The history was rewritten, and this repository carried the most of it.** `minecraft-data/server.properties`
+  is gone from every commit, so the two machine-generated secrets it held are no longer published by
+  publication. Six people's names are gone from ten commits and two commit messages, the board
+  member's from the ERP rollout and five more from the changelog's retelling of the member list, and
+  a third party's postal address with them. The authorship trailers went in the same pass.
+- **The content is provably untouched.** 147 commits before and after, and the tree at `HEAD` is
+  `2f562d25` before and after, so only commit objects changed. The working tree had been corrected in
+  1.39.0 and 1.39.1 first, precisely so this invariant could hold while content left the history.
+- **Republished rather than force-pushed**, which leaves no pre-rewrite objects in GitHub's cache.
+  Verified: every probe term returns zero over every blob and every message, the removed path appears
+  in no commit, a pre-rewrite SHA answers `not our ref` against a control fetch that succeeds, and the
+  suite is 184 tests green with shellcheck clean.
+
 ## [1.39.1] - 2026-09-15
 
 ### Changed

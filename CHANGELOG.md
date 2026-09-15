@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.41.0] - 2026-09-15
+
+### Added
+
+- **A tenth health check asks whether the checkout can still reach its remote.** `git_remote` runs
+  `git ls-remote` against `/opt/docker`'s origin and warns when it fails. It is the check that would
+  have caught the deploy-key breakage of 1.40.0, which ran unnoticed for three republish cycles
+  because none of the nine existing checks asked. One call covers a destroyed or revoked key, a moved
+  remote and a host that cannot reach the forge.
+- **The cadence is asymmetric, and that is the substance rather than a detail.** A success is stamped
+  and the remote is not asked again for `GIT_REMOTE_MAX_AGE_HOURS` (26), because the call is an
+  authenticated round trip watching a fact that holds for months, and hourly would be 24 calls a day
+  for nothing. A failure is **not** stamped, so while it is broken the call repeats every run and a
+  recovery shows up within the hour instead of a day later. Six tests cover exactly that asymmetry,
+  counting the calls rather than reading the status.
+- `GIT_CHECKOUT_DIR` names the checkout and defaults to the compose root, because the two are the same
+  directory only by convention. `.env.example` and `docs/monitoring.md` carry all three new settings.
+
+### Changed
+
+- **A missing `git` or a directory that is not a checkout warns rather than passing.** A checker that
+  cannot see its subject says so, which is the line the firewall check already holds.
+- `TODO.md` loses the item this closes.
+
 ## [1.40.0] - 2026-09-15
 
 ### Security

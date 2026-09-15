@@ -1,17 +1,3 @@
-1. **the health check does not notice when `/opt/docker` can no longer reach its remote** (ca. 30 Minuten)
-
-    nine checks cover disk, containers, backups, shopware tasks, the vaultwarden database copy, http,
-    caddy, the firewall and the vaultwarden version. none of them asks whether a `git fetch` still
-    works. that gap went unnoticed for three republish cycles on 2026-09-15, because a dead deploy key
-    still authenticates and greets with the name of the repository it died with, so nothing looks
-    broken until somebody pulls. see [docs/ssh-hardening.md](docs/ssh-hardening.md).
-
-    the cheap form is a tenth check running `git -C /opt/docker ls-remote origin HEAD` against a
-    short timeout and warning on a non-zero exit. it also catches an expired key, a revoked one and a
-    remote that moved, which is three failure modes for one call. it must not run on every health
-    tick, because that is hourly and would be 24 authenticated calls a day for a fact that changes
-    rarely, so once a day is the right cadence and matches the update job.
-
 1. automatic provisioning and deployment (ca. 16 Stunden)
 
     today only the vaultwarden **image** updates itself, daily, via

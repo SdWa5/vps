@@ -40,9 +40,30 @@ auto-update.
 | `firewall` | the IPv4 `INPUT` policy is not `DROP`, fail2ban's jump is gone, a port in `FIREWALL_PORTS` (22 80 443) is no longer accepted, or **`DOCKER-USER` is missing or back to Docker's empty `-j RETURN`**, which leaves every published container port unfiltered. An open IPv6 policy is a WARN rather than a CRIT |
 | `shopware_tasks` | the newest Shopware scheduled task ran longer than `SHOPWARE_TASK_MAX_AGE_HOURS` (2) ago, the task list cannot be read, or no task has ever run |
 | `vaultwarden_version` | the running version is behind the newest GitHub release **and that release is older than `VAULTWARDEN_DRIFT_GRACE_HOURS` (26)** |
+| `git_remote` | `git ls-remote` against the checkout's origin fails, so `/opt/docker` cannot pull |
 
 A container reporting `starting` is not an alert, that is a normal `start_period`. GitHub being
 unreachable is not an alert either, otherwise the recipient learns to ignore this mail.
+
+### The checkout's reach to its remote, and why it is asked daily
+
+`git_remote` exists because of a failure that ran unnoticed for three cycles. **A deploy key belongs to
+the repository object on the forge, so recreating the repository destroys it**, and the redaction
+passes of 2026-09-12, 2026-09-13 and 2026-09-15 each republished by renaming, creating an empty
+repository under the old name and deleting the rename. After every one of them `/opt/docker` could no
+longer pull, and none of the nine checks asked.
+
+**It does not look broken from the outside**, which is the whole reason a check is needed rather than a
+habit. A destroyed deploy key still authenticates and greets with the name of the repository it died
+with, so only a call that actually fetches says so. One `git ls-remote` covers three failure modes at
+once, namely a destroyed or revoked key, a moved remote, and a host that cannot reach the forge.
+
+**The cadence is asymmetric on purpose.** A success is stamped and the remote is not asked again for
+`GIT_REMOTE_MAX_AGE_HOURS` (26), because this check costs an authenticated round trip and watches a
+fact that holds for months; hourly would be 24 calls a day for nothing. A **failure is not stamped**,
+so while it is broken the call is repeated every run and a recovery shows up within the hour instead
+of a day later. `GIT_CHECKOUT_DIR` names the checkout and defaults to the compose root, because the
+two are the same directory only by convention.
 
 The Shopware task check exists because that failure is silent in a different way. Shopware's scheduled
 tasks stop without any error, and the only symptoms are indirect: a sitemap that stops advancing, a

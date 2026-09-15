@@ -15,7 +15,7 @@ Reverse proxy handling TLS termination for all public-facing services.
 | erp.sdwa5.org             | http://localhost:8002 |                                  |
 | project2.sdwa5.org     | http://localhost:8003 |                                  |
 | project3.sdwa5.org          | http://localhost:8004 |                                  |
-| chimodiazz.sdwa5.org      | (none — static placeholder) | `file_server` over `/opt/docker/chimodiazz-placeholder`; becomes `https://127.0.0.1:8444` once the Shopware instance runs |
+| chimodiazz.sdwa5.org      | https://127.0.0.1:8444 | TLS skip verify, same shape as sdwa5.org |
 
 ## Caddyfile
 
@@ -66,23 +66,16 @@ project3.sdwa5.org {
     reverse_proxy localhost:8004
 }
 
-# chimodiazz.sdwa5.org — placeholder while the Shopware instance is being built.
-# This is the only file_server block here; every other site is a reverse_proxy to
-# a loopback port. The site it fronts does not exist yet: chimodiazz/website held
-# content and docs but no deployable application when this block was added on
-# 2026-09-15. The block exists anyway so Caddy issues the certificate and the
-# subdomain answers, rather than failing the TLS handshake as it did before.
-#
-# Once the Shopware instance runs, replace root/file_server with:
-#     reverse_proxy https://127.0.0.1:8444 {
-#         transport http {
-#             tls_insecure_skip_verify
-#         }
-#     }
-# which mirrors how sdwa5.org reaches its own dockware container.
+# chimodiazz.sdwa5.org — Shopware as a CMS, same shape as sdwa5.org above.
+# Served a static placeholder from chimodiazz-placeholder/ between 2026-09-15 and
+# the first start of the container; that directory is kept, because it is what
+# this block falls back to while the instance is down for maintenance.
 chimodiazz.sdwa5.org {
-    root * /opt/docker/chimodiazz-placeholder
-    file_server
+    reverse_proxy https://127.0.0.1:8444 {
+        transport http {
+            tls_insecure_skip_verify
+        }
+    }
 }
 ```
 

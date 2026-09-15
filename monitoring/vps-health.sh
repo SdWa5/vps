@@ -35,7 +35,7 @@ load_env
 
 DISK_WARN="${DISK_WARN:-85}"
 DISK_CRIT="${DISK_CRIT:-92}"
-EXPECTED_CONTAINERS="${EXPECTED_CONTAINERS:-vaultwarden shopware dolibarr dolibarr_db dolibarr_cron restic}"
+EXPECTED_CONTAINERS="${EXPECTED_CONTAINERS:-vaultwarden shopware chimodiazz_shopware dolibarr dolibarr_db dolibarr_cron restic}"
 HEALTH_URLS="${HEALTH_URLS:-vaultwarden=https://vault.sdwa5.org/alive shopware=https://sdwa5.org/ dolibarr=https://erp.sdwa5.org/ chimodiazz=https://chimodiazz.sdwa5.org/}"
 BACKUP_MAX_AGE_HOURS="${BACKUP_MAX_AGE_HOURS:-26}"
 DB_BACKUP_MAX_AGE_HOURS="${DB_BACKUP_MAX_AGE_HOURS:-26}"

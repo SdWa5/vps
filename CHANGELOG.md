@@ -6,6 +6,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.40.0] - 2026-09-15
+
+### Security
+
+- **The two superseded private keys are off the host.** `/root/.ssh/id_ed25519`, the old
+  account-level key that carried write access to every repository its account could see, and the
+  deploy key that the 2026-09-15 republish cycle killed. Deleted only after checking that neither
+  fingerprint appeared on the account or on any repository, that neither was in an `authorized_keys`,
+  that no cron job or script on the host invokes `ssh`, and that `known_hosts` has only ever held
+  `github.com`.
+- **`docs/ssh-hardening.md` describes the key that is actually in use.** It still named a key and a
+  fingerprint from 2026-09-08 and a deploy key on a personal repository that was deleted on
+  2026-09-12. The host had already rotated on 2026-09-13 and rotated again today.
+
+### Fixed
+
+- **A deploy key belongs to the repository object, and recreating the repository destroys it.** Each
+  redaction pass republished by renaming the repository, creating an empty one under the old name and
+  deleting the rename. The deploy key travels with the renamed repository and dies with it, so after
+  each pass `/opt/docker` could no longer pull. Nothing looked broken, because a dead deploy key still
+  authenticates and greets with the name of the repository it died with. Measured today: `ssh -T`
+  answered `Hi SdWa5/vps-old!` while `git ls-remote` failed with `Repository not found`.
+- **The same public key cannot be re-registered afterwards.** GitHub answers `key is already in use`
+  for a key whose repository is gone, although it then hangs on no repository and on no account, so
+  each pass needs a freshly generated keypair rather than a re-registration. A third keypair was
+  generated on the host, registered read-only, and the checkout was brought onto the rewritten history
+  with `fetch` plus `reset --hard`, never a re-clone, so the 6.9 GB of untracked runtime state stayed.
+  Verified afterwards: `Hi SdWa5/vps!`, `ls-remote` succeeds, `push --dry-run` is refused, all nine
+  health checks green.
+
+### Added
+
+- **`TODO.md` records the monitoring gap this exposed.** Nine checks and not one of them asks whether
+  the checkout can still reach its remote.
+
+### Changed
+
+- **The passphrase question is answered rather than asserted.** An unattended puller cannot answer a
+  prompt, and the two ways round that both put the thing that unlocks the key on the same disk as the
+  key, for the same reader. A passphrase defends a key that travels; this one never leaves the host.
+
 ## [1.39.2] - 2026-09-15
 
 ### Security

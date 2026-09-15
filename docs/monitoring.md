@@ -9,6 +9,7 @@ All live in [`monitoring/`](../monitoring/) and are deployed to `/opt/docker/mon
 | Vaultwarden database copy | `vaultwarden-db-backup.sh` | daily 03:50 | the dump failed or could not be verified |
 | Vaultwarden update | `vaultwarden-autoupdate.sh` | daily 03:00 | an update was applied, an update failed, or the health check stopped running |
 | Shopware worker | `shopware-worker.sh` | every minute, under `flock` | the scheduled tasks or the queue consumer failed, or the container is down |
+| Chimo Diazz worker | `shopware-worker.sh` with `SERVICE=chimodiazz_shopware` | every minute, under its own `flock` | same, for the second Shopware instance |
 
 **A healthy system sends nothing.** There is no all-green digest.
 
@@ -91,6 +92,10 @@ Measured 2026-09-08: `/^[0-9]{4}-/` matches nothing there while `/^[0-9][0-9][0-
 test suite cannot catch this, because `tests/run.sh` runs bats in an Alpine container whose busybox
 `awk` does support intervals, and the workstation has GNU awk. Three implementations are in play and
 only the host's decides, so anything written here stays inside POSIX `awk`.
+
+The script takes the container name from `SERVICE`, which is why the second Shopware instance needs
+a second cron file and no second script. Its lock file is its own on purpose: sharing one would let
+either instance starve the other, because `flock -n` makes the loser exit rather than queue.
 
 `monitoring/shopware-worker.sh` is what runs those tasks now, every minute under `flock`. Shopware's
 own documentation warns that cron-driven workers pile up, because cron does not wait for the previous
@@ -331,6 +336,7 @@ install -m 644 -o root -g root monitoring/cron.d/vps-health              /etc/cr
 install -m 644 -o root -g root monitoring/cron.d/vaultwarden-db-backup   /etc/cron.d/vaultwarden-db-backup
 install -m 644 -o root -g root monitoring/cron.d/vaultwarden-autoupdate  /etc/cron.d/vaultwarden-autoupdate
 install -m 644 -o root -g root monitoring/cron.d/shopware-worker         /etc/cron.d/shopware-worker
+install -m 644 -o root -g root monitoring/cron.d/chimodiazz-worker       /etc/cron.d/chimodiazz-worker
 mkdir -p /var/lib/vps-health
 /opt/docker/monitoring/vaultwarden-db-backup.sh
 /opt/docker/monitoring/vps-health.sh --test-mail

@@ -4,26 +4,29 @@ Artist website at <https://chimodiazz.sdwa5.org>, hosted here as a favour rather
 service. The site itself is developed in the private repository `chimodiazz/website`, which this host
 pulls with its own read-only deploy key.
 
-**As of 2026-09-15 the subdomain serves a static placeholder and no container runs.** Everything
-below the placeholder section describes a slot that is prepared but deliberately switched off.
+**Live since 2026-09-15.** It served a static placeholder for a few hours that afternoon, between
+the Caddy block being added and the container's first start.
 
 ## Routing
 
-| Domain                 | Upstream                                    | State                      |
-|------------------------|---------------------------------------------|----------------------------|
-| `chimodiazz.sdwa5.org` | `file_server` over `chimodiazz-placeholder/` | live                       |
-| `chimodiazz.sdwa5.org` | `https://127.0.0.1:8444`                     | after the container starts |
+| Domain                 | Upstream                 | Notes                                         |
+|------------------------|--------------------------|-----------------------------------------------|
+| `chimodiazz.sdwa5.org` | `https://127.0.0.1:8444` | TLS skip verify, same shape as `sdwa5.org`     |
+
+`/adminer`, `/mailcatcher` and `/logs` are answered with 404 by Caddy before anything reaches the
+container. See the section on dockware's bundled tools below.
 
 The A record already pointed at this host before any of this existed. Measured 2026-09-15:
 `chimodiazz.sdwa5.org` resolved to the same address as `sdwa5.org`, and HTTPS failed with
 `tlsv1 alert internal error`, which is what Caddy does for a name it has no site block for. Adding
 the block is therefore all that was needed for the certificate.
 
-## The placeholder
+## The placeholder, now a maintenance page
 
 `chimodiazz-placeholder/index.html` is a single self-contained file with no external resources,
-tracked in this repository and served straight off disk by Caddy. It is the only `file_server` block
-in the Caddyfile; every other site here is a `reverse_proxy` to a loopback port.
+tracked in this repository. It is no longer routed: the site block proxies to the container instead.
+It is kept because it is what this block falls back to while the instance is down, and swapping the
+`handle` body for `root` plus `file_server` is a two-line edit and a reload.
 
 It lives under `/opt/docker/`, so the daily restic backup takes it along. `/opt/docker` is `755
 root:root`, which is why the `caddy` user can read it without any permission change.
@@ -111,21 +114,52 @@ docker rm "$cid"
 The archive is copied rather than unpacked on purpose. The entrypoint unpacks it into the mounted
 directory on first start and sets the file ownership Apache needs while doing so.
 
-## Bringing it up, once the site is ready
+## dockware's bundled tools were public, and are not any more
 
-1. Seed the two directories as above, then
-   `cd /opt/docker && docker-compose -f docker-compose.projects.yml --profile chimodiazz up -d`
-2. **Change dockware's default administrator credentials before the next step.** They are published
-   in dockware's own documentation.
-3. Install and activate the theme:
-   `docker exec chimodiazz_shopware php bin/console plugin:refresh && php bin/console plugin:install --activate ChimodiazzTheme && php bin/console theme:compile`
-4. Swap the Caddy block from `root`/`file_server` to the `reverse_proxy` shown in the Caddyfile
-   comment, then `install -m 644 /opt/docker/Caddyfile /etc/caddy/Caddyfile && systemctl reload caddy`
-5. Add `chimodiazz_shopware` to `EXPECTED_CONTAINERS` in `monitoring/vps-health.sh`.
-6. Add a cron file `monitoring/cron.d/chimodiazz-worker` calling the existing
-   `monitoring/shopware-worker.sh` with `SERVICE=chimodiazz_shopware` and its own `flock` lock.
-   Without it the scheduled tasks stop and nothing says so, which is exactly what happened to the
-   `sdwa5.org` instance for 47 days in 2026 — see [monitoring.md](monitoring.md).
+**Measured 2026-09-15 against the live `sdwa5.org`, before this instance existed:**
+`https://sdwa5.org/adminer/` returned a database login form, `https://sdwa5.org/logs/` the
+PimpMyLog viewer, and `https://sdwa5.org/mailcatcher` the MailCatcher inbox holding every mail the
+shop had sent, password-reset links included. All three answered 200 to anyone.
+
+The cause is the image rather than any configuration here. dockware wires Adminer, MailCatcher and
+PimpMyLog into the same Apache vhost as the shop, and its own startup banner prints them as
+`http://<SHOP_DOMAIN>/adminer` and so on. Nothing in this repository ever pointed at them, which is
+why they went unnoticed.
+
+The `block_dockware_tools` snippet in the Caddyfile answers those paths with 404 for every dockware
+site here. It is a snippet rather than a copied block because the second instance runs the same image
+and would otherwise have repeated the exposure the hour it went up.
+
+**What this does not fix:** the tools are still listening inside both containers, so anyone who
+reaches the loopback ports directly still has them. That is the host's firewall and SSH doing the
+work, not this rule.
+
+The administrator credentials were a separate question and were checked separately. dockware ships a
+published default pair. Measured 2026-09-15: the `sdwa5.org` instance already rejected it, and this
+instance accepted it until the password was rotated, which was done before Caddy ever pointed at it.
+
+## How it was brought up
+
+Kept as a recipe, because the next Shopware instance on this host will need the same steps.
+
+1. `git clone github-chimodiazz:chimodiazz/website.git /opt/docker/chimodiazz-src`
+2. Seed the two data directories from the image, as above. This is the step that is easy to skip and
+   fails silently.
+3. `cd /opt/docker && docker-compose -f docker-compose.projects.yml --profile chimodiazz up -d chimodiazz_shopware`
+4. Rotate dockware's default administrator password **before** the public name points at it.
+5. `docker exec chimodiazz_shopware php bin/console plugin:refresh`, then
+   `plugin:install --activate ChimodiazzTheme`, then `theme:compile`, then `cache:clear`.
+6. Swap the Caddy block to the `reverse_proxy`, `install -m 644 -o root -g root /opt/docker/Caddyfile
+   /etc/caddy/Caddyfile`, `systemctl reload caddy`.
+7. `install -m 644 -o root -g root monitoring/cron.d/chimodiazz-worker /etc/cron.d/chimodiazz-worker`
+   and deploy the `monitoring/vps-health.sh` that lists `chimodiazz_shopware` in
+   `EXPECTED_CONTAINERS`.
+
+Step 7 is not decoration. Without a worker Shopware's scheduled tasks stop and nothing says so, which
+is what happened to the `sdwa5.org` instance for 47 days in 2026 — see [monitoring.md](monitoring.md).
+The worker script takes its container from `SERVICE`, so the second instance needs a second cron file
+and no second script. Its lock file is its own, because `flock -n` makes the loser exit rather than
+queue, and a shared lock would let either instance starve the other.
 
 Memory measured on the host on 2026-09-15 before any of this: 5937 MB total, 2054 MB used, 3883 MB
 available, with the existing Shopware container at 1.01 GiB. A second instance of the same shape
@@ -133,11 +167,9 @@ fits, and it is the largest single thing this host would then be running twice.
 
 ## Monitoring
 
-`chimodiazz=https://chimodiazz.sdwa5.org/` is in the built-in `HEALTH_URLS` default, so the hourly
-check watches the subdomain already. It passes against the placeholder because that returns 200.
-
-`EXPECTED_CONTAINERS` is deliberately unchanged while the container is profile-gated, otherwise every
-run would report a missing container.
+`chimodiazz=https://chimodiazz.sdwa5.org/` is in the built-in `HEALTH_URLS` default, and
+`chimodiazz_shopware` is in `EXPECTED_CONTAINERS`. The container is profile-gated but permanently
+running, so a missing one is a real fault rather than an expected absence.
 
 ## Backup
 

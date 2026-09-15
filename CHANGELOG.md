@@ -6,6 +6,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.43.0] - 2026-09-15
+
+### Security
+
+- **dockware's bundled tools were public on sdwa5.org, and are not any more.** Measured 2026-09-15:
+  `/adminer/` returned a database login form, `/logs/` the PimpMyLog viewer, and `/mailcatcher` the
+  MailCatcher inbox holding every mail the shop had sent, password-reset links included. All three
+  answered 200 to anyone, and had since the instance went up. The cause is the image, which wires
+  them into the same Apache vhost as the shop and prints them in its own startup banner, so nothing
+  in this repository ever pointed at them. The `block_dockware_tools` Caddy snippet answers those
+  paths with 404 for every dockware site here. It is a snippet rather than a copied block because the
+  second instance runs the same image and would otherwise have repeated the exposure the hour it went
+  up. The tools still listen inside both containers, so the firewall and key-only SSH remain what
+  stops loopback access.
+- **The new instance ran with dockware's published default administrator password for as long as it
+  took to rotate it, and never on the public name.** Measured before and after: the default pair
+  returned a valid API token, then 400. The `sdwa5.org` instance was checked with the same request
+  and already rejected it.
+- **The new instance started in `dev` with `debug=true`, and went public in `prod`.** dockware's
+  default. The `sdwa5.org` instance was checked rather than assumed: its `.env` carries `APP_ENV`
+  twice, `prod` on line 3 and `dev` on line 41, and `bin/console about` reports `prod` with debug
+  false, because Symfony's Dotenv does not override a variable it has already set. So the duplicate
+  is untidy and harmless there.
+
+### Added
+
+- **chimodiazz.sdwa5.org serves Shopware.** The container was started, the theme from
+  `chimodiazz/website` installed, activated and compiled, and the Caddy block swapped from the
+  placeholder to `https://127.0.0.1:8444`. The placeholder file is kept as the maintenance page.
+- `monitoring/cron.d/chimodiazz-worker` runs the existing `shopware-worker.sh` with
+  `SERVICE=chimodiazz_shopware`. Its own lock file, not the shopware one: `flock -n` makes the loser
+  exit rather than queue, so a shared lock would let either instance starve the other.
+- `chimodiazz_shopware` in `EXPECTED_CONTAINERS`. It is profile-gated but permanently running, so a
+  missing one is a fault rather than an expected absence.
+
+### Changed
+
+- **The two Shopware site blocks route through `handle` rather than a bare `reverse_proxy`.** Needed
+  for the 404 rule above to take precedence in written order instead of by Caddy's default directive
+  order.
+
 ## [1.42.0] - 2026-09-15
 
 ### Added

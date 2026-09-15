@@ -20,7 +20,7 @@ flowchart LR
             P2["Dolibarr Project 2<br/>127.0.0.1:8003"]
             P2DB[("MariaDB")]
             P3["Dolibarr Project 3<br/>127.0.0.1:8004"]
-            CD["Chimo Diazz<br/>127.0.0.1:8005/8444 · profile, inactive"]
+            CDW["Chimo Diazz Shopware<br/>127.0.0.1:8005/8444 · profile"]
             P3DB[("MariaDB")]
             OL["Ollama<br/>127.0.0.1 via DOCKER-USER · inactive"]
             MC["Minecraft<br/>0.0.0.0:25565 · profile, inactive"]
@@ -46,7 +46,7 @@ flowchart LR
     U -. " :25565 " .-> MC
     C --> SW & VW & DL
     C --> P2 & P3
-    C -. " once the container is started " .-> CD
+    C --> CDW
     DL --> DLDB
     DLC --> DLDB
     P2 --> P2DB
@@ -82,6 +82,7 @@ Cron jobs (host, not Docker) — see [monitoring.md](monitoring.md):
 | Health check               | `monitoring/vps-health.sh`              | hourly, `:17`  |
 | Vaultwarden database copy  | `monitoring/vaultwarden-db-backup.sh`   | daily 03:50    |
 | Vaultwarden auto-update    | `monitoring/vaultwarden-autoupdate.sh`  | Sunday 03:00   |
+| Shopware worker (x2)       | `monitoring/shopware-worker.sh`         | every minute   |
 
 Reverse proxy: **Caddy** (systemd service, not in Docker) — see [caddy.md](caddy.md)
 
@@ -122,7 +123,7 @@ is the whole point of that chain.
 ├── shopware-mysql-data/            # gitignored
 ├── shopware-data/                  # gitignored (legacy mount)
 ├── dolibarr-mariadb-data/          # gitignored — Dolibarr SdWa5 DB
-├── chimodiazz-placeholder/         # tracked — static coming-soon page served by Caddy
+├── chimodiazz-placeholder/         # tracked — maintenance page, not currently routed
 ├── chimodiazz-src/                 # gitignored — checkout of chimodiazz/website (own deploy key)
 ├── chimodiazz-html-data/           # gitignored — Chimo Diazz Shopware web root
 ├── chimodiazz-mysql-data/          # gitignored — Chimo Diazz Shopware DB

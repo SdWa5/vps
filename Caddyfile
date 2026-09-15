@@ -3,6 +3,28 @@
     email ripper@sdwa5.org  # For Let's Encrypt notifications
 }
 
+# dockware ships Adminer, MailCatcher and PimpMyLog inside the image and wires
+# them into the same Apache vhost as the shop. Measured 2026-09-15 against the
+# live sdwa5.org: /adminer/ returned a database login form, /logs/ the log
+# viewer, and /mailcatcher every mail the shop had sent, password-reset links
+# included. All three were public since the instance went up.
+#
+# They are development tools with no Shopware route behind them, so a flat 404
+# costs nothing and is checked before anything reaches the container. Every
+# dockware site here imports this, because the second instance runs the same
+# image and would otherwise repeat the exposure.
+#
+# handle blocks are mutually exclusive and evaluated in written order, which is
+# why the proxy below each import sits in a handle of its own rather than
+# floating free: it makes the precedence explicit instead of leaving it to
+# Caddy's default directive order.
+(block_dockware_tools) {
+    @dockware_tools path /adminer /adminer/* /mailcatcher /mailcatcher/* /logs /logs/*
+    handle @dockware_tools {
+        respond "Not Found" 404
+    }
+}
+
 # Main domain - Shopware
 https://sdwa5.org {
     # First-visit browser-language redirect: German browsers land on /de.
@@ -18,9 +40,13 @@ https://sdwa5.org {
         redir * /de 302
     }
 
-    reverse_proxy https://127.0.0.1:8443 {
-        transport http {
-            tls_insecure_skip_verify
+    import block_dockware_tools
+
+    handle {
+        reverse_proxy https://127.0.0.1:8443 {
+            transport http {
+                tls_insecure_skip_verify
+            }
         }
     }
 }
@@ -44,21 +70,18 @@ project3.sdwa5.org {
     reverse_proxy localhost:8004
 }
 
-# chimodiazz.sdwa5.org — placeholder while the Shopware instance is being built.
-# This is the only file_server block here; every other site is a reverse_proxy to
-# a loopback port. The site it fronts does not exist yet: chimodiazz/website held
-# content and docs but no deployable application when this block was added on
-# 2026-09-15. The block exists anyway so Caddy issues the certificate and the
-# subdomain answers, rather than failing the TLS handshake as it did before.
-#
-# Once the Shopware instance runs, replace root/file_server with:
-#     reverse_proxy https://127.0.0.1:8444 {
-#         transport http {
-#             tls_insecure_skip_verify
-#         }
-#     }
-# which mirrors how sdwa5.org reaches its own dockware container.
+# chimodiazz.sdwa5.org — Shopware as a CMS, same shape as sdwa5.org above.
+# Served a static placeholder from chimodiazz-placeholder/ between 2026-09-15 and
+# the first start of the container; that directory is kept, because it is what
+# this block falls back to while the instance is down for maintenance.
 chimodiazz.sdwa5.org {
-    root * /opt/docker/chimodiazz-placeholder
-    file_server
+    import block_dockware_tools
+
+    handle {
+        reverse_proxy https://127.0.0.1:8444 {
+            transport http {
+                tls_insecure_skip_verify
+            }
+        }
+    }
 }

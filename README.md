@@ -27,7 +27,7 @@ docker-compose up -d
 | Restic backup      | —                             | docker-compose.yml             |
 | Dolibarr Project 2 | https://project2.sdwa5.org | docker-compose.projects.yml |
 | Dolibarr Project 3    | https://project3.sdwa5.org      | docker-compose.projects.yml |
-| Chimo Diazz (placeholder) | https://chimodiazz.sdwa5.org | docker-compose.projects.yml (profile: chimodiazz) |
+| Chimo Diazz        | https://chimodiazz.sdwa5.org | docker-compose.projects.yml (profile: chimodiazz) |
 | Minecraft (inactive) | :25565                      | docker-compose.yml (profile: minecraft) |
 
 ## Credentials

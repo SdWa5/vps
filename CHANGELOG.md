@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.39.1] - 2026-09-15
+
+### Changed
+
+- **`.claude/` is gitignored, like it already was in `sdwa5-3d`.** The project settings file exists
+  only to switch off the authorship attribution, so committing it would disclose exactly what the
+  same day's rewrite removed from every commit message.
+
 ## [1.39.0] - 2026-09-15
 
 ### Security

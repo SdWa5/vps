@@ -174,6 +174,36 @@ autoupdate() {
     run "$REPO_ROOT/monitoring/vaultwarden-autoupdate.sh" "$@"
 }
 
+# chimodiazz-deploy.sh against a faked checkout. The default state is the
+# ordinary run: the remote commit equals the local one, so there is nothing to
+# deploy. A test that wants a deployment calls chimo_new_commit.
+chimo_deploy_setup() {
+    export SRC_DIR="$BATS_TEST_TMPDIR/chimodiazz-src"
+    mkdir -p "$SRC_DIR/.git"
+    export STUB_GIT_LOG="$BATS_TEST_TMPDIR/chimo-git.log"
+    : > "$STUB_GIT_LOG"
+    export STUB_GIT_BRANCH=main
+    export STUB_GIT_LOCAL=1111111111111111111111111111111111111111
+    export STUB_GIT_REMOTE=1111111111111111111111111111111111111111
+    # Short, because the failure path waits this out. The happy path never
+    # reaches the loop's sleep: the stubbed curl answers 200 on the first call.
+    export HEALTH_TIMEOUT=5
+}
+
+chimo_new_commit() {
+    export STUB_GIT_REMOTE=2222222222222222222222222222222222222222
+}
+
+chimo_deploy() {
+    run "$REPO_ROOT/monitoring/chimodiazz-deploy.sh" "$@"
+}
+
+# Which git subcommands the run actually issued. A reset is the signature of a
+# deployment, so its absence is how "nothing to do" is asserted.
+chimo_git_calls() {
+    cat "$STUB_GIT_LOG"
+}
+
 db_backup() {
     run "$REPO_ROOT/monitoring/vaultwarden-db-backup.sh" "$@"
 }

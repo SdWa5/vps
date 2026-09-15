@@ -32,6 +32,20 @@ case "${1:-}" in
         elif [[ "$*" == *"messenger:consume"* ]]; then
             [[ -n "${STUB_CONSUME_FAILS:-}" ]] && { echo "consumer blew up"; exit 1; }
             echo "[OK] Consuming messages"
+        elif [[ "$*" == *"plugin:refresh"* ]]; then
+            [[ -n "${STUB_PLUGIN_REFRESH_FAILS:-}" ]] && { echo "refresh blew up"; exit 1; }
+            echo "3 plugins, 2 installed"
+        elif [[ "$*" == *"plugin:update"* ]]; then
+            # Non-zero when there is nothing to update, which the caller ignores
+            # on purpose. Default to that, because it is the ordinary case.
+            [[ -n "${STUB_PLUGIN_UPDATE_OK:-}" ]] || exit 1
+            echo "Updated 1 plugin(s)."
+        elif [[ "$*" == *"theme:compile"* ]]; then
+            [[ -n "${STUB_THEME_COMPILE_FAILS:-}" ]] && { echo "sass exploded"; exit 1; }
+            echo "Start theme compilation"
+        elif [[ "$*" == *"cache:clear"* ]]; then
+            [[ -n "${STUB_CACHE_CLEAR_FAILS:-}" ]] && { echo "cache clear blew up"; exit 1; }
+            echo "[OK] Cache was successfully cleared."
         elif [[ "$*" == *"restic snapshots"* ]]; then
             # docker exec restic restic snapshots --json
             # Unset means the repository cannot be reached, which is a different

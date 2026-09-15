@@ -165,6 +165,31 @@ Memory measured on the host on 2026-09-15 before any of this: 5937 MB total, 205
 available, with the existing Shopware container at 1.01 GiB. A second instance of the same shape
 fits, and it is the largest single thing this host would then be running twice.
 
+## Deployment, and why this host pulls
+
+A change to the theme reaches the site without anyone touching this host.
+`monitoring/chimodiazz-deploy.sh` runs **every five minutes** from
+`/etc/cron.d/chimodiazz-deploy` under its own `flock`, fetches the checkout's branch, and when the
+commit moved it resets to it, refreshes and updates the plugin, recompiles the storefront and clears
+the cache. Then it asks the public URL for a 200. If the rebuild fails or the site does not come
+back, it resets to the commit that was serving before, rebuilds from that and sends one mail. Silent
+otherwise, which is almost every run.
+
+**It pulls rather than being pushed to, and that departs from [TODO.md](../TODO.md) on purpose.**
+That file settled on a push-based GitHub Action on 2026-09-03 and asked not to re-open the
+comparison. The reason here is different in kind rather than in cost: a push deployment out of
+`chimodiazz/website` would put an SSH key to this host into a repository whose collaborators and
+permissions somebody else administers. Pulling keeps the credential here, keeps it read-only and
+opens nothing inbound. The decision for `SdWa5/vps` itself is untouched.
+
+**What gets deployed is whatever branch `chimodiazz-src/` is checked out on.** Switching it is a
+`git switch` in that directory rather than an edit to the script, and it is visible to anyone who
+looks. A detached checkout, a branch that disappeared upstream and a failing fetch each send their
+own mail rather than going quiet; the fetch failure names the deploy key, because that key lives on a
+repository this host does not own and can be revoked without anything here noticing.
+
+The checkout is never edited by hand, which is what makes `git reset --hard` safe as the rollback.
+
 ## Monitoring
 
 `chimodiazz=https://chimodiazz.sdwa5.org/` is in the built-in `HEALTH_URLS` default, and

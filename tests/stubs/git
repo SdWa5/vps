@@ -1,9 +1,42 @@
 #!/usr/bin/env bash
-# Fake git. vps-health.sh uses only "-C <dir> ls-remote origin HEAD".
+# Fake git.
 #
-# STUB_GIT_LSREMOTE_RC drives the outcome and STUB_GIT_LOG records the calls, which is how the
-# once-a-day cadence is tested: the assertion is the number of calls, not the reported status.
+# vps-health.sh uses only "-C <dir> ls-remote origin HEAD".
+# chimodiazz-deploy.sh additionally uses rev-parse, fetch and reset.
+#
+# STUB_GIT_LSREMOTE_RC drives the ls-remote outcome and STUB_GIT_LOG records the calls, which is how
+# the once-a-day cadence is tested: the assertion is the number of calls, not the reported status.
+#
+# For the deploy script the two commits are what matter. STUB_GIT_LOCAL is HEAD in the checkout and
+# STUB_GIT_REMOTE is origin/<branch>; equal values mean "nothing to deploy", which is the ordinary
+# run. STUB_GIT_REMOTE unset deliberately means the ref does not resolve, so the "branch gone" path
+# can be reached without inventing a separate flag.
 [[ -n "${STUB_GIT_LOG:-}" ]] && printf '%s\n' "$*" >> "$STUB_GIT_LOG"
+
+args="$*"
+
+case "$args" in
+    *"rev-parse --abbrev-ref HEAD"*)
+        printf '%s\n' "${STUB_GIT_BRANCH-main}"
+        exit 0
+        ;;
+    *"rev-parse origin/"*)
+        [[ -z "${STUB_GIT_REMOTE+set}" ]] && exit 128
+        printf '%s\n' "$STUB_GIT_REMOTE"
+        exit 0
+        ;;
+    *"rev-parse HEAD"*)
+        printf '%s\n' "${STUB_GIT_LOCAL:-1111111111111111111111111111111111111111}"
+        exit 0
+        ;;
+    *fetch*)
+        exit "${STUB_GIT_FETCH_RC:-0}"
+        ;;
+    *reset*)
+        exit "${STUB_GIT_RESET_RC:-0}"
+        ;;
+esac
+
 for arg in "$@"; do
     if [[ "$arg" == "ls-remote" ]]; then
         rc="${STUB_GIT_LSREMOTE_RC:-0}"

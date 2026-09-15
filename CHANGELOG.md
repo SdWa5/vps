@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.44.0] - 2026-09-15
+
+### Added
+
+- **A theme change in chimodiazz/website reaches the live site without anyone touching this host.**
+  `monitoring/chimodiazz-deploy.sh` runs every five minutes under its own `flock`, fetches the
+  checkout's branch, and when the commit moved it resets to it, refreshes and updates the plugin,
+  recompiles the storefront, clears the cache and then asks the public URL for a 200. A failed
+  rebuild or a site that does not come back resets to the commit that was serving before, rebuilds
+  from it and sends one mail. Silent otherwise, which is almost every run.
+- **It pulls rather than being pushed to, which departs from [TODO.md](TODO.md) deliberately.** That
+  file settled on a push-based GitHub Action on 2026-09-03 and asked not to re-open the comparison.
+  The reason here differs in kind rather than in cost: a push out of `chimodiazz/website` would put
+  an SSH key to this host into a repository whose collaborators and permissions somebody else
+  administers. Pulling keeps the credential here, keeps it read-only and opens nothing inbound. The
+  decision for this repository is untouched, and item 1 of TODO.md stands.
+- **What gets deployed is whatever branch `chimodiazz-src/` is checked out on**, so switching it is a
+  `git switch` in that directory rather than an edit to the script. A detached checkout, a branch
+  that vanished upstream and a failing fetch each send their own mail rather than going quiet, and
+  the fetch failure names the deploy key, because that key lives on a repository this host does not
+  own and can be revoked without anything here noticing.
+- Fifteen tests in `tests/chimodiazz-deploy.bats`, covering both rollback paths and the three ways
+  the remote can be unusable. The `git` stub grew `rev-parse`, `fetch` and `reset`; the `docker` stub
+  grew the four console commands. `plugin:update` failing is asserted *not* to be a deployment
+  failure, because it exits non-zero when there is nothing to update, which is the ordinary case.
+
 ## [1.43.0] - 2026-09-15
 
 ### Security

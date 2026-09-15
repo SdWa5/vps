@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Fake git. vps-health.sh uses only "-C <dir> ls-remote origin HEAD".
+#
+# STUB_GIT_LSREMOTE_RC drives the outcome and STUB_GIT_LOG records the calls, which is how the
+# once-a-day cadence is tested: the assertion is the number of calls, not the reported status.
+[[ -n "${STUB_GIT_LOG:-}" ]] && printf '%s\n' "$*" >> "$STUB_GIT_LOG"
+for arg in "$@"; do
+    if [[ "$arg" == "ls-remote" ]]; then
+        rc="${STUB_GIT_LSREMOTE_RC:-0}"
+        [[ "$rc" == "0" ]] && printf '5a5d5fe6584507affeadfb6966f2cecac7ed6915\tHEAD\n'
+        exit "$rc"
+    fi
+done
+exit 0

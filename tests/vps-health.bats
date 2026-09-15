@@ -542,3 +542,75 @@ Container started." health
     health --nonsense
     [ "$status" -eq 2 ]
 }
+
+# --- the checkout's reach to its remote ------------------------------------
+#
+# A deploy key belongs to the repository object on GitHub, so recreating the repository destroys it.
+# That happened three times in September 2026 and nothing here noticed, because none of the nine
+# checks asked whether /opt/docker could still pull. It does not look broken from the outside: a dead
+# deploy key still authenticates and greets with the name of the repository it died with.
+#
+# The cadence is the subtle half. A success is worth one call a day, a failure is worth one every run,
+# because the second is how a recovery shows up within the hour.
+
+@test "a reachable remote is OK and sends nothing" {
+    health
+    [ "$(mail_count)" -eq 0 ]
+    [ "$(git_call_count)" -eq 1 ]
+}
+
+@test "an unreachable remote is the alert, and it names the deploy key" {
+    STUB_GIT_LSREMOTE_RC=1 health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"cannot reach its remote"* ]]
+    [[ "$(mail_body)" == *"deploy key"* ]]
+}
+
+@test "the remote is asked once a day rather than once an hour" {
+    local t0=1800000000
+    health_at $t0
+    [ "$(git_call_count)" -eq 1 ]
+
+    # Four more hourly runs. None of them may cost a round trip.
+    health_at $(( t0 + 1 * 3600 ))
+    health_at $(( t0 + 2 * 3600 ))
+    health_at $(( t0 + 3 * 3600 ))
+    health_at $(( t0 + 4 * 3600 ))
+    [ "$(git_call_count)" -eq 1 ]
+    [ "$(mail_count)" -eq 0 ]
+}
+
+@test "the remote is asked again once the window has passed" {
+    local t0=1800000000
+    health_at $t0
+    [ "$(git_call_count)" -eq 1 ]
+
+    health_at $(( t0 + 26 * 3600 - 1 ))
+    [ "$(git_call_count)" -eq 1 ]
+
+    health_at $(( t0 + 26 * 3600 ))
+    [ "$(git_call_count)" -eq 2 ]
+}
+
+@test "a failure is retried every run, so a recovery shows up within the hour" {
+    local t0=1800000000
+    STUB_GIT_LSREMOTE_RC=1 health_at $t0
+    [ "$(git_call_count)" -eq 1 ]
+
+    # Still broken an hour later. The window does not apply, because nothing was stamped.
+    STUB_GIT_LSREMOTE_RC=1 health_at $(( t0 + 3600 ))
+    [ "$(git_call_count)" -eq 2 ]
+
+    # Fixed. The next run says so rather than waiting out a day.
+    health_at $(( t0 + 2 * 3600 ))
+    [ "$(git_call_count)" -eq 3 ]
+    [[ "$(mail_body)" == *"can reach its remote"* ]]
+}
+
+@test "a directory that is not a checkout warns rather than passing" {
+    rm -rf "$GIT_CHECKOUT_DIR/.git"
+    health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"is not a git checkout"* ]]
+    [ "$(git_call_count)" -eq 0 ]
+}

@@ -54,6 +54,18 @@ VAULTWARDEN_RELEASE_API="${VAULTWARDEN_RELEASE_API:-https://api.github.com/repos
 VAULTWARDEN_DRIFT_GRACE_HOURS="${VAULTWARDEN_DRIFT_GRACE_HOURS:-26}"
 FIREWALL_PORTS="${FIREWALL_PORTS:-22 80 443}"
 
+# **HOW OFTEN THE REMOTE IS ASKED, AND WHY IT IS NOT EVERY RUN.** This check costs an authenticated
+# network round trip, and what it watches changes rarely. Hourly would be 24 calls a day for a fact
+# that holds for months. Once a day is the cadence, measured from the last **successful** call, which
+# is why the failure path deliberately does not stamp: while it is broken it is retried every run, so
+# a recovery shows up within the hour instead of a day later.
+# The checkout being watched. It is the compose root on this host, and it is its own knob because the
+# two are the same thing only by convention.
+GIT_CHECKOUT_DIR="${GIT_CHECKOUT_DIR:-$COMPOSE_DIR}"
+GIT_REMOTE_MAX_AGE_HOURS="${GIT_REMOTE_MAX_AGE_HOURS:-26}"
+GIT_REMOTE_TIMEOUT="${GIT_REMOTE_TIMEOUT:-20}"
+GIT_REMOTE_STAMP="${GIT_REMOTE_STAMP:-$STATE_DIR/git-remote-ok}"
+
 STATE_FILE="$STATE_DIR/state"
 DRY_RUN=0
 
@@ -508,6 +520,42 @@ emit() {
     printf '%s\t%s\t%s\n' "$key" "$status" "$message"
 }
 
+# **THE CHECK THAT WOULD HAVE CAUGHT THE SEPTEMBER 2026 DEPLOY-KEY BREAKAGE.** A deploy key belongs to
+# the repository object on GitHub, so recreating the repository destroys it, and the redaction passes
+# of 2026-09-12, 2026-09-13 and 2026-09-15 each did exactly that. After every one of them /opt/docker
+# could no longer pull, and **nothing here noticed for three cycles**, because none of the nine checks
+# asked. It does not look broken from the outside either: a dead deploy key still authenticates and
+# greets with the name of the repository it died with, so only a call that actually fetches says so.
+#
+# One call covers three failure modes at once, namely a destroyed or revoked key, a moved remote, and
+# a host that cannot reach GitHub at all. See docs/ssh-hardening.md.
+check_git_remote() {
+    local last=0 age
+
+    command -v git >/dev/null 2>&1 \
+        || { printf 'WARN\tgit is not installed, so whether %s can pull is unknown\n' "$GIT_CHECKOUT_DIR"; return; }
+    [[ -d "$GIT_CHECKOUT_DIR/.git" ]] \
+        || { printf 'WARN\t%s is not a git checkout, so it cannot pull\n' "$GIT_CHECKOUT_DIR"; return; }
+
+    [[ -f "$GIT_REMOTE_STAMP" ]] && last="$(stat -c %Y "$GIT_REMOTE_STAMP" 2>/dev/null || echo 0)"
+    age=$(( ($(now) - last) / 3600 ))
+    if (( last > 0 && age < GIT_REMOTE_MAX_AGE_HOURS )); then
+        printf 'OK\t%s reached its remote %sh ago, asked again after %sh\n' \
+            "$GIT_CHECKOUT_DIR" "$age" "$GIT_REMOTE_MAX_AGE_HOURS"
+        return
+    fi
+
+    if timeout "$GIT_REMOTE_TIMEOUT" git -C "$GIT_CHECKOUT_DIR" ls-remote origin HEAD >/dev/null 2>&1; then
+        mkdir -p "$STATE_DIR" 2>/dev/null
+        : > "$GIT_REMOTE_STAMP"
+        touch -d "@$(now)" "$GIT_REMOTE_STAMP" 2>/dev/null
+        printf 'OK\t%s can reach its remote\n' "$GIT_CHECKOUT_DIR"
+    else
+        printf 'WARN\t%s cannot reach its remote, so it cannot pull. A destroyed deploy key still authenticates, so check whether ssh -T against the forge names the right repository\n' \
+            "$GIT_CHECKOUT_DIR"
+    fi
+}
+
 run_checks() {
     emit disk                  "$(check_disk)"
     emit containers            "$(check_containers)"
@@ -518,6 +566,7 @@ run_checks() {
     emit caddy                 "$(check_caddy)"
     emit firewall              "$(check_firewall)"
     emit vaultwarden_version   "$(check_vaultwarden_version)"
+    emit git_remote            "$(check_git_remote)"
 }
 
 main() {

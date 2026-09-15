@@ -24,6 +24,24 @@ common_setup() {
     set_db_backup_fresh
     set_firewall_healthy
     set_shopware_tasks_fresh
+    set_git_remote_reachable
+}
+
+# The checkout the git_remote check watches. It is a tmpdir rather than the real repository root, so
+# the test never depends on whether the mounted working copy happens to carry a .git directory.
+set_git_remote_reachable() {
+    export GIT_CHECKOUT_DIR="$BATS_TEST_TMPDIR/checkout"
+    mkdir -p "$GIT_CHECKOUT_DIR/.git"
+    export STUB_GIT_LSREMOTE_RC=0
+    export STUB_GIT_LOG="$BATS_TEST_TMPDIR/git.log"
+    : > "$STUB_GIT_LOG"
+}
+
+# How often the remote was actually asked. The cadence is the point of that check, so the assertion
+# is the number of calls rather than the status it reported.
+git_call_count() {
+    [[ -f "${STUB_GIT_LOG:-}" ]] || { echo 0; return; }
+    grep -c 'ls-remote' "$STUB_GIT_LOG" || true
 }
 
 # A healthy INPUT chain as the firewall check expects to find it: DROP policy,
@@ -147,6 +165,8 @@ health_at() {
     set_backup_fresh
     set_db_backup_fresh
     set_shopware_tasks_fresh
+    # set_git_remote_reachable is deliberately NOT called here. It truncates the call log and the
+    # cadence tests move the clock across several runs to count the calls.
     health "$@"
 }
 

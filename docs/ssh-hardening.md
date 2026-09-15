@@ -155,10 +155,11 @@ key.
 
 | Key | Purpose | Registered as | Passphrase |
 |---|---|---|---|
-| `/root/.ssh/id_ed25519_deploy` | pull `sdwa5-vps` into `/opt/docker` | deploy key on `bestcodename/sdwa5-vps`, id 162604148, `read_only: true` | no |
+| `/root/.ssh/id_ed25519_sdwa5vps_20260915` | pull `SdWa5/vps` into `/opt/docker` | deploy key on `SdWa5/vps`, id 163344886, `read_only: true` | no |
 
-Fingerprint `SHA256:9cc+0NXJEYRo7xyJ2WeTAFQbE94nDbCap3kgNdX39IU`. The private half was generated on
-this host and has never crossed the network.
+Fingerprint `SHA256:cSSIrs739ebFZEOrHkSYQJwCmlgjVnRaApdhJieYHhw`. The private half was generated on
+this host and has never crossed the network. It is the **third** key in this role, and the reason is
+below.
 
 **What it replaced, and why that mattered.** The old `/root/.ssh/id_ed25519` was registered as an
 *account-level* key on the `bestcodename` user, titled "sdwa5.org Contabo VPS". An account key carries
@@ -182,25 +183,47 @@ old one is still on disk.
 rather than as the account:
 
 ```sh
-ssh -T git@github.com            # Hi bestcodename/sdwa5-vps! not Hi bestcodename!
+ssh -T git@github.com            # Hi SdWa5/vps! not Hi bestcodename!
 cd /opt/docker && git ls-remote origin HEAD    # succeeds
 cd /opt/docker && git push --dry-run origin main   # refused, no write access
 ```
 
-Verified in that order on 2026-09-08, and the account key was deleted only after the pull had been
-proven to work through the new one.
+Verified in that order on 2026-09-08 and again on 2026-09-15, and a superseded key is deleted only
+after the pull has been proven to work through its replacement. **The greeting is also the fastest way
+to catch the failure above**, because a dead deploy key still authenticates and names the repository
+it died with.
 
 **Pushing from this host now fails, by design.** Nothing in this repository does. The deploy
 automation in [TODO.md](../TODO.md) runs the other way round, a GitHub Action reaching *in* to the
 host, so it is unaffected and will need its own key held as a GitHub secret.
 
-**The deploy key has no passphrase, deliberately.** An unattended puller cannot answer a prompt, so
-the mitigation is the key's scope rather than encryption at rest. That is strictly better than what it
-replaced, which also had none and carried the whole account.
+**The deploy key has no passphrase, and that is not a gap that could be closed.** An unattended puller
+cannot answer a prompt. The two ways round that are an `ssh-agent` unlocked at boot and a passphrase
+kept in a file, and both put the thing that unlocks the key on the same disk as the key, for the same
+reader. A passphrase defends a key that travels; this one never leaves the host. So the mitigation is
+the key's **scope**, which is one repository and read-only, plus mode `600` and the fact that reading
+it at all already requires root. That is strictly better than what it replaced, which also had no
+passphrase and carried the whole account.
 
-The old `/root/.ssh/id_ed25519` is still on disk, fingerprint
-`SHA256:dsDOKwdXfJwdiY1AC6u1PEH3oH6pJPjet4jCghnbsNE`, and is registered nowhere, so it grants nothing.
-It was left rather than deleted, because deleting it is tidy-up and irreversible.
+**A DEPLOY KEY BELONGS TO THE REPOSITORY OBJECT, AND RECREATING THE REPOSITORY DESTROYS IT.** This is
+the operational fact behind the third key. The redaction passes of 2026-09-12, 2026-09-13 and
+2026-09-15 each republished by renaming the repository, creating an empty one under the old name and
+deleting the rename, because that is what clears GitHub's cache of pre-rewrite objects. The deploy key
+travels with the **renamed** repository and dies with it, so after each pass `/opt/docker` could no
+longer pull, while `ssh -T` still authenticated and cheerfully greeted the deleted name.
+
+**And the same public key cannot simply be re-registered.** GitHub answers
+`key is already in use` (HTTP 422) for a key whose repository is gone, although it then appears on no
+repository and on no account. Measured again on 2026-09-15. So each pass needs a **freshly generated
+keypair**, not a re-registration.
+
+**Nothing on this host notices.** The nine health checks cover disk, containers, backups, HTTP, Caddy,
+the firewall and the Vaultwarden version, and not one of them asks whether the checkout can still
+reach its remote. That is filed in [TODO.md](../TODO.md).
+
+The two superseded keys were deleted on 2026-09-15, after checking that neither fingerprint appeared
+on the account or on any repository, that neither was in an `authorized_keys`, that no cron job or
+script on this host invokes `ssh`, and that `known_hosts` has only ever held `github.com`.
 
 Client-side detail, including the `~/.ssh/conf.d` layout and where each of the five keys is backed up,
 is documented in `~/PhpstormProjects/ai/docs/ssh-keys.md`, and the replacement procedure with its

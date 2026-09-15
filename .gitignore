@@ -50,6 +50,19 @@ project3-dolibarr-mariadb-data/
 project3-dolibarr-documents-data/
 project3-dolibarr-custom-data/
 
+# Chimo Diazz Shopware data. The web root is fully ignored, unlike
+# shopware-html-data/ above, because nothing in it is repository-owned yet: the
+# site's own code lives in chimodiazz/website and reaches the container from
+# there. Revisit this once it is clear which parts are configuration worth
+# tracking.
+chimodiazz-html-data/
+chimodiazz-mysql-data/
+# Checkout of chimodiazz/website, pulled with its own read-only deploy key. A
+# nested git repository, so it is ignored here rather than tracked or made a
+# submodule: the host pulls it directly and this repository has no say over its
+# history.
+chimodiazz-src/
+
 # Other service data
 vaultwarden-data/
 # Pre-update snapshots written by monitoring/vaultwarden-autoupdate.sh. Without

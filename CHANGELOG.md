@@ -6,6 +6,58 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.42.0] - 2026-09-15
+
+### Added
+
+- **`chimodiazz.sdwa5.org` answers, which it did not before.** The A record already pointed at this
+  host, but Caddy had no site block for the name and therefore no certificate, so every HTTPS request
+  died in the handshake with `tlsv1 alert internal error`. The block issues the certificate and
+  serves a static placeholder off `chimodiazz-placeholder/index.html`. It is the first and only
+  `file_server` block here; every other site is a `reverse_proxy` to a loopback port.
+- **A `chimodiazz_shopware` service, defined and deliberately not started.** One
+  `dockware/shopware:6.7.11.1` container on `127.0.0.1:8005` and `:8444`, the same exact pin as the
+  `sdwa5.org` instance so both stay one shape and a Shopware upgrade is one decision rather than two.
+  It is gated behind `profiles: ["chimodiazz"]` because an ungated `up -d` would put an empty shop
+  with dockware's published default credentials on a public subdomain.
+- **A second outbound deploy key, for `chimodiazz/website`.** GitHub refuses one deploy key on two
+  repositories, so the `SdWa5/vps` key could not be reused and an account key is what
+  `docs/ssh-hardening.md` exists to argue against. It is read-only, was generated on the host and has
+  never crossed the network, and it is reached through its own `github-chimodiazz` alias rather than
+  a second `IdentityFile` under `Host github.com`, because ssh offers listed keys in order and GitHub
+  answers as whichever repository the first accepted key belongs to. Verified in one session on
+  2026-09-15: both aliases greet their own repository.
+- `chimodiazz=https://chimodiazz.sdwa5.org/` in the built-in `HEALTH_URLS` default, bumped in the
+  script rather than overridden in `.env`, because an override has to repeat every existing entry and
+  silently stops watching the ones it forgets. Two tests pin the list so a dropped entry fails there.
+- [`docs/chimodiazz.md`](docs/chimodiazz.md), with the measured starting state, the deploy-key
+  verification and the numbered steps that bring the container up.
+- **A seeding step that the `sdwa5.org` instance never needed, because its directories were filled
+  once and the trap stayed invisible.** Measured 2026-09-15 against the image this host already
+  holds: `/var/www/html` contains only `shopware.tar.zst`, which `/entrypoint.sh` unpacks solely
+  `if [ -f ]`, and `/var/lib/mysql` ships populated. Docker does not seed a bind mount from the
+  image, so two empty directories would have produced an empty web root and no database, with no
+  error naming the cause. `docs/chimodiazz.md` carries the `docker create` plus `docker cp` recipe.
+
+### Changed
+
+- **`docs/caddy.md` now embeds the Caddyfile byte for byte** instead of a hand-trimmed copy without
+  its comments. The doc has always duplicated the whole file, and a copy that drops half the reasoning
+  is a copy that drifts.
+- **The Shopware image pin keeps its exactness and loses its wrong reason.** The comment said
+  dockware publishes no 6.7 series tag. Measured 2026-09-15: `dockware/shopware:6.7-latest` answers
+  200, so it does. The pin stays exact because that tag rolls across minor versions and a Shopware
+  minor runs forward-only migrations, which is the reason Dolibarr is pinned exactly too.
+
+### Known gaps
+
+- **Nothing notices if the new deploy key dies.** `git_remote` watches the `SdWa5/vps` key only, which
+  is the exact trap that check was built for in 1.41.0.
+- `EXPECTED_CONTAINERS` does not list `chimodiazz_shopware`, on purpose while it is profile-gated.
+  It has to be added in the same sitting the container is first started, together with a
+  `chimodiazz-worker` cron entry, or its scheduled tasks stop silently the way the `sdwa5.org`
+  instance's did for 47 days.
+
 ## [1.41.0] - 2026-09-15
 
 ### Added

@@ -27,6 +27,7 @@ docker-compose up -d
 | Restic backup      | —                             | docker-compose.yml             |
 | Dolibarr Project 2 | https://project2.sdwa5.org | docker-compose.projects.yml |
 | Dolibarr Project 3    | https://project3.sdwa5.org      | docker-compose.projects.yml |
+| Chimo Diazz (placeholder) | https://chimodiazz.sdwa5.org | docker-compose.projects.yml (profile: chimodiazz) |
 | Minecraft (inactive) | :25565                      | docker-compose.yml (profile: minecraft) |
 
 ## Credentials
@@ -50,6 +51,7 @@ See `docs/` for per-service documentation:
 - [Caddy](docs/caddy.md)
 - [Ollama](docs/ollama.md)
 - [Minecraft](docs/minecraft.md)
+- [Chimo Diazz](docs/chimodiazz.md)
 - [Maintenance (disk cleanup, log caps)](docs/maintenance.md)
 - [Monitoring (health checks, alerts, Vaultwarden auto-update)](docs/monitoring.md)
 - [SSH hardening (key-only access, fail2ban)](docs/ssh-hardening.md)

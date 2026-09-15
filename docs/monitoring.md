@@ -35,7 +35,7 @@ auto-update.
 | `containers` | any of vaultwarden, shopware, dolibarr, dolibarr_db, dolibarr_cron, restic is missing, stopped or `unhealthy` |
 | `backup` | the newest snapshot **in the repository** is older than `BACKUP_MAX_AGE_HOURS` (26), the repository cannot be reached or holds no snapshots at all, or the container log reports an explicitly failed run |
 | `vaultwarden_db_backup` | the consistent database copy is missing, or older than `DB_BACKUP_MAX_AGE_HOURS` (26) |
-| `http` | `vault.sdwa5.org/alive`, `sdwa5.org` or `erp.sdwa5.org` returns anything but 200 |
+| `http` | `vault.sdwa5.org/alive`, `sdwa5.org`, `erp.sdwa5.org` or `chimodiazz.sdwa5.org` returns anything but 200 |
 | `caddy` | `systemctl is-active caddy` is not `active` |
 | `firewall` | the IPv4 `INPUT` policy is not `DROP`, fail2ban's jump is gone, a port in `FIREWALL_PORTS` (22 80 443) is no longer accepted, or **`DOCKER-USER` is missing or back to Docker's empty `-j RETURN`**, which leaves every published container port unfiltered. An open IPv6 policy is a WARN rather than a CRIT |
 | `shopware_tasks` | the newest Shopware scheduled task ran longer than `SHOPWARE_TASK_MAX_AGE_HOURS` (2) ago, the task list cannot be read, or no task has ever run |

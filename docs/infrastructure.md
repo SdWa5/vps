@@ -83,6 +83,7 @@ Cron jobs (host, not Docker) — see [monitoring.md](monitoring.md):
 | Vaultwarden database copy  | `monitoring/vaultwarden-db-backup.sh`   | daily 03:50    |
 | Vaultwarden auto-update    | `monitoring/vaultwarden-autoupdate.sh`  | Sunday 03:00   |
 | Shopware worker (x2)       | `monitoring/shopware-worker.sh`         | every minute   |
+| Chimo Diazz deploy         | `monitoring/chimodiazz-deploy.sh`       | every five minutes |
 
 Reverse proxy: **Caddy** (systemd service, not in Docker) — see [caddy.md](caddy.md)
 

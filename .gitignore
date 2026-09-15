@@ -92,3 +92,9 @@ tools/dolibarr/pm-spec.json
 # surname is personal data. tools/dolibarr/address-records.example.json is the
 # committed shape.
 tools/dolibarr/address-records.json
+
+# Claude Code project settings. Deliberately not committed: the file's whole job
+# is to switch off the authorship attribution that the 2026-09-15 rewrite removed
+# from every commit message, so committing it would disclose exactly what that
+# removed. sdwa5-3d has ignored this path since it was created.
+/.claude/

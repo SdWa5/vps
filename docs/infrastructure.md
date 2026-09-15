@@ -20,6 +20,7 @@ flowchart LR
             P2["Dolibarr Project 2<br/>127.0.0.1:8003"]
             P2DB[("MariaDB")]
             P3["Dolibarr Project 3<br/>127.0.0.1:8004"]
+            CD["Chimo Diazz<br/>127.0.0.1:8005/8444 · profile, inactive"]
             P3DB[("MariaDB")]
             OL["Ollama<br/>127.0.0.1 via DOCKER-USER · inactive"]
             MC["Minecraft<br/>0.0.0.0:25565 · profile, inactive"]
@@ -40,10 +41,12 @@ flowchart LR
     U -- " vault.sdwa5.org " --> C
     U -- " erp.sdwa5.org " --> C
     U -- " project2/project3.sdwa5.org " --> C
+    U -- " chimodiazz.sdwa5.org " --> C
     U -- " ssh :22 (key-only) " --> SSHD
     U -. " :25565 " .-> MC
     C --> SW & VW & DL
     C --> P2 & P3
+    C -. " once the container is started " .-> CD
     DL --> DLDB
     DLC --> DLDB
     P2 --> P2DB
@@ -67,6 +70,7 @@ Domain → port mapping lives in the [Caddyfile](../Caddyfile); backup detail in
 | Dolibarr SdWa5 cron | dolibarr/dolibarr:latest     | —               | —                          | docker-compose.yml                      |
 | Dolibarr Project 2  | dolibarr/dolibarr:latest     | 8003            | https://project2.sdwa5.org | docker-compose.projects.yml             |
 | Dolibarr Project 3  | dolibarr/dolibarr:latest     | 8004            | https://project3.sdwa5.org | docker-compose.projects.yml             |
+| Chimo Diazz         | dockware/shopware:6.7.11.1   | 8005 / 8444     | https://chimodiazz.sdwa5.org | docker-compose.projects.yml (profile: chimodiazz) |
 | Ollama              | ollama/ollama:latest         | 11434           | (no domain, firewalled)    | docker-compose.yml                      |
 | Restic backup       | lobaro/restic-backup-docker  | —               | —                          | docker-compose.yml                      |
 | Minecraft           | itzg/minecraft-server:latest | 25565           | —                          | docker-compose.yml (profile: minecraft) |
@@ -118,6 +122,10 @@ is the whole point of that chain.
 ├── shopware-mysql-data/            # gitignored
 ├── shopware-data/                  # gitignored (legacy mount)
 ├── dolibarr-mariadb-data/          # gitignored — Dolibarr SdWa5 DB
+├── chimodiazz-placeholder/         # tracked — static coming-soon page served by Caddy
+├── chimodiazz-src/                 # gitignored — checkout of chimodiazz/website (own deploy key)
+├── chimodiazz-html-data/           # gitignored — Chimo Diazz Shopware web root
+├── chimodiazz-mysql-data/          # gitignored — Chimo Diazz Shopware DB
 ├── dolibarr-documents-data/        # gitignored — Dolibarr SdWa5 uploads
 ├── dolibarr-custom-data/           # gitignored — only GeoLite2-Country.mmdb (MaxMind, re-downloadable)
 ├── vaultwarden-data/               # gitignored — Vaultwarden data

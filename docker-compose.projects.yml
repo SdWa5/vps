@@ -98,3 +98,39 @@ services:
     volumes:
       - ./project3-dolibarr-documents-data:/var/www/documents
       - ./project3-dolibarr-custom-data:/var/www/html/custom
+
+  chimodiazz_shopware:
+    # Same exact pin as the sdwa5.org instance in docker-compose.yml, and for the
+    # same reason: the `6.7-latest` tag that does exist rolls across minor
+    # versions, and a Shopware minor runs forward-only database migrations.
+    # Holding both instances on one version also means a Shopware upgrade is one
+    # deliberate decision rather than two drifting ones.
+    image: dockware/shopware:6.7.11.1
+    container_name: chimodiazz_shopware
+    # Profile-gated on purpose. As of 2026-09-15 chimodiazz/website has no
+    # deployable application yet, so this service is defined but must not start:
+    # a bare `docker-compose -f docker-compose.projects.yml up -d` would otherwise
+    # bring up an empty shop with dockware's default credentials on a public
+    # subdomain. Start it deliberately with `--profile chimodiazz` once the site
+    # exists, and change those credentials in the same sitting.
+    profiles: ["chimodiazz"]
+    restart: unless-stopped
+    logging: *default-logging
+    environment:
+      - SHOP_DOMAIN=chimodiazz.sdwa5.org
+      - APP_URL=https://chimodiazz.sdwa5.org
+    ports:
+      # Loopback only, like every other published port here. Caddy terminates TLS
+      # and reaches 8444, mirroring how sdwa5.org reaches its own container.
+      - "127.0.0.1:8005:80"
+      - "127.0.0.1:8444:443"
+    volumes:
+      - ./chimodiazz-mysql-data:/var/lib/mysql
+      - ./chimodiazz-html-data:/var/www/html
+      # The theme plugin is not owned by this repository. It lives in
+      # chimodiazz/website, which the host checks out to ./chimodiazz-src using
+      # its own read-only deploy key, and it is mounted rather than copied so a
+      # `git pull` in that checkout is the whole update. Read-write on purpose:
+      # Shopware's storefront build writes into the plugin's own dist directory,
+      # which a read-only mount would break.
+      - ./chimodiazz-src/shopware/custom/plugins/ChimodiazzTheme:/var/www/html/custom/plugins/ChimodiazzTheme

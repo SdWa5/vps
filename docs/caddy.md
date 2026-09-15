@@ -15,15 +15,21 @@ Reverse proxy handling TLS termination for all public-facing services.
 | erp.sdwa5.org             | http://localhost:8002 |                                  |
 | project2.sdwa5.org     | http://localhost:8003 |                                  |
 | project3.sdwa5.org          | http://localhost:8004 |                                  |
+| chimodiazz.sdwa5.org      | (none — static placeholder) | `file_server` over `/opt/docker/chimodiazz-placeholder`; becomes `https://127.0.0.1:8444` once the Shopware instance runs |
 
 ## Caddyfile
 
 ```
+# Global options
 {
-    email ripper@sdwa5.org
+    email ripper@sdwa5.org  # For Let's Encrypt notifications
 }
 
+# Main domain - Shopware
 https://sdwa5.org {
+    # First-visit browser-language redirect: German browsers land on /de.
+    # Only on root path; lang_redirect cookie marks "already redirected once"
+    # (Shopware switcher is URL-based, sets no cookie of its own).
     @deFirstVisit {
         path /
         header_regexp Accept-Language ^de
@@ -41,6 +47,7 @@ https://sdwa5.org {
     }
 }
 
+# Other services
 vault.sdwa5.org {
     reverse_proxy localhost:8000 {
         header_up X-Real-IP {remote_host}
@@ -57,6 +64,25 @@ project2.sdwa5.org {
 
 project3.sdwa5.org {
     reverse_proxy localhost:8004
+}
+
+# chimodiazz.sdwa5.org — placeholder while the Shopware instance is being built.
+# This is the only file_server block here; every other site is a reverse_proxy to
+# a loopback port. The site it fronts does not exist yet: chimodiazz/website held
+# content and docs but no deployable application when this block was added on
+# 2026-09-15. The block exists anyway so Caddy issues the certificate and the
+# subdomain answers, rather than failing the TLS handshake as it did before.
+#
+# Once the Shopware instance runs, replace root/file_server with:
+#     reverse_proxy https://127.0.0.1:8444 {
+#         transport http {
+#             tls_insecure_skip_verify
+#         }
+#     }
+# which mirrors how sdwa5.org reaches its own dockware container.
+chimodiazz.sdwa5.org {
+    root * /opt/docker/chimodiazz-placeholder
+    file_server
 }
 ```
 

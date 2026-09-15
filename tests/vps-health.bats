@@ -248,6 +248,19 @@ Container started." health
     [[ "$(mail_body)" == *"502"* ]]
 }
 
+# The built-in HEALTH_URLS default is the whole watch list, because an override
+# in .env has to repeat every existing entry and silently stops watching the
+# ones it forgets. These two assertions make a dropped entry fail here instead.
+@test "the built-in endpoint list covers all four public sites" {
+    health --dry-run
+    [[ "$output" == *"All 4 public endpoints return 200"* ]]
+}
+
+@test "a failing chimodiazz subdomain is named in the mail" {
+    STUB_HTTP_CODE=502 health
+    [[ "$(mail_body)" == *"chimodiazz (https://chimodiazz.sdwa5.org/)"* ]]
+}
+
 @test "an inactive Caddy is critical" {
     STUB_CADDY_STATE=failed health
     [ "$(mail_count)" -eq 1 ]

@@ -156,6 +156,7 @@ key.
 | Key | Purpose | Registered as | Passphrase |
 |---|---|---|---|
 | `/root/.ssh/id_ed25519_sdwa5vps_20260915` | pull `SdWa5/vps` into `/opt/docker` | deploy key on `SdWa5/vps`, id 163344886, `read_only: true` | no |
+| `/root/.ssh/id_ed25519_chimodiazz_20260915` | pull `chimodiazz/website` into `/opt/docker/chimodiazz-src` | deploy key on `chimodiazz/website`, `read_only: true` | no |
 
 Fingerprint `SHA256:cSSIrs739ebFZEOrHkSYQJwCmlgjVnRaApdhJieYHhw`. The private half was generated on
 this host and has never crossed the network. It is the **third** key in this role, and the reason is
@@ -178,6 +179,25 @@ Host github.com
 
 `IdentitiesOnly yes` is the load-bearing line. Without it ssh offers every key it can find, and the
 old one is still on disk.
+
+**A second outbound key was added on 2026-09-15**, for `chimodiazz/website`. GitHub refuses the same
+deploy key on two repositories, so a shared key was never an option, and an account key is the thing
+this section exists to argue against. It gets its own alias rather than a second `IdentityFile` under
+`Host github.com`, because `IdentitiesOnly yes` offers the listed keys in order and GitHub answers as
+whichever repository the first accepted key belongs to:
+
+```
+Host github-chimodiazz
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519_chimodiazz_20260915
+    IdentitiesOnly yes
+```
+
+Verified 2026-09-15, both greetings in one session: `ssh -T github-chimodiazz` answers
+`Hi chimodiazz/website!` and `ssh -T github.com` still answers `Hi SdWa5/vps!`. **The `git_remote`
+health check does not cover the new key**, so its death would be as silent as the old one's was. See
+[chimodiazz.md](chimodiazz.md).
 
 **The greeting is the clearest proof of scope**, because a deploy key identifies as the repository
 rather than as the account:

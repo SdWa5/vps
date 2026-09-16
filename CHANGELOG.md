@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.48.0] - 2026-09-16
+
+### Added
+
+- **An admin integration on `chimodiazz.sdwa5.org`, so that machine access stops running on a human's
+  credentials.** `Chimo agent MCP` is what `@shopware-ag/admin-mcp` connects with, its client id and
+  secret live in the `SSD` Vaultwarden collection next to the login, and
+  [docs/chimodiazz.md](docs/chimodiazz.md) carries the `mcpServers` block that uses them. Verified on
+  creation with a `client_credentials` grant answering 200 and `GET /api/_info/version` answering
+  `6.7.11.1`.
+
+### Removed
+
+- TODO item 10, because its first half is done and its second half is a standing decision rather than
+  a task. That the database and the host stay closed, and why, is stated in
+  [docs/chimodiazz.md](docs/chimodiazz.md) where the rest of Chimo's access is.
+
 ## [1.47.0] - 2026-09-16
 
 ### Added

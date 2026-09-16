@@ -8,10 +8,10 @@
 - `composer.json`/`.lock`, `symfony.lock` and `config/{packages,routes*,services.yaml,bundles.php}` are tracked
   in the repo (everything else in `shopware-html-data/` — `.env`, `var/`, `vendor/`, `public/`, `files/`,
   `config/jwt/` — stays gitignored)
-- Store-installed plugins **FroshLazySizes, FroshPlatformFilterSearch, SwagPlatformSecurity, FroshShopmon** are
-  tracked too — they're not in `composer.lock` (Store install, not `composer require`), so without a repo copy
-  they'd only be recoverable via the Shopware Store account. `FroshPlatformThumbnailProcessor` and
-  `FroshPlatformMailArchive` don't need this — they're real composer requires.
+- **Eleven plugins are installed and active, and this file used to name six of them.** Which ones
+  exist, where each comes from and what records it now lives in [plugins.md](plugins.md), measured
+  rather than listed. The short version is that four are tracked here as source, two are
+  `composer.json` requires, and five are recorded nowhere at all.
 
 ## Runtime: what runs Shopware's background work
 

@@ -185,6 +185,11 @@ chimo_deploy_setup() {
     export STUB_GIT_BRANCH=main
     export STUB_GIT_LOCAL=1111111111111111111111111111111111111111
     export STUB_GIT_REMOTE=1111111111111111111111111111111111111111
+    export STUB_DOCKER_LOG="$BATS_TEST_TMPDIR/chimo-docker.log"
+    : > "$STUB_DOCKER_LOG"
+    # The script locks itself now, so the lock has to live where the test can
+    # write. /run/lock is not writable in the bats container.
+    export LOCK_FILE="$BATS_TEST_TMPDIR/chimo-deploy.lock"
     # Short, because the failure path waits this out. The happy path never
     # reaches the loop's sleep: the stubbed curl answers 200 on the first call.
     export HEALTH_TIMEOUT=5
@@ -202,6 +207,17 @@ chimo_deploy() {
 # deployment, so its absence is how "nothing to do" is asserted.
 chimo_git_calls() {
     cat "$STUB_GIT_LOG"
+}
+
+chimo_docker_calls() {
+    cat "$STUB_DOCKER_LOG"
+}
+
+# A commit that changed nothing the container reads. The path filter is supposed
+# to move the checkout and leave the storefront alone.
+chimo_docs_only_commit() {
+    chimo_new_commit
+    export STUB_GIT_DIFF_FILES="README.md docs/90-inbetriebnahme.md"
 }
 
 db_backup() {

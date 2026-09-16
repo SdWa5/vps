@@ -11,11 +11,26 @@
 # STUB_GIT_REMOTE is origin/<branch>; equal values mean "nothing to deploy", which is the ordinary
 # run. STUB_GIT_REMOTE unset deliberately means the ref does not resolve, so the "branch gone" path
 # can be reached without inventing a separate flag.
+#
+# STUB_GIT_DIFF_FILES is the file list a diff between the two commits would report, and the stub
+# applies the pathspec after `--` to it the way real git would. Without that the path filter would
+# be tested against a stub that always agrees with it.
 [[ -n "${STUB_GIT_LOG:-}" ]] && printf '%s\n' "$*" >> "$STUB_GIT_LOG"
 
 args="$*"
 
 case "$args" in
+    *"diff --name-only"*)
+        rc="${STUB_GIT_DIFF_RC:-0}"
+        (( rc != 0 )) && exit "$rc"
+        specs="${args##*-- }"
+        for f in ${STUB_GIT_DIFF_FILES-shopware/custom/plugins/ChimodiazzTheme/theme.json}; do
+            for spec in $specs; do
+                [[ "$f" == "$spec"* ]] && { printf '%s\n' "$f"; break; }
+            done
+        done
+        exit 0
+        ;;
     *"rev-parse --abbrev-ref HEAD"*)
         printf '%s\n' "${STUB_GIT_BRANCH-main}"
         exit 0

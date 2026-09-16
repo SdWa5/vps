@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.47.0] - 2026-09-16
+
+### Added
+
+- **[docs/chimodiazz.md](docs/chimodiazz.md) now states what Chimo can reach and what he cannot**, as
+  a measured table rather than as something a reader has to assemble from the Caddy snippet and the
+  published ports. He is a full administrator in the admin UI and through the password grant of the
+  Admin API. MySQL is not published at all, there is no SSH account, and the dockware tools stay
+  blocked.
+- TODO item 10, marked high priority: his agent cannot use `@shopware-ag/admin-mcp`, because that
+  needs an admin integration and his instance has none. The eight integrations it does have are
+  Shopware's own service ones with `admin = 0`. Until there is one, machine access runs on a human
+  user's credentials.
+- The same item records that database access stays out deliberately, because granting it means
+  publishing 3306 or handing out an SSH account on this host.
+
 ## [1.46.0] - 2026-09-16
 
 ### Added

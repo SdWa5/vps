@@ -224,6 +224,21 @@ The storefront serves `de-DE` by default since 2026-09-16, with `en-GB` reachabl
 `https://chimodiazz.sdwa5.org/en`. Both are `sales_channel_domain` rows on the one Storefront sales
 channel, so adding a language is a domain rather than a second channel.
 
+## What Chimo can reach, and what he cannot
+
+| Path | State |
+|---|---|
+| Admin UI, `https://chimodiazz.sdwa5.org/admin` | user `chimo`, full administrator |
+| Admin API, password grant with the same credentials | works |
+| Admin API, client credentials for an MCP server | **no integration exists**, item 10 in [TODO.md](../TODO.md) |
+| MySQL | not published at all, only `127.0.0.1:8005` and `127.0.0.1:8444` are |
+| Adminer, MailCatcher, the log viewer | blocked at Caddy, see above |
+| SSH to the host | none |
+
+Measured on 2026-09-16. The database and the host stay closed on purpose, because opening either
+would cost the whole stack something for one guest project. A genuine need for SQL is a request to
+run the query here.
+
 ## Monitoring
 
 `chimodiazz=https://chimodiazz.sdwa5.org/` is in the built-in `HEALTH_URLS` default, and

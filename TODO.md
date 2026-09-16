@@ -180,3 +180,24 @@
     2. store-bought plugins. These arrive through the Shopware account rather than through git and
        cannot come from the repository at all. What is wanted here is a recorded list plus a check
        that alerts when the installed set drifts from it, rather than an installer (ca. 4 Stunden)
+9. **nine of the eleven plugins on `sdwa5.org` are not installed by composer, and five of those are
+   recorded nowhere at all** ([docs/shopware/plugins.md](docs/shopware/plugins.md)). `.gitignore`
+   ignores `shopware-html-data/custom/plugins/*` and lifts exactly four directories back out, so
+   everything installed since falls out of the repository silently. Measured on 2026-09-16, and
+   deliberately only documented that day rather than fixed, because the repair replaces plugin
+   directories on a live shop.
+
+   When it runs, it runs behind Shopware's maintenance mode, decided on 2026-09-16.
+
+    1. six move to composer at exactly the version that runs, so the require is a no-op in content
+       terms: `frosh/lazy-sizes` 3.2.0, `frosh/platform-filter-search` 3.1.0, `frosh/shopmon` 0.2.1,
+       `frosh/tools` 3.9.0, `swag/swag-extension-store` 4.2.2 and `swag/language-pack` 5.58.0. Newer
+       releases exist for the last three, so the require pins rather than floats or the migration
+       silently becomes an upgrade. Three of those six are tracked as source here, so three of the
+       four `!` lines in `.gitignore` go and 51 vendored files leave the repository. The fourth,
+       `SwagPlatformSecurity` with its 115 files, stays until 9.2 (ca. 4 Stunden)
+    2. three cannot, because Packagist does not carry the installed version.
+       `swag/platform-security` 4.0.11 and `tcinn/copyright-custom` 1.0.7 are absent entirely, and
+       `dne/storefront-dark-mode` stops at 2.0.0 while 4.0.0 runs. They need `packages.shopware.com`
+       as a composer repository and a Shopware account token in an untracked `auth.json`, which is
+       item 8.2 seen from this instance. Blocked on that token (ca. 3 Stunden)

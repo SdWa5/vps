@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.46.0] - 2026-09-16
+
+### Added
+
+- **[docs/shopware/plugins.md](docs/shopware/plugins.md), the measured inventory of what the live
+  shop actually runs.** Eleven plugins are installed and active. Two are `composer.json` requires,
+  four are tracked here as source, and **five are recorded nowhere at all**, because `.gitignore`
+  ignores `shopware-html-data/custom/plugins/*` and lifts exactly four directories back out of that
+  exclusion. Anything installed since falls out of the repository silently.
+- The page also records where composer puts a Shopware plugin on this host, which is
+  `custom/plugins/<PluginName>/` and not `vendor/`. Measured, because
+  `vendor/frosh/mail-platform-archive` holds zero files while the `plugin` table gives that plugin
+  `path = custom/plugins/FroshPlatformMailArchive/` with `managed_by_composer = 1`. The directory
+  listing cannot tell the two apart and that column can.
+- The declared licence of all four vendored plugins, which is MIT in each case. That is the
+  measurement behind the carve-out for `shopware-html-data/` in the licence decision.
+- TODO item 9 for the migration to composer, split into the six plugins Packagist carries at exactly
+  the running version and the three it does not, the latter blocked on a Shopware account token.
+
+### Fixed
+
+- **`docs/shopware/infrastructure.md` named six plugins and implied that was all of them**, and
+  `docs/infrastructure.md` repeated the same partial list. Both now point at the inventory instead,
+  so one file holds the answer rather than three holding pieces of it.
+
 ## [1.45.0] - 2026-09-16
 
 ### Added

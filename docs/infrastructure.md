@@ -204,6 +204,6 @@ docker exec shopware php bin/console cache:clear
 - Minecraft is fully configured but excluded from default `up` via compose profile `minecraft`;
   `minecraft-data/` persists the world.
 - `shopware-html-data/` and `minecraft-data/` are no longer fully gitignored — see the tree above for which
-  subpaths are tracked. `frosh/platform-thumbnail-processor` and `frosh/mail-platform-archive` are also
-  installed plugins but stay untracked since they're proper `composer.json`/`composer.lock` requires and get
-  reproduced by `composer install`.
+  subpaths are tracked. The four plugin directories named there are not the whole set: eleven plugins are
+  installed and active on `sdwa5.org`, two of them are `composer.json` requires, and five are recorded
+  nowhere. The measured inventory is [shopware/plugins.md](shopware/plugins.md).

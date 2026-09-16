@@ -45,6 +45,7 @@ See `docs/` for per-service documentation:
 
 - [Infrastructure overview](docs/infrastructure.md)
 - [Shopware](docs/shopware/README.md)
+- [Shopware plugins](docs/shopware/plugins.md)
 - [Dolibarr](docs/dolibarr.md)
 - [Vaultwarden](docs/vaultwarden.md)
 - [Backup (Restic + rclone)](docs/backup.md)

@@ -107,12 +107,87 @@ setup() {
     [ "$(mail_count)" -eq 0 ]
 }
 
+# --- the path filter -------------------------------------------------------
+
+@test "a documentation-only commit moves the checkout without rebuilding" {
+    chimo_docs_only_commit
+    chimo_deploy
+    [ "$status" -eq 0 ]
+    [ "$(mail_count)" -eq 0 ]
+    [[ "$(chimo_git_calls)" == *"reset --hard 2222222222222222222222222222222222222222"* ]]
+    [[ "$(chimo_docker_calls)" != *"theme:compile"* ]]
+}
+
+@test "a commit that touches the theme is rebuilt" {
+    chimo_new_commit
+    chimo_deploy
+    [ "$status" -eq 0 ]
+    [[ "$(chimo_docker_calls)" == *"theme:compile"* ]]
+}
+
+@test "--force rebuilds a documentation-only commit anyway" {
+    chimo_docs_only_commit
+    chimo_deploy --force
+    [ "$status" -eq 0 ]
+    [[ "$(chimo_docker_calls)" == *"theme:compile"* ]]
+}
+
+@test "a diff that cannot be computed rebuilds rather than skipping" {
+    # Skipping a real theme change leaves the site stale with nothing saying so,
+    # which is worse than compiling for nothing.
+    chimo_docs_only_commit
+    STUB_GIT_DIFF_RC=1 chimo_deploy
+    [ "$status" -eq 0 ]
+    [[ "$(chimo_docker_calls)" == *"theme:compile"* ]]
+}
+
+@test "an empty REBUILD_PATHS turns the filter off" {
+    chimo_docs_only_commit
+    REBUILD_PATHS= chimo_deploy
+    [ "$status" -eq 0 ]
+    [[ "$(chimo_docker_calls)" == *"theme:compile"* ]]
+}
+
+# --- the cache race --------------------------------------------------------
+
+@test "a cache:clear that fails once is retried instead of rolling back" {
+    chimo_new_commit
+    STUB_CACHE_CLEAR_FAIL_ONCE="$BATS_TEST_TMPDIR/cache-failed-once" chimo_deploy
+    [ "$status" -eq 0 ]
+    [ "$(mail_count)" -eq 0 ]
+    [[ "$(chimo_docker_calls)" == *"rm -rf var/cache/prod_*"* ]]
+    [[ "$(chimo_git_calls)" != *"reset --hard 1111111111111111111111111111111111111111"* ]]
+}
+
+@test "a cache:clear that keeps failing still rolls back" {
+    chimo_new_commit
+    STUB_CACHE_CLEAR_FAILS=1 chimo_deploy
+    [ "$status" -eq 1 ]
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"rolled back"* ]]
+    [[ "$(chimo_git_calls)" == *"reset --hard 1111111111111111111111111111111111111111"* ]]
+}
+
+# --- the lock --------------------------------------------------------------
+
+@test "a run whose lock is already held exits silently" {
+    chimo_new_commit
+    exec 200>"$LOCK_FILE"
+    flock -n 200
+    chimo_deploy
+    [ "$status" -eq 0 ]
+    [ "$(mail_count)" -eq 0 ]
+    [[ "$(chimo_git_calls)" != *"reset"* ]]
+    flock -u 200
+}
+
 # --- interface -------------------------------------------------------------
 
 @test "the dry run reports the branch and changes nothing" {
     chimo_deploy --dry-run
     [ "$status" -eq 0 ]
     [[ "$output" == *"main"* ]]
+    [[ "$output" == *"shopware/"* ]]
     [[ "$(chimo_git_calls)" != *"fetch"* ]]
     [ "$(mail_count)" -eq 0 ]
 }

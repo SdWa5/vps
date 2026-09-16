@@ -1,10 +1,11 @@
 SHELL=/bin/bash
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 MAILTO=""
-# Every five minutes, under its own flock. A deploy that outlives the interval
-# would otherwise have a second one start on top of it, mid theme compile.
+# Every five minutes. The flock is no longer here but inside the script, on
+# /run/lock/chimodiazz-deploy.lock, so that manual maintenance against the same
+# container can take the same lock. A wrapper here would contend with it.
 #
 # Five rather than one: each run is an authenticated fetch against GitHub, and a
 # theme change is not something anyone waits sixty seconds for. Silent unless a
 # deploy fails, so this line costs nothing while nothing is pushed.
-*/5 * * * * root /usr/bin/flock -n /run/lock/chimodiazz-deploy.lock /opt/docker/monitoring/chimodiazz-deploy.sh 2>&1 | logger -t chimodiazz-deploy
+*/5 * * * * root /opt/docker/monitoring/chimodiazz-deploy.sh 2>&1 | logger -t chimodiazz-deploy

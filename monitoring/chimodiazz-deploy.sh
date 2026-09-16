@@ -24,7 +24,8 @@
 #
 # Usage:
 #   chimodiazz-deploy.sh              fetch, deploy if changed, verify
-#   chimodiazz-deploy.sh --force      deploy even when the commit is unchanged
+#   chimodiazz-deploy.sh --force      deploy even when the commit is unchanged,
+#                                     and rebuild regardless of what it touched
 #   chimodiazz-deploy.sh --dry-run    report what would happen, change nothing
 #   chimodiazz-deploy.sh --help
 
@@ -42,6 +43,22 @@ PLUGIN="${PLUGIN:-ChimodiazzTheme}"
 HEALTH_URL="${HEALTH_URL:-https://chimodiazz.sdwa5.org/}"
 HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-90}"
 CONSOLE="${CONSOLE:-php bin/console}"
+
+# Only a change under one of these paths is worth a rebuild. The rest of
+# chimodiazz/website is documentation, CI and planning material that the
+# container never reads, and without this filter a README fix cost a full
+# theme:compile and a cache:clear on the live shop. The checkout still follows
+# every commit, so the next real change is built from the right base. A list of
+# git pathspecs, and an empty value turns the filter off. The expansion has no
+# colon on purpose, so REBUILD_PATHS= is an explicit "rebuild for everything"
+# rather than silently falling back to the default.
+REBUILD_PATHS="${REBUILD_PATHS-shopware/}"
+
+# One deploy at a time, and the same lock is what manual maintenance on this
+# container is expected to take. It lives here rather than in the cron line
+# because a second flock on the same file from a child process contends with the
+# lock its own parent already holds.
+LOCK_FILE="${LOCK_FILE:-/run/lock/chimodiazz-deploy.lock}"
 
 # Whatever branch the checkout sits on. Switching what gets deployed is then a
 # `git switch` in chimodiazz-src/ rather than an edit here, and the deployed
@@ -67,6 +84,22 @@ local_commit() {
 
 remote_commit() {
     git_src rev-parse "origin/$BRANCH" 2>/dev/null
+}
+
+# True when the two commits differ somewhere under REBUILD_PATHS. Anything that
+# cannot be answered counts as "rebuild", because compiling for nothing costs
+# twenty seconds while skipping a real theme change leaves the site stale with
+# nothing saying so.
+needs_rebuild() {
+    local before="$1" after="$2" changed
+    [[ -z "$REBUILD_PATHS" ]] && return 0
+    [[ -z "$before" ]] && return 0
+    # REBUILD_PATHS is a list of pathspecs and has to split into separate
+    # arguments, so the word splitting here is the point rather than an
+    # oversight.
+    # shellcheck disable=SC2086
+    changed="$(git_src diff --name-only "$before" "$after" -- $REBUILD_PATHS 2>/dev/null)" || return 0
+    [[ -n "$changed" ]]
 }
 
 # Every console call goes through here so a failure carries the command and the
@@ -97,8 +130,22 @@ rebuild_theme() {
     # shellcheck disable=SC2086
     docker exec "$SERVICE" $CONSOLE plugin:update "$PLUGIN" >/dev/null 2>&1
     console theme:compile || return 1
-    console cache:clear || return 1
+    clear_cache || return 1
     return 0
+}
+
+# A failed cache:clear earns one retry before a rollback. Symfony builds a fresh
+# cache directory and swaps it in, so two clears at once leave the loser with a
+# half-built directory and a router that cannot find url_matching_routes.php.
+# That happened on 2026-09-16, when maintenance was run by hand against this
+# container while a deploy was in flight, and it rolled back a commit that had
+# only changed Markdown. Emptying the directory and asking again is cheaper than
+# reverting the site.
+clear_cache() {
+    console cache:clear && return 0
+    log "cache:clear failed, emptying the cache directory and retrying once"
+    docker exec "$SERVICE" sh -c 'rm -rf var/cache/prod_*' >/dev/null 2>&1
+    console cache:clear
 }
 
 wait_for_health() {
@@ -134,8 +181,13 @@ failure it resets to the previous commit, rebuilds from it and mails an alert.
 Deploys whatever branch chimodiazz-src/ is checked out on. Change that with a
 git switch in that directory.
 
+The checkout follows every commit, but the rebuild only runs when the commit
+touched REBUILD_PATHS, which defaults to shopware/. A documentation commit
+therefore moves the checkout and leaves the storefront alone.
+
   chimodiazz-deploy.sh              fetch, deploy if changed, verify
-  chimodiazz-deploy.sh --force      deploy even when the commit is unchanged
+  chimodiazz-deploy.sh --force      deploy even when the commit is unchanged,
+                                    and rebuild regardless of what it touched
   chimodiazz-deploy.sh --dry-run    report what would happen, change nothing
   chimodiazz-deploy.sh --help       this text
 USAGE
@@ -175,10 +227,16 @@ main() {
         echo "Checkout:       $SRC_DIR"
         echo "Branch:         $BRANCH"
         echo "Local commit:   ${before:-unknown}"
+        echo "Rebuild paths:  ${REBUILD_PATHS:-<everything>}"
         echo "Health URL:     $HEALTH_URL"
         echo "Would run:      git fetch, then compare against origin/$BRANCH"
         exit 0
     fi
+
+    # Silent when somebody else holds it, which is what the cron wrapper used to
+    # do. A deploy that is already running needs no second opinion.
+    exec 9>"$LOCK_FILE"
+    flock -n 9 || exit 0
 
     if ! git_src fetch --quiet --prune origin "$BRANCH" 2>/dev/null; then
         send_mail "[sdwa5] Chimo Diazz deploy: fetch failed" \
@@ -201,14 +259,19 @@ This is usually the read-only deploy key: it is registered on chimodiazz/website
         exit 0
     fi
 
-    log "Deploying $before -> $after"
-
     if ! git_src reset --hard "$after" >/dev/null 2>&1; then
         send_mail "[sdwa5] Chimo Diazz deploy: reset failed" \
 "git reset --hard $after failed in $SRC_DIR on $(hostname). The site is untouched and still serving $before." \
             || log "reset failed"
         exit 1
     fi
+
+    if (( ! FORCE )) && ! needs_rebuild "$before" "$after"; then
+        log "Updated $before -> $after without a rebuild, nothing under $REBUILD_PATHS changed"
+        exit 0
+    fi
+
+    log "Deploying $before -> $after"
 
     if ! rebuild_theme; then
         rollback "$before"

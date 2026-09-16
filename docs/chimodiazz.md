@@ -169,11 +169,36 @@ fits, and it is the largest single thing this host would then be running twice.
 
 A change to the theme reaches the site without anyone touching this host.
 `monitoring/chimodiazz-deploy.sh` runs **every five minutes** from
-`/etc/cron.d/chimodiazz-deploy` under its own `flock`, fetches the checkout's branch, and when the
-commit moved it resets to it, refreshes and updates the plugin, recompiles the storefront and clears
-the cache. Then it asks the public URL for a 200. If the rebuild fails or the site does not come
-back, it resets to the commit that was serving before, rebuilds from that and sends one mail. Silent
-otherwise, which is almost every run.
+`/etc/cron.d/chimodiazz-deploy`, fetches the checkout's branch, and when the commit moved it resets
+to it, refreshes and updates the plugin, recompiles the storefront and clears the cache. Then it asks
+the public URL for a 200. If the rebuild fails or the site does not come back, it resets to the
+commit that was serving before, rebuilds from that and sends one mail. Silent otherwise, which is
+almost every run.
+
+**The checkout follows every commit, but only a commit under `REBUILD_PATHS` is rebuilt**, and that
+defaults to `shopware/`. Everything else in `chimodiazz/website` is documentation, CI and planning
+material the container never reads, and without the filter a README fix cost a full `theme:compile`
+and a `cache:clear` on the live shop. A documentation commit therefore moves the checkout and leaves
+the storefront alone, so the next real change is still built from the right base. `--force` rebuilds
+regardless, and `REBUILD_PATHS=` turns the filter off. A diff that cannot be computed counts as
+"rebuild", because compiling for nothing costs twenty seconds while skipping a real theme change
+leaves the site stale with nothing saying so.
+
+**A failed `cache:clear` earns one retry before the rollback.** Symfony builds a fresh cache
+directory and swaps it in, so two clears at once leave the loser with a half-built directory and a
+router that cannot find `url_matching_routes.php`. That happened on 2026-09-16, when
+`theme:change --all` and `cache:clear` were run by hand against this container while a deploy was in
+flight, and it rolled back a commit that had only changed Markdown. The retry empties
+`var/cache/prod_*` and asks again. A second failure is a real failure and still rolls back.
+
+**The lock lives in the script rather than in the cron line**, on
+`/run/lock/chimodiazz-deploy.lock`. A run that finds it held exits silently. Manual maintenance
+against this container takes the same lock, which is what the 2026-09-16 collision was missing:
+
+```bash
+flock /run/lock/chimodiazz-deploy.lock \
+    docker exec chimodiazz_shopware php bin/console cache:clear
+```
 
 **It pulls rather than being pushed to, and that departs from [TODO.md](../TODO.md) on purpose.**
 That file settled on a push-based GitHub Action on 2026-09-03 and asked not to re-open the
@@ -189,6 +214,10 @@ own mail rather than going quiet; the fetch failure names the deploy key, becaus
 repository this host does not own and can be revoked without anything here noticing.
 
 The checkout is never edited by hand, which is what makes `git reset --hard` safe as the rollback.
+
+The storefront serves `de-DE` by default since 2026-09-16, with `en-GB` reachable at
+`https://chimodiazz.sdwa5.org/en`. Both are `sales_channel_domain` rows on the one Storefront sales
+channel, so adding a language is a domain rather than a second channel.
 
 ## Monitoring
 

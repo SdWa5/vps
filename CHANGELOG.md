@@ -6,6 +6,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.45.0] - 2026-09-16
+
+### Added
+
+- **A commit that changes no file the container reads no longer rebuilds the storefront.**
+  `monitoring/chimodiazz-deploy.sh` now compares the old and the new commit against
+  `REBUILD_PATHS`, which defaults to `shopware/`, and skips `plugin:refresh`, `theme:compile` and
+  `cache:clear` when nothing there moved. The checkout still follows every commit, so the next real
+  change is built from the right base. `--force` rebuilds regardless, `REBUILD_PATHS=` turns the
+  filter off, and a diff that cannot be computed counts as "rebuild", because compiling for nothing
+  costs twenty seconds while skipping a real theme change leaves the site stale and says nothing.
+- **A failed `cache:clear` is retried once before the deploy gives up and rolls back.** The retry
+  empties `var/cache/prod_*` and asks again. A second failure is still a failure.
+
+### Changed
+
+- **The deploy takes its own `flock` instead of being wrapped in one by cron**, on
+  `/run/lock/chimodiazz-deploy.lock`, and `monitoring/cron.d/chimodiazz-deploy` calls the script
+  directly. Manual maintenance against the same container can now take the same lock, which a
+  wrapper in the cron line made impossible: a second `flock` on that file would have contended with
+  the one its own parent already held.
+- The storefront of `chimodiazz.sdwa5.org` serves `de-DE` by default, with `en-GB` at
+  `https://chimodiazz.sdwa5.org/en`. That is sales channel configuration rather than repository
+  state, and it is recorded in [docs/chimodiazz.md](docs/chimodiazz.md) so the next reader does not
+  have to guess where the language comes from.
+
+### Fixed
+
+- **`ChimodiazzTheme` was installed and activated but never assigned to the sales channel**, so
+  every deploy ran cleanly and changed nothing visible. Measured on 2026-09-16 in
+  `theme_sales_channel`, which paired the Storefront channel with the default `Storefront` theme.
+  `theme:change --all ChimodiazzTheme` fixed it, and the storefront now carries the theme's own
+  marker and its three accent colours.
+- **Two `cache:clear` runs at once broke a deploy on 2026-09-16.** Symfony builds a fresh cache
+  directory and swaps it in, so the loser was left with a half-built directory and a router that
+  could not find `url_matching_routes.php`. The deploy rolled back a commit that had only changed
+  Markdown. The retry above and the lock in the script are the two halves of the answer.
+
 ## [1.44.0] - 2026-09-15
 
 ### Added

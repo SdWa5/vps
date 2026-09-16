@@ -201,3 +201,20 @@
        `dne/storefront-dark-mode` stops at 2.0.0 while 4.0.0 runs. They need `packages.shopware.com`
        as a composer repository and a Shopware account token in an untracked `auth.json`, which is
        item 8.2 seen from this instance. Blocked on that token (ca. 3 Stunden)
+10. **high priority. Chimo's agent has no machine access to his own Shopware instance**
+    ([docs/chimodiazz.md](docs/chimodiazz.md)). Measured on 2026-09-16: `chimodiazz.sdwa5.org` has no
+    admin integration, so `@shopware-ag/admin-mcp` cannot connect, and the eight integrations that do
+    exist are Shopware's own service ones with `admin = 0`. His agent can therefore only reach the
+    shop through the password grant of a human user, which means his personal credentials travel
+    into whatever tool wants the access.
+
+    1. create an admin integration on that instance, put its client id and secret in the `SSD`
+       Vaultwarden collection next to the login, and give him the `mcpServers` block to paste. The
+       instance is `https://chimodiazz.sdwa5.org` rather than `https://sdwa5.org`, otherwise the
+       shape is identical to the existing one (ca. 45 Minuten)
+    2. **database access stays out, deliberately.** Granting it means publishing 3306 or handing out
+       an SSH account on this host, and neither is something a guest project should cost the rest of
+       the stack. Adminer is blocked at Caddy for the same reason, see
+       [docs/chimodiazz.md](docs/chimodiazz.md). The Admin API and the MCP are the supported paths,
+       and a genuine need for SQL is a request to run the query here rather than a reason to open a
+       port (`decision`)

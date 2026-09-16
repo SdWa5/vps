@@ -215,6 +215,11 @@ repository this host does not own and can be revoked without anything here notic
 
 The checkout is never edited by hand, which is what makes `git reset --hard` safe as the rollback.
 
+**The deploy runs no `composer install`**, so it can only build what is already in the checkout. A
+plugin that `chimodiazz/website` requires through composer, and a plugin bought in the Shopware
+store, both have to be installed on this host by hand today. That is item 8 in
+[TODO.md](../TODO.md).
+
 The storefront serves `de-DE` by default since 2026-09-16, with `en-GB` reachable at
 `https://chimodiazz.sdwa5.org/en`. Both are `sales_channel_domain` rows on the one Storefront sales
 channel, so adding a language is a domain rather than a second channel.

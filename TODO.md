@@ -161,3 +161,22 @@
        `git diff --name-status HEAD origin/main` first; a tracked file that has since become untracked,
        as `minecraft-data/server.properties` once was, gets removed by the reset whatever `.gitignore`
        says afterwards.
+8. **the Chimo Diazz deploy cannot install a plugin that is not already in the checkout**
+   ([docs/chimodiazz.md](docs/chimodiazz.md)). `monitoring/chimodiazz-deploy.sh` runs
+   `plugin:refresh`, `plugin:update`, `theme:compile` and `cache:clear`, and deliberately no
+   `composer install`. A theme change therefore deploys itself, while a plugin that
+   `chimodiazz/website` requires through composer, or one bought in the Shopware store, has to be
+   installed on the host by hand. That breaks the property the rest of this pipeline has, namely that
+   the shop's state follows from the repository. Raised on 2026-09-16, when a dark mode plugin came
+   up. Dark mode itself belongs in the theme's own scss rather than here.
+
+   Two halves, and they are separate decisions:
+
+    1. composer requires from the plugin. running `composer install` in the container on every deploy
+       is the obvious move and the dangerous one, because it reaches the network from a production
+       shop, it can fail halfway, and the rollback would have to undo it as well. A safer shape runs
+       it only when `composer.lock` moved, behind the same rollback, with the vendor directory
+       snapshotted first (ca. 6 Stunden)
+    2. store-bought plugins. These arrive through the Shopware account rather than through git and
+       cannot come from the repository at all. What is wanted here is a recorded list plus a check
+       that alerts when the installed set drifts from it, rather than an installer (ca. 4 Stunden)

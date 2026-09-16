@@ -230,14 +230,34 @@ channel, so adding a language is a domain rather than a second channel.
 |---|---|
 | Admin UI, `https://chimodiazz.sdwa5.org/admin` | user `chimo`, full administrator |
 | Admin API, password grant with the same credentials | works |
-| Admin API, client credentials for an MCP server | **no integration exists**, item 10 in [TODO.md](../TODO.md) |
+| Admin API, client credentials for an MCP server | integration `Chimo agent MCP`, admin, since 2026-09-16 |
 | MySQL | not published at all, only `127.0.0.1:8005` and `127.0.0.1:8444` are |
 | Adminer, MailCatcher, the log viewer | blocked at Caddy, see above |
 | SSH to the host | none |
 
 Measured on 2026-09-16. The database and the host stay closed on purpose, because opening either
 would cost the whole stack something for one guest project. A genuine need for SQL is a request to
-run the query here.
+run the query here rather than a reason to publish 3306 or hand out an SSH account.
+
+**The MCP integration exists since 2026-09-16** and is what keeps a machine's access off a human's
+credentials. Its client id and secret live in the `SSD` Vaultwarden collection next to the login,
+and the block that uses them is:
+
+```json
+"shopware-admin-mcp": {
+  "type": "stdio",
+  "command": "npx",
+  "args": ["-y", "@shopware-ag/admin-mcp"],
+  "env": {
+    "SHOPWARE_API_URL": "https://chimodiazz.sdwa5.org",
+    "SHOPWARE_API_CLIENT_ID": "<from the vault>",
+    "SHOPWARE_API_CLIENT_SECRET": "<from the vault>"
+  }
+}
+```
+
+Verified on creation with a `client_credentials` grant, which answered 200, and with
+`GET /api/_info/version`, which answered `6.7.11.1`.
 
 ## Monitoring
 

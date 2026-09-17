@@ -615,6 +615,11 @@ test never authenticates at all.
   the workstation is no longer the only holder, but a rescue console cannot fetch a vault item and
   every client is logged out for a while after a KDF change. The Contabo console stays the break-glass
   behind both.
+- **There is no account allowlist.** Measured 2026-09-17: sshd has no `AllowUsers`, no
+  `AllowGroups` and no `DenyUsers`, and not a single `Match` block, so any account on this host
+  that carries a key can log in. That was harmless while `root` was the only such account and
+  `admin` had no key. It stops being harmless the moment a second account is created, which is
+  what TODO item 10.1 proposes, so the `AllowGroups` belongs in the same change.
 - Inbound IPv6 is unverified. Outbound works, no AAAA record is published, and the client used for
   testing had IPv6 blocked by its VPN. Settle it from a host with working IPv6 before publishing an
   AAAA record. See the firewall section.

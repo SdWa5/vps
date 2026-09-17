@@ -234,10 +234,18 @@ channel, so adding a language is a domain rather than a second channel.
 | MySQL | not published at all, only `127.0.0.1:8005` and `127.0.0.1:8444` are |
 | Adminer, MailCatcher, the log viewer | blocked at Caddy, see above |
 | SSH to the host | none |
+| The result of his own deploy | nothing, see below |
 
 Measured on 2026-09-16. The database and the host stay closed on purpose, because opening either
 would cost the whole stack something for one guest project. A genuine need for SQL is a request to
 run the query here rather than a reason to publish 3306 or hand out an SSH account.
+
+**The deploy tells him nothing.** `monitoring/chimodiazz-deploy.sh` writes no state file and
+no log that anything off this host can read, and it mails only `MONITOR_MAIL_TO`, which is the
+monitoring address of the whole host rather than his. So a push into `chimodiazz/website` is
+handed over and goes quiet, and neither he nor an agent of his can see which commit is checked
+out, whether the last `theme:compile` succeeded or why a rollback happened. That is item 10 in
+[TODO.md](../TODO.md), where three ways to close it are weighed.
 
 **The MCP integration exists since 2026-09-16** and is what keeps a machine's access off a human's
 credentials. Its client id and secret live in the `SSD` Vaultwarden collection next to the login,

@@ -201,3 +201,65 @@
        `dne/storefront-dark-mode` stops at 2.0.0 while 4.0.0 runs. They need `packages.shopware.com`
        as a composer repository and a Shopware account token in an untracked `auth.json`, which is
        item 8.2 seen from this instance. Blocked on that token (ca. 3 Stunden)
+10. **Chimo cannot see what his own deploy did.** Deployment is a pull from this side, so a push into
+    `chimodiazz/website` is handed over and then goes quiet. `monitoring/chimodiazz-deploy.sh` runs
+    every five minutes, writes no state file and no log that anything off this host can read, and its
+    only output is a mail to the monitoring recipient when a run fails. Read in the script on
+    2026-09-17, where those seven `send_mail` calls are the whole of it. His cloud Claude Code session
+    therefore has no way to learn which commit is checked out, whether the last `theme:compile`
+    succeeded, or why a rollback happened, and the admin API and the `Chimo agent MCP` integration
+    reach the shop's data while saying nothing about the deploy. Raised on 2026-09-17.
+
+    **The constraint is that whatever is granted reaches this one instance and nothing else.** A shell
+    account is what that rules out, because `/opt/docker` carries every service in this repository. It
+    does not rule out SSH itself, which is proposal 1 below. A reader on the monitoring mailbox is
+    ruled out as well, because `MONITOR_MAIL_TO` is one address for the whole host and receives the
+    health, backup and vaultwarden mails too.
+
+    Four proposals, and they are alternatives rather than steps:
+
+    1. **a forced-command SSH key that can only talk to this instance.** Measured on the host on
+       2026-09-17, the ground is favourable. sshd has no `AllowUsers`, no `AllowGroups`, no
+       `DenyUsers` and not a single `Match` block, `PasswordAuthentication` is already `no`, the
+       `docker` group exists with **zero members** because everything here runs as root, and the only
+       human uid is `admin` at 1000 with `/usr/sbin/nologin`. The shape is then a fresh account with
+       no password and no `sudo` group membership, his own public key in its `authorized_keys` behind
+       `restrict,command="…"`, a `Match User` block that repeats `ForceCommand`, `PermitTTY no` and
+       `AllowTcpForwarding no` so that an edited `authorized_keys` cannot widen it, and one
+       `/etc/sudoers.d` line naming a single root-owned helper with no wildcard in it.
+
+       **The `docker` group is not the way in and staying out of it is the whole point**, because a
+       member of it bind-mounts `/` into a container and is thereby root on this host. The wrapper
+       maps a verb out of `SSH_ORIGINAL_COMMAND` onto a fixed `case` and hands the privileged half no
+       string it received from the network, and it names `chimodiazz_shopware` and `chimodiazz-src`
+       literally, so nothing it can be asked for reaches vaultwarden, dolibarr, minecraft or the
+       `sdwa5.org` shop. The verbs worth having are the deploy state, the tail of the last run, a
+       `--force` redeploy under the lock the script already takes, and an allowlist of exact
+       `bin/console` subcommands.
+
+       This is the only proposal that lets him act rather than only watch, and it opens no new public
+       endpoint and puts no token on a public name. What it costs is a shell script parsing a remote
+       string, where a quoting bug is root, so it is also the one that has to be written carefully and
+       covered by the `tests/` suite. The private half would live wherever his cloud session keeps it,
+       which is the weakest part of the arrangement and the reason the scope is drawn this tightly,
+       because losing that key should cost the shop and nothing else. Revocation is one line out of
+       `authorized_keys`. **Worth doing in the same pass is an `AllowGroups`**, since today any
+       account on this host that has a key can log in, and that was acceptable while there was only
+       one such account (ca. 6 Stunden)
+    2. **a status file that the deploy script writes and Caddy serves.** Each run would record the
+       branch, the commit, the timestamp, the outcome and, on a failure, the tail of the command that
+       failed, as JSON somewhere under `/opt/docker`, and a `handle` in the `chimodiazz.sdwa5.org`
+       block would serve that one path behind a bearer token. It reads nothing outside this instance,
+       it opens no port and no account, and an agent can poll it. What it needs deciding first is
+       whether commit hashes and build error output are fit to sit behind a single static token on a
+       public name, and whether a failing `theme:compile` may quote plugin source. The state file is
+       worth building either way, because proposal 1 wants the same data to print (ca. 3 Stunden)
+    3. **the same result written back to `chimodiazz/website` as a commit status**, which is where he
+       is looking anyway and where an agent reads it without any new endpoint. It costs a token with
+       write access to a repository this host does not own, which inverts the read-only direction that
+       the pull deployment was chosen for in the first place. That is the reason to expect this one to
+       be rejected rather than a detail to solve (ca. 4 Stunden)
+    4. **a second recipient for this script alone**, by setting `MONITOR_MAIL_TO` in
+       `/etc/cron.d/chimodiazz-deploy` rather than in `.env`, so the deploy mails reach him and the
+       rest of the host's monitoring does not. It is the cheapest of the four and it closes the human
+       half only, because a mailbox is not something his session reads (ca. 30 Minuten)

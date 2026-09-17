@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.49.0] - 2026-09-17
+
+### Added
+
+- TODO item 10: the deploy is a pull, so Chimo gets nothing back from it. `chimodiazz-deploy.sh`
+  writes no state file and no log that anything off this host can read, and its only output is a
+  mail to `MONITOR_MAIL_TO`, which is the whole host's monitoring address. His cloud Claude Code
+  session can therefore not tell which commit is checked out or why a rollback happened. Four
+  alternatives are recorded under the constraint that whatever is granted reaches this one instance
+  and nothing else, namely a forced-command SSH key, a token-protected status file served by Caddy, a
+  commit status written back to `chimodiazz/website`, and a second mail recipient for this script
+  alone.
+- The SSH proposal is written against the host as measured on 2026-09-17. sshd carries no
+  `AllowUsers`, no `AllowGroups`, no `DenyUsers` and no `Match` block, `PasswordAuthentication` is
+  already `no`, the `docker` group has zero members, and the only human uid is `admin` at 1000 with
+  `/usr/sbin/nologin`. The proposal is an account with no password and no `sudo` group membership, a
+  `restrict,command="…"` key, a `Match User` block that cannot be widened from `authorized_keys`, and
+  one wildcard-free `sudoers.d` line for a root-owned helper. Membership of the `docker` group is
+  ruled out in writing, because it is equivalent to root on this host.
+- [docs/ssh-hardening.md](docs/ssh-hardening.md) records the missing account allowlist as an open
+  item, since a second account is what makes it matter.
+- [docs/chimodiazz.md](docs/chimodiazz.md) now names the deploy result as something he cannot reach,
+  in the table that lists the rest of his access.
+
 ## [1.48.0] - 2026-09-16
 
 ### Added

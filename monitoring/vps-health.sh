@@ -418,17 +418,6 @@ check_vaultwarden_version() {
 # Alert state and backoff
 # ---------------------------------------------------------------------------
 
-# Seconds to wait before reminder number N+1, given N reminders already sent.
-# 1, 2, 4, 8, 16 days, then capped at 30.
-backoff_seconds() {
-    local sent="$1" days=1 i
-    for (( i = 1; i < sent; i++ )); do
-        days=$(( days * 2 ))
-        (( days >= 30 )) && { days=30; break; }
-    done
-    echo $(( days * 86400 ))
-}
-
 # A short hash of the message, so a problem that changes shape (a second
 # container dies) alerts again instead of waiting out the backoff.
 fingerprint() {

@@ -210,8 +210,17 @@ opens nothing inbound. The decision for `SdWa5/vps` itself is untouched.
 **What gets deployed is whatever branch `chimodiazz-src/` is checked out on.** Switching it is a
 `git switch` in that directory rather than an edit to the script, and it is visible to anyone who
 looks. A detached checkout, a branch that disappeared upstream and a failing fetch each send their
-own mail rather than going quiet; the fetch failure names the deploy key, because that key lives on a
+own mail rather than going quiet. The fetch failure names the deploy key, because that key lives on a
 repository this host does not own and can be revoked without anything here noticing.
+
+**A fetch that fails for one run mails nothing.** On 2026-09-29 the run at 16:55 failed its fetch
+between two good runs, and the mail blamed the deploy key, which authenticated and fetched fine when
+it was checked on 2026-10-01. A failed fetch is therefore only logged, with git's own output, until it
+has failed for `FETCH_GRACE` seconds (900, three runs). Then it mails with that output, reminds after
+1, 2, 4, 8 and 16 days and then every 30 days, and mails once more when the fetch works again. A
+branch that is gone from the remote mails at once, since git only says so after reaching the
+remote. The fetch runs under `LC_ALL=C`, because the script tells the two apart by git's English text.
+The state sits in `/var/lib/vps-health/chimodiazz-deploy-remote` while a fault lasts.
 
 The checkout is never edited by hand, which is what makes `git reset --hard` safe as the rollback.
 

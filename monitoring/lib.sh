@@ -27,6 +27,18 @@ now() {
     echo "${FAKE_NOW:-$(date +%s)}"
 }
 
+# Seconds to wait before reminder number N+1, given N reminders already sent.
+# 1, 2, 4, 8, 16 days, then capped at 30. Shared by vps-health.sh and
+# chimodiazz-deploy.sh, so both back off on the same schedule.
+backoff_seconds() {
+    local sent="$1" days=1 i
+    for (( i = 1; i < sent; i++ )); do
+        days=$(( days * 2 ))
+        (( days >= 30 )) && { days=30; break; }
+    done
+    echo $(( days * 86400 ))
+}
+
 # Log to stderr with a timestamp. stdout stays reserved for check results.
 log() {
     printf '[%s] %s\n' "$(date -u '+%Y-%m-%d %H:%M:%S')" "$*" >&2

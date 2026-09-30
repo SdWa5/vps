@@ -10,7 +10,7 @@ All live in [`monitoring/`](../monitoring/) and are deployed to `/opt/docker/mon
 | Vaultwarden update | `vaultwarden-autoupdate.sh` | daily 03:00 | an update was applied, an update failed, or the health check stopped running |
 | Shopware worker | `shopware-worker.sh` | every minute, under `flock` | the scheduled tasks or the queue consumer failed, or the container is down |
 | Chimo Diazz worker | `shopware-worker.sh` with `SERVICE=chimodiazz_shopware` | every minute, under its own `flock` | same, for the second Shopware instance |
-| Chimo Diazz deploy | `chimodiazz-deploy.sh` | **every five minutes**, taking its own `flock` internally | a theme deployment failed and was rolled back, or the remote could not be reached |
+| Chimo Diazz deploy | `chimodiazz-deploy.sh` | **every five minutes**, taking its own `flock` internally | a theme deployment failed and was rolled back, or the remote could not be reached for 15 minutes, with reminders backing off like the health check's and one mail when it is reachable again |
 
 **A healthy system sends nothing.** There is no all-green digest.
 

@@ -42,12 +42,63 @@ setup() {
 
 # --- failures --------------------------------------------------------------
 
-@test "a failed fetch alerts and names the deploy key, without touching the site" {
-    STUB_GIT_FETCH_RC=1 chimo_deploy
+@test "a fetch that fails once is logged and mails nothing" {
+    STUB_GIT_FETCH_RC=1 STUB_GIT_FETCH_ERR="ssh: connect to host github.com port 22: Connection timed out" chimo_deploy
+    [ "$status" -eq 1 ]
+    [ "$(mail_count)" -eq 0 ]
+    [[ "$output" == *"Connection timed out"* ]]
+    [[ "$(chimo_git_calls)" != *"reset"* ]]
+}
+
+@test "a fetch that keeps failing past the grace alerts with git's words and names the deploy key" {
+    export STUB_GIT_FETCH_RC=1 STUB_GIT_FETCH_ERR="ERROR: Repository not found."
+    FAKE_NOW=1000000 chimo_deploy
+    FAKE_NOW=1000600 chimo_deploy
+    [ "$(mail_count)" -eq 0 ]
+    FAKE_NOW=1000900 chimo_deploy
     [ "$status" -eq 1 ]
     [ "$(mail_count)" -eq 1 ]
     [[ "$(mail_body)" == *"github-chimodiazz"* ]]
+    [[ "$(mail_body)" == *"Repository not found."* ]]
     [[ "$(chimo_git_calls)" != *"reset"* ]]
+}
+
+@test "a lasting fetch failure reminds after a day rather than every run" {
+    export STUB_GIT_FETCH_RC=1 FETCH_GRACE=0
+    FAKE_NOW=1000000 chimo_deploy
+    FAKE_NOW=1000300 chimo_deploy
+    FAKE_NOW=1086300 chimo_deploy
+    [ "$(mail_count)" -eq 1 ]
+    FAKE_NOW=1086400 chimo_deploy
+    [ "$(mail_count)" -eq 2 ]
+    [[ "$(mail_body)" == *"reminder 2"* ]]
+}
+
+@test "a remote that is reachable again after an alert says so once" {
+    STUB_GIT_FETCH_RC=1 FETCH_GRACE=0 chimo_deploy
+    [ "$(mail_count)" -eq 1 ]
+    chimo_deploy
+    [ "$status" -eq 0 ]
+    [ "$(mail_count)" -eq 2 ]
+    [[ "$(mail_body)" == *"reachable again"* ]]
+    chimo_deploy
+    [ "$(mail_count)" -eq 2 ]
+}
+
+@test "a remote that recovers within the grace stays silent" {
+    STUB_GIT_FETCH_RC=1 chimo_deploy
+    chimo_deploy
+    [ "$status" -eq 0 ]
+    [ "$(mail_count)" -eq 0 ]
+    [[ ! -e "$STATE_DIR/chimodiazz-deploy-remote" ]]
+}
+
+@test "a branch deleted upstream alerts as gone without waiting out the grace" {
+    STUB_GIT_FETCH_RC=128 STUB_GIT_FETCH_ERR="fatal: couldn't find remote ref main" chimo_deploy
+    [ "$status" -eq 1 ]
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"branch gone"* ]]
+    [[ "$(mail_body)" == *"couldn't find remote ref main"* ]]
 }
 
 @test "a branch that no longer exists alerts rather than deploying nothing quietly" {

@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.50.0] - 2026-09-30
+
+### Added
+
+- TODO item 11: paperless-ngx behind Caddy for two tenants, a private one and the Verein. One
+  instance with per-owner permissions is the goal and two instances are the fallback. Whether tags,
+  correspondents and document types can be separated per owner is still to be checked.
+- Sub-items to maybe fork paperless-ngx into the SdWa5 organization and to make that fork public.
+
 ## [1.49.0] - 2026-09-17
 
 ### Added

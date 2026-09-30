@@ -173,12 +173,13 @@ a compromise of every repository. The key was deleted, GitHub id 155997825.
 ```
 Host github.com
     User git
-    IdentityFile ~/.ssh/id_ed25519_deploy
+    IdentityFile ~/.ssh/id_ed25519_sdwa5vps_20260915
     IdentitiesOnly yes
 ```
 
-`IdentitiesOnly yes` is the load-bearing line. Without it ssh offers every key it can find, and the
-old one is still on disk.
+`IdentitiesOnly yes` is the load-bearing line. Without it ssh offers every key it can find. Measured on
+2026-09-30, `/root/.ssh/` holds only the two keys in the table above, so no superseded key is left to
+offer, and the line stays so that a key added later cannot be offered by accident either.
 
 **A second outbound key was added on 2026-09-15**, for `chimodiazz/website`. GitHub refuses the same
 deploy key on two repositories, so a shared key was never an option, and an account key is the thing

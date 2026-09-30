@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.51.0] - 2026-10-01
+
+### Added
+
+- `FETCH_GRACE` in `monitoring/chimodiazz-deploy.sh`, 900 seconds by default. A fetch that fails is only
+  logged until it has failed for that long, since one failed run on 2026-09-29 at 16:55 mailed an alert
+  between two good runs.
+- Reminders for a remote that stays unreachable, after 1, 2, 4, 8 and 16 days and then every 30 days, and
+  one mail when the fetch works again. The state is kept in `/var/lib/vps-health/chimodiazz-deploy-remote`.
+
+### Changed
+
+- The fetch failure mail and the journal carry git's own output instead of discarding it.
+- `backoff_seconds` moved from `monitoring/vps-health.sh` into `monitoring/lib.sh`, so both scripts back off
+  on the same schedule.
+
+### Fixed
+
+- A branch deleted from `chimodiazz/website` sent the fetch failure mail, which blames the deploy key,
+  because git only names a missing branch in a failed fetch. It now sends the branch gone mail at once. The
+  fetch runs under `LC_ALL=C`, since the host's git answered in German over SSH.
+
 ## [1.50.1] - 2026-09-30
 
 ### Fixed

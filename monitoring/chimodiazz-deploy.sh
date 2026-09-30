@@ -18,7 +18,9 @@
 #
 # Silent when there is nothing to do, which is most runs. One mail when a deploy
 # fails, because an all-green mail every five minutes trains the recipient to
-# ignore the mail.
+# ignore the mail. A remote that cannot be fetched mails on the way in, backs
+# off while it lasts and mails once more when it is reachable again, and a
+# fetch that fails for a single run mails nothing at all.
 #
 # Runs from /etc/cron.d/chimodiazz-deploy every five minutes under `flock -n`.
 #
@@ -60,6 +62,19 @@ REBUILD_PATHS="${REBUILD_PATHS-shopware/}"
 # lock its own parent already holds.
 LOCK_FILE="${LOCK_FILE:-/run/lock/chimodiazz-deploy.lock}"
 
+# A fetch against GitHub fails now and then for one run and works five minutes
+# later. That happened on 2026-09-29 at 16:55, between two good runs, and the
+# mail it sent blamed the deploy key, which was fine. So a failed fetch is only
+# logged until it has kept failing for this many seconds, three runs at the
+# cron's pace. A branch that is gone from the remote needs no grace, because
+# that answer comes from a remote that was reached.
+FETCH_GRACE="${FETCH_GRACE:-900}"
+
+# The remote's condition across runs: kind, first seen, last mailed, mails
+# sent. It lives next to vps-health.sh's state and is removed by the first run
+# that fetches the branch again.
+REMOTE_STATE="${REMOTE_STATE:-$STATE_DIR/chimodiazz-deploy-remote}"
+
 # Whatever branch the checkout sits on. Switching what gets deployed is then a
 # `git switch` in chimodiazz-src/ rather than an edit here, and the deployed
 # branch is visible to anyone who looks at the directory. There is deliberately
@@ -100,6 +115,53 @@ needs_rebuild() {
     # shellcheck disable=SC2086
     changed="$(git_src diff --name-only "$before" "$after" -- $REBUILD_PATHS 2>/dev/null)" || return 0
     [[ -n "$changed" ]]
+}
+
+# A remote that cannot be fetched. The first mail goes out once the condition
+# has lasted <grace> seconds, the reminders back off like vps-health.sh's (1, 2,
+# 4, 8, 16, then every 30 days), and a different kind of fault starts over.
+# Every run in between logs, so the journal shows each failure and git's own
+# words.
+remote_fault() {
+    local kind="$1" grace="$2" subject="$3" body="$4"
+    local ts prev="" first=0 last=0 count=0
+    ts="$(now)"
+    [[ -r "$REMOTE_STATE" ]] && IFS=$'\t' read -r prev first last count < "$REMOTE_STATE"
+    if [[ "$prev" != "$kind" ]]; then
+        first="$ts" last=0 count=0
+    fi
+
+    if (( ts - first < grace )); then
+        log "$subject, no mail before it has lasted ${grace}s: $body"
+    elif (( count == 0 || ts - last >= $(backoff_seconds "$count") )); then
+        (( count > 0 )) && body+="
+
+Unchanged since $(date -d "@$first" '+%Y-%m-%d %H:%M'), reminder $(( count + 1 )). Reminders back off: 1, 2, 4, 8, 16, then every 30 days."
+        send_mail "$subject" "$body" || log "$subject: $body"
+        last="$ts"
+        count=$(( count + 1 ))
+    else
+        log "$subject, unchanged since $(date -d "@$first" '+%Y-%m-%d %H:%M')"
+    fi
+
+    mkdir -p "$(dirname "$REMOTE_STATE")" 2>/dev/null
+    printf '%s\t%s\t%s\t%s\n' "$kind" "$first" "$last" "$count" > "$REMOTE_STATE"
+}
+
+# The branch was fetched. A condition that was mailed gets its recovery mail,
+# one that never got that far only a log line.
+remote_ok() {
+    [[ -r "$REMOTE_STATE" ]] || return 0
+    local kind first last count
+    IFS=$'\t' read -r kind first last count < "$REMOTE_STATE"
+    rm -f "$REMOTE_STATE"
+    if (( count > 0 )); then
+        send_mail "[sdwa5] Chimo Diazz deploy: remote reachable again" \
+"git fetch origin $BRANCH works again in $SRC_DIR on $(hostname). The fault ($kind) lasted from $(date -d "@$first" '+%Y-%m-%d %H:%M') until now." \
+            || log "remote reachable again after $kind"
+    else
+        log "remote reachable again, the $kind since $(date -d "@$first" '+%Y-%m-%d %H:%M') never lasted long enough to mail"
+    fi
 }
 
 # Every console call goes through here so a failure carries the command and the
@@ -228,6 +290,7 @@ main() {
         echo "Branch:         $BRANCH"
         echo "Local commit:   ${before:-unknown}"
         echo "Rebuild paths:  ${REBUILD_PATHS:-<everything>}"
+        echo "Fetch grace:    ${FETCH_GRACE}s"
         echo "Health URL:     $HEALTH_URL"
         echo "Would run:      git fetch, then compare against origin/$BRANCH"
         exit 0
@@ -238,22 +301,37 @@ main() {
     exec 9>"$LOCK_FILE"
     flock -n 9 || exit 0
 
-    if ! git_src fetch --quiet --prune origin "$BRANCH" 2>/dev/null; then
-        send_mail "[sdwa5] Chimo Diazz deploy: fetch failed" \
-"git fetch origin $BRANCH failed in $SRC_DIR on $(hostname). The site is untouched and still serving $before.
+    # git names a branch that is gone from the remote only in a failed fetch of
+    # that branch, so the failure has to be read rather than discarded. LC_ALL=C
+    # because the host's git answered in German over SSH, and the match below is
+    # on git's English text.
+    local fetch_out
+    if ! fetch_out="$(LC_ALL=C git_src fetch --quiet --prune origin "$BRANCH" 2>&1)"; then
+        if [[ "$fetch_out" == *"couldn't find remote ref"* ]]; then
+            remote_fault "branch gone" 0 "[sdwa5] Chimo Diazz deploy: branch gone" \
+"$BRANCH no longer exists on the remote of $SRC_DIR on $(hostname). The branch was probably renamed, merged or deleted in chimodiazz/website. The site is untouched and still serving $before. Switch the checkout to the branch that should be deployed.
 
-This is usually the read-only deploy key: it is registered on chimodiazz/website, which this host does not own, so it can be revoked without anything here noticing. Check with: ssh -T github-chimodiazz" \
-            || log "fetch failed"
+git said:
+$fetch_out"
+        else
+            remote_fault "fetch failure" "$FETCH_GRACE" "[sdwa5] Chimo Diazz deploy: fetch failed" \
+"git fetch origin $BRANCH has failed in $SRC_DIR on $(hostname) for every run in at least ${FETCH_GRACE}s. The site is untouched and still serving $before.
+
+git said:
+${fetch_out:-(nothing)}
+
+One cause is the read-only deploy key: it is registered on chimodiazz/website, which this host does not own, so it can be revoked without anything here noticing. Check with: ssh -T github-chimodiazz"
+        fi
         exit 1
     fi
 
     after="$(remote_commit)"
     if [[ -z "$after" ]]; then
-        send_mail "[sdwa5] Chimo Diazz deploy: branch gone" \
-"origin/$BRANCH does not exist in $SRC_DIR on $(hostname) after a successful fetch. The branch was probably renamed or deleted in chimodiazz/website. The site is untouched and still serving $before." \
-            || log "origin/$BRANCH missing"
+        remote_fault "branch gone" 0 "[sdwa5] Chimo Diazz deploy: branch gone" \
+"origin/$BRANCH does not exist in $SRC_DIR on $(hostname) after a successful fetch. The branch was probably renamed or deleted in chimodiazz/website. The site is untouched and still serving $before."
         exit 1
     fi
+    remote_ok
 
     if [[ "$before" == "$after" ]] && (( ! FORCE )); then
         exit 0

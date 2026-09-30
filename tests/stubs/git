@@ -12,6 +12,9 @@
 # run. STUB_GIT_REMOTE unset deliberately means the ref does not resolve, so the "branch gone" path
 # can be reached without inventing a separate flag.
 #
+# STUB_GIT_FETCH_ERR is what a failing fetch prints to stderr. The deploy script reads it, because
+# git names a branch that is gone from the remote only there.
+#
 # STUB_GIT_DIFF_FILES is the file list a diff between the two commits would report, and the stub
 # applies the pathspec after `--` to it the way real git would. Without that the path filter would
 # be tested against a stub that always agrees with it.
@@ -45,6 +48,7 @@ case "$args" in
         exit 0
         ;;
     *fetch*)
+        [[ -n "${STUB_GIT_FETCH_ERR:-}" ]] && printf '%s\n' "$STUB_GIT_FETCH_ERR" >&2
         exit "${STUB_GIT_FETCH_RC:-0}"
         ;;
     *reset*)

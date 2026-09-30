@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.50.1] - 2026-09-30
+
+### Fixed
+
+- `docs/ssh-hardening.md` described the outbound key as it stood before 2026-09-15. The `/root/.ssh/config`
+  block named `id_ed25519_deploy`, while the host pins `id_ed25519_sdwa5vps_20260915`, and the text said a
+  superseded private key was still on disk. Measured on 2026-09-30, `/root/.ssh/` holds only the two deploy
+  keys, which matches the deletion recorded further down the same page.
+
 ## [1.50.0] - 2026-09-30
 
 ### Added

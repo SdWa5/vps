@@ -263,3 +263,16 @@
        `/etc/cron.d/chimodiazz-deploy` rather than in `.env`, so the deploy mails reach him and the
        rest of the host's monitoring does not. It is the cheapest of the four and it closes the human
        half only, because a mailbox is not something his session reads (ca. 30 Minuten)
+11. **add paperless-ngx** (docker-compose.yml, behind Caddy) for two tenants, myself privately and the
+    Soundsystem Verein. One instance is the goal and two instances are the fallback. Paperless-ngx has
+    had per-object owners and permissions since 1.14, and workflows can set the owner by consume path
+    or mail rule, so one instance with a private user and an org user or group should cover it. This
+    is from the project docs and not yet tried here. Check before deciding that tags, correspondents
+    and document types can be kept apart per owner as well, because a shared vocabulary would leak the
+    private side's structure to the org. Backups and the monitoring cron need the new volumes either
+    way (ca. 6 Stunden)
+    1. maybe fork paperless-ngx into the SdWa5 organization rather than running the upstream image
+       unchanged. Nothing asks for a code change yet, so a fork is worth it only once one does,
+       because every upstream release then has to be merged by hand (`decision`)
+    2. make the fork public. Paperless-ngx is GPL-3.0, and publishing the modified source keeps the
+       fork in line with it and with the plan to take all sdwa5 repositories public

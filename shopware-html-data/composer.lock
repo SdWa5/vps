@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ba9011e87330f88db701fffae77478ce",
+    "content-hash": "8d750e7496fa8ffbcc2f41a0606df477",
     "packages": [
         {
             "name": "async-aws/core",
@@ -7290,10 +7290,10 @@
         },
         {
             "name": "store.shopware.com/swagplatformsecurity",
-            "version": "4.0.11",
+            "version": "4.0.16",
             "dist": {
                 "type": "zip",
-                "url": "https://packages.shopware.com/download?downloadUrl=%2Fpackages%2Fplugins%2FSwagPlatformSecurity%2Fbinaries%2F4.0.11"
+                "url": "https://packages.shopware.com/download?downloadUrl=%2Fpackages%2Fplugins%2FSwagPlatformSecurity%2Fbinaries%2F4.0.16"
             },
             "require": {
                 "shopware/core": "~6.7.0"

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.52.1] - 2026-10-01
+
+### Changed
+
+- `store.shopware.com/swagplatformsecurity` from 4.0.11 to 4.0.16 on `sdwa5.org`.
+- `docs/shopware/plugins.md` records how a plugin update runs.
+
 ## [1.52.0] - 2026-10-01
 
 ### Added

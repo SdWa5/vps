@@ -22,13 +22,25 @@ that way.
 | `FroshTools` | `frosh/tools` | 3.9.0 | Packagist |
 | `SwagExtensionStore` | `swag/swag-extension-store` | 4.2.2 | Packagist |
 | `SwagLanguagePack` | `swag/language-pack` | 5.58.0 | Packagist |
-| `SwagPlatformSecurity` | `store.shopware.com/swagplatformsecurity` | 4.0.11 | Shopware Store |
+| `SwagPlatformSecurity` | `store.shopware.com/swagplatformsecurity` | 4.0.16 | Shopware Store |
 | `TcinnCopyrightCustom` | `store.shopware.com/tcinncopyrightcustom` | 1.0.7 | Shopware Store |
 
 Every require is pinned to the exact version, because a floating constraint would turn the next
 `composer update` into an unplanned plugin upgrade on a live shop. An upgrade is a deliberate change of
-the pin. On 2026-10-01 newer releases existed for `SwagPlatformSecurity` (4.0.16), `TcinnCopyrightCustom`
-(1.1.1), `FroshTools` (3.14.1), `SwagExtensionStore` (7.0.0) and `SwagLanguagePack` (5.72.0).
+the pin. On 2026-10-01 newer releases existed for `TcinnCopyrightCustom` (1.1.1), `FroshTools` (3.14.1),
+`SwagExtensionStore` (7.0.0) and `SwagLanguagePack` (5.72.0).
+
+An update follows the run of `SwagPlatformSecurity` from 4.0.11 to 4.0.16 on 2026-10-01, which took two
+minutes of maintenance mode with the worker lock held, as in the migration below:
+
+```bash
+composer require --no-interaction store.shopware.com/swagplatformsecurity:4.0.16
+php bin/console plugin:update SwagPlatformSecurity
+php bin/console cache:clear
+kill -USR2 "$(pgrep -f 'php-fpm: master')"     # as root in the container
+```
+
+The FPM reload is a precaution, because the path of an updated plugin stays the same.
 
 ## Where composer puts a plugin here
 

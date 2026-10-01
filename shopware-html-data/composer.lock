@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4395a53c71b74cf840308ed43294f237",
+    "content-hash": "ba9011e87330f88db701fffae77478ce",
     "packages": [
         {
             "name": "async-aws/core",
@@ -1828,12 +1828,82 @@
             "time": "2025-10-28T10:28:17+00:00"
         },
         {
+            "name": "frosh/lazy-sizes",
+            "version": "3.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/FriendsOfShopware/FroshLazySizes.git",
+                "reference": "c89983f2d63da617cb30f641892cb8e851ff8c90"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/FriendsOfShopware/FroshLazySizes/zipball/c89983f2d63da617cb30f641892cb8e851ff8c90",
+                "reference": "c89983f2d63da617cb30f641892cb8e851ff8c90",
+                "shasum": ""
+            },
+            "require": {
+                "shopware/core": "~6.6.0||~6.7.0"
+            },
+            "type": "shopware-platform-plugin",
+            "extra": {
+                "label": {
+                    "de-DE": "LazySizes und LazyLoading für passende Bilder-Sizes",
+                    "en-GB": "LazySizes and LazyLoading for suitable image sizes"
+                },
+                "description": {
+                    "de-DE": "Lass die beste Thumbnail-Größe automatisch berechnen. Dadurch musst du dir keine Gedanken um das Attribut \"sizes\" bei den Bildern zu machen und gewinnst an Score.",
+                    "en-GB": "Automatically calculate the best thumbnail size. This means you don't have to worry about the \"sizes\" attribute for the images. Additionally, you gain a score."
+                },
+                "supportLink": {
+                    "de-DE": "https://github.com/FriendsOfShopware/FroshLazySizes/issues",
+                    "en-GB": "https://github.com/FriendsOfShopware/FroshLazySizes/issues"
+                },
+                "manufacturerLink": {
+                    "de-DE": "https://github.com/FriendsOfShopware/FroshLazySizes",
+                    "en-GB": "https://github.com/FriendsOfShopware/FroshLazySizes"
+                },
+                "shopware-plugin-class": "Frosh\\LazySizes\\FroshLazySizes"
+            },
+            "autoload": {
+                "psr-4": {
+                    "Frosh\\LazySizes\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "mit"
+            ],
+            "authors": [
+                {
+                    "name": "FriendsOfShopware",
+                    "homepage": "https://friendsofshopware.de"
+                }
+            ],
+            "description": "Automatically calculate the best thumbnail size. This means you don't have to worry about the \"sizes\" attribute for the images. Additionally, you gain a score.",
+            "keywords": [
+                "media",
+                "shopware",
+                "thumbnail"
+            ],
+            "support": {
+                "issues": "https://github.com/FriendsOfShopware/FroshLazySizes/issues",
+                "source": "https://github.com/FriendsOfShopware/FroshLazySizes/tree/3.2.0"
+            },
+            "time": "2025-07-10T10:02:16+00:00"
+        },
+        {
             "name": "frosh/mail-platform-archive",
             "version": "3.6.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/FriendsOfShopware/FroshPlatformMailArchive.git",
+                "reference": "ceeb1ad9b310d9c236c13aa7b3371cbccdaf2249"
+            },
             "dist": {
-                "type": "path",
-                "url": "custom/plugins/FroshPlatformMailArchive",
-                "reference": "51a3ac9217cb43fd79943b7300fe849148c0677e"
+                "type": "zip",
+                "url": "https://api.github.com/repos/FriendsOfShopware/FroshPlatformMailArchive/zipball/ceeb1ad9b310d9c236c13aa7b3371cbccdaf2249",
+                "reference": "ceeb1ad9b310d9c236c13aa7b3371cbccdaf2249",
+                "shasum": ""
             },
             "require": {
                 "shopware/core": "~6.6.0 || ~6.7.0",
@@ -1847,8 +1917,6 @@
             },
             "type": "shopware-platform-plugin",
             "extra": {
-                "shopware-plugin-class": "Frosh\\MailArchive\\FroshPlatformMailArchive",
-                "plugin-icon": "src/Resources/config/plugin.png",
                 "label": {
                     "de-DE": "Mail Archive",
                     "en-GB": "Mail Archive"
@@ -1857,28 +1925,23 @@
                     "de-DE": "Mit diesem Plugin erhalten Sie ein einfaches durchsuchbares Archiv für E-Mails, die aus Shopware versendet werden. Die E-Mails sind erreichbar: Einstellungen/Erweiterungen/Main Archiv.",
                     "en-GB": "With this plugin you get a simple searchable archive for emails that are sent from Shopware. The e-mails can be found via the menu path Settings/Extensions/Main Archive.."
                 },
+                "plugin-icon": "src/Resources/config/plugin.png",
+                "supportLink": {
+                    "de-DE": "https://github.com/FriendsOfShopware/FroshPlatformMailArchive/issues",
+                    "en-GB": "https://github.com/FriendsOfShopware/FroshPlatformMailArchive/issues"
+                },
                 "manufacturerLink": {
                     "de-DE": "https://github.com/FriendsOfShopware/FroshPlatformMailArchive",
                     "en-GB": "https://github.com/FriendsOfShopware/FroshPlatformMailArchive"
                 },
-                "supportLink": {
-                    "de-DE": "https://github.com/FriendsOfShopware/FroshPlatformMailArchive/issues",
-                    "en-GB": "https://github.com/FriendsOfShopware/FroshPlatformMailArchive/issues"
-                }
+                "shopware-plugin-class": "Frosh\\MailArchive\\FroshPlatformMailArchive"
             },
             "autoload": {
                 "psr-4": {
                     "Frosh\\MailArchive\\": "src/"
                 }
             },
-            "scripts": {
-                "format": [
-                    "docker run --rm -v $(pwd):/ext shopware/shopware-cli:latest extension format /ext"
-                ],
-                "check": [
-                    "docker run --rm -v $(pwd):/ext shopware/shopware-cli:latest extension validate --full /ext"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
@@ -1893,18 +1956,86 @@
                 "archive",
                 "mail"
             ],
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
+            "support": {
+                "issues": "https://github.com/FriendsOfShopware/FroshPlatformMailArchive/issues",
+                "source": "https://github.com/FriendsOfShopware/FroshPlatformMailArchive/tree/3.6.0"
+            },
+            "time": "2026-03-03T13:18:40+00:00"
+        },
+        {
+            "name": "frosh/platform-filter-search",
+            "version": "3.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/FriendsOfShopware/FroshPlatformFilterSearch.git",
+                "reference": "ff99a09371180ae57ccc29160fa1a0317e15d4e9"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/FriendsOfShopware/FroshPlatformFilterSearch/zipball/ff99a09371180ae57ccc29160fa1a0317e15d4e9",
+                "reference": "ff99a09371180ae57ccc29160fa1a0317e15d4e9",
+                "shasum": ""
+            },
+            "require": {
+                "shopware/core": "~6.6.0 || ~6.7.0",
+                "shopware/storefront": "~6.6.0 || ~6.7.0"
+            },
+            "type": "shopware-platform-plugin",
+            "extra": {
+                "label": {
+                    "de-DE": "Filter Suche",
+                    "en-GB": "Filter search"
+                },
+                "copyright": "FriendsOfShopware",
+                "description": {
+                    "de-DE": "Dieses Plugin fügt ein Suchfeld über die Filter Optionen ein. Damit können die Optionen gefiltert werden. Eine Mindestanzahl kann konfiguriert werden.",
+                    "en-GB": "This plugin inserts a search input above the filter options. This field is visible if the configured value is bigger than the count of the filter options."
+                },
+                "supportLink": {
+                    "de-DE": "https://github.com/FriendsOfShopware/FroshPlatformFilterSearch/issues",
+                    "en-GB": "https://github.com/FriendsOfShopware/FroshPlatformFilterSearch/issues"
+                },
+                "manufacturerLink": {
+                    "de-DE": "https://github.com/FriendsOfShopware/FroshPlatformFilterSearch",
+                    "en-GB": "https://github.com/FriendsOfShopware/FroshPlatformFilterSearch"
+                },
+                "shopware-plugin-class": "FroshPlatformFilterSearch\\FroshPlatformFilterSearch"
+            },
+            "autoload": {
+                "psr-4": {
+                    "FroshPlatformFilterSearch\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "FriendsOfShopware",
+                    "homepage": "https://friendsofshopware.de"
+                }
+            ],
+            "description": "This plugin inserts a search input above the filter options in the listing.",
+            "support": {
+                "issues": "https://github.com/FriendsOfShopware/FroshPlatformFilterSearch/issues",
+                "source": "https://github.com/FriendsOfShopware/FroshPlatformFilterSearch/tree/3.1.0"
+            },
+            "time": "2025-11-05T08:33:30+00:00"
         },
         {
             "name": "frosh/platform-thumbnail-processor",
             "version": "5.4.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/FriendsOfShopware/FroshPlatformThumbnailProcessor.git",
+                "reference": "a6f302f17a0297ea5ece1b34e6426f7253d61ec7"
+            },
             "dist": {
-                "type": "path",
-                "url": "custom/plugins/FroshPlatformThumbnailProcessor",
-                "reference": "8f0e3d57216bd2061cf201b42fd4e843bcdf60e6"
+                "type": "zip",
+                "url": "https://api.github.com/repos/FriendsOfShopware/FroshPlatformThumbnailProcessor/zipball/a6f302f17a0297ea5ece1b34e6426f7253d61ec7",
+                "reference": "a6f302f17a0297ea5ece1b34e6426f7253d61ec7",
+                "shasum": ""
             },
             "require": {
                 "nikic/php-parser": "^4.13.0|^5.0.0",
@@ -1915,7 +2046,6 @@
             },
             "type": "shopware-platform-plugin",
             "extra": {
-                "shopware-plugin-class": "Frosh\\ThumbnailProcessor\\FroshPlatformThumbnailProcessor",
                 "label": {
                     "de-DE": "ThumbnailProcessor mit Webp-Unterstützung",
                     "en-GB": "ThumbnailProcessor incl. Webp-Support"
@@ -1924,32 +2054,22 @@
                     "de-DE": "Verschwende nicht Rechenleistung und Speicherplatz durch Thumbnails! Lass diese in Echtzeit beim Besuch durch einen externen Dienst erzeugen und ausliefern.",
                     "en-GB": "Don't waste the computing power and space with thumbnails! Have the thumbnails generated and delivered in real time when you visit an external service."
                 },
+                "supportLink": {
+                    "de-DE": "https://github.com/FriendsOfShopware/FroshPlatformThumbnailProcessor/issues",
+                    "en-GB": "https://github.com/FriendsOfShopware/FroshPlatformThumbnailProcessor/issues"
+                },
                 "manufacturerLink": {
                     "de-DE": "https://github.com/FriendsOfShopware/FroshPlatformThumbnailProcessor",
                     "en-GB": "https://github.com/FriendsOfShopware/FroshPlatformThumbnailProcessor"
                 },
-                "supportLink": {
-                    "de-DE": "https://github.com/FriendsOfShopware/FroshPlatformThumbnailProcessor/issues",
-                    "en-GB": "https://github.com/FriendsOfShopware/FroshPlatformThumbnailProcessor/issues"
-                }
+                "shopware-plugin-class": "Frosh\\ThumbnailProcessor\\FroshPlatformThumbnailProcessor"
             },
             "autoload": {
                 "psr-4": {
                     "Frosh\\ThumbnailProcessor\\": "src/"
                 }
             },
-            "autoload-dev": {
-                "psr-4": {
-                    "Frosh\\ThumbnailProcessor\\Tests\\Unit\\": "tests/unit",
-                    "Frosh\\ThumbnailProcessor\\Tests\\Integration\\": "tests/integration"
-                }
-            },
-            "scripts": {
-                "create-placeholders": [
-                    "echo \"<?php\n\ndeclare (strict_types=1);\n\nnamespace Frosh\\ThumbnailProcessor\\DependencyInjection;\n\nclass FileSaver extends \\Shopware\\Core\\Content\\Media\\File\\FileSaver\n{\n}\n\" > src/DependencyInjection/FileSaver.php",
-                    "echo \"<?php\n\ndeclare (strict_types=1);\n\nnamespace Frosh\\ThumbnailProcessor\\DependencyInjection;\n\nclass ThumbnailService extends \\Shopware\\Core\\Content\\Media\\Thumbnail\\ThumbnailService\n{\n}\n\" > src/DependencyInjection/ThumbnailService.php"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "mit"
             ],
@@ -1961,19 +2081,141 @@
             ],
             "description": "This plugins allows you to use variable thumbnails, without having them on storage.",
             "keywords": [
+                "Media Manager",
                 "admin",
                 "backend",
                 "cdn",
                 "media",
-                "media manager",
                 "shopware",
                 "storage",
                 "thumbnail"
             ],
-            "transport-options": {
-                "symlink": true,
-                "relative": true
-            }
+            "support": {
+                "issues": "https://github.com/FriendsOfShopware/FroshPlatformThumbnailProcessor/issues",
+                "source": "https://github.com/FriendsOfShopware/FroshPlatformThumbnailProcessor/tree/5.4.0"
+            },
+            "time": "2025-06-17T13:26:23+00:00"
+        },
+        {
+            "name": "frosh/shopmon",
+            "version": "0.2.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/FriendsOfShopware/FroshShopmon.git",
+                "reference": "802e1a3960f73b841febca4c8b3e028bedc65ab9"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/FriendsOfShopware/FroshShopmon/zipball/802e1a3960f73b841febca4c8b3e028bedc65ab9",
+                "reference": "802e1a3960f73b841febca4c8b3e028bedc65ab9",
+                "shasum": ""
+            },
+            "require": {
+                "shopware/core": "~6.5.0 || ~6.6.0 || ~6.7.0"
+            },
+            "type": "shopware-platform-plugin",
+            "extra": {
+                "label": {
+                    "de-DE": "Shopmon",
+                    "en-GB": "Shopmon"
+                },
+                "description": {
+                    "de-DE": "Connector für Shopmon Shop Monitoring mit automatisch generiertem, einfach konfigurierbarem Zugriffsschlüssel. Erstellt Integration mit notwendigen Berechtigungen automatisch.",
+                    "en-GB": "Connector for Shopmon Shop Monitoring with automatically generated, easy to configure access key. Creates integration with necessary permissions automatically."
+                },
+                "supportLink": {
+                    "de-DE": "https://friendsofshopware.com",
+                    "en-GB": "https://friendsofshopware.com"
+                },
+                "manufacturerLink": {
+                    "de-DE": "https://friendsofshopware.com",
+                    "en-GB": "https://friendsofshopware.com"
+                },
+                "shopware-plugin-class": "Frosh\\Shopmon\\FroshShopmon"
+            },
+            "autoload": {
+                "psr-4": {
+                    "Frosh\\Shopmon\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "FriendsOfShopware",
+                    "homepage": "https://friendsofshopware.com"
+                }
+            ],
+            "description": "Shop monitoring plugin for Shopware 6",
+            "support": {
+                "issues": "https://github.com/FriendsOfShopware/FroshShopmon/issues",
+                "source": "https://github.com/FriendsOfShopware/FroshShopmon/tree/0.2.1"
+            },
+            "time": "2026-06-18T13:12:00+00:00"
+        },
+        {
+            "name": "frosh/tools",
+            "version": "3.9.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/FriendsOfShopware/FroshTools.git",
+                "reference": "a6fbc0f593f797fa09304e60c0e276bf9d4dc0c5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/FriendsOfShopware/FroshTools/zipball/a6fbc0f593f797fa09304e60c0e276bf9d4dc0c5",
+                "reference": "a6fbc0f593f797fa09304e60c0e276bf9d4dc0c5",
+                "shasum": ""
+            },
+            "require": {
+                "shopware/core": "~6.6.0 || ~6.7.0"
+            },
+            "require-dev": {
+                "shopware/elasticsearch": "~6.6.0 || ~6.7.0"
+            },
+            "type": "shopware-platform-plugin",
+            "extra": {
+                "label": {
+                    "de-DE": "Tools",
+                    "en-GB": "Tools"
+                },
+                "description": {
+                    "de-DE": "Die kostenlose Shopware 6 App beinhaltet mehrere Werkzeuge um den Shop besser zu verwalten. Optimierter Cache Manager, Log Viewer um die Logeinträge zu sehen oder Tasks auszuführen.",
+                    "en-GB": "The free Shopware 6 app include several tools to manage the store much better like a cache manager, log viewer to see the log entries, run the tasks or see the system status."
+                },
+                "supportLink": {
+                    "de-DE": "https://github.com/FriendsOfShopware/FroshTools/issues",
+                    "en-GB": "https://github.com/FriendsOfShopware/FroshTools/issues"
+                },
+                "manufacturerLink": {
+                    "de-DE": "https://github.com/FriendsOfShopware/FroshTools",
+                    "en-GB": "https://github.com/FriendsOfShopware/FroshTools"
+                },
+                "shopware-plugin-class": "Frosh\\Tools\\FroshTools"
+            },
+            "autoload": {
+                "psr-4": {
+                    "Frosh\\Tools\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "FriendsOfShopware",
+                    "homepage": "https://friendsofshopware.com"
+                }
+            ],
+            "description": "Provides some basic things for managing the Shopware Installation",
+            "support": {
+                "issues": "https://github.com/FriendsOfShopware/FroshTools/issues",
+                "source": "https://github.com/FriendsOfShopware/FroshTools/tree/3.9.0"
+            },
+            "time": "2026-06-25T07:34:21+00:00"
         },
         {
             "name": "goetas-webservices/xsd2php-runtime",
@@ -6993,6 +7235,298 @@
                 "source": "https://github.com/squirrelphp/twig-php-syntax/tree/v1.13"
             },
             "time": "2025-05-03T06:37:30+00:00"
+        },
+        {
+            "name": "store.shopware.com/dnestorefrontdarkmode",
+            "version": "4.0.0",
+            "dist": {
+                "type": "zip",
+                "url": "https://packages.shopware.com/download?downloadUrl=%2Fpackages%2Fplugins%2FDneStorefrontDarkMode%2Fbinaries%2F4.0.0"
+            },
+            "require": {
+                "shopware/core": "~6.7.0"
+            },
+            "replace": {
+                "dne/storefront-dark-mode": "self.version"
+            },
+            "type": "shopware-platform-plugin",
+            "extra": {
+                "label": {
+                    "de-DE": "Storefront Dark Mode",
+                    "en-GB": "Storefront Dark Mode"
+                },
+                "copyright": "(c) David Neustadt",
+                "description": {
+                    "de-DE": "Dark Mode im Storefront",
+                    "en-GB": "Dark Mode in the storefront"
+                },
+                "supportLink": {
+                    "de-DE": "https://github.com/dneustadt",
+                    "en-GB": "https://github.com/dneustadt"
+                },
+                "manufacturerLink": {
+                    "de-DE": "https://store.shopware.com/open-source-plugins.html",
+                    "en-GB": "https://store.shopware.com/en/open-source-plugins.html"
+                },
+                "shopware-plugin-class": "Dne\\StorefrontDarkMode\\DneStorefrontDarkMode"
+            },
+            "autoload": {
+                "psr-4": {
+                    "Dne\\StorefrontDarkMode\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Dne\\StorefrontDarkMode\\Test\\": "tests/"
+                }
+            },
+            "notification-url": "https://packages.shopware.com/downloads/",
+            "authors": [
+                {
+                    "name": "Open Source Plugins"
+                }
+            ],
+            "description": "Storefront Dark Mode"
+        },
+        {
+            "name": "store.shopware.com/swagplatformsecurity",
+            "version": "4.0.11",
+            "dist": {
+                "type": "zip",
+                "url": "https://packages.shopware.com/download?downloadUrl=%2Fpackages%2Fplugins%2FSwagPlatformSecurity%2Fbinaries%2F4.0.11"
+            },
+            "require": {
+                "shopware/core": "~6.7.0"
+            },
+            "replace": {
+                "swag/platform-security": "self.version"
+            },
+            "type": "shopware-platform-plugin",
+            "extra": {
+                "label": {
+                    "de-DE": "Shopware 6 Sicherheits-Plugin",
+                    "en-GB": "Shopware 6 Security Plugin"
+                },
+                "description": {
+                    "de-DE": "Schütze Deinen Onlineshop vor Sicherheitslücken - mit diesem Plugin kannst Du mit einem einfachen Plugin-Update Deinen Shop schnell und einfach absichern.",
+                    "en-GB": "Protect your online shop from security gaps - with this Shopware 6 security plugin you can quickly and easily secure your shop with a simple plugin update."
+                },
+                "supportLink": {
+                    "de-DE": "https://docs.shopware.com/de",
+                    "en-GB": "https://docs.shopware.com/en"
+                },
+                "manufacturerLink": {
+                    "de-DE": "https://store.shopware.com/shopware-ag.html",
+                    "en-GB": "https://store.shopware.com/en/shopware-ag.html"
+                },
+                "shopware-plugin-class": "Swag\\Security\\SwagPlatformSecurity"
+            },
+            "autoload": {
+                "psr-4": {
+                    "Swag\\Security\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Swag\\Security\\Tests\\": "tests/"
+                }
+            },
+            "notification-url": "https://packages.shopware.com/downloads/",
+            "authors": [
+                {
+                    "name": "shopware AG"
+                }
+            ],
+            "description": "Fixes known issues for outdated Shopware installations"
+        },
+        {
+            "name": "store.shopware.com/tcinncopyrightcustom",
+            "version": "1.0.7",
+            "dist": {
+                "type": "zip",
+                "url": "https://packages.shopware.com/download?downloadUrl=%2Fpackages%2Fplugins%2FTcinnCopyrightCustom%2Fbinaries%2F1.0.7"
+            },
+            "require": {
+                "shopware/core": "6.7.*"
+            },
+            "replace": {
+                "tcinn/copyright-custom": "self.version"
+            },
+            "type": "shopware-platform-plugin",
+            "extra": {
+                "label": {
+                    "de-DE": "Copyright entfernen oder austauschen",
+                    "en-GB": "Remove or replace copyright"
+                },
+                "copyright": "(c) by TC-Innovations GmbH",
+                "description": {
+                    "de-DE": "Shopware Copyright-Text im Standard Theme entfernen oder verändern.",
+                    "en-GB": "Remove or change Shopware copyright text in default theme."
+                },
+                "plugin-icon": "src/Resources/config/plugin-icon.png",
+                "supportLink": {
+                    "de-DE": "https://www.tc-innovations.de",
+                    "en-GB": "https://www.tc-innovations.de"
+                },
+                "manufacturerLink": {
+                    "de-DE": "https://www.tc-innovations.de",
+                    "en-GB": "https://www.tc-innovations.de"
+                },
+                "shopware-plugin-class": "TcinnCopyrightCustom\\TcinnCopyrightCustom"
+            },
+            "autoload": {
+                "psr-4": {
+                    "TcinnCopyrightCustom\\": "src/"
+                }
+            },
+            "notification-url": "https://packages.shopware.com/downloads/",
+            "authors": [
+                {
+                    "name": "TC-Innovations GmbH",
+                    "homepage": "https://www.tc-innovations.de"
+                }
+            ],
+            "description": "Remove or change Shopware copyright text in default theme."
+        },
+        {
+            "name": "swag/language-pack",
+            "version": "5.58.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/shopware/SwagLanguagePack.git",
+                "reference": "51af5ca24c74410819f8fbbbd1b39151094dbefa"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/shopware/SwagLanguagePack/zipball/51af5ca24c74410819f8fbbbd1b39151094dbefa",
+                "reference": "51af5ca24c74410819f8fbbbd1b39151094dbefa",
+                "shasum": ""
+            },
+            "require": {
+                "shopware/administration": "~6.7",
+                "shopware/core": "~6.7",
+                "shopware/storefront": "~6.7"
+            },
+            "conflict": {
+                "swag/i18n-bosnian": "*",
+                "swag/i18n-czech": "*",
+                "swag/i18n-danish": "*",
+                "swag/i18n-dutch": "*",
+                "swag/i18n-french": "*",
+                "swag/i18n-indonesian": "*",
+                "swag/i18n-italian": "*",
+                "swag/i18n-latvian": "*",
+                "swag/i18n-polish": "*",
+                "swag/i18n-portuguese": "*",
+                "swag/i18n-russian": "*",
+                "swag/i18n-spanish": "*",
+                "swag/i18n-swedish": "*"
+            },
+            "suggest": {
+                "shopware/administration": "Allows you to to set up the extension easily",
+                "shopware/storefront": "This extension also offers translations for the Shopware Storefront"
+            },
+            "type": "shopware-platform-plugin",
+            "extra": {
+                "label": {
+                    "de-DE": "Sprachpaket",
+                    "en-GB": "Language pack"
+                },
+                "copyright": "(c) by shopware AG",
+                "description": {
+                    "de-DE": "Das Sprachpaket von Shopware vereint alle Übersetzungen, die von Shopware angeboten werden sowie Länderflaggen für eine Sprachauswahl in der Storefront.",
+                    "en-GB": "The Shopware language pack combines all translations offered by Shopware, as well as associated country flags for a language selection in our storefront."
+                },
+                "supportLink": {
+                    "de-DE": "https://issues.shopware.com/",
+                    "en-GB": "https://issues.shopware.com/"
+                },
+                "manufacturerLink": {
+                    "de-DE": "https://store.shopware.com/shopware-ag.html",
+                    "en-GB": "https://store.shopware.com/en/shopware-ag.html"
+                },
+                "shopware-plugin-class": "Swag\\LanguagePack\\SwagLanguagePack"
+            },
+            "autoload": {
+                "psr-4": {
+                    "Swag\\LanguagePack\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Shopware"
+                }
+            ],
+            "description": "Language pack for Shopware 6",
+            "support": {
+                "source": "https://github.com/shopware/SwagLanguagePack/tree/5.58.0"
+            },
+            "time": "2026-06-26T07:38:42+00:00"
+        },
+        {
+            "name": "swag/swag-extension-store",
+            "version": "4.2.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/shopware/SwagExtensionStore.git",
+                "reference": "1bf1e787c9ce8a7357c2975f4d7fdcd4608b49fa"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/shopware/SwagExtensionStore/zipball/1bf1e787c9ce8a7357c2975f4d7fdcd4608b49fa",
+                "reference": "1bf1e787c9ce8a7357c2975f4d7fdcd4608b49fa",
+                "shasum": ""
+            },
+            "require": {
+                "shopware/administration": "~6.7.0@dev",
+                "shopware/core": "~6.7.0@dev"
+            },
+            "type": "shopware-platform-plugin",
+            "extra": {
+                "label": {
+                    "de-DE": "Shopware Store",
+                    "en-GB": "Shopware Store"
+                },
+                "copyright": "shopware AG",
+                "description": {
+                    "de-DE": "Entdecken und kaufen Sie Erweiterungen ganz einfach, direkt in Ihrem eigenen Shopware-Shop. Erhalten Sie Zugang zu vielen Erweiterungen, die Sie in Ihren Shop integrieren können.",
+                    "en-GB": "Explore and buy extensions easily, right from within your own Shopware shop. Get access to loads of helpful Extensions and modern Themes that can be integrated into your shop."
+                },
+                "supportLink": {
+                    "de-DE": "https://www.shopware.com/en/",
+                    "en-GB": "https://www.shopware.com/en/"
+                },
+                "manufacturerLink": {
+                    "de-DE": "https://www.shopware.com/en/",
+                    "en-GB": "https://www.shopware.com/en/"
+                },
+                "shopware-plugin-class": "SwagExtensionStore\\SwagExtensionStore"
+            },
+            "autoload": {
+                "psr-4": {
+                    "SwagExtensionStore\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "shopware AG",
+                    "homepage": "https://shopware.com"
+                }
+            ],
+            "description": "SWAG Extension Store",
+            "support": {
+                "issues": "https://github.com/shopware/SwagExtensionStore/issues",
+                "source": "https://github.com/shopware/SwagExtensionStore/tree/4.2.2"
+            },
+            "time": "2026-06-08T06:49:42+00:00"
         },
         {
             "name": "symfony/asset",
@@ -15497,12 +16031,12 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": [],
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
         "composer-runtime-api": "^2.0"
     },
-    "platform-dev": {},
-    "plugin-api-version": "2.9.0"
+    "platform-dev": [],
+    "plugin-api-version": "2.2.0"
 }

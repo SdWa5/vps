@@ -3,12 +3,21 @@
     "type": "project",
     "require": {
         "composer-runtime-api": "^2.0",
+        "frosh/lazy-sizes": "3.2.0",
         "frosh/mail-platform-archive": "3.6.0",
+        "frosh/platform-filter-search": "3.1.0",
         "frosh/platform-thumbnail-processor": "5.4.0",
+        "frosh/shopmon": "0.2.1",
+        "frosh/tools": "3.9.0",
         "shopware/administration": "*",
         "shopware/core": "v6.7.11.1",
         "shopware/elasticsearch": "*",
         "shopware/storefront": "*",
+        "store.shopware.com/dnestorefrontdarkmode": "4.0.0",
+        "store.shopware.com/swagplatformsecurity": "4.0.11",
+        "store.shopware.com/tcinncopyrightcustom": "1.0.7",
+        "swag/language-pack": "5.58.0",
+        "swag/swag-extension-store": "4.2.2",
         "symfony/flex": "~2"
     },
     "repositories": [
@@ -32,6 +41,10 @@
             "options": {
                 "symlink": true
             }
+        },
+        {
+            "type": "composer",
+            "url": "https://packages.shopware.com"
         }
     ],
     "autoload": {

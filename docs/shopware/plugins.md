@@ -1,86 +1,90 @@
 # Shopware plugins on sdwa5.org
 
 Which plugins the live shop runs, where each one comes from, and what in this repository records it.
-Everything here was measured on the running instance on 2026-09-16 with `plugin:list`, the `plugin`
-table and the Packagist API. Nothing is inferred from the directory listing alone.
+The state below was measured on the running instance on 2026-10-01, right after the migration to
+composer, with `plugin:list`, the `plugin` table and `composer.lock`.
 
 ## The inventory
 
-Eleven plugins are installed and active. `Recorded` is what would bring the plugin back if
-`/opt/docker` were lost.
+Eleven plugins are installed and active. **All eleven are exact requires in
+[`composer.json`](../../shopware-html-data/composer.json) and locked as zip downloads in `composer.lock`**,
+so `composer install` on a fresh checkout reproduces the whole set. `tests/shopware-plugins.bats` keeps it
+that way.
 
-| Directory under `custom/plugins/` | Composer name | Version | Recorded |
+| Plugin | Composer name | Version | Source |
 |---|---|---|---|
-| `DneStorefrontDarkMode` | `dne/storefront-dark-mode` | 4.0.0 | **nothing** |
-| `FroshLazySizes` | `frosh/lazy-sizes` | 3.2.0 | tracked source |
-| `FroshPlatformFilterSearch` | `frosh/platform-filter-search` | 3.1.0 | tracked source |
-| `FroshPlatformMailArchive` | `frosh/mail-platform-archive` | 3.6.0 | `composer.json` |
-| `FroshPlatformThumbnailProcessor` | `frosh/platform-thumbnail-processor` | 5.4.0 | `composer.json` |
-| `FroshShopmon` | `frosh/shopmon` | 0.2.1 | tracked source |
-| `FroshTools` | `frosh/tools` | 3.9.0 | **nothing** |
-| `SwagExtensionStore` | `swag/swag-extension-store` | 4.2.2 | **nothing** |
-| `SwagLanguagePack` | `swag/language-pack` | 5.58.0 | **nothing** |
-| `SwagPlatformSecurity` | `swag/platform-security` | 4.0.11 | tracked source |
-| `TcinnCopyrightCustom` | `tcinn/copyright-custom` | 1.0.7 | **nothing** |
+| `DneStorefrontDarkMode` | `store.shopware.com/dnestorefrontdarkmode` | 4.0.0 | Shopware Store |
+| `FroshLazySizes` | `frosh/lazy-sizes` | 3.2.0 | Packagist |
+| `FroshPlatformFilterSearch` | `frosh/platform-filter-search` | 3.1.0 | Packagist |
+| `FroshPlatformMailArchive` | `frosh/mail-platform-archive` | 3.6.0 | Packagist |
+| `FroshPlatformThumbnailProcessor` | `frosh/platform-thumbnail-processor` | 5.4.0 | Packagist |
+| `FroshShopmon` | `frosh/shopmon` | 0.2.1 | Packagist |
+| `FroshTools` | `frosh/tools` | 3.9.0 | Packagist |
+| `SwagExtensionStore` | `swag/swag-extension-store` | 4.2.2 | Packagist |
+| `SwagLanguagePack` | `swag/language-pack` | 5.58.0 | Packagist |
+| `SwagPlatformSecurity` | `store.shopware.com/swagplatformsecurity` | 4.0.11 | Shopware Store |
+| `TcinnCopyrightCustom` | `store.shopware.com/tcinncopyrightcustom` | 1.0.7 | Shopware Store |
 
-**Five active plugins are recorded nowhere.** `.gitignore` ignores
-`shopware-html-data/custom/plugins/*` and then lifts exactly four directories back out of that
-exclusion, so everything installed since simply falls out of the repository without anything saying
-so. That is a reproducibility gap rather than a disclosure one, and it is the reason this page
-exists.
+Every require is pinned to the exact version, because a floating constraint would turn the next
+`composer update` into an unplanned plugin upgrade on a live shop. An upgrade is a deliberate change of
+the pin. On 2026-10-01 newer releases existed for `SwagPlatformSecurity` (4.0.16), `TcinnCopyrightCustom`
+(1.1.1), `FroshTools` (3.14.1), `SwagExtensionStore` (7.0.0) and `SwagLanguagePack` (5.72.0).
 
-## Where composer puts a Shopware plugin here
+## Where composer puts a plugin here
 
-Into `custom/plugins/<PluginName>/`, not into `vendor/`. Measured on 2026-09-16:
-`vendor/frosh/mail-platform-archive` holds **zero** files, `custom/plugins/FroshPlatformMailArchive`
-holds 61, and the `plugin` table gives that plugin `path = custom/plugins/FroshPlatformMailArchive/`
-with `managed_by_composer = 1`.
+Into `vendor/<vendor>/<package>/`. The `plugin` table gives each plugin that path with
+`managed_by_composer = 1`, and `custom/plugins/` is empty apart from its own `.gitignore`.
 
-This matters for the migration below, because it means moving a plugin to composer changes where a
-directory came from and not where it sits. The `managed_by_composer` column is what distinguishes the
-two, and the directory listing cannot.
+`composer.json` still lists the three path repositories Shopware ships with (`custom/plugins/*`,
+`custom/plugins/*/packages/*` and `custom/static-plugins/*`). They come first, so a directory dropped into
+`custom/plugins/` wins over Packagist and the Store and is locked as `dist.type: path`. A plugin uploaded
+through the admin's plugin manager lands exactly there. **Install plugins with `composer require`, not
+through the admin.** A path lock is not reproducible, because `custom/plugins/` is not in the repository,
+and the test suite fails on it.
 
-## What could move to composer today, and what could not
+## The Shopware Store repository
 
-Checked against the Packagist API for the exact installed version:
+The three Store plugins come from `https://packages.shopware.com`, the fourth repository in
+`composer.json`. It needs the composer token of the shop `sdwa5.org` from the Shopware Account, which
+lives in Vaultwarden and on the host in `shopware-html-data/auth.json`:
 
-- **Six are available at exactly the version that runs**, so a `composer require` would be a no-op in
-  content terms: `frosh/lazy-sizes`, `frosh/platform-filter-search`, `frosh/shopmon`, `frosh/tools`,
-  `swag/swag-extension-store` and `swag/language-pack`. Newer releases exist for the last three, so
-  the require has to pin rather than float, or the migration silently becomes an upgrade.
-- **Three are not on Packagist in the version that runs.** `swag/platform-security` and
-  `tcinn/copyright-custom` answer 404 there entirely. `dne/storefront-dark-mode` exists but stops at
-  2.0.0, while 4.0.0 is installed. All three come through the Shopware Store, so they need
-  `packages.shopware.com` as an additional composer repository and a Shopware account token in an
-  untracked `auth.json`. That is the same missing capability as item 8 in [TODO.md](../../TODO.md),
-  seen from the other instance.
+```json
+{"bearer": {"packages.shopware.com": "<token>"}}
+```
 
-## Licences of the four that this repository carries as source
+`auth.json` is gitignored through the `shopware-html-data/*` line. A restore from this repository therefore
+needs that file put back before `composer install`, and without it the three Store plugins fail to
+download. The repository answers HTTP 400 with the body `"Token invalid."` for a wrong token, while
+the same URL without any token answers 200 with a public package list. A 400 therefore means the token,
+not an outage.
 
-Read from each plugin's own `composer.json` on 2026-09-16. All four declare **MIT**, which is what
-makes publishing this repository with them in it permissible:
+## How the migration ran on 2026-10-01
 
-| Plugin | Declared licence | Tracked files |
-|---|---|---|
-| `FroshLazySizes` | MIT | 18 |
-| `FroshPlatformFilterSearch` | MIT | 22 |
-| `FroshShopmon` | MIT | 11 |
-| `SwagPlatformSecurity` | MIT | 115 |
+The shop was in maintenance mode from about 07:22 to 07:27 Berlin.
 
-The root `README.md` carve-out calls this content "store-installed plugin content under its vendors'
-own terms". That stays the right wording, because it also covers whatever is vendored next, and this
-table is the measurement behind it for what is vendored today.
+1. A database dump plus a tar of `custom/plugins/`, `vendor/`, `composer.json` and `composer.lock` went to
+   `/root/plugin-migration-2026-10-01/` on the host. The old plugin directories are there as well.
+2. The worker's lock `/run/lock/shopware-worker.lock` was held, so no queue run loaded plugins halfway.
+3. All eleven directories moved out of `custom/plugins/`, and one `composer require` with the eleven exact
+   pins installed them into `vendor/`. Before that, nine plugins were not in composer at all, and
+   `FroshPlatformMailArchive` and `FroshPlatformThumbnailProcessor` were locked as `dist.type: path`, so
+   `vendor/frosh/*` were symlinks into the untracked `custom/plugins/`.
+4. The lock diff added exactly the nine missing packages and changed no other version. `shopware/core`
+   stayed `v6.7.11.1`.
+5. `plugin:refresh`, `assets:install`, `theme:compile` and `cache:clear` followed.
 
-## The migration, which is planned and not done
-
-Recorded as item 9 in [TODO.md](../../TODO.md). It was scoped on 2026-09-16 and deliberately not
-executed, because it replaces plugin directories on a live shop. When it runs, it runs behind
-Shopware's maintenance mode, which was the decision taken the same day.
+**One trap showed up and is worth knowing for the next time a plugin path changes.** Right after the
+change the admin answered HTTP 500 on some requests and 200 on others, depending on the FPM worker. The FPM error log
+`/var/log/php/fpm_errors.log` showed `include(/var/www/html/custom/plugins/FroshPlatformMailArchive/...)`,
+which is the old symlink target. `realpath_cache_ttl` is 600 seconds in this image, so the long-lived
+PHP-FPM workers kept resolving the old path. A graceful reload of the FPM master (`kill -USR2` on the
+`php-fpm: master process`) cleared it. The Shopware log itself recorded nothing, because the error
+happens before the kernel boots.
 
 ## Reading the current state yourself
 
 ```bash
 docker exec shopware php bin/console plugin:list
 docker exec -u root shopware mysql -uroot -proot -N -B \
-    -e "SELECT name, path, managed_by_composer FROM shopware.plugin ORDER BY name;"
+    -e "SELECT name, version, managed_by_composer, path FROM shopware.plugin ORDER BY name;"
 ```

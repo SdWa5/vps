@@ -1,4 +1,0 @@
---rm
---artifact-server-path=${HOME}/.cache/act/artifacts
---cache-server-path=${HOME}/.cache/act/cache
---eventpath=.github/act/event.json

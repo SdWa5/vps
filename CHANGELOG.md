@@ -6,6 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.52.0] - 2026-10-01
+
+### Added
+
+- `packages.shopware.com` as a composer repository in `shopware-html-data/composer.json`, authenticated by the
+  shop's composer token in the gitignored `shopware-html-data/auth.json`.
+- Exact requires for the nine plugins that were not in composer, namely `frosh/lazy-sizes` 3.2.0,
+  `frosh/platform-filter-search` 3.1.0, `frosh/shopmon` 0.2.1, `frosh/tools` 3.9.0, `swag/swag-extension-store`
+  4.2.2, `swag/language-pack` 5.58.0, `store.shopware.com/swagplatformsecurity` 4.0.11,
+  `store.shopware.com/tcinncopyrightcustom` 1.0.7 and `store.shopware.com/dnestorefrontdarkmode` 4.0.0.
+- `tests/shopware-plugins.bats`.
+
+### Changed
+
+- All eleven plugins on `sdwa5.org` install into `vendor/` from Packagist or the Shopware Store. The migration
+  ran behind maintenance mode and kept every version.
+- `docs/shopware/plugins.md` describes the composer setup, the token and the migration, including the stale
+  PHP-FPM realpath cache that made the admin answer 500 until a graceful FPM reload.
+- `TODO.md` item 8.2 describes the Store repository as available, and items 10 and 11 are now 9 and 10.
+- `docs/shopware/TODO.md` items 10 to 14 are now 9 to 13.
+
+### Fixed
+
+- `frosh/mail-platform-archive` and `frosh/platform-thumbnail-processor` were locked as `dist.type: path` into
+  the untracked `custom/plugins/`, so `composer install` on a fresh checkout could not rebuild them. Both are
+  locked as Packagist zips at the same versions.
+- `docs/shopware/TODO.md` item 6.4 referred to its sibling as 5.3.
+
+### Removed
+
+- The source of `FroshLazySizes`, `FroshPlatformFilterSearch`, `FroshShopmon` and `SwagPlatformSecurity` under
+  `shopware-html-data/custom/plugins/` (166 files), and the `.gitignore` lines that tracked it.
+- `TODO.md` item 9 and `docs/shopware/TODO.md` item 9, both done by this release.
+
 ## [1.51.0] - 2026-10-01
 
 ### Added

@@ -7,7 +7,7 @@
    `registry.services.shopware.io`. None of them appears in
    the 2026-07-22 legal review, which now lives in Google Drive, so whether a non-profit wants
    an AI image editor, a Copilot and an event ingestion service active on its shop is open. Decide per
-   app, then either deactivate the unwanted ones or cover them in the same privacy pass as item 14
+   app, then either deactivate the unwanted ones or cover them in the same privacy pass as item 13
    (`decision`)
 2. update email templates (order confirmation etc. still default Shopware copy)
     1. dont get too fancy (e.g. with corporate or blogging style expressions)
@@ -34,7 +34,7 @@
        markedly cheaper per piece in bulk, and the association cannot accumulate the capital for a
        bulk order before it has sold anything. A preorder run turns that around, because the
        customers fund the order they are waiting for. That gives the two variants a shared purpose
-       and a clear split. 5.3 only counts interest, which sizes the bulk order but pays for nothing.
+       and a clear split. 6.3 only counts interest, which sizes the bulk order but pays for nothing.
        This item takes the money up front, which is what actually unlocks the bulk price.
        Check first how far core Shopware carries it. The clearance sale flag, the stock and restock
        time fields and the delivery time of a product are the relevant settings, and a plugin is
@@ -44,7 +44,7 @@
         - A minimum quantity below which the run does not happen, and what happens to the money
           then. A refund path has to exist before the first preorder is sold.
         - The legal wording for a binding prepaid sale with a later delivery date, which goes into
-          the same AGB pass as item 14. Taking money for goods not yet ordered is the part a
+          the same AGB pass as item 13. Taking money for goods not yet ordered is the part a
           non-profit should get right on paper.
 7. Checkout end-to-end test — no real order flow tested yet
    (deferred — not selling products yet)
@@ -55,18 +55,13 @@
    `shopware.sitemap_generate` had stopped, and the worker now runs it again. **What is left is whether it has ever
    been submitted to Google Search Console**, which needs the account and cannot be answered from the host, plus the
    meta titles and descriptions, which were never measured
-9. Switch store-installed plugins to composer install — FroshLazySizes, FroshPlatformFilterSearch, SwagPlatformSecurity,
-   FroshShopmon are currently installed via the Shopware Store plugin manager and not in
-   `composer.json`/`composer.lock` (unlike FroshPlatformThumbnailProcessor, FroshPlatformMailArchive). Their source is
-   now tracked in git as a stopgap (see [infrastructure.md](../infrastructure.md)), but `composer require`
-   would be the proper fix so `composer install` alone reproduces the install and updates go through Composer.
-10. update mysql and php
-11. frosh tools system-status
+9. update mysql and php
+10. frosh tools system-status
     1. System Health
     2. Performance recommendations
-12. Hide cart UI when irrelevant — hide cart icon, minicart, and related shop chrome when cart is empty AND user is not
+11. Hide cart UI when irrelevant — hide cart icon, minicart, and related shop chrome when cart is empty AND user is not
     on a PDP or category listing page. Reduces commercial appearance on content-only pages.
-13. Content
+12. Content
     1. add images
     2. add "useful links" page
         1. grouped overview
@@ -74,7 +69,7 @@
     3. Artists & Friends
         1. add links
         2. asked in SdWa5 Family Whatsapp group who wants to be featured -> wait for responses
-14. Apply the legal-page wording fixes from the 2026-07-22 review before editing the live
+13. Apply the legal-page wording fixes from the 2026-07-22 review before editing the live
     Datenschutz, AGB, Impressum and Widerrufsrecht CMS pages. **The review itself lives in Google
     Drive and deliberately not here**, decided 2026-09-13: it is a dated, itemised list of gaps on a
     live Austrian webshop written by its own operator, and in a public repository that is a ready-made

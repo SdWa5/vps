@@ -23,15 +23,9 @@ shopware-html-data/config/*
 !shopware-html-data/config/routes/
 !shopware-html-data/config/services.yaml
 !shopware-html-data/config/bundles.php
-!shopware-html-data/custom/
-shopware-html-data/custom/*
-!shopware-html-data/custom/plugins/
-shopware-html-data/custom/plugins/*
-# Store-installed plugins, not tracked via composer.json/composer.lock
-!shopware-html-data/custom/plugins/FroshLazySizes/
-!shopware-html-data/custom/plugins/FroshPlatformFilterSearch/
-!shopware-html-data/custom/plugins/SwagPlatformSecurity/
-!shopware-html-data/custom/plugins/FroshShopmon/
+# Every plugin comes from composer.json/composer.lock into vendor/, so nothing
+# under custom/plugins/ is tracked. auth.json holds the packages.shopware.com
+# token and stays ignored through the shopware-html-data/* line above.
 shopware-mysql-data/
 shopware-data/
 

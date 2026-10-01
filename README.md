@@ -140,7 +140,6 @@ Two licences, because this repository is part tooling and part writing.
 Attribute as "Musikverein Schmeiß die Wand an 5 (SdWa5)" with a link to the repository. Share-alike applies to the prose, so a
 derivative of the documentation stays under the same licence. The code carries no such condition.
 
-**Not ours to license**: `shopware-html-data/`, which is store-installed Shopware plugin content
-tracked because those plugins are not managed through composer, and `minecraft-data/`, which is server
-and mod configuration produced by the image and its mods, including 27 LuckPerms translation files.
-Each carries its own vendor's terms.
+**Not ours to license**: `minecraft-data/`, which is server and mod configuration produced by the image
+and its mods, including 27 LuckPerms translation files. It carries its vendors' own terms. No Shopware
+plugin source is tracked since 2026-10-01, because every plugin installs through composer.

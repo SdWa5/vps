@@ -106,6 +106,12 @@ sqlite3 /tmp/restore/data/vaultwarden-db-backup/db.sqlite3 'PRAGMA integrity_che
 docker exec restic restic check
 ```
 
+A restic restore brings `shopware-html-data/auth.json` back with the rest of `/opt/docker`, since
+`RESTIC_BACKUP_ARGS` sets no excludes, for every snapshot from 2026-10-02 on. A rebuild
+from the git repository alone does not, because that file is gitignored. Its composer token for
+`packages.shopware.com` then has to come from Vaultwarden before `composer install`, or the three Store
+plugins fail to download, see [shopware/plugins.md](shopware/plugins.md).
+
 ## Retention groups, and why there are eleven of them
 
 `restic forget` groups snapshots by **`host,paths`** by default, and restic records `os.Hostname()`

@@ -177,31 +177,14 @@
        shop, it can fail halfway, and the rollback would have to undo it as well. A safer shape runs
        it only when `composer.lock` moved, behind the same rollback, with the vendor directory
        snapshotted first (ca. 6 Stunden)
-    2. store-bought plugins. These arrive through the Shopware account rather than through git and
-       cannot come from the repository at all. What is wanted here is a recorded list plus a check
-       that alerts when the installed set drifts from it, rather than an installer (ca. 4 Stunden)
-9. **nine of the eleven plugins on `sdwa5.org` are not installed by composer, and five of those are
-   recorded nowhere at all** ([docs/shopware/plugins.md](docs/shopware/plugins.md)). `.gitignore`
-   ignores `shopware-html-data/custom/plugins/*` and lifts exactly four directories back out, so
-   everything installed since falls out of the repository silently. Measured on 2026-09-16, and
-   deliberately only documented that day rather than fixed, because the repair replaces plugin
-   directories on a live shop.
-
-   When it runs, it runs behind Shopware's maintenance mode, decided on 2026-09-16.
-
-    1. six move to composer at exactly the version that runs, so the require is a no-op in content
-       terms: `frosh/lazy-sizes` 3.2.0, `frosh/platform-filter-search` 3.1.0, `frosh/shopmon` 0.2.1,
-       `frosh/tools` 3.9.0, `swag/swag-extension-store` 4.2.2 and `swag/language-pack` 5.58.0. Newer
-       releases exist for the last three, so the require pins rather than floats or the migration
-       silently becomes an upgrade. Three of those six are tracked as source here, so three of the
-       four `!` lines in `.gitignore` go and 51 vendored files leave the repository. The fourth,
-       `SwagPlatformSecurity` with its 115 files, stays until 9.2 (ca. 4 Stunden)
-    2. three cannot, because Packagist does not carry the installed version.
-       `swag/platform-security` 4.0.11 and `tcinn/copyright-custom` 1.0.7 are absent entirely, and
-       `dne/storefront-dark-mode` stops at 2.0.0 while 4.0.0 runs. They need `packages.shopware.com`
-       as a composer repository and a Shopware account token in an untracked `auth.json`, which is
-       item 8.2 seen from this instance. Blocked on that token (ca. 3 Stunden)
-10. **Chimo cannot see what his own deploy did.** Deployment is a pull from this side, so a push into
+    2. store-bought plugins. These come from `packages.shopware.com` through composer, which
+       `sdwa5.org` does since 2026-10-01 with its own shop token in an untracked `auth.json`, see
+       [docs/shopware/plugins.md](docs/shopware/plugins.md). Chimo Diazz would need the composer
+       token of its own shop, and installing it on deploy is then the same question as half 1. What
+       is still wanted is a check that alerts when a plugin lands in `custom/plugins/` through the
+       admin's plugin manager instead, because that one is locked as a path and not reproducible
+       (ca. 4 Stunden)
+9. **Chimo cannot see what his own deploy did.** Deployment is a pull from this side, so a push into
     `chimodiazz/website` is handed over and then goes quiet. `monitoring/chimodiazz-deploy.sh` runs
     every five minutes, writes no state file and no log that anything off this host can read, and its
     only output is a mail to the monitoring recipient when a run fails. Read in the script on
@@ -263,7 +246,7 @@
        `/etc/cron.d/chimodiazz-deploy` rather than in `.env`, so the deploy mails reach him and the
        rest of the host's monitoring does not. It is the cheapest of the four and it closes the human
        half only, because a mailbox is not something his session reads (ca. 30 Minuten)
-11. **add paperless-ngx** (docker-compose.yml, behind Caddy) for two tenants, myself privately and the
+10. **add paperless-ngx** (docker-compose.yml, behind Caddy) for two tenants, myself privately and the
     Soundsystem Verein. One instance is the goal and two instances are the fallback. Paperless-ngx has
     had per-object owners and permissions since 1.14, and workflows can set the owner by consume path
     or mail rule, so one instance with a private user and an org user or group should cover it. This

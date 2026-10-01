@@ -117,10 +117,9 @@ is the whole point of that chain.
 ├── monitoring/                     # host cron scripts, deployed to /opt/docker/monitoring
 ├── vaultwarden-db-backup/          # gitignored — consistent sqlite copy for restic
 ├── shopware-html-data/             # partially tracked — Shopware web root + MySQL
-│   ├── composer.json/.lock, symfony.lock, config/*   # tracked
-│   ├── custom/plugins/{FroshLazySizes,FroshPlatformFilterSearch,SwagPlatformSecurity,FroshShopmon}/
-│   │                                                  # tracked — store-installed, not in composer.lock
-│   └── .env, var/, vendor/, public/, files/, config/jwt/   # gitignored (secrets/build/uploads)
+│   ├── composer.json/.lock, symfony.lock, config/*   # tracked — all eleven plugins are locked here
+│   └── .env, auth.json, var/, vendor/, public/, files/, custom/, config/jwt/
+│                                                      # gitignored (secrets/build/uploads)
 ├── shopware-mysql-data/            # gitignored
 ├── shopware-data/                  # gitignored (legacy mount)
 ├── dolibarr-mariadb-data/          # gitignored — Dolibarr SdWa5 DB
@@ -204,6 +203,6 @@ docker exec shopware php bin/console cache:clear
 - Minecraft is fully configured but excluded from default `up` via compose profile `minecraft`;
   `minecraft-data/` persists the world.
 - `shopware-html-data/` and `minecraft-data/` are no longer fully gitignored — see the tree above for which
-  subpaths are tracked. The four plugin directories named there are not the whole set: eleven plugins are
-  installed and active on `sdwa5.org`, two of them are `composer.json` requires, and five are recorded
-  nowhere. The measured inventory is [shopware/plugins.md](shopware/plugins.md).
+  subpaths are tracked. No plugin source is among them. Since 2026-10-01 all eleven plugins on `sdwa5.org`
+  are exact requires in `composer.json` and install into `vendor/`. The three from the Shopware Store need
+  the token in `shopware-html-data/auth.json`. The inventory is [shopware/plugins.md](shopware/plugins.md).

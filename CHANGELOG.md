@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.52.2] - 2026-10-05
+
+### Changed
+
+- `docs/ssh-hardening.md` records the second copy of `id_ed25519_sdwa5` on stefan-notebook.
+
+### Removed
+
+- The resolved `TODO.md` item for the second copy of `id_ed25519_sdwa5`.
+
 ## [1.52.1] - 2026-10-01
 
 ### Changed

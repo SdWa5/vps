@@ -78,24 +78,21 @@
        [docs/dolibarr.md](docs/dolibarr.md#operations). vaultwarden got this treatment for a reason
        and dolibarr carries the accounting (ca. 2 Stunden)
 7. security follow-ups from the 2026-09-07 ssh hardening ([docs/ssh-hardening.md](docs/ssh-hardening.md))
-    1. a second copy of `id_ed25519_sdwa5` on the notebook. the key is in vaultwarden since 2026-09-08,
-       so the workstation is no longer the only holder, but a rescue console cannot fetch a vault item
-       and every client is logged out for a while after a kdf change (ca. 15 Minuten)
-    2. one of the three pbkdf2 accounts is in active use and the other two are not. argon2id is
+    1. one of the three pbkdf2 accounts is in active use and the other two are not. argon2id is
        per-account and only its holder can change it, so this is a message to that person rather than
        an action here. **the per-account figures are deliberately not written down**, here or in
        `sdwa5/docs/services.md`: which account holds how much on the weaker kdf, read beside a
        reachable `vault.sdwa5.org`, names the soft target and prices it. the admin panel has them for
        anybody who should (ca. 15 Minuten)
-    3. finish the emergency access enrolment with the new member, in progress since 2026-09-08. the
+    2. finish the emergency access enrolment with the new member, in progress since 2026-09-08. the
        sdwa5 org has a single owner, so until a takeover grantee is confirmed, losing that account
        loses the org data. the grantee count is the thing to check in the admin panel; the cipher and
-       collection counts are not written down here for the same reason as 7.2 (ca. 30 Minuten)
-    4. inbound ipv6 works, including cold after 25 minutes idle, so the neighbour-cache hypothesis is
+       collection counts are not written down here for the same reason as 7.1 (ca. 30 Minuten)
+    3. inbound ipv6 works, including cold after 25 minutes idle, so the neighbour-cache hypothesis is
        refuted. one transient failure on 2026-09-08 was never reproduced and its cause is unknown. do
        not open a contabo ticket. if it recurs, capture the network path in use at the time
        (ca. 10 Minuten)
-    5. **DONE on 2026-09-13.** `/opt/docker` had been unable to pull since the 2026-09-12 move: its
+    4. **DONE on 2026-09-13.** `/opt/docker` had been unable to pull since the 2026-09-12 move: its
        `origin` still named the deleted personal repository and its `HEAD` was a pre-rewrite commit
        that existed nowhere. Nothing noticed, because deploys are manual. It now tracks
        `git@github.com:SdWa5/vps.git` at 1.32.0, `git pull --ff-only` succeeds unattended, and all six
@@ -133,7 +130,7 @@
        diagnosis is to try adding fingerprint `SHA256:9cc+0NXJEYRo7xyJ2WeTAFQbE94nDbCap3kgNdX39IU` as a
        deploy key in mid-December; if it is accepted then, this was the cause (`decision`, ca. 5 Minuten)
 
-    6. **Six deleted repositories are still restorable, so the pre-rewrite history is unreachable rather
+    5. **Six deleted repositories are still restorable, so the pre-rewrite history is unreachable rather
        than destroyed.** This is the one place the go-public work overstated itself, corrected
        2026-09-13. `bestcodename/sdwa5`, `sdwa5-vps` and `sdwa5-3d` were deleted on 2026-09-12, and
        `SdWa5/docs-old`, `vps-old` and `3d-old` on 2026-09-13. GitHub restores a deleted repository

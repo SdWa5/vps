@@ -128,21 +128,22 @@ substitute.
 Fingerprint `SHA256:3r0Dk1tFl8W/iHyFC6rsOFbQ1JznqEeP5+06iYug0mA`, comment
 `stefanr@stefan-desktop sdwa5-vps personal 2026-09-07`.
 
-This host is **not** exposed by the unprotected copies of the old keys that still sit on
-stefan-notebook, because `id_rsa` was removed from `authorized_keys` here and `id_ed25519_sdwa5` does
-not exist on that machine. Replacing the key rather than only adding a passphrase to it is what bought
-that.
+This host was **not** exposed by the unprotected copies of the old keys that sat on stefan-notebook
+until 2026-10-04, because `id_rsa` was removed from `authorized_keys` here and `id_ed25519_sdwa5` did
+not exist on that machine then. Replacing the key rather than only adding a passphrase to it is what
+bought that.
 
 The private key is stored in Vaultwarden since 2026-09-08, as item
 `00fceed1-965b-4857-9b91-2d371d0c6662`, uploaded by path and then downloaded again and compared
-byte-for-byte against the file on disk. A second copy still belongs on the notebook.
+byte-for-byte against the file on disk. A second copy with the same passphrase is on stefan-notebook
+since 2026-10-04, with the fingerprint above.
 
 Vaultwarden running on the very host this key unlocks looks circular, and that was the initial
 reasoning for keeping it out. It does not hold up. If the key file is lost the vault is still up and
 the key can be read back, and if Vaultwarden itself is down the Bitwarden clients cache the vault and
 unlock offline, so the loop needs the server and every logged-in client to fail at once.
 
-Two caveats do survive, and they are why the notebook copy stays on the list. A KDF or master password
+Two caveats do survive, and they are why the notebook holds a copy. A KDF or master password
 change logs out every client, so for a while the vault exists only on the server. And a vault item
 cannot be fetched from a rescue console, which is exactly where you sit when SSH is broken. The
 Contabo console is therefore the break-glass rather than the vault.
@@ -612,10 +613,6 @@ test never authenticates at all.
 
 ## Open items
 
-- Second copy of `id_ed25519_sdwa5` on the notebook. The key went into Vaultwarden on 2026-09-08, so
-  the workstation is no longer the only holder, but a rescue console cannot fetch a vault item and
-  every client is logged out for a while after a KDF change. The Contabo console stays the break-glass
-  behind both.
 - **There is no account allowlist.** Measured 2026-09-17: sshd has no `AllowUsers`, no
   `AllowGroups` and no `DenyUsers`, and not a single `Match` block, so any account on this host
   that carries a key can log in. That was harmless while `root` was the only such account and

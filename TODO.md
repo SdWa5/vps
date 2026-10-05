@@ -257,11 +257,6 @@
     2. make the fork public. Paperless-ngx is GPL-3.0, and publishing the modified source keeps the
        fork in line with it and with the plan to take all sdwa5 repositories public
 11. **BankSync follow-ups** ([docs/dolibarr.md](docs/dolibarr.md#custom-modules)). Live since 2026-10-05 in
-    dry run, account 4 mapped, opening balance 333.40 € matched PayPal, daily job at 06:00 UTC
-    1. set the queue mail recipients `BANKSYNC_NOTIFY_EMAIL`, until then the queue is silent (`decision`)
-    2. switch on `BANKSYNC_AUTOPOST_ENABLED` after the first real `would_post` decisions were reviewed
-    3. a run only looks back 14 days, so a job that stays down longer loses transactions. resume from
-       the end of the last successful run instead (SdWa5/banksync, ca. 1 Stunde 30 Minuten)
-    4. a purchase in a foreign currency arrives as a USD payment, which is skipped, and a EUR
-       conversion line `T0200` without counterparty, which lands in the queue as `other`. pair the
-       two through PayPal's reference id (SdWa5/banksync, ca. 3 Stunden)
+    dry run at v1.1.0, account 4 mapped, opening balance 333.40 € matched PayPal, daily job at
+    06:00 UTC, queue mail to mail@sdwa5.org
+    1. switch on `BANKSYNC_AUTOPOST_ENABLED` after the first real `would_post` decisions were reviewed

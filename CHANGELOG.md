@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.53.4] - 2026-10-06
+
+### Fixed
+
+- `TODO.md` and the deploy example in `docs/dolibarr.md` name BankSync v1.2.0, the tag deployed on the VPS.
+
 ## [1.53.3] - 2026-10-05
 
 ### Removed

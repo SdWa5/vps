@@ -33,7 +33,7 @@ the host.
 
 ```bash
 cd /opt/docker
-tools/dolibarr/deploy-module.sh banksync https://github.com/SdWa5/banksync.git v1.0.0
+tools/dolibarr/deploy-module.sh banksync https://github.com/SdWa5/banksync.git v1.2.0
 ```
 
 A rollback is the same command with the older tag. The script refuses a directory that is not a

@@ -257,6 +257,6 @@
     2. make the fork public. Paperless-ngx is GPL-3.0, and publishing the modified source keeps the
        fork in line with it and with the plan to take all sdwa5 repositories public
 11. **BankSync follow-ups** ([docs/dolibarr.md](docs/dolibarr.md#custom-modules)). Live since 2026-10-05 in
-    dry run at v1.1.0, account 4 mapped, opening balance 333.40 € matched PayPal, daily job at
+    dry run at v1.2.0, account 4 mapped, opening balance 333.40 € matched PayPal, daily job at
     06:00 UTC, queue mail to mail@sdwa5.org
     1. switch on `BANKSYNC_AUTOPOST_ENABLED` after the first real `would_post` decisions were reviewed

@@ -68,14 +68,16 @@ xclip -selection clipboard -o | ssh root@sdwa5.org 'install -m 0400 -o 1000 -g 1
 ```
 
 Adding a file needs no restart. Creating the directory after the containers started needs
-`docker compose up -d dolibarr dolibarr_cron`, because the bind mount resolves at container start.
+`docker-compose up -d dolibarr dolibarr_cron`, because the bind mount resolves at container start.
+The VPS has only the standalone `docker-compose` v1 and no `docker compose` plugin. v1 recreates the
+linked `dolibarr_db` along with them, which took ca. 1 minute of ERP downtime on 2026-10-05.
 
 ## Project 2 + Project 3 instances
 
 - Inactive (containers not running as of 2026-06-30)
 - Defined in `docker-compose.projects.yml`
 - No data dirs created yet on VPS
-- Start with: `docker compose -f docker-compose.projects.yml up -d`
+- Start with: `docker-compose -f docker-compose.projects.yml up -d`
 
 ## API access
 

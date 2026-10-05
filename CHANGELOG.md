@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.53.3] - 2026-10-05
+
+### Removed
+
+- The resolved `TODO.md` follow-ups for BankSync, which are fixed in its 1.1.0, and the queue mail
+  recipient, which is set.
+
 ## [1.53.2] - 2026-10-05
 
 ### Changed

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.53.2] - 2026-10-05
+
+### Changed
+
+- `TODO.md` item 11 lists the BankSync follow-ups instead of the go-live steps, which are done.
+
 ## [1.53.1] - 2026-10-05
 
 ### Fixed

@@ -112,6 +112,9 @@ from the git repository alone does not, because that file is gitignored. Its com
 `packages.shopware.com` then has to come from Vaultwarden before `composer install`, or the three Store
 plugins fail to download, see [shopware/plugins.md](shopware/plugins.md).
 
+`dolibarr-secrets/` behaves the same way. A restic restore brings BankSync's `paypal.json` back, and
+a rebuild from git alone needs it from Vaultwarden, see [dolibarr.md](dolibarr.md#module-secrets).
+
 ## Retention groups, and why there are eleven of them
 
 `restic forget` groups snapshots by **`host,paths`** by default, and restic records `os.Hostname()`

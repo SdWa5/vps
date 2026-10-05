@@ -256,3 +256,11 @@
        because every upstream release then has to be merged by hand (`decision`)
     2. make the fork public. Paperless-ngx is GPL-3.0, and publishing the modified source keeps the
        fork in line with it and with the plan to take all sdwa5 repositories public
+11. **BankSync go-live on erp.sdwa5.org** ([docs/dolibarr.md](docs/dolibarr.md#custom-modules), ca. 3 Stunden)
+    1. tag `v1.0.0` in `SdWa5/banksync` once `feature/paypal-provider` is merged, then deploy it with
+       `tools/dolibarr/deploy-module.sh` and activate the module in the ui
+    2. create the PayPal Live REST app with Transaction Search under the Verein's business login, put
+       client id and secret into Vaultwarden and into `dolibarr-secrets/paypal.json` (user, ca. 30 Minuten)
+    3. map the PayPal source account to bank account 4, cutover 2026-09-09, first run in dry-run, then
+       compare PayPal's balance at the end of 2026-09-08 with the 333.40 € of account 4 before posting
+    4. enable `BankSyncPayPalDailyJob` and set the queue mail recipients

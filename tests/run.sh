@@ -7,7 +7,9 @@
 # timestamp formats the scripts read out of the restic log. GNU coreutils is
 # installed into the throwaway container so the test environment matches the
 # Debian VPS. jq comes along for the same reason: tools/shopware/set-address.sh
-# builds its JSON payloads with it, and so do that suite's fixtures.
+# builds its JSON payloads with it, and so do that suite's fixtures. git is real
+# rather than stubbed for tools/dolibarr/deploy-module.sh, whose suite clones a
+# throwaway repository.
 #
 # Usage: tests/run.sh [bats arguments]
 
@@ -18,7 +20,7 @@ cd "$REPO_ROOT"
 
 echo "== bats =="
 docker run --rm -v "$REPO_ROOT:/code" -w /code --entrypoint sh bats/bats:latest \
-    -c "apk add --no-cache coreutils jq >/dev/null 2>&1 && bats ${*:-tests/}"
+    -c "apk add --no-cache coreutils jq git >/dev/null 2>&1 && bats ${*:-tests/}"
 
 echo
 echo "== shellcheck =="
@@ -30,6 +32,7 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt koalaman/shellcheck:stable -x \
     monitoring/shopware-worker.sh \
     monitoring/chimodiazz-deploy.sh \
     hardening/firewall/sdwa5-firewall.sh \
+    tools/dolibarr/deploy-module.sh \
     tools/dolibarr/doli.sh \
     tools/dolibarr/set-address.sh \
     tools/dolibarr/sync-pm.sh \

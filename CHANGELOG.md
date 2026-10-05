@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.53.0] - 2026-10-05
+
+### Added
+
+- `tools/dolibarr/deploy-module.sh`, which installs or updates a Dolibarr custom module as a git
+  checkout of a tag and hands it to the web user, with a bats suite running real git.
+- Read-only mount of `dolibarr-secrets/` as `/run/secrets` in `dolibarr` and `dolibarr_cron`, for
+  credentials a module reads from a file.
+- `docs/dolibarr.md` sections on custom modules, the BankSync module and module secrets.
+- `docs/backup.md` notes that restic covers `dolibarr-secrets/`.
+- `TODO.md` item for the BankSync go-live.
+
+### Changed
+
+- `tests/run.sh` installs git into the bats container and shellchecks the new script.
+- `.gitignore` covers `dolibarr-secrets/`.
+
 ## [1.52.2] - 2026-10-05
 
 ### Changed

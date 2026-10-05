@@ -87,6 +87,9 @@ tools/dolibarr/doli.sh status
 
 # Show what the project/task backlog would change in the ERP (--apply writes)
 tools/dolibarr/sync-pm.sh
+
+# Install or update a Dolibarr custom module at a tag, on the VPS as root (see docs/dolibarr.md)
+tools/dolibarr/deploy-module.sh banksync https://github.com/SdWa5/banksync.git v1.0.0
 ```
 
 ## Monitoring

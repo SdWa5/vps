@@ -20,9 +20,55 @@ Admin login for all instances: `admin` (see `*_ADMIN_PASSWORD` in .env)
 
 - ERP for Musikverein Schmeiß die Wand an 5
 - Cron job runs as separate `dolibarr_cron` container (depends on `dolibarr` being healthy)
-- Data dirs: `dolibarr-documents-data/`, `dolibarr-custom-data/`, `dolibarr-mariadb-data/` — all gitignored.
-  `dolibarr-custom-data/` currently only holds `GeoLite2-Country.mmdb` (MaxMind GeoIP DB), not custom module
-  code — a re-downloadable binary, so it's not tracked in the repo either.
+- Data dirs: `dolibarr-documents-data/`, `dolibarr-custom-data/`, `dolibarr-mariadb-data/` and
+  `dolibarr-secrets/`, all gitignored. `dolibarr-custom-data/` holds `GeoLite2-Country.mmdb` (MaxMind
+  GeoIP DB, re-downloadable) and the custom modules below.
+
+### Custom modules
+
+Custom modules are git checkouts of a tag inside `dolibarr-custom-data/`, which both containers
+mount as `/var/www/html/custom`. `tools/dolibarr/deploy-module.sh` installs and updates them on the
+VPS as root and hands the checkout to uid 1000, which is `www-data` in the container and `admin` on
+the host.
+
+```bash
+cd /opt/docker
+tools/dolibarr/deploy-module.sh banksync https://github.com/SdWa5/banksync.git v1.0.0
+```
+
+A rollback is the same command with the older tag. The script refuses a directory that is not a
+checkout, a checkout of another repository, a checkout with local edits and a tag that does not
+exist. It never activates anything. After a first install, or after an update that adds scheduled
+jobs, boxes or menus, the module is deactivated and activated again in Setup → Modules, because
+Dolibarr registers those only on activation.
+
+| Module | Repository | Purpose |
+|---|---|---|
+| `banksync` | [SdWa5/banksync](https://github.com/SdWa5/banksync), a fork of `vanyolai/dolibarr-banksync` | PayPal sync into bank account 4, automatic posting of the clear cases, a queue with Belege for the rest. The fork's `docs/paypal.md` covers setup and behaviour |
+
+### Module secrets
+
+`dolibarr-secrets/` is mounted read-only as `/run/secrets` into both containers. It holds
+credentials that a module reads from a file, so they stay out of the database and every SQL dump
+of it. The restic snapshot of `/opt/docker` does include the directory, encrypted, so a restore
+brings it back. It is a directory mount because Docker turns a missing file mount into an empty
+directory.
+
+| File | Read by | Content |
+|---|---|---|
+| `paypal.json` | BankSync | `client_id` and `client_secret` of the PayPal Live REST app with Transaction Search, in Vaultwarden as well |
+
+The directory is `0700` and each file `0400`, both owned by `1000:1000`. A file is written by
+piping it in, never by typing the secret into a shell command.
+
+```bash
+install -d -m 0700 -o 1000 -g 1000 /opt/docker/dolibarr-secrets
+# on the workstation, with the JSON in the clipboard:
+xclip -selection clipboard -o | ssh root@sdwa5.org 'install -m 0400 -o 1000 -g 1000 /dev/stdin /opt/docker/dolibarr-secrets/paypal.json'
+```
+
+Adding a file needs no restart. Creating the directory after the containers started needs
+`docker compose up -d dolibarr dolibarr_cron`, because the bind mount resolves at container start.
 
 ## Project 2 + Project 3 instances
 

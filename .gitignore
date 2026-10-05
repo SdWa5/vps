@@ -33,6 +33,7 @@ shopware-data/
 dolibarr-mariadb-data/
 dolibarr-documents-data/
 dolibarr-custom-data/
+dolibarr-secrets/
 
 # Dolibarr Project 2 data
 project2-dolibarr-mariadb-data/

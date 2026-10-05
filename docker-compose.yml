@@ -159,6 +159,10 @@ services:
     volumes:
       - ./dolibarr-documents-data:/var/www/documents
       - ./dolibarr-custom-data:/var/www/html/custom
+      # Credentials of custom modules, such as BankSync's paypal.json. A directory rather than a
+      # file, because Docker creates a missing file mount as an empty directory. Kept out of the
+      # database and its dumps on purpose, see docs/dolibarr.md.
+      - ./dolibarr-secrets:/run/secrets:ro
 
   dolibarr_cron:
     # Exact pin, digest 9dbf09ca, which is what runs today. A Dolibarr minor
@@ -193,6 +197,10 @@ services:
     volumes:
       - ./dolibarr-documents-data:/var/www/documents
       - ./dolibarr-custom-data:/var/www/html/custom
+      # Credentials of custom modules, such as BankSync's paypal.json. A directory rather than a
+      # file, because Docker creates a missing file mount as an empty directory. Kept out of the
+      # database and its dumps on purpose, see docs/dolibarr.md.
+      - ./dolibarr-secrets:/run/secrets:ro
 
   ollama:
     # Not pinned. Profile-gated and the image is not present on the host.

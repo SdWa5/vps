@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.54.2] - 2026-10-06
+
+### Fixed
+
+- `SdWa5Theme` 1.0.2. Two rules of 1.0.1 lost to core selectors of higher or equal specificity, so a 320 px
+  phone header still wrapped and the current breadcrumb stayed bright green on the light background. The
+  hovered breadcrumb uses the readable green as well.
+
 ## [1.54.1] - 2026-10-06
 
 ### Fixed

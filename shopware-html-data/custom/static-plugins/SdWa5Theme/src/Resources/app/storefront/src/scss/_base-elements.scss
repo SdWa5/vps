@@ -88,9 +88,11 @@ a {
   color: var(--sdwa5-green-text-immutable) !important;
 }
 
-// The core colours the current breadcrumb with $primary, which as text on the
-// light background measured 1.5:1.
-.breadcrumb-link.is-active {
+// The core colours the current and the hovered breadcrumb with $primary, which
+// as text on the light background measured 1.5:1. Its selector is
+// .breadcrumb a.is-active, so this one has to match it.
+.breadcrumb a.is-active,
+.breadcrumb a:hover {
   color: var(--sdwa5-green-text-immutable);
 }
 

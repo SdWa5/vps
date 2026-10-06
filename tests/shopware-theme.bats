@@ -180,3 +180,18 @@ snippet_keys() {
     run grep -n 'p\[style' "$SCSS/_hero.scss"
     [ "$status" -ne 0 ]
 }
+
+# The core prints these wrappers on every card with a fixed height. The theme
+# prints the core block only when it renders text, see docs/shopware/theme.md.
+@test "the listing card prints its optional boxes only when they hold text" {
+    card="$VIEWS/component/product/card"
+    for pair in box-standard:component_product_box_variant_characteristics box-standard:component_product_box_description \
+        price-unit:component_product_box_price_unit price-unit:component_product_box_cheapest_price; do
+        f="$card/${pair%%:*}.html.twig"
+        body="$(sed -n "/{% block ${pair#*:} %}/,/{% endblock %}/p" "$f")"
+        [ -n "$body" ] || { echo "$f lacks ${pair#*:}"; return 1; }
+        echo "$body" | grep -q '{% set sdwa5Block %}{{ parent() }}{% endset %}'
+        echo "$body" | grep -q '{% if sdwa5Block|striptags|trim is not empty %}{{ sdwa5Block }}{% endif %}'
+    done
+}
+

@@ -24,7 +24,7 @@ shop's own theme `SdWa5Theme`, which lives in this repository and is locked as a
 | `SwagExtensionStore` | `swag/swag-extension-store` | 4.2.2 | Packagist |
 | `SwagLanguagePack` | `swag/language-pack` | 5.58.0 | Packagist |
 | `SwagPlatformSecurity` | `store.shopware.com/swagplatformsecurity` | 4.0.16 | Shopware Store |
-| `SdWa5Theme` | `sdwa5/sdwa5-theme` | 1.1.0 | this repository, [theme.md](theme.md) |
+| `SdWa5Theme` | `sdwa5/sdwa5-theme` | 1.1.1 | this repository, [theme.md](theme.md) |
 | `TcinnCopyrightCustom` | `store.shopware.com/tcinncopyrightcustom` | 1.0.7 | Shopware Store |
 
 Every require is pinned to the exact version, because a floating constraint would turn the next

@@ -1,0 +1,16 @@
+{% sw_extends '@Storefront/storefront/component/product/card/price-unit.html.twig' %}
+
+{# The unit line and the "variants from" line are printed on every card, filled
+   or not, with their own height and margin. No sdwa5 product has a purchase or
+   reference unit, and no listing shows a cheaper variant, so each card carried
+   ca. 120 px of empty boxes (measured 2026-10-06). As in box-standard.html.twig,
+   the core block is printed only when it holds text. #}
+{% block component_product_box_price_unit %}
+    {% set sdwa5Block %}{{ parent() }}{% endset %}
+    {% if sdwa5Block|striptags|trim is not empty %}{{ sdwa5Block }}{% endif %}
+{% endblock %}
+
+{% block component_product_box_cheapest_price %}
+    {% set sdwa5Block %}{{ parent() }}{% endset %}
+    {% if sdwa5Block|striptags|trim is not empty %}{{ sdwa5Block }}{% endif %}
+{% endblock %}

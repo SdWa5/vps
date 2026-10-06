@@ -1,0 +1,17 @@
+{% sw_extends '@Storefront/storefront/component/product/card/box-standard.html.twig' %}
+
+{# The core prints the variant and description wrappers on every card, filled
+   or not, and gives them a fixed height so the cards of a row line up. sdwa5's
+   merch has neither variants in the listing nor descriptions, so each card
+   carried ca. 120 px of empty boxes (measured 2026-10-06). The core block is
+   rendered into a variable and printed only when it holds text, which keeps
+   the core conditions and shows the boxes again for a product that fills them. #}
+{% block component_product_box_variant_characteristics %}
+    {% set sdwa5Block %}{{ parent() }}{% endset %}
+    {% if sdwa5Block|striptags|trim is not empty %}{{ sdwa5Block }}{% endif %}
+{% endblock %}
+
+{% block component_product_box_description %}
+    {% set sdwa5Block %}{{ parent() }}{% endset %}
+    {% if sdwa5Block|striptags|trim is not empty %}{{ sdwa5Block }}{% endif %}
+{% endblock %}

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d5a9b5b6edb5d85044366a6147ea76fa",
+    "content-hash": "a3e396c4accb7bf7878d27dd388b4cf8",
     "packages": [
         {
             "name": "async-aws/core",
@@ -6277,11 +6277,11 @@
         },
         {
             "name": "sdwa5/sdwa5-theme",
-            "version": "1.0.3",
+            "version": "1.0.4",
             "dist": {
                 "type": "path",
                 "url": "custom/static-plugins/SdWa5Theme",
-                "reference": "e9ee7bf8f20ec0db3e2af1b5adcca88f32559182"
+                "reference": "4ca3d7cc19e3668e5375c4b81fe1105ce7f98af1"
             },
             "require": {
                 "shopware/core": "~6.7.0",

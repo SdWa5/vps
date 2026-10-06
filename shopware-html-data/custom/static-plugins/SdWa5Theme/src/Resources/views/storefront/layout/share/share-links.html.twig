@@ -4,24 +4,30 @@
    a click. The deploy builds no storefront JavaScript, so navigator.share and a
    copy button are out of reach anyway.
 
-   The page URL is built from two request attributes, as in the ChimodiazzTheme,
-   which measured both obvious sources as wrong:
+   The page URL is the URL as it was requested, built from two attributes the
+   RequestTransformer sets: sw-sales-channel-absolute-base-url is scheme and
+   host, and sw-original-request-uri is the path as requested, including the
+   domain path such as /de and the query string. Measured on 2026-10-06, the
+   other candidates are wrong:
 
    - app.request.uri has the sales channel domain prefix stripped by the
      RequestTransformer, so on /de/ it shares the root.
+   - sw-storefront-url plus resolved-uri, which ChimodiazzTheme uses, gives the
+     technical /navigation/<id> path on sdwa5.org/About-SdWa5/ and drops the
+     trailing slash on sdwa5.org/de/Hardware/, which then answers 404.
    - page.metaInformation.canonical is a placeholder that the SEO URL handler
      replaces in the finished response, and |url_encode breaks the pattern it
-     looks for.
+     looks for. It is also missing on several pages.
 
-   sw-storefront-url is scheme, host and the domain path such as /de, and
-   resolved-uri is the path inside the sales channel. app.request.uri stays the
-   fallback for error pages, where the RequestTransformer does not run.
+   app.request.uri stays the fallback for error pages, where the
+   RequestTransformer does not run.
 
    Variables: sdwa5ShareVariant is 'bar' (fixed at the right edge from 992 px)
    or 'row' (end of the main content below 992 px). #}
-{% set sdwa5Base = app.request.attributes.get('sw-storefront-url') %}
-{% set sdwa5Url = sdwa5Base
-    ? sdwa5Base ~ app.request.attributes.get('resolved-uri')
+{% set sdwa5Host = app.request.attributes.get('sw-sales-channel-absolute-base-url') %}
+{% set sdwa5Path = app.request.attributes.get('sw-original-request-uri') %}
+{% set sdwa5Url = sdwa5Host and sdwa5Path
+    ? sdwa5Host ~ sdwa5Path
     : app.request.uri %}
 {% set sdwa5Text = 'sdwa5.share.text'|trans %}
 

@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.54.4] - 2026-10-06
+
+### Fixed
+
+- `SdWa5Theme` 1.0.4. The share links carry the URL as it was requested. They shared the technical
+  `/navigation/<id>` path on English category pages, and on German ones a URL without its trailing slash,
+  which answered 404.
+
+### Changed
+
+- `TODO.md` item 13 notes that the Chimo Diazz share aside probably has the same URL defect.
+
 ## [1.54.3] - 2026-10-06
 
 ### Fixed

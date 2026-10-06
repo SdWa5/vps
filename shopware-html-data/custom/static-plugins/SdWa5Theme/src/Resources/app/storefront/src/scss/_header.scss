@@ -81,7 +81,8 @@
     --bs-gutter-x: 0.5rem;
   }
 
-  .header-actions-col > .row {
+  // Prefixed, because the unprefixed rule further down would win otherwise.
+  .header-row .header-actions-col > .row {
     column-gap: 0;
   }
 }

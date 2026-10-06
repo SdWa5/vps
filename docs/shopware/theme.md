@@ -139,7 +139,8 @@ open. A test fails on any of those words in the donation snippets.
 Every page except checkout and account carries plain links to share it on WhatsApp, Telegram and by
 e-mail. There is no JavaScript and no third-party script, so nothing loads before a click. From 992 px
 they form a vertical bar fixed at the right edge of the screen. Below that they form a row at the end
-of the main content.
+of the main content. Between 992 and 1400 px the content and the footer get right padding, because the
+container runs edge to edge there and the bar covered up to 18 px of it.
 
 They are deliberately not in the offcanvas menu, where Chimo Diazz has them. The offcanvas is part of
 the ESI header, so a link built there always shares the site root. Measured on 2026-10-06 on a Chimo

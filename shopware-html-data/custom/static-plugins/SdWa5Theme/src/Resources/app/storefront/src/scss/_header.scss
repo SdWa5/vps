@@ -71,6 +71,32 @@
   }
 }
 
+// Burger, logo and actions have to share one line on a phone. Measured at
+// 390 px with the default gutters, the three came to 407 px and the actions
+// wrapped below the logo. The empty columns of hidden actions still take a
+// column gap, so the gap goes too. Below 380 px the logo shrinks as well, which
+// keeps a 320 px screen on one line.
+@media (max-width: 575.98px) {
+  .header-row {
+    --bs-gutter-x: 0.5rem;
+  }
+
+  .header-actions-col > .row {
+    column-gap: 0;
+  }
+}
+
+@media (max-width: 379.98px) {
+  .header-row .sdwa5-logo {
+    width: 87px;
+    height: 36px;
+  }
+
+  .header-row .sdwa5-donate-btn {
+    max-width: 7.5rem;
+  }
+}
+
 @media (min-width: 576px) {
   .header-row {
     padding: 0.5rem 0;

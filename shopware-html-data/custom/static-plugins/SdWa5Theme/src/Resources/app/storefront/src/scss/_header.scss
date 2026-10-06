@@ -277,6 +277,18 @@
   border-color: var(--sdwa5-green-immutable);
 }
 
+// The core spaces the rows of flyout columns with a 30 px bottom margin on each
+// column, which also leaves 30 px below the last row, so a flyout with one row
+// was 62 px tall around 32 px of links (Clothing & Merch, measured 2026-10-06).
+// A row gap spaces the rows without that trailing space.
+.sdwa5-nav .navigation-flyout-categories.is-level-0 {
+  row-gap: 30px;
+
+  > .navigation-flyout-col {
+    margin-bottom: 0;
+  }
+}
+
 // --------------------------------------------------------- Off-canvas extras
 
 .sdwa5-offcanvas-donate {

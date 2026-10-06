@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.55.2] - 2026-10-06
+
+### Fixed
+
+- SdWa5Theme 1.1.2. The desktop navigation flyout no longer leaves 30 px of empty space below its last
+  row of categories. The rows are spaced with a row gap instead of the core's bottom margin on each
+  column.
+
 ## [1.55.1] - 2026-10-06
 
 ### Fixed

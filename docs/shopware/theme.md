@@ -108,6 +108,8 @@ with the `muted` token.
   the offcanvas menu there and language and currency are in the offcanvas as well. The navigation row
   is hidden too, because below 992 px it holds only the collapsed navbar's padding and border, and the
   burger opens the offcanvas menu instead.
+- **The navigation flyout** spaces its rows of categories with a row gap. The core uses a bottom margin
+  on each column, which left 30 px of empty space below the last row.
 - **The logo** is `assets/logo/sdwa5-logo.webp`, 213×88 px shown at 107×44 px, built from the live
   `Graffiti_Banner_cut.png` in Drive. It is read through `asset('…', 'theme')`, so the logo media stored
   in Storefront's config is ignored by this theme. A faint light halo keeps it legible in dark mode. To

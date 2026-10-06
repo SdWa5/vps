@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.54.3] - 2026-10-06
+
+### Fixed
+
+- `SdWa5Theme` 1.0.3. Every core rule that used the SdWa5 green as a text colour, 33 selectors such as the
+  offcanvas "Show all categories" link and the active category, uses the readable green, and the offcanvas
+  headline and back link use the headline colour instead of the red.
+
+### Changed
+
+- `docs/shopware/theme.md` gives the scan for core rules with brand-coloured text and the exact theme
+  update commands, including `theme:compile --active-only`.
+
 ## [1.54.2] - 2026-10-06
 
 ### Fixed

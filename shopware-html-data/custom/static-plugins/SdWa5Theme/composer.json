@@ -1,7 +1,7 @@
 {
   "name": "sdwa5/sdwa5-theme",
   "description": "Storefront theme of sdwa5.org, ported from the ChimodiazzTheme and adapted to the DNE dark mode plugin.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "type": "shopware-platform-plugin",
   "license": "MIT",
   "authors": [

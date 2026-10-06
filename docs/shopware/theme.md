@@ -78,6 +78,18 @@ Three rules keep this working, and the tests enforce the first two.
    inverted a second time.
 3. **An alpha colour is a token**, because DNE converts every alpha colour regardless of saturation.
 
+The core also uses `$primary` and `$secondary` as plain text colours, for example for the current
+breadcrumb and the offcanvas headline, and those compile to the literal green and red. `_base-elements.scss`
+repeats each of those selectors with a readable token. The list was collected on 2026-10-06 from the
+compiled CSS of Shopware 6.7.11.1. **After a Shopware update, collect it again and compare it with that
+list**, because a new core rule with green text would be back at 1.5:1 on the light background. The scan
+still shows the overridden rules, since the core's own rules stay in the bundle:
+
+```bash
+css=$(curl -s https://sdwa5.org/ | grep -oE 'https://sdwa5.org/theme/[^"]*all\.css[^"]*' | head -1)
+curl -s "$css" | grep -aoE '[^{}]+\{([^{}]*;)?color:#(1fe51f|e5231f)[^{}]*\}' | grep -v data-theme
+```
+
 `TcinnCopyrightCustom` prints its copyright line with an inline `color:#fff`. The footer overrides it
 with the `muted` token.
 
@@ -200,8 +212,10 @@ docker exec -u root shopware sh -c 'kill -USR2 "$(pgrep -f "php-fpm: master")"'
 tools/shopware/set-homepage-sections.sh            # from a workstation, then again with --apply
 ```
 
-A later change to the theme needs the pull, a version bump in the three places the tests compare,
-`composer install`, `plugin:update SdWa5Theme`, `theme:compile` and `cache:clear`. The deploy marker
+A later change to the theme needs a version bump in the places the tests compare, then on the host the
+pull, `composer install`, `plugin:refresh`, `plugin:update SdWa5Theme`, `theme:compile --active-only
+--sync` and `cache:clear` under the worker lock, and the FPM reload. `plugin:update` already recompiles
+the theme. The option is `--active-only`, and `--only-active` aborts the command. The deploy marker
 `<meta name="sdwa5:theme" content="…">` in every page head shows which version is live. Automating
 this is filed in the root [TODO.md](../../TODO.md).
 

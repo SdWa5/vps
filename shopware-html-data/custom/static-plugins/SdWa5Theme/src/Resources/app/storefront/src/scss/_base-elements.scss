@@ -88,12 +88,56 @@ a {
   color: var(--sdwa5-green-text-immutable) !important;
 }
 
-// The core colours the current and the hovered breadcrumb with $primary, which
-// as text on the light background measured 1.5:1. Its selector is
-// .breadcrumb a.is-active, so this one has to match it.
+// The core uses $primary as a text colour in the rules below, and $primary is
+// the SdWa5 green, which as text on the light background measured 1.5:1. Each
+// selector repeats the core's exactly, so the same specificity and the later
+// position in the bundle decide. Collected on 2026-10-06 from the compiled CSS
+// of Shopware 6.7.11.1, every rule whose color is #1fe51f. After a Shopware
+// update the list needs the same scan again, see docs/shopware/theme.md. The
+// footer headline, the hotline link and the cart total are styled in their own
+// partials.
+.account-aside-item.is-active,
+.alert-primary .icon,
+a.line-item-label:hover,
+.base-slider-controls-prev:hover,
+.base-slider-controls-next:hover,
+.basic-captcha-content-refresh-icon:hover .icon.icon-arrow-switch,
 .breadcrumb a.is-active,
-.breadcrumb a:hover {
+.breadcrumb a:hover,
+.category-navigation-link.is-active,
+.custom-select:hover,
+.filter-boolean:hover,
+.filter-panel-item-toggle.show .icon-filter-panel-item-toggle svg,
+.filter-rating-select-item-label:hover .filter-rating-select-item-label-text,
+.filter-rating-select-radio:focus-visible ~ .filter-rating-select-item-label .filter-rating-select-item-label-text,
+.footer-link:hover,
+.forms-boolean:hover,
+.header-minimal-contact a,
+.header-search-btn:hover .icon,
+.header-close-btn:hover .icon,
+.is--sidebar .filter-panel-item-toggle[aria-expanded="true"],
+.is--sidebar .filter-panel-item-toggle[aria-expanded="true"] svg,
+.navigation-flyout-link.active,
+.navigation-flyout-link.nav-link:hover,
+.navigation-offcanvas-link.is-current-category,
+.navigation-offcanvas-link.is-home-link,
+.navigation-offcanvas-link.is-home-link .icon,
+.order-item-product-name:hover,
+.product-detail-tab-preview-more,
+.search-suggest-product-link:focus,
+.search-suggest-product-link:focus-visible,
+.search-suggest-product-link:hover,
+.search-suggest-total-link:focus,
+.search-suggest-total-link:focus-visible {
   color: var(--sdwa5-green-text-immutable);
+}
+
+// The same for $secondary, the SdWa5 red, which as small text on the light
+// background measured 4.19:1. The core's red icons stay, because an icon needs
+// 3:1.
+.navigation-offcanvas-headline,
+.navigation-offcanvas-link.is-back-link {
+  color: var(--sdwa5-headline-immutable);
 }
 
 // The browser default focus ring disappears on a dark background.

@@ -6,13 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.54.5] - 2026-10-06
+
+### Fixed
+
+- The 1.54.4 entry, the share template comment, its test and `TODO.md` item 13 no longer claim a dropped
+  trailing slash on German pages. The page measured, `/de/Hardware/`, does not exist and answers 404
+  itself, while real German pages such as `/de/Events/` were shared correctly.
+
 ## [1.54.4] - 2026-10-06
 
 ### Fixed
 
 - `SdWa5Theme` 1.0.4. The share links carry the URL as it was requested. They shared the technical
-  `/navigation/<id>` path on English category pages, and on German ones a URL without its trailing slash,
-  which answered 404.
+  `/navigation/<id>` path on English category pages.
 
 ### Changed
 

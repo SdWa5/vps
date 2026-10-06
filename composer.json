@@ -1,7 +1,7 @@
 {
   "name": "sdwa5/sdwa5-vps",
   "description": "SdWa5 VPS infrastructure — Docker Compose config, Caddy, and ops documentation for all services on the Contabo VPS",
-  "version": "1.54.3",
+  "version": "1.54.4",
   "type": "project",
   "homepage": "https://sdwa5.org"
 }

@@ -155,3 +155,12 @@ snippet_keys() {
         [ "$parents" -ge "$(( blocks - replaced ))" ] || { echo "$f: $blocks blocks, $parents parent() calls"; return 1; }
     done
 }
+
+# resolved-uri is the technical /navigation/<id> path wherever an SEO URL exists,
+# and it lost the trailing slash of /de/Hardware/, which then answered 404.
+@test "share links carry the URL as it was requested" {
+    f="$VIEWS/layout/share/share-links.html.twig"
+    grep -q "attributes.get('sw-original-request-uri')" "$f"
+    grep -q "attributes.get('sw-sales-channel-absolute-base-url')" "$f"
+    ! grep -q "attributes.get('resolved-uri')" "$f"
+}

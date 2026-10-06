@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.55.3] - 2026-10-06
+
+### Removed
+
+- `docs/shopware/TODO.md` item 15, the empty strip between header and homepage hero. Declined on
+  2026-10-06.
+
 ## [1.55.2] - 2026-10-06
 
 ### Fixed

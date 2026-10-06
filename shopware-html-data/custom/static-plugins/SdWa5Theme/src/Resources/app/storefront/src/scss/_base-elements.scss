@@ -12,7 +12,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-// Thin accent stripe at the top edge in the three accent colours. It is also
+// Thin accent stripe at the top edge from green to red. It is also
 // the outside check that a deploy recompiled the theme.
 body::before {
   content: '';
@@ -26,7 +26,6 @@ body::before {
   background: linear-gradient(
     90deg,
     var(--sdwa5-green-immutable) 0%,
-    var(--sdwa5-link-immutable) 50%,
     var(--sdwa5-red-immutable) 100%
   );
 }
@@ -67,20 +66,20 @@ h3, .h3 { font-size: clamp(1.15rem, calc(1.05rem + 0.5vw), 1.375rem); line-heigh
 // ----------------------------------------------------------------- Links
 //
 // Bootstrap derives the link colour from $primary, and SdWa5 green on a light
-// background is unreadable (about 1.4:1). Links therefore get a colour pair of
-// their own.
+// background is unreadable (about 1.4:1). Links are red text instead and turn
+// green on hover, so both accents show on every page.
 
 :root {
-  --bs-link-color: var(--sdwa5-link-immutable);
-  --bs-link-hover-color: var(--sdwa5-link-hover-immutable);
+  --bs-link-color: var(--sdwa5-red-text-immutable);
+  --bs-link-hover-color: var(--sdwa5-green-text-immutable);
 }
 
 a {
-  color: var(--sdwa5-link-immutable);
+  color: var(--sdwa5-red-text-immutable);
 
   &:hover,
   &:focus {
-    color: var(--sdwa5-link-hover-immutable);
+    color: var(--sdwa5-green-text-immutable);
   }
 }
 
@@ -189,18 +188,18 @@ a.line-item-label:hover,
   font-weight: 600;
 }
 
-// Secondary is SdWa5 red as a theme colour, but as a button it is the quiet
-// outline variant from chimodiazz.
+// Secondary is SdWa5 red as a theme colour, and as a button it is the quiet
+// outline variant from chimodiazz in the red text colour.
 .btn-secondary {
-  --bs-btn-color: var(--sdwa5-link-immutable);
+  --bs-btn-color: var(--sdwa5-red-text-immutable);
   --bs-btn-bg: transparent;
-  --bs-btn-border-color: var(--sdwa5-link-immutable);
+  --bs-btn-border-color: var(--sdwa5-red-text-immutable);
   --bs-btn-hover-color: var(--sdwa5-bg-immutable);
-  --bs-btn-hover-bg: var(--sdwa5-link-immutable);
-  --bs-btn-hover-border-color: var(--sdwa5-link-immutable);
+  --bs-btn-hover-bg: var(--sdwa5-red-text-immutable);
+  --bs-btn-hover-border-color: var(--sdwa5-red-text-immutable);
   --bs-btn-active-color: var(--sdwa5-bg-immutable);
-  --bs-btn-active-bg: var(--sdwa5-link-immutable);
-  --bs-btn-active-border-color: var(--sdwa5-link-immutable);
+  --bs-btn-active-bg: var(--sdwa5-red-text-immutable);
+  --bs-btn-active-border-color: var(--sdwa5-red-text-immutable);
 }
 
 .btn-outline-primary {
@@ -215,9 +214,9 @@ a.line-item-label:hover,
 }
 
 .btn-link {
-  --bs-btn-color: var(--sdwa5-link-immutable);
-  --bs-btn-hover-color: var(--sdwa5-link-hover-immutable);
-  --bs-btn-active-color: var(--sdwa5-link-hover-immutable);
+  --bs-btn-color: var(--sdwa5-red-text-immutable);
+  --bs-btn-hover-color: var(--sdwa5-green-text-immutable);
+  --bs-btn-active-color: var(--sdwa5-green-text-immutable);
 }
 
 // ------------------------------------------------------- Badges, paging
@@ -237,9 +236,9 @@ a.line-item-label:hover,
 }
 
 .pagination {
-  --bs-pagination-color: var(--sdwa5-link-immutable);
-  --bs-pagination-hover-color: var(--sdwa5-link-hover-immutable);
-  --bs-pagination-focus-color: var(--sdwa5-link-hover-immutable);
+  --bs-pagination-color: var(--sdwa5-red-text-immutable);
+  --bs-pagination-hover-color: var(--sdwa5-green-text-immutable);
+  --bs-pagination-focus-color: var(--sdwa5-green-text-immutable);
   --bs-pagination-active-color: var(--sdwa5-on-green-immutable);
   --bs-pagination-active-bg: var(--sdwa5-green-immutable);
   --bs-pagination-active-border-color: var(--sdwa5-green-immutable);

@@ -7,6 +7,12 @@
 //
 // The dark blocks hold tokens and color-scheme only. A rule with a colour
 // literal in there would be inverted a second time by DNE.
+//
+// Green and red are the two accents. Both brand values fail WCAG AA as small
+// text (red #e5231f reaches 4.20:1 on the light and 4.32:1 on the dark
+// background), so each has a text variant: green-text for focus and hover,
+// red-text for links, outline buttons and paging. The brand values stay for
+// fills and the gradient.
 
 $sdwa5-light: (
   'bg': #f5f5f8,
@@ -18,8 +24,7 @@ $sdwa5-light: (
   'green': #1fe51f,
   'green-text': #0a7d0a,
   'red': #e5231f,
-  'link': #006b73,
-  'link-hover': #0a7d0a,
+  'red-text': #c41c18,
   'on-green': #0a0a0f,
   'on-red': #ffffff,
   'glass': rgba(245, 245, 248, 0.78),
@@ -37,8 +42,7 @@ $sdwa5-dark: (
   'green': #1fe51f,
   'green-text': #1fe51f,
   'red': #e5231f,
-  'link': #00f0ff,
-  'link-hover': #1fe51f,
+  'red-text': #ff4f4a,
   'on-green': #0a0a0f,
   'on-red': #ffffff,
   'glass': rgba(10, 10, 15, 0.72),
@@ -60,7 +64,7 @@ $sdwa5-dark: (
   // because two separate values drift apart at the first adjustment.
   --sdwa5-nav-h: 7.5rem;
   --sdwa5-font-mono: #{$sdwa5-font-family-mono};
-  --sdwa5-hero-focus: 50% 45%;
+  --sdwa5-hero-focus: 50% 30%;
 }
 
 :root[data-theme='dark'] {

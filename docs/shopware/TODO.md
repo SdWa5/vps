@@ -83,3 +83,7 @@
 14. **Text wordmark as the header logo** (ca. 20 minutes), if the small graffiti logo of the SdWa5Theme does not
     convince. Decided 2026-10-06 to try the graffiti logo first. The wordmark would be "SdWa5" in Space Grotesk in
     `layout_header_logo_image`, which needs no image and stays sharp at every size
+15. **Empty strip between the header and the homepage hero** (ca. 20 minutes, `decision`). The homepage shows a thin
+    empty band between the sticky header and the full-width hero, which comes from the CMS page's top padding.
+    Proposed on 2026-10-06 to remove that padding for the first section when it carries `sdwa5-hero`. Left undecided
+    on 2026-10-06, when the other follow-ups shipped as SdWa5Theme 1.1.0

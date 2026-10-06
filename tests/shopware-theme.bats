@@ -95,6 +95,14 @@ snippet_keys() {
     [ "$light" = "$dark" ]
 }
 
+@test "every colour token a rule uses is defined in the token maps" {
+    defined="$(sed -n '/^\$sdwa5-light:/,/^);/p' "$SCSS/_tokens.scss" | grep -oE "^  '[a-z-]+'" | tr -d " '" | sort -u)"
+    used="$(grep -ohE -- '--sdwa5-[a-z-]+-immutable' "$SCSS"/*.scss | sed 's/^--sdwa5-//; s/-immutable$//' | sort -u)"
+    [ -n "$used" ]
+    # A renamed token leaves var() pointing at nothing, and the browser falls back silently.
+    comm -23 <(echo "$used") <(echo "$defined") | { ! grep .; }
+}
+
 @test "the dark blocks emit tokens and color-scheme only" {
     # Everything between the dark selectors and their closing brace.
     body="$(sed -n "/data-theme='dark'/,/^}/p; /prefers-color-scheme: dark/,/^}/p" "$SCSS/_tokens.scss" \
@@ -163,4 +171,12 @@ snippet_keys() {
     grep -q "attributes.get('sw-original-request-uri')" "$f"
     grep -q "attributes.get('sw-sales-channel-absolute-base-url')" "$f"
     ! grep -q "attributes.get('resolved-uri')" "$f"
+}
+
+# The English hero text styles only the subtitle inline, the German one every
+# paragraph, so an attribute selector turned the German stats line green.
+@test "the hero subtitle is selected by position, not by the CMS markup" {
+    grep -q 'h1 + p' "$SCSS/_hero.scss"
+    run grep -n 'p\[style' "$SCSS/_hero.scss"
+    [ "$status" -ne 0 ]
 }

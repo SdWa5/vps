@@ -69,8 +69,10 @@
     color: var(--sdwa5-muted-immutable);
   }
 
-  // The subtitle carries style="font-size:1.2em" from the CMS.
-  p[style] {
+  // The subtitle is the paragraph right after the name. The CMS markup cannot
+  // tell it apart, because the German slot puts an inline style on every
+  // paragraph while the English one styles only the subtitle.
+  h1 + p {
     color: var(--sdwa5-green-text-immutable);
   }
 
@@ -81,19 +83,22 @@
     font-size: clamp(1rem, calc(0.9rem + 0.6vw), 1.375rem);
     font-weight: 700;
     letter-spacing: 0.04em;
-    color: var(--sdwa5-red-immutable);
+    color: var(--sdwa5-red-text-immutable);
   }
 }
 
 // ------------------------------------------------------------------ Tiles
 //
 // Each tile is its own CMS block, so the section's inner element becomes a
-// grid and every block a card in the chimodiazz style.
+// wrapping flex row and every block a card in the chimodiazz style. At most
+// three cards share a row and a shorter last row is centred, so five tiles
+// read 3 + 2 instead of leaving one alone. Below 768 px they stack.
 
 .cms-section.sdwa5-tiles {
   > .cms-section-default {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 1.5rem;
     padding-top: 2rem;
     padding-bottom: 3rem;
@@ -101,6 +106,7 @@
 
   .cms-block {
     display: flex;
+    flex: 0 0 100%;
     margin: 0 !important;
     background: var(--sdwa5-surface-immutable);
     border: 1px solid var(--sdwa5-border-immutable);
@@ -140,5 +146,11 @@
     letter-spacing: 0.14em;
     text-transform: uppercase;
     text-decoration: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .cms-section.sdwa5-tiles .cms-block {
+    flex-basis: calc((100% - 3rem) / 3);
   }
 }

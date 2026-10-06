@@ -1,0 +1,144 @@
+// Homepage hero, hero text and tiles.
+//
+// The three classes sit on CMS sections and are set by
+// tools/shopware/set-homepage-sections.sh (sdwa5-hero, sdwa5-tiles) or were set
+// by hand earlier (sdwa5-hero-text). The core renders a section's cssClass on
+// the outer .cms-section element. docs/shopware/content-cms.md asks to keep them.
+
+// ------------------------------------------------------------------- Hero
+//
+// Full width and cropped at the top and bottom. The image element is an
+// is-stretch image with an inline aspect-ratio from the media, so the crop
+// works by giving the container a fixed height and letting the image cover it.
+// --sdwa5-hero-focus moves the visible part, see _tokens.scss.
+
+.cms-section.sdwa5-hero {
+  > .cms-section-default {
+    max-width: none;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .cms-block-container {
+    padding: 0 !important;
+  }
+
+  .cms-block-container-row {
+    --bs-gutter-x: 0;
+    margin: 0;
+  }
+
+  .cms-image-container {
+    position: relative;
+    height: clamp(14rem, 42vw, 34rem);
+    overflow: hidden;
+  }
+
+  .cms-image-container .cms-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    object-fit: cover;
+    object-position: var(--sdwa5-hero-focus);
+    aspect-ratio: auto !important;
+  }
+}
+
+// -------------------------------------------------------------- Hero text
+//
+// The section holds one text element: the name as h1, the subtitle with an
+// inline font-size, the power figures, and the slogan in <strong>.
+
+.cms-section.sdwa5-hero-text {
+  h1 {
+    margin-bottom: 1rem;
+    font-size: clamp(2.25rem, calc(1rem + 5vw), 4.5rem);
+    line-height: 0.98;
+    letter-spacing: -0.03em;
+  }
+
+  p {
+    margin-bottom: 0.6rem;
+    font-family: var(--sdwa5-font-mono);
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--sdwa5-muted-immutable);
+  }
+
+  // The subtitle carries style="font-size:1.2em" from the CMS.
+  p[style] {
+    color: var(--sdwa5-green-text-immutable);
+  }
+
+  strong {
+    display: inline-block;
+    margin-top: 0.75rem;
+    font-family: $sw-font-family-headline;
+    font-size: clamp(1rem, calc(0.9rem + 0.6vw), 1.375rem);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--sdwa5-red-immutable);
+  }
+}
+
+// ------------------------------------------------------------------ Tiles
+//
+// Each tile is its own CMS block, so the section's inner element becomes a
+// grid and every block a card in the chimodiazz style.
+
+.cms-section.sdwa5-tiles {
+  > .cms-section-default {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 1.5rem;
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+  }
+
+  .cms-block {
+    display: flex;
+    margin: 0 !important;
+    background: var(--sdwa5-surface-immutable);
+    border: 1px solid var(--sdwa5-border-immutable);
+    border-radius: 2px;
+    transition: border-color 0.15s ease;
+
+    &:hover,
+    &:focus-within {
+      border-color: var(--sdwa5-green-immutable);
+    }
+  }
+
+  .cms-block-container {
+    width: 100%;
+    padding: 1.75rem 1.5rem !important;
+  }
+
+  h3 {
+    margin-bottom: 0.6rem;
+
+    a {
+      color: var(--sdwa5-headline-immutable);
+      text-decoration: none;
+
+      &:hover,
+      &:focus {
+        color: var(--sdwa5-green-text-immutable);
+      }
+    }
+  }
+
+  // The last paragraph is the "Read more" link.
+  p:last-child a {
+    font-family: var(--sdwa5-font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+}

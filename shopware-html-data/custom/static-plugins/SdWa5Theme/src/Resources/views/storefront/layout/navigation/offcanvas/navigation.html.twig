@@ -1,0 +1,12 @@
+{% sw_extends '@Storefront/storefront/layout/navigation/offcanvas/navigation.html.twig' %}
+
+{# Donation entry in the off-canvas menu, below language, currency and the DNE
+   toggle. Below 992 px the header button is the only other way to it, and this
+   one carries the longer label. #}
+{% block layout_navigation_offcanvas_navigation_actions %}
+    {{ parent() }}
+
+    <nav class="nav sdwa5-offcanvas-donate">
+        {% sw_include '@SdWa5Theme/storefront/layout/donate-link.html.twig' with { sdwa5DonateVariant: 'offcanvas' } %}
+    </nav>
+{% endblock %}

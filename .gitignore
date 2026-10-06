@@ -23,9 +23,17 @@ shopware-html-data/config/*
 !shopware-html-data/config/routes/
 !shopware-html-data/config/services.yaml
 !shopware-html-data/config/bundles.php
-# Every plugin comes from composer.json/composer.lock into vendor/, so nothing
-# under custom/plugins/ is tracked. auth.json holds the packages.shopware.com
-# token and stays ignored through the shopware-html-data/* line above.
+# Every third-party plugin comes from composer.json/composer.lock into vendor/,
+# so nothing under custom/plugins/ is tracked. The one exception is the shop's
+# own theme, which lives in this repository and reaches vendor/ through the
+# custom/static-plugins/* path repository. auth.json holds the
+# packages.shopware.com token and stays ignored through the shopware-html-data/*
+# line above.
+!shopware-html-data/custom/
+shopware-html-data/custom/*
+!shopware-html-data/custom/static-plugins/
+shopware-html-data/custom/static-plugins/*
+!shopware-html-data/custom/static-plugins/SdWa5Theme/
 shopware-mysql-data/
 shopware-data/
 

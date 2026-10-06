@@ -1,0 +1,11 @@
+{% sw_extends '@Storefront/storefront/layout/header.html.twig' %}
+
+{# Sticky glass bar. The core renders <header class="header-main"> and
+   <div class="nav-main"> as siblings, and sticking each one separately lets them
+   drift apart while scrolling, so both get one wrapper. parent() keeps every
+   line of core markup out of this file. #}
+{% block header %}
+    <div class="sdwa5-nav">
+        {{ parent() }}
+    </div>
+{% endblock %}

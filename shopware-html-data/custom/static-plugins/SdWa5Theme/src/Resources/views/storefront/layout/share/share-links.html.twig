@@ -1,0 +1,43 @@
+{# Share links for WhatsApp, Telegram and e-mail.
+
+   Plain links, no JavaScript and no third-party script, so nothing loads before
+   a click. The deploy builds no storefront JavaScript, so navigator.share and a
+   copy button are out of reach anyway.
+
+   The page URL is built from two request attributes, as in the ChimodiazzTheme,
+   which measured both obvious sources as wrong:
+
+   - app.request.uri has the sales channel domain prefix stripped by the
+     RequestTransformer, so on /de/ it shares the root.
+   - page.metaInformation.canonical is a placeholder that the SEO URL handler
+     replaces in the finished response, and |url_encode breaks the pattern it
+     looks for.
+
+   sw-storefront-url is scheme, host and the domain path such as /de, and
+   resolved-uri is the path inside the sales channel. app.request.uri stays the
+   fallback for error pages, where the RequestTransformer does not run.
+
+   Variables: sdwa5ShareVariant is 'bar' (fixed at the right edge from 992 px)
+   or 'row' (end of the main content below 992 px). #}
+{% set sdwa5Base = app.request.attributes.get('sw-storefront-url') %}
+{% set sdwa5Url = sdwa5Base
+    ? sdwa5Base ~ app.request.attributes.get('resolved-uri')
+    : app.request.uri %}
+{% set sdwa5Text = 'sdwa5.share.text'|trans %}
+
+<aside class="sdwa5-share sdwa5-share--{{ sdwa5ShareVariant }}" aria-label="{{ 'sdwa5.share.label'|trans|striptags }}">
+    <span class="sdwa5-share__label">{{ 'sdwa5.share.label'|trans|sw_sanitize }}</span>
+
+    <a class="sdwa5-share__link"
+       href="https://wa.me/?text={{ (sdwa5Text ~ ' ' ~ sdwa5Url)|url_encode }}"
+       target="_blank"
+       rel="noopener noreferrer">WhatsApp</a>
+
+    <a class="sdwa5-share__link"
+       href="https://t.me/share/url?url={{ sdwa5Url|url_encode }}&amp;text={{ sdwa5Text|url_encode }}"
+       target="_blank"
+       rel="noopener noreferrer">Telegram</a>
+
+    <a class="sdwa5-share__link"
+       href="mailto:?subject={{ sdwa5Text|url_encode }}&amp;body={{ (sdwa5Text ~ ' ' ~ sdwa5Url)|url_encode }}">{{ 'sdwa5.share.email'|trans|sw_sanitize }}</a>
+</aside>

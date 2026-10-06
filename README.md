@@ -137,12 +137,16 @@ tracked. CI never sees it, because an untracked file is not in the clone.
 Two licences, because this repository is part tooling and part writing.
 
 - **MIT** ([LICENSE](LICENSE)) for the code and configuration: `monitoring/`, `hardening/`, `minecraft/`, `tools/`, `tests/`, `.github/`, `Caddyfile`,
-  `docker-compose*.yml` and `.env.example`.
+  `docker-compose*.yml`, `.env.example` and the theme code in `shopware-html-data/custom/static-plugins/SdWa5Theme/`.
 - **CC BY-SA 4.0** ([LICENSE-docs](LICENSE-docs)) for the prose and data: `docs/`, `README.md`, `CHANGELOG.md` and `TODO.md`.
 
 Attribute as "Musikverein Schmeiß die Wand an 5 (SdWa5)" with a link to the repository. Share-alike applies to the prose, so a
 derivative of the documentation stays under the same licence. The code carries no such condition.
 
 **Not ours to license**: `minecraft-data/`, which is server and mod configuration produced by the image
-and its mods, including 27 LuckPerms translation files. It carries its vendors' own terms. No Shopware
-plugin source is tracked since 2026-10-01, because every plugin installs through composer.
+and its mods, including 27 LuckPerms translation files. It carries its vendors' own terms. No third-party
+Shopware plugin source is tracked since 2026-10-01, because every plugin installs through composer.
+
+The theme carries two exceptions to the MIT grant. Its fonts DM Sans, Space Grotesk and JetBrains Mono are
+under the SIL Open Font License 1.1, see the theme's `assets/fonts/LICENSE.md`. The SdWa5 logo in
+`assets/logo/` is the association's mark and is not licensed at all.

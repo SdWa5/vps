@@ -1,0 +1,26 @@
+// SdWa5 storefront theme.
+//
+// Ported from the ChimodiazzTheme, which is dark only. This shop keeps the DNE
+// dark mode plugin, which rewrites the compiled CSS after scssphp has run: every
+// low-saturation colour literal becomes a variable with a light and a dark value.
+// Two rules follow from that and every partial keeps them.
+//
+// 1. Own colours are custom properties whose names end in `-immutable`. DNE skips
+//    those properties (ThemeCompileSubscriber.php, line 116), so _tokens.scss can
+//    give them an explicit dark value. A colour literal anywhere else would be
+//    inverted by the plugin and then no longer match its token.
+// 2. Core and Bootstrap colours come from the light sw-* values in theme.json.
+//    They are chosen so that the plugin's inversion lands on the chimodiazz dark
+//    palette, see the table in docs/shopware/theme.md.
+//
+// This file is loaded after @Storefront (theme.json, "style"), so it cannot
+// change Bootstrap variables, only override rules. Media queries are written out
+// instead of media-breakpoint-up(), because scssphp 1.12.0 on the server compiles
+// this file without the Bootstrap mixins in scope and aborts on "Undefined mixin".
+
+@import 'tokens';
+@import 'fonts';
+@import 'base-elements';
+@import 'header';
+@import 'hero';
+@import 'footer';

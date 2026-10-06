@@ -56,6 +56,12 @@ Order set via `afterCategoryId` linked-list chain. CMS page names carry no "page
 → "Music / Mixes", "Booking & Contact page" → "Booking & Contact"). Homepage has link tiles: About, Events, Merch,
 Music / Mixes, Hardware.
 
+**The homepage sections carry the classes the theme styles, and they have to stay.** The hero image section
+(position 0) is `full_width` with the class `sdwa5-hero`, the hero text section (position 1) has
+`sdwa5-hero-text`, and the tiles section (position 2) has `sdwa5-tiles`. Without them the hero is no longer
+cropped and the tiles lose their card grid. A rebuilt homepage needs them set again, and its new section ids
+pinned in `tools/shopware/set-homepage-sections.sh`. See [theme.md](theme.md#homepage-hero-and-tiles).
+
 ### Form pages (Event Inquiry / Membership)
 
 Each page = compact text block (form-critical info only) + Shopware native `form` block (`type: contact`, posts to

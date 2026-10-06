@@ -1,0 +1,39 @@
+{# Voluntary donation link, straight to PayPal.
+
+   The target is the theme config field sdwa5-donation-url, so it changes in the
+   theme manager without a deploy. The wording says "voluntary donation" and
+   nothing more. It never claims a charitable status or a tax benefit, because
+   the association is registered only as not aimed at profit, and it never ties
+   a donation to merch. tests/shopware-theme.bats guards the snippets.
+
+   Variables: sdwa5DonateVariant is 'button' (header), 'offcanvas' or 'footer'. #}
+{% set sdwa5DonateUrl = theme_config('sdwa5-donation-url') ?: 'https://paypal.me/SdWa5' %}
+
+{% if sdwa5DonateVariant == 'footer' %}
+    <p class="sdwa5-donate-line">
+        {{ 'sdwa5.footer.donateText'|trans|sw_sanitize }}
+        <a class="sdwa5-donate-line__link"
+           href="{{ sdwa5DonateUrl }}"
+           target="_blank"
+           rel="noopener noreferrer"
+           title="{{ 'sdwa5.donate.title'|trans|striptags }}">{{ 'sdwa5.footer.donateLink'|trans|sw_sanitize }}</a>
+    </p>
+{% elseif sdwa5DonateVariant == 'offcanvas' %}
+    <a class="nav-link sdwa5-donate-offcanvas"
+       href="{{ sdwa5DonateUrl }}"
+       target="_blank"
+       rel="noopener noreferrer"
+       title="{{ 'sdwa5.donate.title'|trans|striptags }}">
+        {% sw_icon 'heart' style { size: 'xs' } %}
+        <span>{{ 'sdwa5.donate.offcanvas'|trans|sw_sanitize }}</span>
+    </a>
+{% else %}
+    <a class="btn sdwa5-donate-btn"
+       href="{{ sdwa5DonateUrl }}"
+       target="_blank"
+       rel="noopener noreferrer"
+       title="{{ 'sdwa5.donate.title'|trans|striptags }}">
+        {% sw_icon 'heart' style { size: 'xs' } %}
+        <span class="sdwa5-donate-btn__label">{{ 'sdwa5.donate.label'|trans|sw_sanitize }}</span>
+    </a>
+{% endif %}

@@ -393,3 +393,31 @@ mail_count() {
 mail_body() {
     cat "$STUB_MAIL_LOG"
 }
+
+# tools/shopware/set-homepage-sections.sh. Each section is read by id, so each
+# has its own fixture. The defaults are the live state before the theme.
+SW_HOME_PAGE="695477e02ef643e5a016b83ed4cdf63a"
+SW_HERO_SECTION="935477e02ef643e5a016b83ed4cdf63a"
+SW_TILES_SECTION="fe11e555fd554ac69a914c34b0b2093f"
+
+# sw_fixture_section ID CSS_CLASS SIZING_MODE [PAGE_ID]; an empty class is null.
+sw_fixture_section() {
+    jq -n --arg id "$1" --arg c "$2" --arg s "$3" --arg p "${4:-$SW_HOME_PAGE}" \
+        '{data:{id:$id,pageId:$p,position:0,cssClass:(if $c == "" then null else $c end),sizingMode:$s,mobileBehavior:"wrap"}}' \
+        > "$STUB_SW_DIR/_api_cms-section_$1"
+}
+
+sw_sections_setup() {
+    sw_setup
+    sw_fixture_section "$SW_HERO_SECTION" "" "boxed"
+    sw_fixture_section "$SW_TILES_SECTION" "" "boxed"
+}
+
+set_homepage_sections() {
+    run "$REPO_ROOT/tools/shopware/set-homepage-sections.sh" "$@"
+}
+
+# The body of the PATCH sent to one section, or nothing.
+sw_patch_body() {
+    grep "^PATCH /api/cms-section/$1 " "$STUB_SW_LOG" | sed "s|^PATCH /api/cms-section/$1 ||"
+}

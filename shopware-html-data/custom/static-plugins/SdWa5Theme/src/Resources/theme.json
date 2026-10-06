@@ -1,0 +1,170 @@
+{
+  "name": "SdWa5Theme",
+  "author": "Musikverein Schmeiß die Wand an 5",
+  "description": {
+    "de-DE": "SdWa5-Theme, portiert vom Chimodiazz-Theme, mit hellem und dunklem Modus",
+    "en-GB": "SdWa5 theme, ported from the Chimodiazz theme, with a light and a dark mode"
+  },
+  "views": [
+    "@Storefront",
+    "@Plugins",
+    "@SdWa5Theme"
+  ],
+  "style": [
+    "@Storefront",
+    "app/storefront/src/scss/base.scss"
+  ],
+  "script": [
+    "@Storefront"
+  ],
+  "asset": [
+    "@Storefront",
+    "app/storefront/src/assets"
+  ],
+  "config": {
+    "blocks": {
+      "themeColors": {
+        "label": {
+          "de-DE": "Farben (heller Modus, der dunkle wird abgeleitet)",
+          "en-GB": "Colours (light mode, dark mode is derived)"
+        }
+      },
+      "typography": {
+        "label": {
+          "de-DE": "Typografie",
+          "en-GB": "Typography"
+        }
+      },
+      "donation": {
+        "label": {
+          "de-DE": "Freiwillige Spende",
+          "en-GB": "Voluntary donation"
+        }
+      }
+    },
+    "fields": {
+      "sw-color-brand-primary": {
+        "label": {
+          "de-DE": "SdWa5-Grün, nur für Flächen",
+          "en-GB": "SdWa5 green, fills only"
+        },
+        "type": "color",
+        "value": "#1fe51f",
+        "editable": true,
+        "block": "themeColors",
+        "order": 100
+      },
+      "sw-color-brand-secondary": {
+        "label": {
+          "de-DE": "Logo-Rot",
+          "en-GB": "Logo red"
+        },
+        "type": "color",
+        "value": "#e5231f",
+        "editable": true,
+        "block": "themeColors",
+        "order": 200
+      },
+      "sw-color-buy-button": {
+        "label": {
+          "de-DE": "Kaufen-Knopf",
+          "en-GB": "Buy button"
+        },
+        "type": "color",
+        "value": "#e5231f",
+        "editable": true,
+        "block": "themeColors",
+        "order": 300
+      },
+      "sw-background-color": {
+        "label": {
+          "de-DE": "Flächen",
+          "en-GB": "Surfaces"
+        },
+        "type": "color",
+        "value": "#fcfcfd",
+        "editable": true,
+        "block": "themeColors",
+        "order": 400
+      },
+      "sw-text-color": {
+        "label": {
+          "de-DE": "Text",
+          "en-GB": "Text"
+        },
+        "type": "color",
+        "value": "#101018",
+        "editable": true,
+        "block": "themeColors",
+        "order": 500
+      },
+      "sw-headline-color": {
+        "label": {
+          "de-DE": "Überschriften",
+          "en-GB": "Headlines"
+        },
+        "type": "color",
+        "value": "#0a0a0f",
+        "editable": true,
+        "block": "themeColors",
+        "order": 600
+      },
+      "sw-border-color": {
+        "label": {
+          "de-DE": "Rahmen",
+          "en-GB": "Borders"
+        },
+        "type": "color",
+        "value": "#e1e1e9",
+        "editable": true,
+        "block": "themeColors",
+        "order": 700
+      },
+      "sw-font-family-base": {
+        "label": {
+          "de-DE": "Textschrift",
+          "en-GB": "Body font"
+        },
+        "type": "fontFamily",
+        "value": "'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif",
+        "editable": true,
+        "block": "typography",
+        "order": 100
+      },
+      "sw-font-family-headline": {
+        "label": {
+          "de-DE": "Überschriftenschrift",
+          "en-GB": "Headline font"
+        },
+        "type": "fontFamily",
+        "value": "'Space Grotesk', 'DM Sans', sans-serif",
+        "editable": true,
+        "block": "typography",
+        "order": 200
+      },
+      "sdwa5-font-family-mono": {
+        "label": {
+          "de-DE": "Monoschrift für Navigation und Kleingedrucktes",
+          "en-GB": "Mono font for navigation and small print"
+        },
+        "type": "fontFamily",
+        "value": "'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
+        "editable": true,
+        "block": "typography",
+        "order": 300
+      },
+      "sdwa5-donation-url": {
+        "label": {
+          "de-DE": "Ziel der Spenden-Links",
+          "en-GB": "Target of the donation links"
+        },
+        "type": "text",
+        "value": "https://paypal.me/SdWa5",
+        "editable": true,
+        "block": "donation",
+        "order": 100,
+        "scss": false
+      }
+    }
+  }
+}

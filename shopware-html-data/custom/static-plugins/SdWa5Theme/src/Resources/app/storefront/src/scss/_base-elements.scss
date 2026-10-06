@@ -1,0 +1,256 @@
+// Page, typography, links, buttons, badges and the off-canvas menu.
+
+// ------------------------------------------------------------------ Page
+
+// The page background is a token of its own, one step darker than the
+// surfaces (sw-background-color), so cards and the header stand out in both
+// modes. The core paints body with sw-background-color.
+body {
+  background-color: var(--sdwa5-bg-immutable);
+  color: var(--sdwa5-text-immutable);
+  font-family: $sw-font-family-base;
+  -webkit-font-smoothing: antialiased;
+}
+
+// Thin accent stripe at the top edge in the three accent colours. It is also
+// the outside check that a deploy recompiled the theme.
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 9999;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    var(--sdwa5-green-immutable) 0%,
+    var(--sdwa5-link-immutable) 50%,
+    var(--sdwa5-red-immutable) 100%
+  );
+}
+
+// ------------------------------------------------------------ Typography
+
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  color: var(--sdwa5-headline-immutable);
+  font-family: $sw-font-family-headline;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+// Caps on the three top levels only. The legal and hardware pages carry long
+// h4 to h6 runs, and those read badly in capitals.
+h1, h2, h3,
+.h1, .h2, .h3 {
+  text-transform: uppercase;
+}
+
+h1, .h1 { font-size: clamp(2rem, calc(1.3rem + 3vw), 3.25rem); line-height: 1.04; }
+h2, .h2 { font-size: clamp(1.5rem, calc(1.15rem + 1.5vw), 2rem); line-height: 1.12; }
+h3, .h3 { font-size: clamp(1.15rem, calc(1.05rem + 0.5vw), 1.375rem); line-height: 1.2; }
+
+// Small mono line above a section, as on chimodiazz. Available for CMS content.
+.sdwa5-overline {
+  display: block;
+  margin-bottom: 1rem;
+  font-family: var(--sdwa5-font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--sdwa5-green-text-immutable);
+}
+
+// ----------------------------------------------------------------- Links
+//
+// Bootstrap derives the link colour from $primary, and SdWa5 green on a light
+// background is unreadable (about 1.4:1). Links therefore get a colour pair of
+// their own.
+
+:root {
+  --bs-link-color: var(--sdwa5-link-immutable);
+  --bs-link-hover-color: var(--sdwa5-link-hover-immutable);
+}
+
+a {
+  color: var(--sdwa5-link-immutable);
+
+  &:hover,
+  &:focus {
+    color: var(--sdwa5-link-hover-immutable);
+  }
+}
+
+.text-primary {
+  color: var(--sdwa5-green-text-immutable) !important;
+}
+
+// The browser default focus ring disappears on a dark background.
+:focus-visible {
+  outline: 2px solid var(--sdwa5-green-text-immutable);
+  outline-offset: 2px;
+}
+
+// The header is sticky, so a jump target would land behind it.
+[id] {
+  scroll-margin-top: calc(var(--sdwa5-nav-h) + 1rem);
+}
+
+// --------------------------------------------------------------- Buttons
+//
+// Text on an accent colour always comes from an on-* token. Bootstrap picks
+// black or white once at compile time, and DNE then inverts that pick in dark
+// mode, which left white text on SdWa5 green at about 1.7:1.
+
+.btn-primary {
+  --bs-btn-color: var(--sdwa5-on-green-immutable);
+  --bs-btn-bg: var(--sdwa5-green-immutable);
+  --bs-btn-border-color: var(--sdwa5-green-immutable);
+  --bs-btn-hover-color: var(--sdwa5-on-red-immutable);
+  --bs-btn-hover-bg: var(--sdwa5-red-immutable);
+  --bs-btn-hover-border-color: var(--sdwa5-red-immutable);
+  --bs-btn-active-color: var(--sdwa5-on-red-immutable);
+  --bs-btn-active-bg: var(--sdwa5-red-immutable);
+  --bs-btn-active-border-color: var(--sdwa5-red-immutable);
+  --bs-btn-disabled-color: var(--sdwa5-on-green-immutable);
+  --bs-btn-disabled-bg: var(--sdwa5-green-immutable);
+  --bs-btn-disabled-border-color: var(--sdwa5-green-immutable);
+  font-weight: 600;
+}
+
+.btn-buy {
+  --bs-btn-color: var(--sdwa5-on-red-immutable);
+  --bs-btn-bg: var(--sdwa5-red-immutable);
+  --bs-btn-border-color: var(--sdwa5-red-immutable);
+  --bs-btn-hover-color: var(--sdwa5-on-green-immutable);
+  --bs-btn-hover-bg: var(--sdwa5-green-immutable);
+  --bs-btn-hover-border-color: var(--sdwa5-green-immutable);
+  --bs-btn-active-color: var(--sdwa5-on-green-immutable);
+  --bs-btn-active-bg: var(--sdwa5-green-immutable);
+  --bs-btn-active-border-color: var(--sdwa5-green-immutable);
+  --bs-btn-disabled-color: var(--sdwa5-on-red-immutable);
+  --bs-btn-disabled-bg: var(--sdwa5-red-immutable);
+  --bs-btn-disabled-border-color: var(--sdwa5-red-immutable);
+  font-weight: 600;
+}
+
+// Secondary is SdWa5 red as a theme colour, but as a button it is the quiet
+// outline variant from chimodiazz.
+.btn-secondary {
+  --bs-btn-color: var(--sdwa5-link-immutable);
+  --bs-btn-bg: transparent;
+  --bs-btn-border-color: var(--sdwa5-link-immutable);
+  --bs-btn-hover-color: var(--sdwa5-bg-immutable);
+  --bs-btn-hover-bg: var(--sdwa5-link-immutable);
+  --bs-btn-hover-border-color: var(--sdwa5-link-immutable);
+  --bs-btn-active-color: var(--sdwa5-bg-immutable);
+  --bs-btn-active-bg: var(--sdwa5-link-immutable);
+  --bs-btn-active-border-color: var(--sdwa5-link-immutable);
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--sdwa5-green-text-immutable);
+  --bs-btn-border-color: var(--sdwa5-green-text-immutable);
+  --bs-btn-hover-color: var(--sdwa5-on-green-immutable);
+  --bs-btn-hover-bg: var(--sdwa5-green-immutable);
+  --bs-btn-hover-border-color: var(--sdwa5-green-immutable);
+  --bs-btn-active-color: var(--sdwa5-on-green-immutable);
+  --bs-btn-active-bg: var(--sdwa5-green-immutable);
+  --bs-btn-active-border-color: var(--sdwa5-green-immutable);
+}
+
+.btn-link {
+  --bs-btn-color: var(--sdwa5-link-immutable);
+  --bs-btn-hover-color: var(--sdwa5-link-hover-immutable);
+  --bs-btn-active-color: var(--sdwa5-link-hover-immutable);
+}
+
+// ------------------------------------------------------- Badges, paging
+
+.badge.bg-primary,
+.text-bg-primary,
+.header-cart-badge {
+  --bs-badge-color: var(--sdwa5-on-green-immutable);
+  color: var(--sdwa5-on-green-immutable) !important;
+}
+
+.badge.bg-secondary,
+.badge.bg-danger,
+.text-bg-secondary {
+  --bs-badge-color: var(--sdwa5-on-red-immutable);
+  color: var(--sdwa5-on-red-immutable) !important;
+}
+
+.pagination {
+  --bs-pagination-color: var(--sdwa5-link-immutable);
+  --bs-pagination-hover-color: var(--sdwa5-link-hover-immutable);
+  --bs-pagination-focus-color: var(--sdwa5-link-hover-immutable);
+  --bs-pagination-active-color: var(--sdwa5-on-green-immutable);
+  --bs-pagination-active-bg: var(--sdwa5-green-immutable);
+  --bs-pagination-active-border-color: var(--sdwa5-green-immutable);
+}
+
+// ---------------------------------------------------- Off-canvas menu
+//
+// The core paints the off-canvas header, the sliding panels and every category
+// row with a fixed light colour. DNE would invert those, but to the surface
+// colour rather than the page colour, so they are set from the tokens here.
+
+.offcanvas {
+  --bs-offcanvas-bg: var(--sdwa5-bg-immutable);
+  --bs-offcanvas-color: var(--sdwa5-text-immutable);
+  --bs-offcanvas-border-color: var(--sdwa5-border-immutable);
+
+  .offcanvas-header {
+    background-color: var(--sdwa5-bg-immutable);
+    border-bottom: 1px solid var(--sdwa5-border-immutable);
+  }
+
+  // The close button carries btn-secondary, which is an outline button here.
+  // Across the whole header row that outline reads as a broken box.
+  .offcanvas-close {
+    background: transparent;
+    border-color: transparent;
+    color: var(--sdwa5-muted-immutable);
+
+    &:hover,
+    &:focus-visible {
+      background: transparent;
+      color: var(--sdwa5-green-text-immutable);
+    }
+  }
+}
+
+.navigation-offcanvas-placeholder,
+.navigation-offcanvas-overlay {
+  background-color: var(--sdwa5-bg-immutable);
+}
+
+.navigation-offcanvas-list-item {
+  background-color: transparent;
+  border-top-color: var(--sdwa5-border-immutable);
+}
+
+.navigation-offcanvas-link {
+  color: var(--sdwa5-text-immutable);
+
+  &.is-back-link {
+    border-top-color: var(--sdwa5-border-immutable);
+  }
+}
+
+// ------------------------------------------------------ Reduced motion
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

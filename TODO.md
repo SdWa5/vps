@@ -260,3 +260,16 @@
     dry run at v1.2.0, account 4 mapped, opening balance 333.40 € matched PayPal, daily job at
     06:00 UTC, queue mail to mail@sdwa5.org
     1. switch on `BANKSYNC_AUTOPOST_ENABLED` after the first real `would_post` decisions were reviewed
+12. **automate the SdWa5Theme deploy** ([docs/shopware/theme.md](docs/shopware/theme.md#deploy)) (ca. 2 Stunden
+    30 Minuten). a theme change reaches sdwa5.org only through a hand-run `composer install`, `plugin:update`,
+    `theme:compile` and `cache:clear` on the host. `monitoring/chimodiazz-deploy.sh` already does the rebuild,
+    the health check and the rollback for Chimo Diazz. extract its rebuild and health helpers into a shared
+    library at the theme's first update and run them for sdwa5.org as well. the script is not generalized as a
+    whole, because its rollback runs `git reset --hard` on the whole checkout, and at `/opt/docker` that is
+    every service in this repository
+13. **the share links in the Chimo Diazz offcanvas menu share the site root on every page.** measured on
+    2026-10-06 on a subpage of chimodiazz.sdwa5.org, where the share aside linked the subpage and the
+    offcanvas linked `https://chimodiazz.sdwa5.org/`. the offcanvas is rendered inside the ESI header
+    sub-request, so the request it reads its URL from is the header's own. the SdWa5Theme avoids it with a
+    share row in the main content. the fix belongs in `chimodiazz/website`, by moving the offcanvas share
+    links into the main content the same way or by dropping them (ca. 30 Minuten)

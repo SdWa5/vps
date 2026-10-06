@@ -1,0 +1,53 @@
+{% sw_extends '@Storefront/storefront/layout/header/header.html.twig' %}
+
+{# One header row at every width.
+
+     < 992 px   [burger] [logo] ........ [search] [account] [cart] [donation]
+     >= 992 px  [logo] ... [search field] [settings] [account] [cart] [donation]
+
+   Search, account and cart appear on shop pages only. The body class that
+   decides it is set in base.html.twig, and _header.scss does the hiding.
+   The main navigation stays in its own row below, as in the core.
+
+   All block names checked against Shopware 6.7.11.1. #}
+
+{# Language, currency and the DNE dark mode toggle move from their own row into
+   the action row, see layout_header_actions_cart below. #}
+{% block layout_top_bar %}{% endblock %}
+
+{# The burger sits left of the logo. The core puts it into the action column,
+   which ends up right of the logo, and adds a second one for tablets inside the
+   search column, which _header.scss hides. #}
+{% block layout_header_logo %}
+    <div class="col-auto d-lg-none sdwa5-header__burger">
+        <div class="menu-button">
+            <button
+                class="btn nav-main-toggle-btn header-actions-btn"
+                type="button"
+                data-off-canvas-menu="true"
+                aria-label="{{ 'general.menuLink'|trans|striptags }}"
+            >
+                {% sw_icon 'stack' %}
+            </button>
+        </div>
+    </div>
+
+    {{ parent() }}
+{% endblock %}
+
+{% block layout_header_navigation_toggle %}{% endblock %}
+
+{# The last block of the action row, so everything added here lands at the
+   right edge. The core has no block meant for extra actions, and taking over
+   layout_header_actions would copy its wrapper markup. #}
+{% block layout_header_actions_cart %}
+    <div class="col-auto sdwa5-header__settings">
+        {% sw_include '@Storefront/storefront/layout/header/top-bar.html.twig' %}
+    </div>
+
+    {{ parent() }}
+
+    <div class="col-auto sdwa5-header__donate">
+        {% sw_include '@SdWa5Theme/storefront/layout/donate-link.html.twig' with { sdwa5DonateVariant: 'button' } %}
+    </div>
+{% endblock %}

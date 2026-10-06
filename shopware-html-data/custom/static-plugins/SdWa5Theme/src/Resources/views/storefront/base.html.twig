@@ -1,0 +1,45 @@
+{% sw_extends '@Storefront/storefront/base.html.twig' %}
+
+{# Shop context.
+
+   The header is rendered as an ESI sub-request (render_esi in the core
+   base_esi_header block), so templates inside it see the route of the
+   sub-request and never the page itself. The context is therefore decided here,
+   in the main request, as a body class, and _header.scss hides the shop chrome
+   from it. That stays cache-safe, because the class depends on the URL alone.
+
+   Shop pages are product detail pages, listings, search results, the wishlist,
+   checkout and the account area. The account area counts because a hidden
+   account menu would strand a logged-in visitor inside it. #}
+{% block base_body_classes %}
+    {{- parent() -}}
+    {%- set sdwa5Route = activeRoute|default('') -%}
+    {%- if sdwa5Route in ['frontend.detail.page', 'frontend.search.page', 'frontend.wishlist.page']
+        or sdwa5Route starts with 'frontend.checkout.'
+        or sdwa5Route starts with 'frontend.account.'
+        or (page.cmsPage.type ?? '') == 'product_list' %} sdwa5-shop-context{% endif -%}
+{% endblock %}
+
+{# Mobile share row, at the end of the main content.
+
+   It is not in the off-canvas menu, as it is on chimodiazz, because that menu
+   is part of the ESI header and its links would always share the site root. #}
+{% block base_main_inner %}
+    {{ parent() }}
+
+    {% if not (activeRoute|default('') starts with 'frontend.checkout.' or activeRoute|default('') starts with 'frontend.account.') %}
+        <div class="container d-lg-none">
+            {% sw_include '@SdWa5Theme/storefront/layout/share/share-links.html.twig' with { sdwa5ShareVariant: 'row' } %}
+        </div>
+    {% endif %}
+{% endblock %}
+
+{# Desktop share bar at the right edge. Hooked onto base_scroll_up with
+   parent(), so the scroll-up button stays. #}
+{% block base_scroll_up %}
+    {{ parent() }}
+
+    {% if not (activeRoute|default('') starts with 'frontend.checkout.' or activeRoute|default('') starts with 'frontend.account.') %}
+        {% sw_include '@SdWa5Theme/storefront/layout/share/share-links.html.twig' with { sdwa5ShareVariant: 'bar' } %}
+    {% endif %}
+{% endblock %}

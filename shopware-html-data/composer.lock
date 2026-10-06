@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8d750e7496fa8ffbcc2f41a0606df477",
+    "content-hash": "52bbc3943399c25430609deed0092905",
     "packages": [
         {
             "name": "async-aws/core",
@@ -6274,6 +6274,49 @@
                 "source": "https://github.com/scssphp/scssphp/tree/v1.12.0"
             },
             "time": "2023-11-14T14:56:09+00:00"
+        },
+        {
+            "name": "sdwa5/sdwa5-theme",
+            "version": "1.0.0",
+            "dist": {
+                "type": "path",
+                "url": "custom/static-plugins/SdWa5Theme",
+                "reference": "caa5b6188124c8e5c558b10956aa2a0d3ff2a221"
+            },
+            "require": {
+                "shopware/core": "~6.7.0",
+                "shopware/storefront": "~6.7.0"
+            },
+            "type": "shopware-platform-plugin",
+            "extra": {
+                "shopware-plugin-class": "SdWa5Theme\\SdWa5Theme",
+                "label": {
+                    "de-DE": "SdWa5 Theme",
+                    "en-GB": "SdWa5 Theme"
+                },
+                "description": {
+                    "de-DE": "Storefront-Theme von sdwa5.org mit hellem und dunklem Modus.",
+                    "en-GB": "Storefront theme of sdwa5.org with a light and a dark mode."
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "SdWa5Theme\\": "src/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Musikverein Schmeiß die Wand an 5"
+                }
+            ],
+            "description": "Storefront theme of sdwa5.org, ported from the ChimodiazzTheme and adapted to the DNE dark mode plugin.",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
         },
         {
             "name": "seld/jsonlint",

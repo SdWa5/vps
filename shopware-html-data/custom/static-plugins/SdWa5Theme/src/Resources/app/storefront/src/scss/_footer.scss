@@ -1,0 +1,159 @@
+// Footer, donation line and share links.
+
+// ----------------------------------------------------------------- Footer
+//
+// The core colours the column headlines and the hotline link with $primary,
+// which is SdWa5 green and unreadable on a light background.
+
+.footer-main {
+  background-color: transparent;
+  border-top-color: var(--sdwa5-border-immutable);
+}
+
+.footer-column {
+  border-bottom-color: var(--sdwa5-border-immutable);
+}
+
+.footer-column-headline {
+  font-family: var(--sdwa5-font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--sdwa5-green-text-immutable);
+
+  a {
+    color: inherit;
+  }
+}
+
+.footer-contact-hotline a {
+  color: var(--sdwa5-link-immutable);
+}
+
+.footer-link {
+  color: var(--sdwa5-text-immutable);
+
+  &:hover {
+    color: var(--sdwa5-link-hover-immutable);
+  }
+}
+
+// The core paints the bottom bar light grey.
+.footer-bottom {
+  background: transparent;
+  border-top: 1px solid var(--sdwa5-border-immutable);
+}
+
+.footer-service-menu-link {
+  font-family: var(--sdwa5-font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+// Only the look of the VAT notice changes, its wording stays as it is.
+.footer-vat {
+  font-family: var(--sdwa5-font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
+  color: var(--sdwa5-muted-immutable);
+  text-align: center;
+}
+
+// TcinnCopyrightCustom writes an inline <style> with .footer-copyright{color:#fff},
+// which is white on a light background. The id-free selector with body in
+// front outranks it.
+body .footer-copyright {
+  font-family: var(--sdwa5-font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sdwa5-muted-immutable) !important;
+  text-align: center;
+}
+
+// --------------------------------------------------------- Donation line
+
+.sdwa5-footer-donate {
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+  text-align: center;
+}
+
+.sdwa5-donate-line {
+  margin: 0;
+  color: var(--sdwa5-muted-immutable);
+}
+
+.sdwa5-donate-line__link {
+  margin-left: 0.25rem;
+  font-weight: 600;
+}
+
+// ------------------------------------------------------------ Share links
+//
+// Bar: vertical at the right edge from 992 px. Not below, where it would sit on
+// the scroll-up button and take space a phone screen needs. z-index 700 is the
+// scroll-up button's level, below the sticky header.
+// Row: a plain row at the end of the main content below 992 px.
+
+.sdwa5-share {
+  font-family: var(--sdwa5-font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.sdwa5-share__label {
+  color: var(--sdwa5-muted-immutable);
+}
+
+.sdwa5-share__link {
+  text-decoration: none;
+}
+
+.sdwa5-share--bar {
+  display: none;
+}
+
+@media (min-width: 992px) {
+  .sdwa5-share--bar {
+    position: fixed;
+    top: 50%;
+    right: 0;
+    z-index: 700;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.25rem 0.5rem;
+    transform: translateY(-50%);
+    background: var(--sdwa5-share-bg-immutable);
+    border: 1px solid var(--sdwa5-border-immutable);
+    border-right: 0;
+    border-radius: 2px 0 0 2px;
+
+    // writing-mode instead of rotate, so the box follows the turned text.
+    .sdwa5-share__label,
+    .sdwa5-share__link {
+      writing-mode: vertical-rl;
+    }
+
+    .sdwa5-share__label {
+      padding-bottom: 0.25rem;
+      border-bottom: 1px solid var(--sdwa5-border-immutable);
+    }
+  }
+}
+
+.sdwa5-share--row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1.25rem;
+  margin: 2rem 0 1rem;
+  padding: 1rem 0 0;
+  border-top: 1px solid var(--sdwa5-border-immutable);
+}

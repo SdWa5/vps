@@ -9,6 +9,6 @@ Admin: https://sdwa5.org/admin · `admin` / see project memory
 - [Content & CMS](content-cms.md) — navigation, CMS pages, slot types, table styling, legal pages, footer
 - [Merch catalog](merch.md) — products, prices
 - [Cookie consent](cookie-consent.md) — cookie groups, snippet overrides, CMP threshold
-- [Plugins](plugins.md) — the installed eleven, where each comes from, and what records it
-- [Theme / Design](theme.md) — colors, logos, Dark Mode plugin + known bug
+- [Plugins](plugins.md) — the installed twelve, where each comes from, and what records it
+- [Theme / Design](theme.md) — the SdWa5Theme plugin, colour tokens and dark mode, donation, deploy and rollback
 - [TODO](TODO.md)

@@ -6,6 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.54.0] - 2026-10-06
+
+### Added
+
+- `SdWa5Theme` 1.0.0, the shop's own theme plugin in `shopware-html-data/custom/static-plugins/`, ported
+  from the Chimo Diazz theme with the SdWa5 green and red, light and dark colour tokens that the dark mode
+  plugin leaves alone, DM Sans, Space Grotesk and JetBrains Mono, and a small graffiti header logo.
+- Voluntary donation links to PayPal in the header, the offcanvas menu and the footer, with the URL as the
+  theme config field `sdwa5-donation-url`.
+- Share links for WhatsApp, Telegram and e-mail, as a bar at the right edge on desktop and a row below the
+  content on mobile.
+- A full-width homepage hero cropped top and bottom, and the homepage link tiles as a card grid.
+- `tools/shopware/set-homepage-sections.sh`, which sets the hero and tiles section classes and the hero's
+  full width on the live homepage, dry run by default, with `--revert`.
+- `tools/shopware/lib.sh` with the admin API helpers both Shopware scripts share.
+- `tests/shopware-theme.bats` and `tests/shopware-homepage-sections.bats`.
+
+### Changed
+
+- Search, the account menu, the currency switcher and an empty cart show only on shop pages, and the header
+  cart total is hidden everywhere.
+- `tools/shopware/set-address.sh` sources `tools/shopware/lib.sh`.
+- `.gitignore` tracks `shopware-html-data/custom/static-plugins/SdWa5Theme/`, and
+  `tests/shopware-plugins.bats` allows a path lock only for a tracked static plugin.
+- `docs/shopware/theme.md` describes the theme, its dark mode translation, deploy and rollback.
+- `docs/shopware/plugins.md`, `infrastructure.md`, `content-cms.md` and the licence section of `README.md`
+  cover the theme.
+- `TODO.md` and `docs/shopware/TODO.md` gain the theme deploy automation, the Chimo Diazz offcanvas share
+  bug, a preview for theme changes and the text wordmark fallback.
+
+### Removed
+
+- `docs/shopware/TODO.md` item 11, hiding the cart UI on content pages, which the theme does.
+
 ## [1.53.4] - 2026-10-06
 
 ### Fixed

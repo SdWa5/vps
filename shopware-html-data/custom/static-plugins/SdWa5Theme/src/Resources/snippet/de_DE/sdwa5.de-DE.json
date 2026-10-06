@@ -1,0 +1,18 @@
+{
+  "sdwa5": {
+    "donate": {
+      "label": "Freiwillige Spende",
+      "title": "Du kannst freiwillig über PayPal spenden. Der Link öffnet sich in einem neuen Tab.",
+      "offcanvas": "Freiwillige Spende über PayPal"
+    },
+    "footer": {
+      "donateText": "Dir gefällt, was wir machen? Du kannst SdWa5 mit einer freiwilligen Spende unterstützen.",
+      "donateLink": "Über PayPal spenden"
+    },
+    "share": {
+      "label": "Teilen",
+      "email": "E-Mail",
+      "text": "SdWa5 ist ein Free-Tekno-Soundsystem aus Österreich."
+    }
+  }
+}

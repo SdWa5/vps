@@ -1,0 +1,32 @@
+// Self-hosted fonts, never fonts.googleapis.com, see assets/fonts/LICENSE.md.
+//
+// The path comes from $app-css-relative-asset-path, the same variable Shopware
+// uses for its own Inter font. A hand-written ../assets/ points nowhere, because
+// the compiled CSS and the assets live under two different ids below theme/, and
+// the browser then falls back to the system font without any error.
+//
+// They are variable fonts, so one file covers the whole weight range.
+
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('#{$app-css-relative-asset-path}/fonts/space-grotesk.woff2') format('woff2');
+  font-weight: 300 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DM Sans';
+  src: url('#{$app-css-relative-asset-path}/fonts/dm-sans.woff2') format('woff2');
+  font-weight: 100 1000;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('#{$app-css-relative-asset-path}/fonts/jetbrains-mono.woff2') format('woff2');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}

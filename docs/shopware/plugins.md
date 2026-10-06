@@ -6,10 +6,11 @@ composer, with `plugin:list`, the `plugin` table and `composer.lock`.
 
 ## The inventory
 
-Eleven plugins are installed and active. **All eleven are exact requires in
-[`composer.json`](../../shopware-html-data/composer.json) and locked as zip downloads in `composer.lock`**,
-so `composer install` on a fresh checkout reproduces the whole set. `tests/shopware-plugins.bats` keeps it
-that way.
+Twelve plugins are installed and active. **All twelve are exact requires in
+[`composer.json`](../../shopware-html-data/composer.json)**, so `composer install` on a fresh checkout
+reproduces the whole set. Eleven are locked as zip downloads in `composer.lock`. The twelfth is the
+shop's own theme `SdWa5Theme`, which lives in this repository and is locked as a path, see
+[The one path lock](#the-one-path-lock). `tests/shopware-plugins.bats` keeps it that way.
 
 | Plugin | Composer name | Version | Source |
 |---|---|---|---|
@@ -23,6 +24,7 @@ that way.
 | `SwagExtensionStore` | `swag/swag-extension-store` | 4.2.2 | Packagist |
 | `SwagLanguagePack` | `swag/language-pack` | 5.58.0 | Packagist |
 | `SwagPlatformSecurity` | `store.shopware.com/swagplatformsecurity` | 4.0.16 | Shopware Store |
+| `SdWa5Theme` | `sdwa5/sdwa5-theme` | 1.0.0 | this repository, [theme.md](theme.md) |
 | `TcinnCopyrightCustom` | `store.shopware.com/tcinncopyrightcustom` | 1.0.7 | Shopware Store |
 
 Every require is pinned to the exact version, because a floating constraint would turn the next
@@ -53,6 +55,27 @@ Into `vendor/<vendor>/<package>/`. The `plugin` table gives each plugin that pat
 through the admin's plugin manager lands exactly there. **Install plugins with `composer require`, not
 through the admin.** A path lock is not reproducible, because `custom/plugins/` is not in the repository,
 and the test suite fails on it.
+
+### The one path lock
+
+`SdWa5Theme` is the exception, and it is reproducible because its source is tracked. It sits in
+`custom/static-plugins/SdWa5Theme/`, which `.gitignore` lifts out of the ignored `shopware-html-data/`
+with three negations and nothing else, so `custom/plugins/` stays untracked. Composer finds it through
+the `custom/static-plugins/*` path repository and symlinks it into `vendor/sdwa5/sdwa5-theme`. The test
+suite allows a path lock only for a `custom/static-plugins/` directory whose `composer.json` is in the
+repository and whose negation is in `.gitignore`.
+
+The lock records a `reference` for a path package, which is a hash of its `composer.json` rather than
+of its code. A version bump of the theme therefore changes the lock, so the lock is updated with the
+bump:
+
+```bash
+docker run --rm -u "$(id -u):$(id -g)" -v "$PWD/shopware-html-data:/app" -w /app composer:2.2 \
+    update --no-install --no-scripts --no-plugins --ignore-platform-reqs sdwa5/sdwa5-theme
+```
+
+The path repository throws if `custom/plugins/` is missing, so a fresh checkout needs
+`mkdir -p shopware-html-data/custom/plugins` before that call. The directory stays ignored.
 
 ## The Shopware Store repository
 

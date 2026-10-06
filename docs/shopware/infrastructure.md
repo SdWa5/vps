@@ -8,10 +8,10 @@
 - `composer.json`/`.lock`, `symfony.lock` and `config/{packages,routes*,services.yaml,bundles.php}` are tracked
   in the repo (everything else in `shopware-html-data/` — `.env`, `var/`, `vendor/`, `public/`, `files/`,
   `config/jwt/` — stays gitignored)
-- **Eleven plugins are installed and active, and this file used to name six of them.** Which ones
-  exist, where each comes from and what records it now lives in [plugins.md](plugins.md), measured
-  rather than listed. The short version is that four are tracked here as source, two are
-  `composer.json` requires, and five are recorded nowhere at all.
+- **Twelve plugins are installed and active.** Which ones exist, where each comes from and what
+  records it lives in [plugins.md](plugins.md). All twelve are exact `composer.json` requires. The only
+  plugin source tracked here is the shop's own theme in `custom/static-plugins/SdWa5Theme/`, see
+  [theme.md](theme.md).
 
 ## Runtime: what runs Shopware's background work
 

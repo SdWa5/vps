@@ -7,7 +7,7 @@
    `registry.services.shopware.io`. None of them appears in
    the 2026-07-22 legal review, which now lives in Google Drive, so whether a non-profit wants
    an AI image editor, a Copilot and an event ingestion service active on its shop is open. Decide per
-   app, then either deactivate the unwanted ones or cover them in the same privacy pass as item 13
+   app, then either deactivate the unwanted ones or cover them in the same privacy pass as item 12
    (`decision`)
 2. update email templates (order confirmation etc. still default Shopware copy)
     1. dont get too fancy (e.g. with corporate or blogging style expressions)
@@ -19,7 +19,9 @@
    five exist as CMS pages and all five are in the sitemap. So the storefront search is product-only as suspected.
    Extend it to also surface CMS pages, ideally as primary results, since sdwa5.org is primarily a homepage and the
    shop is secondary. Shopware core has no CMS-page search, so this needs a plugin. **Whether a free one exists is
-   the open question**, and per the original note, if there is none this moves to the "Hide cart UI" item
+   the open question**. Since the SdWa5Theme the search box shows only on shop pages
+   ([theme.md](theme.md#shop-context)), which is what the original note planned for the case that no plugin
+   exists. A CMS-page search would bring it back on every page
 6. Merch / Products
     1. Make use of variants and other product related shopware features
     2. Add missing product images, remove background / opacity from existing images
@@ -44,7 +46,7 @@
         - A minimum quantity below which the run does not happen, and what happens to the money
           then. A refund path has to exist before the first preorder is sold.
         - The legal wording for a binding prepaid sale with a later delivery date, which goes into
-          the same AGB pass as item 13. Taking money for goods not yet ordered is the part a
+          the same AGB pass as item 12. Taking money for goods not yet ordered is the part a
           non-profit should get right on paper.
 7. Checkout end-to-end test — no real order flow tested yet
    (deferred — not selling products yet)
@@ -59,9 +61,7 @@
 10. frosh tools system-status
     1. System Health
     2. Performance recommendations
-11. Hide cart UI when irrelevant — hide cart icon, minicart, and related shop chrome when cart is empty AND user is not
-    on a PDP or category listing page. Reduces commercial appearance on content-only pages.
-12. Content
+11. Content
     1. add images
     2. add "useful links" page
         1. grouped overview
@@ -69,10 +69,17 @@
     3. Artists & Friends
         1. add links
         2. asked in SdWa5 Family Whatsapp group who wants to be featured -> wait for responses
-13. Apply the legal-page wording fixes from the 2026-07-22 review before editing the live
+12. Apply the legal-page wording fixes from the 2026-07-22 review before editing the live
     Datenschutz, AGB, Impressum and Widerrufsrecht CMS pages. **The review itself lives in Google
     Drive and deliberately not here**, decided 2026-09-13: it is a dated, itemised list of gaps on a
     live Austrian webshop written by its own operator, and in a public repository that is a ready-made
     checklist for anybody minded to send an Abmahnung. Its findings are therefore not restated in this
     file either. One of them is a characterization decision that needs the Obmann or the board rather
     than a wording patch, and that is the item this one waits on (`decision`)
+13. **A preview for theme changes** (medium priority, ca. 1 hour 30 minutes). The SdWa5Theme went live directly,
+    decided 2026-10-06, so every theme change is seen first on the live site. A second sales channel on a preview
+    domain with the theme assigned, or a separate environment, would let a change be checked before it reaches the
+    Storefront channel. Decide which of the two, then document it in [theme.md](theme.md#deploy)
+14. **Text wordmark as the header logo** (ca. 20 minutes), if the small graffiti logo of the SdWa5Theme does not
+    convince. Decided 2026-10-06 to try the graffiti logo first. The wordmark would be "SdWa5" in Space Grotesk in
+    `layout_header_logo_image`, which needs no image and stays sharp at every size

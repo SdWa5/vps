@@ -1,0 +1,14 @@
+{% sw_extends '@Storefront/storefront/layout/meta.html.twig' %}
+
+{# Deploy marker. It shows from outside which theme version is served:
+
+       curl -s https://sdwa5.org/ | grep sdwa5:theme
+
+   The value has to match "version" in the plugin's composer.json, which
+   tests/shopware-theme.bats checks. parent() is mandatory, without it every
+   Shopware meta tag disappears. #}
+{% block layout_head_meta_tags_general %}
+    {{ parent() }}
+
+    <meta name="sdwa5:theme" content="1.0.0">
+{% endblock %}

@@ -1,0 +1,16 @@
+{% sw_extends '@Storefront/storefront/layout/header/logo.html.twig' %}
+
+{# Small graffiti logo instead of the 300 px wide media logo from the theme
+   config. The file ships with the theme (assets/logo/sdwa5-logo.webp, 213x88,
+   shown at half size for sharp rendering on high-density screens), and its build
+   command is recorded in docs/shopware/theme.md. The minimal checkout header
+   includes this template too, so it gets the same logo.
+
+   The link around it, with its target and title, still comes from the core. #}
+{% block layout_header_logo_image %}
+    <img src="{{ asset('assets/logo/sdwa5-logo.webp', 'theme') }}"
+         alt="{{ 'header.logoLink'|trans|striptags }}"
+         class="header-logo-main-img sdwa5-logo"
+         width="107"
+         height="44">
+{% endblock %}

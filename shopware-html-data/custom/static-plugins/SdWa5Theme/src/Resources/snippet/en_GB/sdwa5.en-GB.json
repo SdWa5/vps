@@ -1,0 +1,18 @@
+{
+  "sdwa5": {
+    "donate": {
+      "label": "Voluntary Donation",
+      "title": "You can make a voluntary donation via PayPal. The link opens in a new tab.",
+      "offcanvas": "Voluntary donation via PayPal"
+    },
+    "footer": {
+      "donateText": "Do you like what we do? You can support SdWa5 with a voluntary donation.",
+      "donateLink": "Donate via PayPal"
+    },
+    "share": {
+      "label": "Share",
+      "email": "Email",
+      "text": "SdWa5 is a free tekno sound system from Austria."
+    }
+  }
+}

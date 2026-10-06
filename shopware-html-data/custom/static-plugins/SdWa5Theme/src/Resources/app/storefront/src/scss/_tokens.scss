@@ -1,0 +1,82 @@
+// Colour tokens, light first.
+//
+// Every name ends in `-immutable` so the DNE plugin leaves the property alone.
+// The dark values are emitted by the mixin below under exactly the selector pair
+// DNE writes for its own variables, so the toggle in the header and the
+// operating system preference switch both sets at the same moment.
+//
+// The dark blocks hold tokens and color-scheme only. A rule with a colour
+// literal in there would be inverted a second time by DNE.
+
+$sdwa5-light: (
+  'bg': #f5f5f8,
+  'surface': #fcfcfd,
+  'text': #101018,
+  'headline': #0a0a0f,
+  'muted': #55556a,
+  'border': #e1e1e9,
+  'green': #1fe51f,
+  'green-text': #0a7d0a,
+  'red': #e5231f,
+  'link': #006b73,
+  'link-hover': #0a7d0a,
+  'on-green': #0a0a0f,
+  'on-red': #ffffff,
+  'glass': rgba(245, 245, 248, 0.78),
+  'share-bg': rgba(252, 252, 253, 0.88),
+  'logo-shadow': rgba(255, 255, 255, 0)
+);
+
+$sdwa5-dark: (
+  'bg': #0a0a0f,
+  'surface': #12121b,
+  'text': #e8e8f0,
+  'headline': #f0f0f5,
+  'muted': #9d9db0,
+  'border': #252532,
+  'green': #1fe51f,
+  'green-text': #1fe51f,
+  'red': #e5231f,
+  'link': #00f0ff,
+  'link-hover': #1fe51f,
+  'on-green': #0a0a0f,
+  'on-red': #ffffff,
+  'glass': rgba(10, 10, 15, 0.72),
+  'share-bg': rgba(18, 18, 27, 0.82),
+  'logo-shadow': rgba(255, 255, 255, 0.08)
+);
+
+@mixin sdwa5-tokens($map) {
+  @each $name, $value in $map {
+    --sdwa5-#{$name}-immutable: #{$value};
+  }
+}
+
+:root {
+  @include sdwa5-tokens($sdwa5-light);
+  color-scheme: light;
+
+  // Height of the sticky header. The bar and every scroll-margin-top read it,
+  // because two separate values drift apart at the first adjustment.
+  --sdwa5-nav-h: 7.5rem;
+  --sdwa5-font-mono: #{$sdwa5-font-family-mono};
+  --sdwa5-hero-focus: 50% 45%;
+}
+
+:root[data-theme='dark'] {
+  @include sdwa5-tokens($sdwa5-dark);
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    @include sdwa5-tokens($sdwa5-dark);
+    color-scheme: dark;
+  }
+}
+
+@media (max-width: 991.98px) {
+  :root {
+    --sdwa5-nav-h: 4.5rem;
+  }
+}

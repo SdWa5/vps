@@ -6,8 +6,8 @@
 # The bats image is Alpine and ships busybox date, which cannot parse the
 # timestamp formats the scripts read out of the restic log. GNU coreutils is
 # installed into the throwaway container so the test environment matches the
-# Debian VPS. jq comes along for the same reason: tools/shopware/set-address.sh
-# builds its JSON payloads with it, and so do that suite's fixtures. git is real
+# Debian VPS. jq comes along for the same reason: the scripts in tools/shopware/
+# build their JSON payloads with it, and so do their suites' fixtures. git is real
 # rather than stubbed for tools/dolibarr/deploy-module.sh, whose suite clones a
 # throwaway repository.
 #
@@ -36,7 +36,9 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt koalaman/shellcheck:stable -x \
     tools/dolibarr/doli.sh \
     tools/dolibarr/set-address.sh \
     tools/dolibarr/sync-pm.sh \
+    tools/shopware/lib.sh \
     tools/shopware/set-address.sh \
+    tools/shopware/set-homepage-sections.sh \
     tests/run.sh \
     tests/test_helper.bash \
     tests/stubs/*

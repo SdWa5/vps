@@ -40,82 +40,20 @@ NEW_COMPANY="Musikverein Schmeiß die Wand an 5"
 
 APPLY=0
 
-usage() { sed -n '3,30p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
-die() { printf 'set-address.sh: %s\n' "$*" >&2; exit 1; }
+# shellcheck source=tools/shopware/lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 case "${1:-}" in
     --apply) APPLY=1 ;;
-    -h|--help) usage; exit 0 ;;
+    -h|--help) sw_usage; exit 0 ;;
     "") ;;
     *) die "unknown option: ${1}. Try --help." ;;
 esac
 
-command -v jq >/dev/null 2>&1 || die "jq is required"
-
-# --- authentication --------------------------------------------------------
-#
-# The client secret goes from the config file straight into the request body
-# without passing through a variable that anything later prints.
-
-CONFIG="${SHOPWARE_MCP_CONFIG:-$HOME/.claude.json}"
-
-if [[ -z "${SW_API_URL:-}" ]]; then
-    [[ -r "$CONFIG" ]] || die "no credentials: set SW_API_URL and friends, or provide $CONFIG"
-    SW_API_URL="$(jq -r '.mcpServers["shopware-admin-mcp"].env.SHOPWARE_API_URL // empty' "$CONFIG")"
-fi
-[[ -n "${SW_API_URL:-}" ]] || die "no Shopware URL found"
-SW_API_URL="${SW_API_URL%/}"
-
-token_payload() {
-    if [[ -n "${SW_API_CLIENT_ID:-}" && -n "${SW_API_CLIENT_SECRET:-}" ]]; then
-        jq -c -n --arg i "$SW_API_CLIENT_ID" --arg s "$SW_API_CLIENT_SECRET" \
-            '{grant_type:"client_credentials",client_id:$i,client_secret:$s}'
-    else
-        jq -c '{grant_type:"client_credentials",
-                client_id:     .mcpServers["shopware-admin-mcp"].env.SHOPWARE_API_CLIENT_ID,
-                client_secret: .mcpServers["shopware-admin-mcp"].env.SHOPWARE_API_CLIENT_SECRET}' \
-            "$CONFIG"
-    fi
-}
-
-TOKEN="$(token_payload | curl -s --max-time 30 -X POST "$SW_API_URL/api/oauth/token" \
-    -H 'Content-Type: application/json' -H 'Accept: application/json' --data @- \
-    | jq -r '.access_token // empty')"
-[[ -n "$TOKEN" ]] || die "could not obtain an access token from $SW_API_URL"
-
-# api METHOD PATH [BODY] [EXTRA_HEADER]
-api() {
-    local method="$1" path="$2" body="${3:-}" extra="${4:-}"
-    local args=(-s --max-time 60 -X "$method" "$SW_API_URL/api$path"
-        -H "Authorization: Bearer $TOKEN"
-        -H 'Content-Type: application/json' -H 'Accept: application/json')
-    [[ -n "$extra" ]] && args+=(-H "$extra")
-    [[ -n "$body" ]] && args+=(--data "$body")
-    curl "${args[@]}"
-}
-
-# A successful Shopware write answers 204 with an empty body. `jq -e` on empty
-# input exits 4, so an empty response has to be recognised as success before jq
-# ever sees it. Getting this wrong made every successful write look like a
-# failure.
-write_ok() {
-    local response="$1" what="$2"
-    [[ -z "${response//[[:space:]]/}" ]] && return 0
-    printf '%s' "$response" | jq -e 'has("errors") | not' >/dev/null 2>&1 \
-        || die "writing $what failed: $response"
-}
+sw_auth
 
 CHANGED=0
 SKIPPED=0
-
-report() {
-    local verb="$1" what="$2"
-    if (( APPLY )); then
-        printf '  %-8s %s\n' "$verb" "$what"
-    else
-        printf '  %-8s %s\n' "would" "$what"
-    fi
-}
 
 # --- 1. CMS text slots -----------------------------------------------------
 #
@@ -127,7 +65,7 @@ update_slot() {
     local slot_id="$1" language_id="$2" label="$3"
     local current new_content config
 
-    config="$(api POST "/search/cms-slot-translation" \
+    config="$(sw_api POST "/search/cms-slot-translation" \
         "{\"limit\":1,\"filter\":[{\"type\":\"equals\",\"field\":\"cmsSlotId\",\"value\":\"$slot_id\"},{\"type\":\"equals\",\"field\":\"languageId\",\"value\":\"$language_id\"}]}" \
         | jq -c '.data[0].config // empty')"
     [[ -n "$config" ]] || die "no translation for slot $slot_id in language $language_id"
@@ -135,7 +73,7 @@ update_slot() {
     current="$(printf '%s' "$config" | jq -r '.content.value // ""')"
 
     if [[ "$current" != *"$OLD_STREET"* && "$current" != *"$OLD_CITY"* ]]; then
-        printf '  %-8s %s\n' "skip" "$label, already current"
+        sw_skip "$label, already current"
         SKIPPED=$((SKIPPED + 1))
         return
     fi
@@ -143,14 +81,14 @@ update_slot() {
     new_content="${current//$OLD_STREET/$NEW_STREET}"
     new_content="${new_content//$OLD_CITY/$NEW_CITY}"
 
-    report "update" "$label"
+    sw_report "update" "$label"
     CHANGED=$((CHANGED + 1))
     (( APPLY )) || return 0
 
     local payload
     payload="$(jq -c -n --argjson cfg "$config" --arg v "$new_content" \
         '{config: ($cfg | .content.value = $v)}')"
-    write_ok "$(api PATCH "/cms-slot/$slot_id" "$payload" "sw-language-id: $language_id")" "slot $slot_id"
+    sw_write_ok "$(sw_api PATCH "/cms-slot/$slot_id" "$payload" "sw-language-id: $language_id")" "slot $slot_id"
 }
 
 # --- 2. the shop's own address ---------------------------------------------
@@ -163,7 +101,7 @@ update_basic_address() {
     local want="$NEW_STREET<br>$NEW_CITY<br>Österreich"
     local row id current
 
-    row="$(api POST "/search/system-config" \
+    row="$(sw_api POST "/search/system-config" \
         '{"limit":1,"filter":[{"type":"equals","field":"configurationKey","value":"core.basicInformation.address"}]}' \
         | jq -c '.data[0] // empty')"
     [[ -n "$row" ]] || die "core.basicInformation.address does not exist"
@@ -172,16 +110,16 @@ update_basic_address() {
     current="$(printf '%s' "$row" | jq -r '.configurationValue | if type == "object" then (._value // tostring) else tostring end')"
 
     if [[ "$current" == "$want" ]]; then
-        printf '  %-8s %s\n' "skip" "core.basicInformation.address, already current"
+        sw_skip "core.basicInformation.address, already current"
         SKIPPED=$((SKIPPED + 1))
         return
     fi
 
-    report "update" "core.basicInformation.address"
+    sw_report "update" "core.basicInformation.address"
     CHANGED=$((CHANGED + 1))
     (( APPLY )) || return 0
 
-    write_ok "$(api PATCH "/system-config/$id" "$(jq -c -n --arg v "$want" '{configurationValue: $v}')")" \
+    sw_write_ok "$(sw_api PATCH "/system-config/$id" "$(jq -c -n --arg v "$want" '{configurationValue: $v}')")" \
         "core.basicInformation.address"
 }
 
@@ -193,7 +131,7 @@ update_basic_address() {
 
 update_documents() {
     local rows
-    rows="$(api POST "/search/document-base-config" '{"limit":50}' | jq -c '.data[]')"
+    rows="$(sw_api POST "/search/document-base-config" '{"limit":50}' | jq -c '.data[]')"
     [[ -n "$rows" ]] || die "no document base configs found"
 
     local row id name config want_addr
@@ -206,19 +144,19 @@ update_documents() {
 
         if [[ "$(printf '%s' "$config" | jq -r '.companyName // ""')" == "$NEW_COMPANY" \
            && "$(printf '%s' "$config" | jq -r '.companyAddress // ""')" == "$want_addr" ]]; then
-            printf '  %-8s %s\n' "skip" "document $name, already current"
+            sw_skip "document $name, already current"
             SKIPPED=$((SKIPPED + 1))
             continue
         fi
 
-        report "update" "document $name, company name and address"
+        sw_report "update" "document $name, company name and address"
         CHANGED=$((CHANGED + 1))
         (( APPLY )) || continue
 
         local payload
         payload="$(jq -c -n --argjson cfg "$config" --arg n "$NEW_COMPANY" --arg a "$want_addr" \
             '{config: ($cfg | .companyName = $n | .companyAddress = $a)}')"
-        write_ok "$(api PATCH "/document-base-config/$id" "$payload")" "document base config $name"
+        sw_write_ok "$(sw_api PATCH "/document-base-config/$id" "$payload")" "document base config $name"
     done <<< "$rows"
 }
 

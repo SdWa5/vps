@@ -1,0 +1,30 @@
+{
+  "name": "sdwa5/sdwa5-theme",
+  "description": "Storefront theme of sdwa5.org, ported from the ChimodiazzTheme and adapted to the DNE dark mode plugin.",
+  "version": "1.0.0",
+  "type": "shopware-platform-plugin",
+  "license": "MIT",
+  "authors": [
+    { "name": "Musikverein Schmeiß die Wand an 5" }
+  ],
+  "require": {
+    "shopware/core": "~6.7.0",
+    "shopware/storefront": "~6.7.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "SdWa5Theme\\": "src/"
+    }
+  },
+  "extra": {
+    "shopware-plugin-class": "SdWa5Theme\\SdWa5Theme",
+    "label": {
+      "de-DE": "SdWa5 Theme",
+      "en-GB": "SdWa5 Theme"
+    },
+    "description": {
+      "de-DE": "Storefront-Theme von sdwa5.org mit hellem und dunklem Modus.",
+      "en-GB": "Storefront theme of sdwa5.org with a light and a dark mode."
+    }
+  }
+}

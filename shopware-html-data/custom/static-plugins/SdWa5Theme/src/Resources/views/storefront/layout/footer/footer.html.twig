@@ -1,0 +1,15 @@
+{% sw_extends '@Storefront/storefront/layout/footer/footer.html.twig' %}
+
+{# One donation line above the footer bottom.
+
+   Nothing else in the footer changes its content. The VAT notice in
+   layout_footer_vat keeps its wording, because that wording is part of the
+   pending legal pass (docs/shopware/TODO.md). _footer.scss only changes how it
+   looks. #}
+{% block layout_footer_bottom %}
+    <div class="container sdwa5-footer-donate">
+        {% sw_include '@SdWa5Theme/storefront/layout/donate-link.html.twig' with { sdwa5DonateVariant: 'footer' } %}
+    </div>
+
+    {{ parent() }}
+{% endblock %}

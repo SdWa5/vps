@@ -1,0 +1,298 @@
+// Sticky header, header row, donation button, main navigation and the shop
+// context. The markup comes from layout/header.html.twig and
+// layout/header/header.html.twig.
+
+// -------------------------------------------------------- Sticky glass bar
+//
+// z-index 1020 is Bootstrap's sticky level, below the off-canvas backdrop (1040)
+// and the cookie notice (1100). The opaque background comes first, because a
+// translucent background without the blur lays text over text.
+
+.sdwa5-nav {
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+  background: var(--sdwa5-surface-immutable);
+  border-bottom: 1px solid var(--sdwa5-border-immutable);
+}
+
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .sdwa5-nav {
+    background: var(--sdwa5-glass-immutable);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    backdrop-filter: blur(14px) saturate(140%);
+  }
+}
+
+.sdwa5-nav .header-main,
+.sdwa5-nav .nav-main,
+.sdwa5-nav .main-navigation {
+  background: transparent;
+  border: 0;
+}
+
+// --------------------------------------------------------------- Header row
+//
+// The core gives the logo column col-12, which below 992 px is a row of its own,
+// and the action column order-1, which put it above the logo. The child
+// selectors below (0,2,0) beat the column classes. The Bootstrap spacing
+// utilities on the logo column carry !important, so the override does too.
+
+.header-row {
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 0.5rem 0;
+
+  > .sdwa5-header__burger {
+    order: 0;
+    flex: 0 0 auto;
+    width: auto;
+    padding-right: 0;
+  }
+
+  > .header-logo-col {
+    order: 1;
+    flex: 0 0 auto;
+    width: auto;
+    margin: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  // Full width below the row on phones, where the core search toggle opens it.
+  > .header-search-col {
+    order: 3;
+  }
+
+  > .header-actions-col {
+    order: 2;
+    flex: 0 0 auto;
+    width: auto;
+    margin-left: auto;
+  }
+}
+
+@media (min-width: 576px) {
+  .header-row {
+    padding: 0.5rem 0;
+
+    > .header-search-col {
+      order: 2;
+      flex: 1 1 0;
+      width: auto;
+    }
+
+    > .header-actions-col {
+      order: 3;
+      margin-left: 0;
+    }
+  }
+
+  // The search column is visible only in the shop context. Without it the
+  // actions have to be pushed to the right edge by themselves.
+  body:not(.sdwa5-shop-context) .header-row > .header-actions-col {
+    margin-left: auto;
+  }
+}
+
+// The core's second burger for tablets lives inside the search column. The
+// burger left of the logo replaces it.
+.header-search-col > .row > .col-sm-auto {
+  display: none !important;
+}
+
+.header-logo-main {
+  text-align: left;
+}
+
+.sdwa5-logo {
+  display: block;
+  width: 107px;
+  max-width: none;
+  height: 44px;
+  filter: drop-shadow(0 0 6px var(--sdwa5-logo-shadow-immutable));
+}
+
+.header-actions-col > .row {
+  flex-wrap: nowrap;
+  align-items: center;
+  column-gap: 0.25rem;
+}
+
+.header-actions-btn {
+  color: var(--sdwa5-text-immutable);
+
+  &:hover,
+  &:hover .icon {
+    color: var(--sdwa5-green-text-immutable);
+  }
+}
+
+// Every merch price is zero, so the total next to the cart icon says nothing.
+.header-cart-total {
+  display: none !important;
+}
+
+// ---------------------------------------------------------- Settings column
+//
+// Language, currency and the DNE toggle, moved from the core top bar into the
+// action row. The top bar hides itself below 992 px, and the column goes with
+// it, because an empty flex item still gets the column gap.
+
+.sdwa5-header__settings {
+  display: none;
+}
+
+@media (min-width: 992px) {
+  .sdwa5-header__settings {
+    display: flex;
+    align-items: center;
+    margin-right: 0.5rem;
+  }
+}
+
+.sdwa5-header__settings .top-bar-nav-btn {
+  color: var(--sdwa5-muted-immutable);
+  font-family: var(--sdwa5-font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+
+  &:hover {
+    color: var(--sdwa5-green-text-immutable);
+  }
+}
+
+// --------------------------------------------------------- Donation button
+//
+// Visible on every page but deliberately quiet: an outline in the border
+// colour, only the heart in red. Green marks the hover.
+
+.sdwa5-header__donate {
+  margin-left: 0.5rem;
+}
+
+.sdwa5-donate-btn {
+  --bs-btn-padding-y: 0.35rem;
+  --bs-btn-padding-x: 0.75rem;
+  --bs-btn-color: var(--sdwa5-text-immutable);
+  --bs-btn-bg: transparent;
+  --bs-btn-border-color: var(--sdwa5-border-immutable);
+  --bs-btn-hover-color: var(--sdwa5-green-text-immutable);
+  --bs-btn-hover-bg: transparent;
+  --bs-btn-hover-border-color: var(--sdwa5-green-text-immutable);
+  --bs-btn-active-color: var(--sdwa5-green-text-immutable);
+  --bs-btn-active-bg: transparent;
+  --bs-btn-active-border-color: var(--sdwa5-green-text-immutable);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--sdwa5-font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: left;
+  white-space: nowrap;
+
+  .icon {
+    color: var(--sdwa5-red-immutable);
+  }
+
+  .icon > svg {
+    top: 0;
+  }
+}
+
+// On narrow phones the label wraps onto two lines instead of getting shorter.
+@media (max-width: 575.98px) {
+  .sdwa5-donate-btn {
+    --bs-btn-padding-x: 0.5rem;
+    max-width: 8.5rem;
+    white-space: normal;
+    letter-spacing: 0.06em;
+  }
+
+  .sdwa5-header__donate {
+    margin-left: 0.25rem;
+  }
+}
+
+// ------------------------------------------------------------- Main navigation
+
+.sdwa5-nav .nav-main {
+  border-top: 1px solid var(--sdwa5-border-immutable);
+}
+
+.sdwa5-nav .main-navigation-link {
+  font-family: var(--sdwa5-font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--sdwa5-text-immutable);
+
+  &:hover,
+  &.active {
+    color: var(--sdwa5-green-text-immutable);
+  }
+}
+
+.sdwa5-nav .main-navigation-link.root.active .main-navigation-link-text {
+  border-color: var(--sdwa5-green-immutable);
+}
+
+// --------------------------------------------------------- Off-canvas extras
+
+.sdwa5-offcanvas-donate {
+  flex-direction: column;
+  padding: 0.25rem 0;
+  border-top: 1px solid var(--sdwa5-border-immutable);
+  border-bottom: 1px solid var(--sdwa5-border-immutable);
+}
+
+.sdwa5-donate-offcanvas {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-family: var(--sdwa5-font-mono);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sdwa5-text-immutable);
+
+  .icon {
+    color: var(--sdwa5-red-immutable);
+  }
+}
+
+// ------------------------------------------------------------- Shop context
+//
+// The body class comes from base.html.twig. Search, account and currency are
+// shop tools and stay off the content pages. The cart stays visible there only
+// while it holds something, which the core shows as a badge that
+// CartWidgetPlugin fills in client-side.
+//
+// :has() needs Firefox 121 or newer. An older browser keeps the cart icon on
+// content pages, which is the old behaviour rather than a broken one.
+
+body:not(.sdwa5-shop-context) {
+  .header-search-col,
+  .search-toggle,
+  .account-menu,
+  .top-bar-currency {
+    display: none !important;
+  }
+
+  .header-cart:not(:has(.header-cart-badge)) {
+    display: none !important;
+  }
+
+  .header-actions-col > .row > :has(> .search-toggle),
+  .header-actions-col > .row > :has(> .account-menu),
+  .header-actions-col > .row > :has(> .header-cart:not(:has(.header-cart-badge))) {
+    display: none !important;
+  }
+}

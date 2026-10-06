@@ -88,6 +88,12 @@ a {
   color: var(--sdwa5-green-text-immutable) !important;
 }
 
+// The core colours the current breadcrumb with $primary, which as text on the
+// light background measured 1.5:1.
+.breadcrumb-link.is-active {
+  color: var(--sdwa5-green-text-immutable);
+}
+
 // The browser default focus ring disappears on a dark background.
 :focus-visible {
   outline: 2px solid var(--sdwa5-green-text-immutable);

@@ -148,6 +148,18 @@ body .footer-copyright {
   }
 }
 
+// Between 992 and 1400 px the container runs edge to edge, and the fixed bar
+// covered up to 18 px of the content and the footer, measured at 1024 and
+// 1280 px. From 1400 px the container's own margin is wider than the bar.
+@media (min-width: 992px) and (max-width: 1399.98px) {
+  body:has(.sdwa5-share--bar) {
+    .content-main,
+    .footer-main {
+      padding-right: 2.25rem;
+    }
+  }
+}
+
 .sdwa5-share--row {
   display: flex;
   flex-wrap: wrap;

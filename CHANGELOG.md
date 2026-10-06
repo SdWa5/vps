@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.54.1] - 2026-10-06
+
+### Fixed
+
+- `SdWa5Theme` 1.0.1. On phones the donation button sits in the header row next to the logo instead of
+  wrapping below it, the current breadcrumb uses the readable green on the light background, and the
+  share bar no longer covers the right edge of the content between 992 and 1400 px.
+
 ## [1.54.0] - 2026-10-06
 
 ### Added

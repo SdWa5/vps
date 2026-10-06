@@ -9,7 +9,7 @@
         "frosh/platform-thumbnail-processor": "5.4.0",
         "frosh/shopmon": "0.2.1",
         "frosh/tools": "3.9.0",
-        "sdwa5/sdwa5-theme": "1.0.0",
+        "sdwa5/sdwa5-theme": "1.0.1",
         "shopware/administration": "*",
         "shopware/core": "v6.7.11.1",
         "shopware/elasticsearch": "*",

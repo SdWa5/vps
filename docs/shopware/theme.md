@@ -56,19 +56,21 @@ and those are light values chosen so that DNE's inversion lands on the Chimo Dia
 | `muted` | `#55556a` | `#9d9db0` | secondary text, VAT line, copyright |
 | `border` | `#e1e1e9` | `#252532` | also `sw-border-color` |
 | `green` | `#1fe51f` | `#1fe51f` | fills only, also `sw-color-brand-primary` |
-| `green-text` | `#0a7d0a` | `#1fe51f` | green text and focus ring |
-| `red` | `#e5231f` | `#e5231f` | fills and large text, also `sw-color-brand-secondary` and `sw-color-buy-button` |
-| `link` / `link-hover` | `#006b73` / `#0a7d0a` | `#00f0ff` / `#1fe51f` | links |
+| `green-text` | `#0a7d0a` | `#1fe51f` | green text, focus ring, link hover |
+| `red` | `#e5231f` | `#e5231f` | fills and the gradient, also `sw-color-brand-secondary` and `sw-color-buy-button` |
+| `red-text` | `#c41c18` | `#ff4f4a` | links, tile and share links, outline buttons, paging, hero slogan |
 | `on-green` / `on-red` | `#0a0a0f` / `#ffffff` | the same | text on a green or red fill |
 | `glass`, `share-bg`, `logo-shadow` | alpha colours | alpha colours | sticky header, share bar, logo halo |
 
 The DNE outputs in the `Dark` column were computed from its formula, so `#fcfcfd` becomes `#12121b`,
-`#101018` becomes `#e8e8f0` and `#e1e1e9` becomes `#252532`. `#1fe51f`, `#e5231f` and `#006b73` stay
+`#101018` becomes `#e8e8f0` and `#e1e1e9` becomes `#252532`. `#1fe51f` and `#e5231f` stay
 unchanged. Text on the green or red fill is always set from `on-green` or `on-red`. Before the theme,
 DNE turned the text on `.btn-primary` white in dark mode and the text on `.badge` white in light mode,
 which put white on `#1fe51f` at a contrast of about 1.7:1. The measured WCAG contrasts now are 11.56:1
-for `#0a0a0f` on green, 4.57:1 for white on red, 5.76:1 for the light link colour and 4.88:1 for
-`green-text` on the light background.
+for `#0a0a0f` on green, 4.57:1 for white on red and 4.88:1 for
+`green-text` on the light background. **The brand red fails as small text**, at 4.20:1 on the light and
+4.32:1 on the dark background, so links use `red-text` at 5.47:1 (light) and 6.08:1 (dark). Links were the
+Chimo Diazz cyan until 1.1.0, which made the site read green and cyan rather than green and red.
 
 Three rules keep this working, and the tests enforce the first two.
 
@@ -97,7 +99,7 @@ with the `muted` token.
 
 - **A sticky glass bar with two rows on desktop.** The first row holds the logo, search, the account
   menu, the settings column with the DNE toggle, language and currency, the cart and the donation
-  button. The second row is the main navigation in monospaced caps. A 3 px gradient in green, cyan and
+  button. The second row is the main navigation in monospaced caps. A 3 px gradient from green to
   red runs above the page. The Storefront top bar is emptied, because its contents moved into the
   first row.
 - **Below 992 px** the row holds the burger, the logo, the donation button and the cart, and search
@@ -166,12 +168,12 @@ The theme styles two homepage sections by CSS class, and the classes live in the
 | Section | Position | Setting | Effect |
 |---|---|---|---|
 | Hero image | 0 | `sizingMode: full_width`, class `sdwa5-hero` | the image spans the screen, cropped top and bottom to `clamp(14rem, 42vw, 34rem)` |
-| Hero text | 1 | class `sdwa5-hero-text` | caps headline, monospaced stats line, slogan in red |
-| Link tiles | 2 | class `sdwa5-tiles` | the five tiles become a card grid |
+| Hero text | 1 | class `sdwa5-hero-text` | caps headline, the paragraph after it as the green subtitle, monospaced stats line, slogan in red |
+| Link tiles | 2 | class `sdwa5-tiles` | the five tiles become cards, at most three per row with a centred last row (3 + 2), stacked below 768 px |
 
 [`tools/shopware/set-homepage-sections.sh`](../../tools/shopware/set-homepage-sections.sh) sets
 positions 0 and 2, dry run by default. The crop keeps the point `--sdwa5-hero-focus` (default
-`50% 45%`, in `_tokens.scss`) in view. **Removing a class or the full-width mode in the admin breaks the
+`50% 30%`, in `_tokens.scss`, which keeps the banner in the photo whole at 1440 px) in view. **Removing a class or the full-width mode in the admin breaks the
 layout**, see [content-cms.md](content-cms.md).
 
 ## Not ported from Chimo Diazz

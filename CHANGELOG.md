@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.55.0] - 2026-10-06
+
+### Added
+
+- `red-text` colour tokens in SdWa5Theme, `#c41c18` light and `#ff4f4a` dark, because the brand red
+  `#e5231f` fails WCAG AA as small text.
+- Tests that every colour token a rule uses is defined, and that the hero subtitle is selected by position.
+- `docs/shopware/TODO.md` item 15, the empty strip between header and hero, left undecided.
+
+### Changed
+
+- SdWa5Theme 1.1.0. Red replaces the Chimo Diazz cyan as the second accent. Links, tile and share links,
+  outline buttons, paging, the footer hotline link and the hero slogan use `red-text`, and hover turns
+  green. The top gradient runs from green to red. The `link` and `link-hover` tokens are removed.
+- The homepage hero crop focus moved from `50% 45%` to `50% 30%`.
+- The homepage tiles are a wrapping flex row with at most three per row and a centred last row, so five
+  tiles read 3 + 2. Below 768 px they stack.
+
+### Fixed
+
+- The German hero stats line was green, because the theme found the subtitle by `p[style]` and the
+  German slot styles every paragraph inline. The subtitle is now `h1 + p`.
+
 ## [1.54.5] - 2026-10-06
 
 ### Fixed

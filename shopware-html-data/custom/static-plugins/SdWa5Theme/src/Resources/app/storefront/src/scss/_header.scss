@@ -251,6 +251,14 @@
   border-top: 1px solid var(--sdwa5-border-immutable);
 }
 
+// Below 992 px the navbar is collapsed and the burger opens the off-canvas
+// menu, so the row held only the navbar padding and its border (17 px).
+@media (max-width: 991.98px) {
+  .sdwa5-nav .nav-main {
+    display: none;
+  }
+}
+
 .sdwa5-nav .main-navigation-link {
   font-family: var(--sdwa5-font-mono);
   font-size: 0.75rem;

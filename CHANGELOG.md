@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.55.1] - 2026-10-06
+
+### Fixed
+
+- SdWa5Theme 1.1.1. Listing cards no longer carry ca. 250 px of empty boxes. The variant line, the
+  description, the unit line and the cheaper-variant line are printed only when the core block renders
+  text.
+- The main navigation row is hidden below 992 px, where it held only the collapsed navbar's padding and
+  border.
+
 ## [1.55.0] - 2026-10-06
 
 ### Added

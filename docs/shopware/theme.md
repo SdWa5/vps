@@ -21,6 +21,7 @@ replaces the Shopware default Storefront theme, whose stored config stays as the
 | `…/_footer.scss` | footer, donation line, share bar |
 | `app/storefront/src/assets/` | fonts with their OFL licence, `logo/sdwa5-logo.webp` |
 | `views/storefront/` | Twig overrides, each block calls `parent()` unless it replaces it on purpose |
+| `views/storefront/component/product/card/` | listing cards without empty boxes, see [Product cards](#product-cards) |
 | `snippet/{en_GB,de_DE}/` | every text the theme adds, under `sdwa5.*` |
 
 The theme config merges in this order, measured in Shopware's `DatabaseConfigLoader`: the Storefront
@@ -104,7 +105,9 @@ with the `muted` token.
   first row.
 - **Below 992 px** the row holds the burger, the logo, the donation button and the cart, and search
   takes a line of its own on phones. The settings column is hidden, because DNE injects its toggle into
-  the offcanvas menu there and language and currency are in the offcanvas as well.
+  the offcanvas menu there and language and currency are in the offcanvas as well. The navigation row
+  is hidden too, because below 992 px it holds only the collapsed navbar's padding and border, and the
+  burger opens the offcanvas menu instead.
 - **The logo** is `assets/logo/sdwa5-logo.webp`, 213×88 px shown at 107×44 px, built from the live
   `Graffiti_Banner_cut.png` in Drive. It is read through `asset('…', 'theme')`, so the logo media stored
   in Storefront's config is ignored by this theme. A faint light halo keeps it legible in dark mode. To
@@ -160,6 +163,17 @@ They are deliberately not in the offcanvas menu, where Chimo Diazz has them. The
 the ESI header, so a link built there always shares the site root. Measured on 2026-10-06 on a Chimo
 Diazz subpage, where the aside shared the subpage and the offcanvas shared the root. That bug is filed
 in the root [TODO.md](../../TODO.md).
+
+## Product cards
+
+The core prints four wrappers on every listing card whether they have content or not, each with a
+fixed height or margin so the cards of a row line up: `.product-variant-characteristics`,
+`.product-description`, `.product-price-unit` and `.product-cheapest-price`. No sdwa5 product fills
+them, and on 2026-10-06 they took ca. 250 px of empty space per card. The overrides in
+`component/product/card/box-standard.html.twig` and `price-unit.html.twig` render each core block into a
+variable and print it only when it holds text. The core conditions stay in charge, so a product that
+gets a description, variants or a reference price shows the box again. Cards in a row then line up
+only as far as their content matches.
 
 ## Homepage hero and tiles
 

@@ -273,7 +273,6 @@
     sub-request, so the request it reads its URL from is the header's own. the SdWa5Theme avoids it with a
     share row in the main content. the fix belongs in `chimodiazz/website`, by moving the offcanvas share
     links into the main content the same way or by dropping them. its aside builds the URL from
-    `sw-storefront-url` and `resolved-uri`, which on sdwa5.org gave the technical `/navigation/<id>` path
-    and dropped a trailing slash into a 404, so the aside probably shares the same wrong URLs wherever
-    Chimo Diazz has SEO URLs. SdWa5Theme 1.0.4 uses `sw-sales-channel-absolute-base-url` and
+    `sw-storefront-url` and `resolved-uri`, which on sdwa5.org gave the technical `/navigation/<id>` path,
+    so the aside probably shares the same wrong URL wherever Chimo Diazz has SEO URLs. SdWa5Theme 1.0.4 uses `sw-sales-channel-absolute-base-url` and
     `sw-original-request-uri` instead (ca. 30 Minuten)

@@ -157,7 +157,7 @@ snippet_keys() {
 }
 
 # resolved-uri is the technical /navigation/<id> path wherever an SEO URL exists,
-# and it lost the trailing slash of /de/Hardware/, which then answered 404.
+# measured on /About-SdWa5/.
 @test "share links carry the URL as it was requested" {
     f="$VIEWS/layout/share/share-links.html.twig"
     grep -q "attributes.get('sw-original-request-uri')" "$f"

@@ -13,8 +13,7 @@
    - app.request.uri has the sales channel domain prefix stripped by the
      RequestTransformer, so on /de/ it shares the root.
    - sw-storefront-url plus resolved-uri, which ChimodiazzTheme uses, gives the
-     technical /navigation/<id> path on sdwa5.org/About-SdWa5/ and drops the
-     trailing slash on sdwa5.org/de/Hardware/, which then answers 404.
+     technical /navigation/<id> path on sdwa5.org/About-SdWa5/.
    - page.metaInformation.canonical is a placeholder that the SEO URL handler
      replaces in the finished response, and |url_encode breaks the pattern it
      looks for. It is also missing on several pages.

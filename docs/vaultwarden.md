@@ -386,6 +386,29 @@ is lost, `/admin` is unreachable with it. The recovery path is the offline expor
 restic restore of `vaultwarden-data/`, both of which have to exist before they are needed. Nothing
 else closes the loop today.
 
+## Organization policies
+
+Policies live in the `org_policies` table, one row per organization and type. Vaultwarden reads them
+on every request, so a change needs no restart. A client only learns about it on its next sync, so a
+member who ran into a policy has to sync before trying again, in the browser extension under
+Settings, Vault, Sync vault now.
+
+**Not every policy binds owners.** Which roles are exempt is decided per policy type in Bitwarden's
+client SDK, in [`bitwarden/sdk-internal`](https://github.com/bitwarden/sdk-internal), under
+`crates/bitwarden-policies`. Enforce organization data ownership exempts owners and admins. Master
+password requirements, the password generator and remove unlock with PIN bind everyone, owners
+included. A policy that exempts owners can therefore get in the members' way without the owner who set
+it ever noticing, so check such a change from a member account.
+
+**A browser extension that refuses to save to the personal vault** is running into Enforce
+organization data ownership in one of the member's organizations. Its message names an organization
+policy and the personal vault.
+
+**Policy changes are logged.** Organization event logging is on, set by `org_events_enabled` and
+`events_days_retain` in `config.json`, and it keeps 365 days. A change shows up in the web vault under
+the organization's Reporting, Event logs, with who made it and when. The reasons behind each policy are
+recorded inside the vault and deliberately not in this public file.
+
 ## Notes
 
 - SMTP is configured through the admin panel and stored in `vaultwarden-data/config.json`. It sends

@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.55.5] - 2026-10-12
+
+### Added
+
+- `docs/vaultwarden.md` section "Organization policies". It covers where policies live, that a client
+  needs a sync after a change, which policy types exempt owners and admins, and where policy changes
+  are logged.
+
+### Changed
+
+- Organization event logging is on in Vaultwarden and keeps 365 days. Like the rest of the server
+  configuration it is set in `config.json`.
+
 ## [1.55.4] - 2026-10-06
 
 ### Changed

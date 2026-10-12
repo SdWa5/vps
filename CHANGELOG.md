@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.55.6] - 2026-10-12
+
+### Security
+
+- **Vault account posture is out of the public docs.** `docs/vaultwarden.md`, `docs/backup.md`,
+  `TODO.md` and older entries of this file no longer state what the checks found on this vault. The
+  checks themselves stay. The removals of 2026-09-12 to 2026-09-15 had thinned the parent repository
+  and left the same facts standing here.
+- **No prose names the mailbox behind an SMTP credential.** `docs/shopware/shop-config.md`,
+  `docs/monitoring.md` and the notes in `docs/vaultwarden.md` describe the credential without the
+  account. The configuration and its reference table keep the login, because the scripts need it.
+
 ## [1.55.5] - 2026-10-12
 
 ### Added
@@ -997,8 +1009,8 @@ From the 2026-09-13 audit of all three repositories. The root repository's
 
 - **The Vaultwarden pairing that `sdwa5/docs/services.md` removed was restated in this repository's
   `TODO.md`, with more detail than the table had ever held**, namely which account is on the weaker
-  KDF, how much it holds and when it was last seen. Item 7.2 now says only that one of the three
-  PBKDF2 accounts is in use, and says why the figures are deliberately absent. Item 7.3 loses the
+  KDF, how much it holds and when it was last seen. Item 7.2 now tracks only the migration away from
+  PBKDF2, and says why the figures are deliberately absent. Item 7.3 loses the
   cipher, collection and grantee counts and the `SELECT` that reads them, and refers to the new member
   by role.
 - **`docs/shopware/privacy-tos-review-2026-07-22.md` is removed from the tree and from the history.**
@@ -1489,8 +1501,8 @@ From the 2026-09-13 audit of all three repositories. The root repository's
 - **The restore drill has been run, and it passed.** `docs/backup.md` gained a Restore drill section
   with the recipe and what the first run measured. Restoring the vault database from snapshot
   `b672181d` took 6 seconds, `PRAGMA integrity_check` returned `ok`, and the database held 29 tables
-  with 4 users, 450 ciphers, 1 organization and 5 collections against a live vault of 455 ciphers,
-  which is the expected daily drift. The repository was previously unproven end to end.
+  with every user, organization and collection, a few ciphers short of the live vault, which is the
+  expected daily drift. The repository was previously unproven end to end.
 - The drill restores through the existing `restic` container on purpose, because it already holds
   `RESTIC_REPOSITORY`, `RESTIC_PASSWORD` and the rclone config, so the drill never handles the
   repository password. It also deletes the restored copy afterwards, which is not tidiness: that file
@@ -1772,9 +1784,8 @@ From the 2026-09-13 audit of all three repositories. The root repository's
 
 ### Changed
 
-- `TODO.md` items 7.2 to 7.4 rewritten from measurement rather than assumption. Of the three accounts
-  on PBKDF2, only one is in use and the other two are not. The single-owner item now names what is at
-  stake and what the two remedies cost. The per-account figures behind that are deliberately not
+- `TODO.md` items 7.2 to 7.4 rewritten from measurement rather than assumption. The recovery item now
+  names what is at stake and what the two remedies cost. The per-account figures behind that are deliberately not
   written down here, for the reason item 7.2 gives.
 
 ### Added
@@ -1934,22 +1945,20 @@ From the 2026-09-13 audit of all three repositories. The root repository's
   had been rejected anywhere, so the failure was entirely local. A locked Bitwarden client holds a
   stale `kdfConfig` and a user key wrapped with the old master key, and never calls the server, so it
   cannot learn that anything changed. Clearing the app's storage and logging in fresh fixed it.
-  Records that a second factor and a pending new-device verification were both ruled out, since both
-  produce the same symptom.
+  Records how to rule out a second factor and a pending new-device verification, since both produce
+  the same symptom.
 - `docs/vaultwarden.md` — the rotation performed on 2026-09-07 is recorded in the "Master password and
   KDF" section, together with the fact that `private_key` and `public_key` were unchanged, which is
   the proof that "Rotate account encryption key" was left off.
 - `docs/vaultwarden.md` step 7 now warns that the mobile app is expected to refuse the new password at
   its lock screen, so the reader does not read it as a fault and retry.
-- `TODO.md` items 7.6 and 7.7: returning to a tagged release once one above 1.37.2 exists, and the
-  fact that emergency access is enabled but nobody is enrolled while the SdWa5 org has a single owner,
-  which leaves a forgotten master password unrecoverable for all four accounts.
+- `TODO.md` items 7.6 and 7.7: returning to a tagged release once one above 1.37.2 exists, and
+  enrolling a grantee for emergency access, so a forgotten master password stays recoverable.
 
 ### Changed
 
-- The account now uses Argon2id at 64 MiB, 3 iterations, parallelism 4, verified from the database.
-  451 ciphers intact. The other three accounts remain on PBKDF2 600,000, which only their holders can
-  change.
+- The account now uses Argon2id at 64 MiB, 3 iterations, parallelism 4, verified from the database,
+  with every cipher intact. Other accounts change their KDF themselves, since only a holder can.
 
 ## [1.8.0] - 2026-09-07
 
@@ -2018,8 +2027,8 @@ From the 2026-09-13 audit of all three repositories. The root repository's
   `vaultwarden-db-backup/` directories in the layout, and the daily database copy in the cron table,
   which had been missing since 1.6.0.
 - `TODO.md` item 7, the security follow-ups: no firewall at all, the notebook key copy, what to do
-  about the `admin` account, the parent repo's `docs/services.md` claiming one Vaultwarden user where
-  the database holds four, and the other three accounts still being on PBKDF2.
+  about the `admin` account, the parent repo's `docs/services.md` disagreeing with the database on
+  the number of Vaultwarden users, and the accounts still on PBKDF2.
 
 ### Changed
 

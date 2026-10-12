@@ -297,7 +297,7 @@ directly in `monitoring/lib.sh`, which would have published it the moment the re
 so it moved to `.env` on 2026-09-08 with the effective recipient list unchanged. `.env` is
 gitignored.
 
-Mail goes out through `curl` to `smtps://smtp.gmail.com:465` as `ripper@sdwa5.org`, reusing the
+Mail goes out through `curl` to `smtps://smtp.gmail.com:465` as `MONITOR_SMTP_USER`, reusing the
 Gmail app password Vaultwarden already sends from. The local exim4 would deliver direct-to-MX from a
 Contabo address and land in Gmail's spam folder, which for an alerting channel is the same as not
 sending at all.

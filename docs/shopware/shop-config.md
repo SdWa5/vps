@@ -71,7 +71,8 @@ Two languages on the Storefront Sales Channel, subpath domain structure (set up 
 ## SMTP
 
 - Host: smtp.gmail.com:587, STARTTLS
-- Auth user: ripper@sdwa5.org (Google Workspace App Password)
+- Auth: a Google Workspace mailbox with an App Password; the login is set in the Shopware admin under
+  Settings, System, Mailer and is not named here
 - Sender: shop@sdwa5.org / "Scheiß die Wand an 5"
 
 ## Tax / Payment / Shipping

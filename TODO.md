@@ -78,16 +78,15 @@
        [docs/dolibarr.md](docs/dolibarr.md#operations). vaultwarden got this treatment for a reason
        and dolibarr carries the accounting (ca. 2 Stunden)
 7. security follow-ups from the 2026-09-07 ssh hardening ([docs/ssh-hardening.md](docs/ssh-hardening.md))
-    1. one of the three pbkdf2 accounts is in active use and the other two are not. argon2id is
-       per-account and only its holder can change it, so this is a message to that person rather than
-       an action here. **the per-account figures are deliberately not written down**, here or in
-       `sdwa5/docs/services.md`: which account holds how much on the weaker kdf, read beside a
-       reachable `vault.sdwa5.org`, names the soft target and prices it. the admin panel has them for
-       anybody who should (ca. 15 Minuten)
-    2. finish the emergency access enrolment with the new member, in progress since 2026-09-08. the
-       sdwa5 org has a single owner, so until a takeover grantee is confirmed, losing that account
-       loses the org data. the grantee count is the thing to check in the admin panel; the cipher and
-       collection counts are not written down here for the same reason as 7.1 (ca. 30 Minuten)
+    1. move the accounts still on pbkdf2 to argon2id. the kdf is per-account and only its holder can
+       change it, so this is a message to those people rather than an action here. **which accounts
+       they are and what they hold is deliberately not written down**, here or in
+       `sdwa5/docs/services.md`, because read beside a reachable `vault.sdwa5.org` it names the soft
+       target and prices it. the admin panel has it for anybody who should (ca. 15 Minuten)
+    2. finish the emergency access enrolment with the new member, in progress since 2026-09-08, so the
+       org has a recovery path that does not depend on one master password. the grantee count is the
+       thing to check in the admin panel and is not written down here, for the same reason as 7.1
+       (ca. 30 Minuten)
     3. inbound ipv6 works, including cold after 25 minutes idle, so the neighbour-cache hypothesis is
        refuted. one transient failure on 2026-09-08 was never reproduced and its cause is unknown. do
        not open a contabo ticket. if it recurs, capture the network path in use at the time

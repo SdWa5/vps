@@ -197,10 +197,9 @@ Snapshot `b672181d`, taken 2026-09-07 04:00 UTC.
 | `PRAGMA integrity_check` | `ok` |
 | `PRAGMA quick_check` | `ok` |
 | Tables | 29 |
-| Rows | 4 users, 450 ciphers, 1 organization, 5 collections |
+| Rows | users, ciphers, organizations and collections all present |
 | Schema migration | `20260505120000` |
-| Live vault at the time | 4 users, **455** ciphers — five added after the snapshot, which is the expected daily drift rather than a fault |
-| `emergency_access` | **0 rows**, which independently confirms the open item on emergency access enrolment |
+| Live vault at the time | same users and organizations, a few more ciphers added after the snapshot, which is the expected daily drift rather than a fault |
 
 The hot copy `vaultwarden-data/db.sqlite3` was restored in the same run purely to test it, and it also
 returned `ok` without its `-wal`. That is the finding recorded above: a clean `integrity_check` says

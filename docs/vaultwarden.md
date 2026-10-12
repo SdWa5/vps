@@ -201,7 +201,7 @@ clean reinstall cleared it. It now works on 2026.8.0, so no client is pinned.
 What did **not** help, recorded so it is not tried again: logging out inside the extension,
 restarting the browser, and disabling the organization policies. The policy attempt came from
 #7635 pointing at a date field on policy objects. It was applied and reverted the same evening. The
-upstream symptom reproduces with every policy disabled, and all three are `enabled = 1` again.
+upstream symptom reproduces with every policy disabled, and the policies were restored afterwards.
 
 ## Runbook: a mobile client cannot log in after a password or KDF change
 
@@ -216,7 +216,7 @@ JOIN users u ON u.uuid = d.user_uuid WHERE u.email = '<address>' ORDER BY d.upda
 ```
 
 ```
-Android  25053PC47G   last seen 17:25    <- over an hour BEFORE the change
+Android  <model>      last seen 17:25    <- over an hour BEFORE the change
 password change                18:46
 KDF change                     18:49
 ```
@@ -240,9 +240,9 @@ the state that is stale, but it was not the path taken on 2026-09-07 and is ther
 After a reinstall the self-hosted URL has to be set to `https://vault.sdwa5.org` in the login screen's
 settings before entering the address, otherwise the app tries Bitwarden's cloud.
 
-Ruled out during that diagnosis, and worth ruling out again rather than assuming: no second factor is
-configured on the account, and `login_verify_count` was 0 with `verified_at` set, so no new-device
-verification was pending.
+Two other causes produce the same symptom and are worth ruling out rather than assuming. A second
+factor shows up as rows in `twofactor` for the user. A pending new-device verification shows up as a
+`login_verify_count` above 0 or an empty `verified_at` on the user row.
 
 ## Master password and KDF
 
@@ -255,9 +255,8 @@ in the web vault at https://vault.sdwa5.org.
 
 **Performed on 2026-09-07.** New master password and Argon2id at 64 MiB, 3 iterations, parallelism 4,
 both verified from the database rather than from the UI. `private_key` and `public_key` were unchanged,
-which is the proof that "Rotate account encryption key" really was left off, and all 451 ciphers came
-through. The other three accounts remain on PBKDF2, since the KDF is per account and only its holder
-can change it.
+which is the proof that "Rotate account encryption key" really was left off, and every cipher came
+through. The KDF is per account, so only its holder can change it.
 
 ### Target settings
 
@@ -412,8 +411,8 @@ recorded inside the vault and deliberately not in this public file.
 ## Notes
 
 - SMTP is configured through the admin panel and stored in `vaultwarden-data/config.json`. It sends
-  as `vault@sdwa5.org` through `smtp.gmail.com` with the `ripper@sdwa5.org` app password. The
-  monitoring scripts reuse the same credential, see [monitoring.md](monitoring.md).
+  as `vault@sdwa5.org` through `smtp.gmail.com` with a Workspace app password. The monitoring
+  scripts reuse the same credential, see [monitoring.md](monitoring.md).
 - Users must be invited or registered via admin panel.
 - Signups are disabled (`signups_allowed: false`).
 - The container binds to `127.0.0.1:8000` only. Everything public goes through Caddy.

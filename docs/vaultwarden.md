@@ -69,8 +69,10 @@ Worth knowing rather than rediscovering:
 
 - **Master password change**: broken. Needs the testing image again, which is a ten minute round trip
   now that this is documented.
-- **Reset two-step login**: broken by the same payload change,
-  [#7674](https://github.com/dani-garcia/vaultwarden/issues/7674).
+- **Reset two-step login**: was broken by the same payload change,
+  [#7674](https://github.com/dani-garcia/vaultwarden/issues/7674). Fixed upstream by
+  [#7435](https://github.com/dani-garcia/vaultwarden/pull/7435), which release 1.37.4 contains. Not
+  tested here.
 - **Organisation import into a collection**: broken,
   [#7698](https://github.com/dani-garcia/vaultwarden/issues/7698). Confirmed with `.kdbx` through the
   SDK importer, where the payload omits `groups` and `users` that Vaultwarden requires but never
@@ -243,6 +245,43 @@ settings before entering the address, otherwise the app tries Bitwarden's cloud.
 Two other causes produce the same symptom and are worth ruling out rather than assuming. A second
 factor shows up as rows in `twofactor` for the user. A pending new-device verification shows up as a
 `login_verify_count` above 0 or an empty `verified_at` on the user row.
+
+## Runbook: a member lost their second factor
+
+**The second step is asked at login, never at unlock.** A client that is still logged in unlocks with
+the master password alone. A device that ticked "remember me" at the second step skips it for 30 days.
+A master password or KDF change logs every device out, so after one of those every device asks for
+the second step again. These are the paths back, cheapest first.
+
+1. **A browser where the web vault is still logged in.** Unlock it, open Settings, Security, Two-step
+   login, View recovery code, and log in on the new device with that code. A recovery code login
+   deletes every second factor of the account and every "remember me" token. Enrol again afterwards,
+   then view the recovery code once more and replace the stored copy if it changed.
+2. **The member's own copy of the recovery code**, kept outside the vault. Where it is kept is the
+   member's business and not written here.
+3. **The operator.** In `/admin`, Users, the user's row, Remove 2FA. That deletes the second factors,
+   the "remember me" tokens and the stored recovery code. `/admin` needs the admin token, so the
+   break-glass gap further down applies. Without it, as root on the host, after a snapshot:
+
+   ```bash
+   docker stop vaultwarden
+   sqlite3 /opt/docker/vaultwarden-data/db.sqlite3 "
+     DELETE FROM twofactor WHERE user_uuid = (SELECT uuid FROM users WHERE email = '<address>');
+     UPDATE devices SET twofactor_remember = NULL
+       WHERE user_uuid = (SELECT uuid FROM users WHERE email = '<address>');
+     UPDATE users SET totp_recover = NULL WHERE email = '<address>';"
+   docker start vaultwarden
+   ```
+
+4. **Emergency access with takeover.** A grantee resets the master password after the waiting period,
+   and the takeover deletes the grantor's second factors. It only works if it was set up beforehand.
+
+**Check** that the account has no second factor left, without printing the secret column:
+
+```sql
+SELECT t.atype, t.enabled FROM twofactor t JOIN users u ON u.uuid = t.user_uuid
+WHERE u.email = '<address>';
+```
 
 ## Master password and KDF
 

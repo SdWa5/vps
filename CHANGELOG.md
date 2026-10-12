@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.55.7] - 2026-10-12
+
+### Added
+
+- `docs/vaultwarden.md`: runbook for a member who lost their second factor, from a still logged-in
+  browser through the recovery code, `/admin` and a direct database fix to emergency access.
+
+### Changed
+
+- `docs/vaultwarden.md`: reset two-step login is fixed upstream in release 1.37.4.
+
 ## [1.55.6] - 2026-10-12
 
 ### Security

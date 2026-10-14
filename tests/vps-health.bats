@@ -248,6 +248,43 @@ Container started." health
     [[ "$(mail_body)" == *"502"* ]]
 }
 
+@test "a missing SQL archive is critical" {
+    rm -f "$DATABASE_BACKUP_DIR/dolibarr_db.tar.gz"
+    health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *'dolibarr_db has no consistent database archive'* ]]
+}
+
+@test "a stale SQL archive is critical" {
+    touch -d '-30 hours' "$DATABASE_BACKUP_DIR/shopware.tar.gz"
+    health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *'shopware database archive is 30h old'* ]]
+}
+
+@test "a failed SQL job alerts even while its previous archive is fresh" {
+    printf 'dump failed' > "$DATABASE_BACKUP_DIR/chimodiazz_shopware.failed"
+    health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *'chimodiazz_shopware database backup failed'* ]]
+}
+
+@test "a failed SQL job without any archive names its stage and the missing archive" {
+    rm -f "$DATABASE_BACKUP_DIR/dolibarr_db.tar.gz"
+    printf '2026-10-14T21:52:10Z\troutine metadata\n' > "$DATABASE_BACKUP_DIR/dolibarr_db.failed"
+    health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *'dolibarr_db database backup failed at routine metadata; no full archive exists'* ]]
+    [[ "$(mail_body)" != *'dolibarr_db database backup failed at routine metadata; the previous'* ]]
+}
+
+@test "a corrupt SQL archive is critical" {
+    printf 'broken' > "$DATABASE_BACKUP_DIR/shopware.tar.gz"
+    health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *'shopware database archive failed its integrity check'* ]]
+}
+
 # The built-in HEALTH_URLS default is the whole watch list, because an override
 # in .env has to repeat every existing entry and silently stops watching the
 # ones it forgets. These two assertions make a dropped entry fail here instead.

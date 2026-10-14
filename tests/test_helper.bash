@@ -22,6 +22,7 @@ common_setup() {
     export STUB_GITHUB_TAG=1.37.2
     set_backup_fresh
     set_db_backup_fresh
+    set_database_archives_fresh
     set_firewall_healthy
     set_shopware_tasks_fresh
     set_git_remote_reachable
@@ -77,6 +78,18 @@ set_db_backup_fresh() {
     mkdir -p "$(dirname "$VAULTWARDEN_DB_BACKUP")"
     printf 'SQLite format 3' > "$VAULTWARDEN_DB_BACKUP"
     touch -d "@$(( ref - 3600 ))" "$VAULTWARDEN_DB_BACKUP"
+}
+
+set_database_archives_fresh() {
+    local container ref
+    ref="${FAKE_NOW:-$(date +%s)}"
+    export DATABASE_BACKUP_DIR="$BATS_TEST_TMPDIR/database-backup"
+    export DATABASE_BACKUP_CONTAINERS='dolibarr_db shopware chimodiazz_shopware'
+    mkdir -p "$DATABASE_BACKUP_DIR"
+    for container in $DATABASE_BACKUP_CONTAINERS; do
+        printf 'database archive fixture' | gzip > "$DATABASE_BACKUP_DIR/$container.tar.gz"
+        touch -d "@$(( ref - 3600 ))" "$DATABASE_BACKUP_DIR/$container.tar.gz"
+    done
 }
 
 # The backup check compares against now(), which honours FAKE_NOW, so the fake
@@ -164,6 +177,7 @@ health_at() {
     shift
     set_backup_fresh
     set_db_backup_fresh
+    set_database_archives_fresh
     set_shopware_tasks_fresh
     # set_git_remote_reachable is deliberately NOT called here. It truncates the call log and the
     # cadence tests move the clock across several runs to count the calls.

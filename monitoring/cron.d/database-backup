@@ -1,0 +1,5 @@
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=""
+
+40 3 * * * root /opt/docker/monitoring/database-backup.sh 2>&1 | logger -t database-backup

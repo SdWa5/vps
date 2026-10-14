@@ -72,11 +72,12 @@
     3. monitoring runs on the monitored host, so a dead vps sends nothing and the silence looks
        healthy. an external dead-man's switch would close that gap, deliberately deferred
        (ca. 45 Minuten)
-    4. **`dolibarr_db` has no consistent dump, only hot files.** `monitoring/cron.d/` holds
-       `vaultwarden-db-backup` and nothing equivalent for dolibarr, so restic copies the mariadb data
-       directory while the server is writing to it. the only dolibarr dump is the manual one in
-       [docs/dolibarr.md](docs/dolibarr.md#operations). vaultwarden got this treatment for a reason
-       and dolibarr carries the accounting (ca. 2 Stunden)
+    4. **the `dolibarr_db` routine catalog does not match the server.** measured 2026-10-14:
+       `mariadb-dump --routines` fails with `Column count of mysql.proc is wrong` on mariadb 12.3.3,
+       so `database-backup.sh` writes only the labeled table-only rescue archive for it and the health
+       check stays CRIT until this is fixed. `mariadb-upgrade` repairs the system tables but needs
+       root, and a root login with the password from `.env` failed in the same probe. restore root
+       access first, then run the upgrade in a maintenance window (ca. 1 Stunde)
 7. security follow-ups from the 2026-09-07 ssh hardening ([docs/ssh-hardening.md](docs/ssh-hardening.md))
     1. move the accounts still on pbkdf2 to argon2id. the kdf is per-account and only its holder can
        change it, so this is a message to those people rather than an action here. **which accounts

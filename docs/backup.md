@@ -116,6 +116,26 @@ triggers and events, but does not prove that stored procedures or functions can 
 Use the explicit `--tables-only` option to verify this rescue archive. Repairing system tables or
 changing authentication is a separate maintenance operation.
 
+The job also fails before dumping when a table carries the same foreign key name twice. Such a dump
+completes but does not import (`errno: 150 "Foreign key constraint is incorrectly formed"`), so the
+archive would look good and restore nothing. MariaDB 12.1 made foreign key names unique per table
+([MDEV-28933](https://jira.mariadb.org/browse/MDEV-28933)). A key created under an older server keeps
+its old-format name, which 12.x no longer matches when the same constraint is added again. Dolibarr adds
+many constraints both in its key files and in its migrations, and that left 15 pairs in the ERP,
+measured 2026-10-15.
+
+Neither `mariadb-upgrade` nor a table rebuild converts the old names. Dropping each key and adding it
+back under 12.x does, and `tools/mariadb/recreate-foreign-keys.sh` does that for one container. It is
+dry-run by default, refuses while a duplicate exists, and compares every definition before and after.
+All 225 ERP keys were recreated this way on 2026-10-15, and a repeated `ADD CONSTRAINT` is rejected
+again since. When the guard fires, drop one key of each pair first, because `DROP FOREIGN KEY`
+removes exactly one of them, then run the tool.
+
+```bash
+tools/mariadb/recreate-foreign-keys.sh dolibarr_db
+tools/mariadb/recreate-foreign-keys.sh dolibarr_db --apply
+```
+
 ```bash
 monitoring/database-backup.sh --dry-run
 monitoring/database-backup.sh

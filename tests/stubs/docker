@@ -38,7 +38,23 @@ case "${1:-}" in
                 echo 'sensitive database diagnostic' >&2
                 exit 1
             fi
-            printf 'app\t8.0.46\t2\t%s\n' "${STUB_NONTRANSACTIONAL_TABLES:-0}"
+            printf 'app\t8.0.46\t2\t%s\t%s\n' "${STUB_NONTRANSACTIONAL_TABLES:-0}" \
+                "${STUB_DUPLICATE_FOREIGN_KEYS:-0}"
+        elif [[ "$*" == 'exec -i fkdb '* ]]; then
+            # tools/mariadb/recreate-foreign-keys.sh sends its SQL on stdin.
+            sql="$(cat)"
+            if [[ "$sql" == *'HAVING COUNT(*) > 1'* ]]; then
+                echo "${STUB_FK_DUPLICATES:-0}"
+            elif [[ "$sql" == *KEY_COLUMN_USAGE* ]]; then
+                if [[ -f "$STUB_FK_APPLIED" && -n "${STUB_FK_SNAPSHOT_AFTER:-}" ]]; then
+                    printf '%s\n' "$STUB_FK_SNAPSHOT_AFTER"
+                else
+                    printf '%s\n' "$STUB_FK_SNAPSHOT"
+                fi
+            else
+                printf '%s\n' "$sql" > "$STUB_FK_APPLIED"
+                exit "${STUB_FK_APPLY_FAIL:-0}"
+            fi
         elif [[ "${!#}" == dump || "${!#}" == dump-tables ]]; then
             cat >/dev/null
             if [[ "${STUB_DATABASE_FAIL:-}" == routine_metadata && "${!#}" == dump ]]; then

@@ -63,6 +63,18 @@ restore_database() {
     ! grep -q -- '-- dump' "$STUB_DOCKER_LOG"
 }
 
+@test "duplicate foreign key names fail the backup and keep the previous archive" {
+    backup_databases
+    [ "$status" -eq 0 ]
+    local before
+    before="$(sha256sum "$DATABASE_BACKUP_DIR/dolibarr_db.tar.gz")"
+    export STUB_DUPLICATE_FOREIGN_KEYS=2
+    backup_databases
+    [ "$status" -eq 1 ]
+    [ "$before" = "$(sha256sum "$DATABASE_BACKUP_DIR/dolibarr_db.tar.gz")" ]
+    [ "$(cut -f2 "$DATABASE_BACKUP_DIR/dolibarr_db.failed")" = 'duplicate foreign key names' ]
+}
+
 @test "dump failure preserves a good archive and removes private temporary files" {
     backup_databases
     [ "$status" -eq 0 ]

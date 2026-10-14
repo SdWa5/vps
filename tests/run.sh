@@ -38,6 +38,7 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt koalaman/shellcheck:stable -x \
     tools/dolibarr/doli.sh \
     tools/dolibarr/set-address.sh \
     tools/dolibarr/sync-pm.sh \
+    tools/mariadb/recreate-foreign-keys.sh \
     tools/shopware/lib.sh \
     tools/shopware/set-address.sh \
     tools/shopware/set-homepage-sections.sh \

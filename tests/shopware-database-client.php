@@ -35,6 +35,10 @@ verifyBackupClient(
     'mysql' === shopwareBackupCommand($parameters, 'probe')[0],
     'The metadata probe uses the wrong client.'
 );
+verifyBackupClient(
+    str_contains(implode(' ', shopwareBackupCommand($parameters, 'probe')), 'REFERENTIAL_CONSTRAINTS'),
+    'The metadata probe does not count duplicate foreign key names.'
+);
 
 $invalidCases = [
     'other' => $parameters,

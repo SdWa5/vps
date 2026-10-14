@@ -1,12 +1,13 @@
 # Monitoring
 
-Four cron jobs, no dashboard, no extra container, no external monitoring service.
+Cron jobs provide monitoring without a dashboard, a permanent extra container or an external service.
 All live in [`monitoring/`](../monitoring/) and are deployed to `/opt/docker/monitoring/`.
 
 | Job | Script | Schedule | Sends mail when |
 |-----|--------|----------|-----------------|
 | Health check | `vps-health.sh` | hourly, `:17` | something is wrong or has just recovered |
 | Vaultwarden database copy | `vaultwarden-db-backup.sh` | daily 03:50 | the dump failed or could not be verified |
+| SQL database archives | `database-backup.sh` | daily 03:40 Europe/Berlin | the existing health check reports a failed, missing, corrupt or stale archive |
 | Vaultwarden update | `vaultwarden-autoupdate.sh` | daily 03:00 | an update was applied, an update failed, or the health check stopped running |
 | Shopware worker | `shopware-worker.sh` | every minute, under `flock` | the scheduled tasks or the queue consumer failed, or the container is down |
 | Chimo Diazz worker | `shopware-worker.sh` with `SERVICE=chimodiazz_shopware` | every minute, under its own `flock` | same, for the second Shopware instance |
@@ -37,6 +38,7 @@ auto-update.
 | `containers` | any of vaultwarden, shopware, dolibarr, dolibarr_db, dolibarr_cron, restic is missing, stopped or `unhealthy` |
 | `backup` | the newest snapshot **in the repository** is older than `BACKUP_MAX_AGE_HOURS` (26), the repository cannot be reached or holds no snapshots at all, or the container log reports an explicitly failed run |
 | `vaultwarden_db_backup` | the consistent database copy is missing, or older than `DB_BACKUP_MAX_AGE_HOURS` (26) |
+| `database_backups` | a configured SQL dump failed, an archive is missing or corrupt, or it is older than `DB_BACKUP_MAX_AGE_HOURS` (26) |
 | `http` | `vault.sdwa5.org/alive`, `sdwa5.org`, `erp.sdwa5.org` or `chimodiazz.sdwa5.org` returns anything but 200 |
 | `caddy` | `systemctl is-active caddy` is not `active` |
 | `firewall` | the IPv4 `INPUT` policy is not `DROP`, fail2ban's jump is gone, a port in `FIREWALL_PORTS` (22 80 443) is no longer accepted, or **`DOCKER-USER` is missing or back to Docker's empty `-j RETURN`**, which leaves every published container port unfiltered. An open IPv6 policy is a WARN rather than a CRIT |
@@ -327,6 +329,19 @@ chmod 600 /opt/docker/.env
 Rotating the Gmail app password means updating it in both places, the Vaultwarden admin panel and
 `/opt/docker/.env`.
 
+## SQL database backup monitoring
+
+`monitoring/database-backup.sh` writes private transactional archives for the ERP and both Shopware
+instances. The existing hourly health job checks them and uses its normal fault, backoff and recovery
+notifications. A healthy backup sends no mail. Failure markers make a failed new dump visible even while
+the previous archive is still fresh. See [backup.md](backup.md#consistent-sql-database-archives).
+
+`DATABASE_BACKUP_CONTAINERS` selects the running database/application containers. It defaults to
+`dolibarr_db shopware chimodiazz_shopware`. `DATABASE_BACKUP_DIR` defaults to
+`/opt/docker/database-backup`, and `DATABASE_BACKUP_TIMEOUT` limits each database client operation to
+900 seconds. Keep the same container list and directory for the backup job and the health check.
+`CHIMODIAZZ_DEPLOY_LOCK` defaults to `/run/lock/chimodiazz-deploy.lock` and must match the deployment job.
+
 ## Installation
 
 ```bash
@@ -335,12 +350,14 @@ git pull --ff-only
 apt install sqlite3
 install -m 644 -o root -g root monitoring/cron.d/vps-health              /etc/cron.d/vps-health
 install -m 644 -o root -g root monitoring/cron.d/vaultwarden-db-backup   /etc/cron.d/vaultwarden-db-backup
+install -m 644 -o root -g root monitoring/cron.d/database-backup         /etc/cron.d/database-backup
 install -m 644 -o root -g root monitoring/cron.d/vaultwarden-autoupdate  /etc/cron.d/vaultwarden-autoupdate
 install -m 644 -o root -g root monitoring/cron.d/shopware-worker         /etc/cron.d/shopware-worker
 install -m 644 -o root -g root monitoring/cron.d/chimodiazz-worker       /etc/cron.d/chimodiazz-worker
 install -m 644 -o root -g root monitoring/cron.d/chimodiazz-deploy       /etc/cron.d/chimodiazz-deploy
 mkdir -p /var/lib/vps-health
 /opt/docker/monitoring/vaultwarden-db-backup.sh
+/opt/docker/monitoring/database-backup.sh
 /opt/docker/monitoring/vps-health.sh --test-mail
 ```
 
@@ -351,6 +368,7 @@ rotating:
 ```bash
 journalctl -t vps-health -n 50
 journalctl -t vaultwarden-db-backup -n 50
+journalctl -t database-backup -n 50
 journalctl -t vaultwarden-autoupdate -n 50
 ```
 

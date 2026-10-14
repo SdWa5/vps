@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.56.0] - 2026-10-15
+
+### Added
+
+- Transactional SQL backups for the ERP and both Shopware databases, published as private atomic archives.
+- An isolated restore check using the archived database image without network access or production mounts.
+- Explicitly labeled table-only rescue archives when a MariaDB routine catalog cannot be read.
+- Regression coverage for dump failures, retained archives, restore isolation and backup health alerts.
+
+### Changed
+
+- The existing health check monitors SQL backup failures, missing archives, corruption and staleness.
+  A failure alert names the failed stage and says whether an earlier full archive exists.
+
 ## [1.55.7] - 2026-10-12
 
 ### Added

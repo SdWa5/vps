@@ -73,6 +73,7 @@ vaultwarden-data/
 # makes "is this host clean?" useless as a deploy precondition.
 vaultwarden-data.bak-*/
 vaultwarden-db-backup/
+database-backup/
 ollama-data/
 
 # Minecraft data (world/mods/logs stay ignored, server config tracked below)

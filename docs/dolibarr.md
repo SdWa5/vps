@@ -220,5 +220,6 @@ docker logs dolibarr_cron
 docker exec -it dolibarr_db mysql -u dolidbuser -p dolidb
 
 # Backup DB manually
-docker exec dolibarr_db mysqldump -u root -p dolidb > dolibarr-backup.sql
+monitoring/database-backup.sh
+monitoring/database-restore-check.sh dolibarr_db
 ```

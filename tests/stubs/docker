@@ -8,6 +8,10 @@
 
 case "${1:-}" in
     inspect)
+        if [[ "$*" == *'{{.Image}}'* ]]; then
+            printf 'sha256:%064d\n' 0
+            exit 0
+        fi
         # docker inspect -f '<fmt>' <name>
         name="${!#}"
         var="STUB_CONTAINER_${name}"
@@ -20,10 +24,52 @@ case "${1:-}" in
         echo "$STUB_IMAGE_ID"
         ;;
     logs)
+        if [[ "${!#}" == sdwa5-restore-* ]]; then
+            [[ -n "${STUB_RESTORE_INIT_PENDING:-}" ]] \
+                || echo '[Note] [Entrypoint]: MariaDB init process done. Ready for start up.'
+            exit 0
+        fi
         printf '%s\n' "${STUB_RESTIC_LOG:-}"
         ;;
     exec)
-        if [[ "$*" == *"scheduled-task:list"* ]]; then
+        if [[ "${!#}" == probe ]]; then
+            cat >/dev/null
+            if [[ "${STUB_DATABASE_FAIL:-}" == probe ]]; then
+                echo 'sensitive database diagnostic' >&2
+                exit 1
+            fi
+            printf 'app\t8.0.46\t2\t%s\n' "${STUB_NONTRANSACTIONAL_TABLES:-0}"
+        elif [[ "${!#}" == dump || "${!#}" == dump-tables ]]; then
+            cat >/dev/null
+            if [[ "${STUB_DATABASE_FAIL:-}" == routine_metadata && "${!#}" == dump ]]; then
+                echo 'Column count of mysql.proc is wrong' >&2
+                exit 1
+            fi
+            if [[ "${STUB_DATABASE_FAIL:-}" == dump ]]; then
+                echo 'sensitive database diagnostic' >&2
+                exit 1
+            fi
+            printf 'CREATE DATABASE app; USE app; CREATE TABLE records (id INT PRIMARY KEY);\n'
+        elif [[ "$*" == *sdwa5-restore-* ]]; then
+            if [[ "$*" == *'CHECK TABLE'* ]]; then
+                # STUB_RESTORE_CHECK_RESULT replaces the Msg_type and Msg_text columns.
+                printf 'app.records\tcheck\t%s\n' "${STUB_RESTORE_CHECK_RESULT:-$'status\tOK'}"
+            elif [[ "$*" == *"TABLE_TYPE = 'BASE TABLE'"* ]]; then
+                # Literal backticks, as the client prints the quoted identifiers.
+                # shellcheck disable=SC2016
+                printf '`records`\n`other`\n'
+            elif [[ "$*" == *'SELECT COUNT(*)'* ]]; then
+                echo "${STUB_RESTORE_TABLES:-2}"
+            elif [[ "$*" == *'--execute=SELECT 1'* ]]; then
+                echo 1
+            else
+                cat >/dev/null
+                if [[ "${STUB_RESTORE_IMPORT_FAIL:-0}" == 1 ]]; then
+                    echo 'sensitive restored row' >&2
+                    exit 1
+                fi
+            fi
+        elif [[ "$*" == *"scheduled-task:list"* ]]; then
             # docker exec shopware php bin/console scheduled-task:list
             # Unset means the command failed, which is a different finding from
             # a task list that exists but is stale.

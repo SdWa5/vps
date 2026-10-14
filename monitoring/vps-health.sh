@@ -39,6 +39,8 @@ EXPECTED_CONTAINERS="${EXPECTED_CONTAINERS:-vaultwarden shopware chimodiazz_shop
 HEALTH_URLS="${HEALTH_URLS:-vaultwarden=https://vault.sdwa5.org/alive shopware=https://sdwa5.org/ dolibarr=https://erp.sdwa5.org/ chimodiazz=https://chimodiazz.sdwa5.org/}"
 BACKUP_MAX_AGE_HOURS="${BACKUP_MAX_AGE_HOURS:-26}"
 DB_BACKUP_MAX_AGE_HOURS="${DB_BACKUP_MAX_AGE_HOURS:-26}"
+DATABASE_BACKUP_DIR="${DATABASE_BACKUP_DIR:-$COMPOSE_DIR/database-backup}"
+DATABASE_BACKUP_CONTAINERS="${DATABASE_BACKUP_CONTAINERS:-dolibarr_db shopware chimodiazz_shopware}"
 # Shopware's shortest scheduled task interval is 60 seconds, so two hours is
 # generous and still catches an outage the same morning. The one this check
 # exists for ran unnoticed for 47 days.
@@ -235,6 +237,39 @@ check_vaultwarden_db_backup() {
         printf 'CRIT\tConsistent Vaultwarden database copy is %sh old, expected within %sh\n' "$age_hours" "$DB_BACKUP_MAX_AGE_HOURS"
     else
         printf 'OK\tConsistent Vaultwarden database copy %sh old (%s bytes)\n' "$age_hours" "$(stat -c %s "$dump")"
+    fi
+}
+
+check_database_backups() {
+    local container archive age_hours stage problems=()
+
+    for container in $DATABASE_BACKUP_CONTAINERS; do
+        archive="$DATABASE_BACKUP_DIR/$container.tar.gz"
+        if [[ -f "$DATABASE_BACKUP_DIR/$container.failed" ]]; then
+            # The marker holds a timestamp and the stage the job failed at.
+            IFS=$'\t' read -r _ stage < "$DATABASE_BACKUP_DIR/$container.failed" || true
+            stage="${stage//[^[:print:]]/}"
+            if [[ -s "$archive" ]]; then
+                problems+=("$container database backup failed at ${stage:-an unknown stage}; the previous archive was retained")
+            else
+                problems+=("$container database backup failed at ${stage:-an unknown stage}; no full archive exists")
+            fi
+        elif [[ ! -s "$archive" ]]; then
+            problems+=("$container has no consistent database archive")
+        else
+            age_hours=$(( ($(now) - $(stat -c %Y "$archive")) / 3600 ))
+            if (( age_hours >= DB_BACKUP_MAX_AGE_HOURS )); then
+                problems+=("$container database archive is ${age_hours}h old")
+            elif ! gzip -t "$archive" 2>/dev/null; then
+                problems+=("$container database archive failed its integrity check")
+            fi
+        fi
+    done
+
+    if (( ${#problems[@]} )); then
+        printf 'CRIT\t%s\n' "$(IFS='; '; echo "${problems[*]}")"
+    else
+        printf 'OK\tConsistent SQL database archives are fresh and readable\n'
     fi
 }
 
@@ -551,6 +586,7 @@ run_checks() {
     emit backup                "$(check_backup)"
     emit shopware_tasks        "$(check_shopware_tasks)"
     emit vaultwarden_db_backup "$(check_vaultwarden_db_backup)"
+    emit database_backups      "$(check_database_backups)"
     emit http                  "$(check_http)"
     emit caddy                 "$(check_caddy)"
     emit firewall              "$(check_firewall)"

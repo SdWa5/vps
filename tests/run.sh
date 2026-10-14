@@ -29,6 +29,8 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt koalaman/shellcheck:stable -x \
     monitoring/vps-health.sh \
     monitoring/vaultwarden-autoupdate.sh \
     monitoring/vaultwarden-db-backup.sh \
+    monitoring/database-backup.sh \
+    monitoring/database-restore-check.sh \
     monitoring/shopware-worker.sh \
     monitoring/chimodiazz-deploy.sh \
     hardening/firewall/sdwa5-firewall.sh \
@@ -42,6 +44,9 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt koalaman/shellcheck:stable -x \
     tests/run.sh \
     tests/test_helper.bash \
     tests/stubs/*
+
+docker run --rm -v "$REPO_ROOT:/code:ro" -w /code php:8.2-cli \
+    php tests/shopware-database-client.php
 
 echo
 echo "All checks passed."

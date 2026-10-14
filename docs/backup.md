@@ -80,6 +80,70 @@ change to either schedule has to be reasoned about in UTC.
 - `vaultwarden-db-backup/db.sqlite3` has none of this, because `.backup` reads through SQLite and
   folds the write-ahead log in, producing one consistent file.
 
+## Consistent SQL database archives
+
+`monitoring/database-backup.sh` takes application-database dumps from `dolibarr_db`, `shopware` and
+`chimodiazz_shopware` at **03:40 Europe/Berlin**. Restic's 04:00 UTC run follows in both winter and summer.
+The job is silent on success. Failures are logged and recorded for the existing health alert.
+
+Each archive under the gitignored `database-backup/` contains `dump.sql` and `manifest.tsv`. The manifest
+records the schema, database version, table count, engine family and running image ID. The directory is
+mode 700 and the archives are mode 600. Credentials pass directly from the running container's
+configuration to its native client. They are not command-line arguments or monitoring output.
+
+The ERP uses its application account. Shopware resolves its effective environment with the application's
+installed Dotenv and DBAL libraries, so local environment overrides are respected. The helper and client
+run inside the application container. No additional production dependency is installed.
+
+The job checks that base tables use InnoDB, then dumps data, triggers, routines and events with
+`--single-transaction`. It refuses nontransactional tables instead of claiming a consistent snapshot.
+Do not run schema changes while a dump runs. The job shares the Chimo deployment lock to exclude that
+automatic deployment. Ordinary InnoDB application writes continue. The database clients document the
+snapshot and DDL limits in [MariaDB's dump reference](https://mariadb.com/docs/server/clients-and-utilities/backup-restore-and-import-clients/mariadb-dump)
+and [MySQL's dump reference](https://dev.mysql.com/doc/refman/8.0/en/mysqldump.html).
+
+A completed dump is packaged and checked before one atomic rename replaces the previous archive.
+Failures preserve the previous archive and leave a failure marker. A successful retry clears the marker.
+The current archive is replaced locally; historical versions remain in restic snapshots. This job does
+not change the restic retention policy or delete existing restore points.
+
+If MariaDB reports an incompatible routine catalog, the job additionally attempts a transactional
+table-only rescue dump. It saves a separate ".tables-only.tar.gz" archive with that limitation in its
+manifest. It never replaces a full archive with this rescue copy. The job still fails and the health
+alert remains active until a complete backup succeeds, which also deletes the superseded rescue copy.
+Earlier copies remain in restic. A table-only archive includes table data,
+triggers and events, but does not prove that stored procedures or functions can be recovered.
+Use the explicit `--tables-only` option to verify this rescue archive. Repairing system tables or
+changing authentication is a separate maintenance operation.
+
+```bash
+monitoring/database-backup.sh --dry-run
+monitoring/database-backup.sh
+monitoring/database-restore-check.sh dolibarr_db
+monitoring/database-restore-check.sh shopware
+monitoring/database-restore-check.sh chimodiazz_shopware
+```
+
+The restore check imports the archive into a new temporary database using the exact image recorded in
+its manifest. The image must be available locally. The container has no network, no published ports,
+disabled scheduled SQL events and no production mounts. It uses only a new disposable data volume.
+SQL import, table count and `CHECK TABLE` on every base table must pass. The check runs through the
+SQL client, because not every server image ships `mysqlcheck`. The new volume is mounted with
+`volume-nocopy`, since the dockware Shopware image ships files under `/var/lib/mysql` that Docker would
+otherwise copy in and that make `mysqld --initialize` abort. For MariaDB the import waits for the
+entrypoint's "init process done" line, because its temporary bootstrap server answers queries and
+then shuts down. `RESTORE_READY_TIMEOUT` (90 seconds) bounds that wait. The scratch files, container
+and volume are removed on exit, including failed imports. A failed cleanup is reported rather than silently ignored.
+Only the isolated server permits a passwordless local root connection.
+
+These checks prove the tested SQL restore path. They do not test whole-VM recovery, every application
+workflow or synchronization between a database and separately copied media/documents. Application
+credentials and other service state still come from the protected restic backup or the vault.
+
+To test a restic copy, restore `/data/database-backup` from a chosen snapshot into a private scratch
+directory, then set `DATABASE_BACKUP_DIR` to that directory for the same three restore commands.
+Delete the restored scratch copy afterward because it contains application data.
+
 ## rclone remote
 
 Remote `[SdWa5]` — Google Drive (OAuth2). Config file at `rclone-config/rclone.conf` contains OAuth client credentials and refresh token. **Never commit this file.**

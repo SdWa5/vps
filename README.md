@@ -82,6 +82,12 @@ systemctl reload caddy
 # Health check on demand (see docs/monitoring.md)
 /opt/docker/monitoring/vps-health.sh --dry-run
 
+# Inspect the scheduled database backup configuration without connecting
+/opt/docker/monitoring/database-backup.sh --dry-run
+
+# Restore an SQL archive in an isolated temporary container
+/opt/docker/monitoring/database-restore-check.sh dolibarr_db
+
 # Read the Dolibarr ERP from a workstation (see docs/dolibarr.md)
 tools/dolibarr/doli.sh status
 
@@ -94,12 +100,16 @@ tools/dolibarr/deploy-module.sh banksync https://github.com/SdWa5/banksync.git v
 
 ## Monitoring
 
-Four cron jobs watch the box and mail every address in `MONITOR_MAIL_TO` when something is wrong.
+The cron jobs watch the box and mail every address in `MONITOR_MAIL_TO` when something is wrong.
 It defaults to `ripper@sdwa5.org` alone, and any private address is configured in `.env` on the host
 rather than committed here. A healthy system sends nothing. Vaultwarden updates itself daily, because
 the Bitwarden clients auto-update and a server left behind stops working with them.
 
 See [docs/monitoring.md](docs/monitoring.md).
+
+The SQL backup job writes consistent ERP and Shopware archives daily at 03:40 Europe/Berlin. Restic
+includes them in its later run. The health check alerts when a dump fails or an archive is missing,
+corrupt or stale. See [docs/backup.md](docs/backup.md) for the isolated restore drill.
 
 ## Host access
 
@@ -116,7 +126,8 @@ getty and PAM rather than sshd. See [docs/ssh-hardening.md](docs/ssh-hardening.m
 tests/run.sh
 ```
 
-Runs the bats suite for the monitoring scripts and `tools/`, plus shellcheck, both inside Docker.
+Runs the bats suite for the monitoring scripts and `tools/`, shellcheck and the PHP database-client
+checks inside Docker.
 Nothing has to be installed on the host.
 
 [`.github/workflows/tests.yml`](.github/workflows/tests.yml) runs the same script on every push, so

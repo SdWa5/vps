@@ -1,8 +1,17 @@
 #!/usr/bin/env bash
-# Fake ip6tables. Only "-S INPUT" is used, see the iptables stub. Invocations
-# are logged to the same STUB_IPT_LOG, so a firewall test can assert both
-# families from one file.
+# Fake ip6tables. Invocations are logged to the same STUB_IPT_LOG as the
+# iptables stub, so a firewall test can assert both families from one file.
+#
+#   STUB_IPT_V6      what "-S INPUT" prints
+#   STUB_IP6T_HAVE   "-C" patterns that exist, one per line, as STUB_IPT_HAVE
 [[ -n "${STUB_IPT_LOG:-}" ]] && printf 'ip6tables %s\n' "$*" >> "$STUB_IPT_LOG"
+if [[ "${1:-}" == "-C" ]]; then
+    while IFS= read -r want; do
+        [[ -z "$want" ]] && continue
+        [[ "$*" == *"$want"* ]] && exit 0
+    done <<< "${STUB_IP6T_HAVE-}"
+    exit 1
+fi
 if [[ "${1:-}" == "-S" ]]; then
     printf '%s' "${STUB_IPT_V6-}"
     [[ -n "${STUB_IPT_V6-}" ]] && printf '\n'

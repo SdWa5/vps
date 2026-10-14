@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.59.0] - 2026-10-15
+
+### Added
+
+- The health check warns when fail2ban's IPv6 chain exists without a jump from IPv6 `INPUT`.
+
+### Fixed
+
+- `sdwa5-firewall.sh` restores fail2ban's jump in IPv6 `INPUT` too, so IPv6 bans survive a firewall
+  restart.
+
 ## [1.58.1] - 2026-10-15
 
 ### Removed

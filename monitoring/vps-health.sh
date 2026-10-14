@@ -360,6 +360,13 @@ check_firewall() {
         return
     fi
 
+    # fail2ban makes its v6 chain on the first IPv6 ban only, so a missing chain
+    # is normal. A chain without the jump means its bans are not applied.
+    if ip6tables -C f2b-sshd -j RETURN >/dev/null 2>&1 && ! grep -q 'j f2b-sshd' <<<"$v6"; then
+        printf 'WARN\tfail2ban has an IPv6 chain but no jump to it in IPv6 INPUT, so IPv6 bans are not applied\n'
+        return
+    fi
+
     printf 'OK\tINPUT DROP on both families, fail2ban jump present, DOCKER-USER filtering, %s accepted\n' \
         "$(tr ' ' ',' <<<"$FIREWALL_PORTS")"
 }

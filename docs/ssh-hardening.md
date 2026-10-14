@@ -359,6 +359,16 @@ silently switched off SSH brute-force filtering while `iptables -S INPUT` still 
 So `sdwa5-firewall.sh` re-adds the jump itself, deterministically, and only when the `f2b-sshd` chain
 exists, because creating that chain is fail2ban's job and a jump to a missing chain fails.
 
+**IPv6 had the same gap until 2026-10-15.** fail2ban bans IPv6 addresses through `ip6tables` with the
+same action, but it creates the v6 `f2b-sshd` chain and its jump only on the first IPv6 ban. Measured
+that day with a ban and unban of the documentation address `2001:db8::1`: the chain and the jump
+appeared, and the ban rule came and went. The script flushed v6 `INPUT` as well and re-added only the
+IPv4 jump, so after any firewall restart an IPv6 ban would have landed in a chain that nothing jumps
+to. It now restores the jump for both families. No IPv6 address had been banned before that test,
+and no IPv6 login failure appears in the journal since July 2026, because no AAAA record is published.
+The health check warns when the v6 chain exists without its jump. A missing v6 chain is normal
+until the first IPv6 ban.
+
 **Dropping the fail2ban restart buys a second thing.** A fail2ban restart logs
 `Flush ticket(s) with iptables-multiport` and discards every active ban, so the old arrangement threw
 away the bans it was trying to protect. Bans now survive a firewall restart, because nothing here

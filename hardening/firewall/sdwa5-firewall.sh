@@ -29,7 +29,22 @@
 # the f2b-sshd chain, so existing bans in it survive a flush of INPUT untouched.
 # The jump is only re-added when that chain exists, because creating it is
 # fail2ban's job and a jump to a missing chain would fail.
+#
+# The same holds for IPv6. fail2ban creates the v6 f2b-sshd chain and its jump
+# on the first IPv6 ban only, measured 2026-10-15 with a ban of 2001:db8::1.
+# Until then this script re-added the IPv4 jump alone, so after any firewall
+# restart an IPv6 ban would have landed in a chain that nothing jumps to.
 set -e
+
+# Puts fail2ban's jump back at the head of INPUT for one family. Inserted rather
+# than appended, so it is judged before the blanket accept for port 22.
+restore_fail2ban_jump() {
+    local ipt="$1"
+    if "$ipt" -C f2b-sshd -j RETURN >/dev/null 2>&1; then
+        "$ipt" -C INPUT -p tcp -m multiport --dports ssh -j f2b-sshd >/dev/null 2>&1 \
+            || "$ipt" -I INPUT -p tcp -m multiport --dports ssh -j f2b-sshd
+    fi
+}
 
 BRIDGES=$(ip -o link show type bridge | awk '{print $2}' | tr -d ':')
 # The interface the default route leaves by, so "from outside" is derived rather
@@ -49,12 +64,7 @@ iptables -A INPUT -p tcp --dport 80  -j ACCEPT
 iptables -A INPUT -p tcp --dport 443 -j ACCEPT
 iptables -A INPUT -p udp --dport 443 -j ACCEPT
 
-# fail2ban's jump, back at the head of INPUT where it belongs. Inserted rather
-# than appended, so it is judged before the blanket accept for port 22.
-if iptables -C f2b-sshd -j RETURN >/dev/null 2>&1; then
-    iptables -C INPUT -p tcp -m multiport --dports ssh -j f2b-sshd >/dev/null 2>&1 \
-        || iptables -I INPUT -p tcp -m multiport --dports ssh -j f2b-sshd
-fi
+restore_fail2ban_jump iptables
 
 iptables -P INPUT DROP
 
@@ -103,4 +113,5 @@ ip6tables -A INPUT -p tcp --dport 22  -j ACCEPT
 ip6tables -A INPUT -p tcp --dport 80  -j ACCEPT
 ip6tables -A INPUT -p tcp --dport 443 -j ACCEPT
 ip6tables -A INPUT -p udp --dport 443 -j ACCEPT
+restore_fail2ban_jump ip6tables
 ip6tables -P INPUT DROP

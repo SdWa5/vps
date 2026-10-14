@@ -346,6 +346,25 @@ Container started." health
     [[ "$(mail_body)" == *"IPv6 INPUT policy is not DROP"* ]]
 }
 
+@test "an IPv6 fail2ban chain nothing jumps to warns" {
+    STUB_IP6T_HAVE='-C f2b-sshd -j RETURN' health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"IPv6 bans are not applied"* ]]
+}
+
+@test "an IPv6 fail2ban chain with its jump is healthy" {
+    export STUB_IP6T_HAVE='-C f2b-sshd -j RETURN'
+    STUB_IPT_V6='-P INPUT DROP
+-A INPUT -p tcp -m multiport --dports 22 -j f2b-sshd
+-A INPUT -p ipv6-icmp -j ACCEPT' health
+    [ "$(mail_count)" -eq 0 ]
+}
+
+@test "no IPv6 fail2ban chain yet is healthy, because fail2ban makes it on the first IPv6 ban" {
+    health
+    [ "$(mail_count)" -eq 0 ]
+}
+
 @test "several firewall faults are reported together rather than one at a time" {
     STUB_IPT_V4='-P INPUT ACCEPT
 -A INPUT -i lo -j ACCEPT' health

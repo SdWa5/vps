@@ -105,6 +105,28 @@ wrote() {
     wrote "ip6tables -A INPUT -p ipv6-icmp -j ACCEPT"
 }
 
+@test "the IPv6 fail2ban jump is re-added when fail2ban has created its v6 chain" {
+    # fail2ban creates the v6 chain on its first IPv6 ban only, and a flush of
+    # v6 INPUT then left those bans without a jump until 2026-10-15.
+    STUB_IP6T_HAVE="-C f2b-sshd -j RETURN" firewall
+    wrote "ip6tables -I INPUT -p tcp -m multiport --dports ssh -j f2b-sshd"
+    # Before the DROP policy, as for IPv4, so no window passes without it.
+    [ "$(grep -n 'ip6tables -I INPUT' "$STUB_IPT_LOG" | cut -d: -f1)" -lt \
+      "$(grep -n 'ip6tables -P INPUT DROP' "$STUB_IPT_LOG" | cut -d: -f1)" ]
+}
+
+@test "no IPv6 fail2ban jump is written before fail2ban has made the v6 chain" {
+    STUB_IPT_HAVE="-C f2b-sshd -j RETURN" firewall
+    wrote "iptables -I INPUT -p tcp -m multiport --dports ssh -j f2b-sshd"
+    ! wrote "ip6tables -I INPUT"
+}
+
+@test "an existing IPv6 fail2ban jump is not inserted twice" {
+    STUB_IP6T_HAVE="-C f2b-sshd -j RETURN
+-C INPUT -p tcp -m multiport --dports ssh -j f2b-sshd" firewall
+    ! wrote "ip6tables -I INPUT"
+}
+
 @test "IPv6 gets no DOCKER-USER rules, because Docker publishes nothing over v6" {
     # Measured 2026-09-08: zero Docker rules in ip6tables, zero v6 DNAT, both
     # bridges link-local only, no daemon.json. Writing v6 rules would defend an

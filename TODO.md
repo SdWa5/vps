@@ -84,10 +84,16 @@
        org has a recovery path that does not depend on one master password. the grantee count is the
        thing to check in the admin panel and is not written down here, for the same reason as 7.1
        (ca. 30 Minuten)
-    3. inbound ipv6 works, including cold after 25 minutes idle, so the neighbour-cache hypothesis is
-       refuted. one transient failure on 2026-09-08 was never reproduced and its cause is unknown. do
-       not open a contabo ticket. if it recurs, capture the network path in use at the time
-       (ca. 10 Minuten)
+    3. ipv6 drops out for minutes at a time and recovers on its own. the first time was 2026-09-08 and
+       the second was 2026-10-15, from at least 01:43 to 01:52 Berlin time. measured during the second:
+       the host kept its address and its static default route via `fe80::1`, echo requests and tcp syns
+       left `eth0` with the right source, and the gateway answered neighbour discovery from ca. 01:47,
+       yet tcpdump saw no reply or icmp error come back. the next hop `2a02:c206::1eaf` did not answer
+       either. from outside, the home line and the company vpn exit both failed while their own ipv6
+       controls worked. the host firewall is ruled out, because tcpdump reads ingress before netfilter
+       and a firewall restart at 01:53 reproduced nothing over three minutes. no aaaa record is
+       published, so no site was affected. open a contabo ticket with these timestamps if it happens a
+       third time or before an aaaa record is published (ca. 30 Minuten)
     4. **DONE on 2026-09-13.** `/opt/docker` had been unable to pull since the 2026-09-12 move: its
        `origin` still named the deleted personal repository and its `HEAD` was a pre-rewrite commit
        that existed nowhere. Nothing noticed, because deploys are manual. It now tracks

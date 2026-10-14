@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.59.1] - 2026-10-15
+
+### Changed
+
+- TODO.md 6.3 records the second transient IPv6 outage with its path measurements.
+
 ## [1.59.0] - 2026-10-15
 
 ### Added

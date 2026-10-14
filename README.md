@@ -91,6 +91,9 @@ systemctl reload caddy
 # Show the SQL that recreates a schema's foreign keys under MariaDB 12.x (--apply runs it, see docs/backup.md)
 /opt/docker/tools/mariadb/recreate-foreign-keys.sh dolibarr_db
 
+# Set a stopped MariaDB service's root password back to the .env value (see docs/backup.md)
+/opt/docker/tools/mariadb/reset-root-password.sh dolibarr_db
+
 # Read the Dolibarr ERP from a workstation (see docs/dolibarr.md)
 tools/dolibarr/doli.sh status
 

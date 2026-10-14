@@ -117,6 +117,11 @@ services:
       MYSQL_DATABASE: ${DOLIBARR_MYSQL_DATABASE:-dolidb}
       MYSQL_USER: ${DOLIBARR_MYSQL_USER:-dolidbuser}
       MYSQL_PASSWORD: ${DOLIBARR_MYSQL_PASSWORD}
+      # Without it the entrypoint skips mariadb-upgrade after a version bump, and
+      # the stale mysql.proc of the 11.8 to 12.3 jump broke `mariadb-dump
+      # --routines` until 2026-10-15. The upgrade runs with grants off, so it
+      # needs no root login, and it backs up the mysql schema into the datadir first.
+      MARIADB_AUTO_UPGRADE: "1"
     logging: *default-logging
     volumes:
       - ./dolibarr-mariadb-data:/var/lib/mysql

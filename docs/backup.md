@@ -136,6 +136,24 @@ tools/mariadb/recreate-foreign-keys.sh dolibarr_db
 tools/mariadb/recreate-foreign-keys.sh dolibarr_db --apply
 ```
 
+Every MariaDB service sets `MARIADB_AUTO_UPGRADE=1`. Without it the image's entrypoint skips
+`mariadb-upgrade` after a version bump. That is how the ERP's `mysql.proc` stayed in the 11.8 format
+under 12.3 and `mariadb-dump --routines` failed with `Column count of mysql.proc is wrong`, measured
+2026-10-14 (`mariadb_upgrade_info` still read 11.8.2). With it, the first start on a new version
+backs up the `mysql` schema to `system_mysql_backup_<old version>.sql.zst` in the datadir, runs the
+upgrade with grants off and then starts normally. No root login is needed for that.
+
+The root password in `.env` reaches the database only when an empty datadir is initialised. When the
+two have drifted apart, `tools/mariadb/reset-root-password.sh` sets every existing root account back
+to the configured value. It runs a throwaway container of the stopped service with grants and
+networking off, proves the new password with a root login and never prints it.
+
+```bash
+docker-compose stop dolibarr_db
+tools/mariadb/reset-root-password.sh dolibarr_db
+docker-compose up -d dolibarr_db
+```
+
 ```bash
 monitoring/database-backup.sh --dry-run
 monitoring/database-backup.sh

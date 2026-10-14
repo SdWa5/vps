@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.56.1] - 2026-10-15
+
+### Changed
+
+- TODO.md 6.4 records the duplicate `bank_record_fk_bank` foreign key that blocks the ERP restore drill
+
 ## [1.56.0] - 2026-10-15
 
 ### Added

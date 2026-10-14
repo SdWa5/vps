@@ -35,7 +35,7 @@ export MYSQL_PWD
 if [ "$1" = probe ]; then
     exec mariadb --no-defaults --user="$MYSQL_USER" --protocol=TCP --host=127.0.0.1 \
         --batch --skip-column-names --database="$MYSQL_DATABASE" \
-        --execute="SELECT DATABASE(), VERSION(), COUNT(*), COALESCE(SUM(TABLE_TYPE = 'BASE TABLE' AND ENGINE <> 'InnoDB'), 0) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()"
+        --execute="SELECT DATABASE(), VERSION(), COUNT(*), COALESCE(SUM(TABLE_TYPE = 'BASE TABLE' AND ENGINE <> 'InnoDB'), 0), (SELECT COUNT(*) FROM (SELECT 1 FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE() GROUP BY TABLE_NAME, CONSTRAINT_NAME HAVING COUNT(*) > 1) d) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()"
 fi
 routine_option=--routines
 [ "$1" != dump-tables ] || routine_option=--skip-routines
@@ -65,17 +65,25 @@ backup_failed() {
 }
 
 backup_one() {
-    local container="$1" probe database version tables nontransactional image flavor archive coverage=full
+    local container="$1" probe database version tables nontransactional duplicates image flavor archive
+    local coverage=full
     WORK_DIR="$(mktemp -d "$DATABASE_BACKUP_DIR/.$container.XXXXXX")" || return 1
 
     if ! probe="$(database_client "$container" probe 2> "$WORK_DIR/error.log")"; then
         backup_failed "$container" 'connection check'
         return 1
     fi
-    IFS=$'\t' read -r database version tables nontransactional <<< "$probe"
+    IFS=$'\t' read -r database version tables nontransactional duplicates <<< "$probe"
     if [[ ! "$database" =~ ^[A-Za-z0-9_]+$ || ! "$tables" =~ ^[1-9][0-9]*$ \
         || "$nontransactional" != 0 ]]; then
         backup_failed "$container" 'transactional table check'
+        return 1
+    fi
+    # A table carrying the same foreign key name twice dumps fine and then fails
+    # to import with errno 150, so the archive would look good and restore
+    # nothing. See tools/mariadb/recreate-foreign-keys.sh for how this arises.
+    if [[ "$duplicates" != 0 ]]; then
+        backup_failed "$container" 'duplicate foreign key names'
         return 1
     fi
 

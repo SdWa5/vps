@@ -28,7 +28,10 @@ function shopwareBackupCommand(array $parameters, string $operation): array
             '--skip-column-names',
             '--database='.$parameters['dbname'],
             '--execute=SELECT DATABASE(), VERSION(), COUNT(*), '
-                .'COALESCE(SUM(TABLE_TYPE = \'BASE TABLE\' AND ENGINE <> \'InnoDB\'), 0) '
+                .'COALESCE(SUM(TABLE_TYPE = \'BASE TABLE\' AND ENGINE <> \'InnoDB\'), 0), '
+                .'(SELECT COUNT(*) FROM (SELECT 1 FROM information_schema.REFERENTIAL_CONSTRAINTS '
+                .'WHERE CONSTRAINT_SCHEMA = DATABASE() GROUP BY TABLE_NAME, CONSTRAINT_NAME '
+                .'HAVING COUNT(*) > 1) d) '
                 .'FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()',
         ]);
     }

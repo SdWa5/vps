@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.57.0] - 2026-10-15
+
+### Added
+
+- `tools/mariadb/recreate-foreign-keys.sh` and a README entry for it. It recreates every foreign key of a schema under the running
+  MariaDB, dry-run by default and verified against a snapshot.
+
+### Changed
+
+- The SQL backup fails at "duplicate foreign key names" when a table carries a foreign key name twice.
+- TODO.md 6.4 keeps only the routine catalog repair.
+
+### Fixed
+
+- The ERP restore drill no longer fails with errno 150, because the duplicate foreign keys were removed
+  and all keys were recreated under MariaDB 12.3.
+
 ## [1.56.1] - 2026-10-15
 
 ### Changed

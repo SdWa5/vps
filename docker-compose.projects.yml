@@ -23,6 +23,8 @@ services:
       MYSQL_DATABASE: ${PROJECT2_MYSQL_DATABASE:-dolidb}
       MYSQL_USER: ${PROJECT2_MYSQL_USER:-dolidbuser}
       MYSQL_PASSWORD: ${PROJECT2_MYSQL_PASSWORD}
+      # See dolibarr_db in docker-compose.yml.
+      MARIADB_AUTO_UPGRADE: "1"
     volumes:
       - ./project2-dolibarr-mariadb-data:/var/lib/mysql
 
@@ -67,6 +69,8 @@ services:
       MYSQL_DATABASE: ${PROJECT3_MYSQL_DATABASE:-dolidb}
       MYSQL_USER: ${PROJECT3_MYSQL_USER:-dolidbuser}
       MYSQL_PASSWORD: ${PROJECT3_MYSQL_PASSWORD}
+      # See dolibarr_db in docker-compose.yml.
+      MARIADB_AUTO_UPGRADE: "1"
     volumes:
       - ./project3-dolibarr-mariadb-data:/var/lib/mysql
 

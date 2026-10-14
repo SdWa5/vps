@@ -3,5 +3,11 @@
 echo "$*" >> "${STUB_COMPOSE_LOG:-/dev/null}"
 case "${1:-}" in
     pull) exit "${STUB_PULL_RC:-0}" ;;
+    ps) printf '%s\n' "${STUB_COMPOSE_PS:-}" ;;
+    run)
+        cat > /dev/null
+        printf '%s\n' "${STUB_COMPOSE_RUN_OUTPUT:-}"
+        exit "${STUB_COMPOSE_RUN_RC:-0}"
+        ;;
 esac
 exit 0

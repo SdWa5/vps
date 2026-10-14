@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.58.0] - 2026-10-15
+
+### Added
+
+- `tools/mariadb/reset-root-password.sh` sets a stopped MariaDB service's root password back to its
+  configured value and verifies it with a login.
+- A test that every MariaDB service in the compose files enables `MARIADB_AUTO_UPGRADE`.
+
+### Fixed
+
+- All MariaDB services set `MARIADB_AUTO_UPGRADE=1`, so the system tables are upgraded after a version
+  bump and `mariadb-dump --routines` works again for the ERP database.
+
 ## [1.57.0] - 2026-10-15
 
 ### Added

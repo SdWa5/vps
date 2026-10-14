@@ -68,18 +68,12 @@
        not been pushed since **2021-05-05**, and whose newest version tag is `1.3.1-0.9.6` from 2020.
        so the image carrying both backups is five years old and unmaintained, and it cannot be pinned
        to anything better. either accept it explicitly or move to a maintained image, which changes
-       the backup path and therefore waits on the restore drill below (ca. 2 Stunden)
+       the backup path and therefore needs a restic restore drill first. the sql drills in
+       [docs/backup.md](docs/backup.md#consistent-sql-database-archives) cover only the local archives
+       (ca. 2 Stunden)
     3. monitoring runs on the monitored host, so a dead vps sends nothing and the silence looks
        healthy. an external dead-man's switch would close that gap, deliberately deferred
        (ca. 45 Minuten)
-    4. **no full `dolibarr_db` sql dump exists yet.** the routine catalog does not match the server.
-       measured 2026-10-14: `mariadb-dump --routines` fails with `Column count of mysql.proc is wrong`
-       on mariadb 12.3.3, so `database-backup.sh` writes only the labeled table-only rescue archive for
-       it and the health check stays CRIT until this is fixed. the table-only drill passes since
-       2026-10-15, see [docs/backup.md](docs/backup.md#consistent-sql-database-archives).
-       `mariadb-upgrade` repairs the system tables but needs root, and a root login with the password
-       from `.env` failed in the same probe. restore root access first, then run the upgrade in a
-       maintenance window (ca. 1 Stunde)
 7. security follow-ups from the 2026-09-07 ssh hardening ([docs/ssh-hardening.md](docs/ssh-hardening.md))
     1. move the accounts still on pbkdf2 to argon2id. the kdf is per-account and only its holder can
        change it, so this is a message to those people rather than an action here. **which accounts

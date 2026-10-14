@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.58.1] - 2026-10-15
+
+### Removed
+
+- TODO.md 6.4, because the ERP database is upgraded to the 12.3 system tables and has a full SQL archive
+  with a passing restore drill since 2026-10-15
+
 ## [1.58.0] - 2026-10-15
 
 ### Added

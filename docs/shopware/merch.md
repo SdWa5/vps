@@ -21,8 +21,8 @@ Prices: selling price = €0 (voluntary donation), list price = Verkaufswert (cr
 | Business Cards                       | €1,00          | €3,00      |
 | Tubes                                | €1,00          | €2,00      |
 | DJ USB Drive                         | €15,00         | €30,00     |
-| SdWa5 Top Model 1:12                 | €1,75          | —          |
-| SKRAM Model 1:12                     | €2,77          | —          |
+| SdWa5 Top Model 1:12                 | €1,75          | €5,00      |
+| SKRAM Model 1:12                     | €2,77          | €8,00      |
 
 Product numbers: SDWA5-* · Images added
 

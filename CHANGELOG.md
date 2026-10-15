@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.64.1] - 2026-10-15
+
+### Added
+
+- `docs/maintenance.md`: a Docker packages section for docker-ce 29.9.1, containerd.io 2.4.2 and the Compose plugin 5.6.0 from download.docker.com, with the update steps and the `Requires=docker.service` trap.
+
+### Changed
+
+- Docs, README and compose file comments use `docker compose` instead of `docker-compose`, because the VPS runs Compose v2 since 2026-10-15.
+- `docs/maintenance.md`: the Compose version section warns against `docker-compose up` with the remaining v1, which would recreate every container.
+- `hardening/firewall/sdwa5-firewall.sh`: the IPv6 comment states the measurement under docker-ce 29.
+- `tools/compose.sh`: the comment records the move to docker-ce.
+
 ## [1.64.0] - 2026-10-15
 
 ### Added

@@ -4,7 +4,7 @@ Docker Compose configuration for all services running on the SdWa5 Contabo VPS.
 
 ## Requirements
 
-- Docker + Docker Compose v1. The VPS has `docker-compose` 1.29.2. The v2 subcommand form `docker compose` does not exist there, so every command below uses the hyphenated binary.
+- Docker + Docker Compose v2. The VPS runs docker-ce 29.9.1 with the `docker compose` plugin 5.6.0 from download.docker.com since 2026-10-15, so every command below uses the subcommand form. See [docs/maintenance.md](docs/maintenance.md#docker-packages).
 - Caddy (system service, not in Docker)
 - A `.env` file in this directory (see `.env.example`)
 
@@ -13,7 +13,7 @@ Docker Compose configuration for all services running on the SdWa5 Contabo VPS.
 ```bash
 cp .env.example .env
 # Fill in all values in .env
-docker-compose up -d
+docker compose up -d
 ```
 
 ## Services
@@ -61,20 +61,20 @@ See `docs/` for per-service documentation:
 
 ```bash
 # Start all main services
-docker-compose up -d
+docker compose up -d
 
 # Start Project 2/Project 3 services
-docker-compose -f docker-compose.projects.yml up -d
+docker compose -f docker-compose.projects.yml up -d
 
 # Start a profile-gated service (excluded from default up)
-docker-compose --profile minecraft up -d
-docker-compose --profile ollama up -d
+docker compose --profile minecraft up -d
+docker compose --profile ollama up -d
 
 # Restart a single service
-docker-compose restart shopware
+docker compose restart shopware
 
 # Follow logs
-docker-compose logs -f
+docker compose logs -f
 
 # Reload Caddy config
 systemctl reload caddy
@@ -114,7 +114,7 @@ tools/shopware/print-cost/print-cost.sh MODEL.stl...
 ```
 
 The scripts reach Compose through `tools/compose.sh`, which prefers the v2 plugin `docker compose`
-and falls back to `docker-compose` v1, the version the host runs. See
+and falls back to `docker-compose` v1 where the plugin is missing. See
 [docs/maintenance.md](docs/maintenance.md#compose-version).
 
 ## Monitoring

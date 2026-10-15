@@ -43,7 +43,7 @@ echo -n '<token>' | argon2 "$(openssl rand -base64 32)" -e -id -k 65540 -t 3 -p 
 # 3. put hash in /opt/docker/.env, single-quoted (contains $):
 #    VAULTWARDEN_ADMIN_TOKEN='$argon2id$...'
 # 4. recreate container
-cd /opt/docker && docker-compose up -d vaultwarden
+cd /opt/docker && docker compose up -d vaultwarden
 ```
 
 ## The testing image, used briefly on 2026-09-07
@@ -114,9 +114,9 @@ docker pull vaultwarden/server:testing
 docker image inspect -f '{{index .RepoDigests 0}}' vaultwarden/server:testing
 # put that digest in docker-compose.yml AND in IMAGE= in monitoring/vaultwarden-autoupdate.sh,
 # otherwise the daily job compares the wrong image
-cd /opt/docker && docker-compose stop vaultwarden \
+cd /opt/docker && docker compose stop vaultwarden \
   && cp -a vaultwarden-data "vaultwarden-data.bak-$(date +%Y%m%d-%H%M)" \
-  && docker-compose pull vaultwarden && docker-compose up -d vaultwarden
+  && docker compose pull vaultwarden && docker compose up -d vaultwarden
 ```
 
 ## Client compatibility — keep the server current
@@ -158,10 +158,10 @@ curl -sS https://api.github.com/repos/dani-garcia/vaultwarden/releases/latest | 
 
 # 3. Snapshot, then update. Migrations are forward-only, the snapshot is the only way back.
 ssh root@sdwa5.org 'cd /opt/docker \
-  && docker-compose stop vaultwarden \
+  && docker compose stop vaultwarden \
   && cp -a vaultwarden-data "vaultwarden-data.bak-$(date +%Y%m%d-%H%M)" \
-  && docker-compose pull vaultwarden \
-  && docker-compose up -d vaultwarden'
+  && docker compose pull vaultwarden \
+  && docker compose up -d vaultwarden'
 
 # 4. In the client: restart the browser, then log out and log back in.
 #    A stale session can survive a server version jump.

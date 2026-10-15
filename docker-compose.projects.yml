@@ -113,7 +113,7 @@ services:
     container_name: chimodiazz_shopware
     # Profile-gated on purpose. As of 2026-09-15 chimodiazz/website has no
     # deployable application yet, so this service is defined but must not start:
-    # a bare `docker-compose -f docker-compose.projects.yml up -d` would otherwise
+    # a bare `docker compose -f docker-compose.projects.yml up -d` would otherwise
     # bring up an empty shop with dockware's default credentials on a public
     # subdomain. Start it deliberately with `--profile chimodiazz` once the site
     # exists, and change those credentials in the same sitting.

@@ -30,7 +30,7 @@ services:
     # Exact pin. Verified 2026-06-23 tag, digest 85e59fb6, and it is what runs
     # today (Shopware 6.7.11.1, PHP 8.2.31). A Shopware update is therefore a
     # deliberate bump of this line. That is the point: nothing ever ran
-    # `docker-compose pull` for this service, so `:latest` gave neither updates
+    # `docker compose pull` for this service, so `:latest` gave neither updates
     # nor reproducibility.
     #
     # This comment used to justify the exact pin by claiming dockware publishes

@@ -149,9 +149,9 @@ to the configured value. It runs a throwaway container of the stopped service wi
 networking off, proves the new password with a root login and never prints it.
 
 ```bash
-docker-compose stop dolibarr_db
+docker compose stop dolibarr_db
 tools/mariadb/reset-root-password.sh dolibarr_db
-docker-compose up -d dolibarr_db
+docker compose up -d dolibarr_db
 ```
 
 ```bash

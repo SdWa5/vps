@@ -69,7 +69,7 @@ container, the same exact pin as the `sdwa5.org` instance. dockware bundles PHP,
 MySQL in one image, which is how Shopware already runs on this host, so both instances stay the same
 shape and a Shopware upgrade is one decision rather than two.
 
-It is gated behind `profiles: ["chimodiazz"]`. A bare `docker-compose -f docker-compose.projects.yml
+It is gated behind `profiles: ["chimodiazz"]`. A bare `docker compose -f docker-compose.projects.yml
 up -d` must not bring up an empty shop carrying dockware's default credentials on a public subdomain.
 
 Mounts:
@@ -145,7 +145,7 @@ Kept as a recipe, because the next Shopware instance on this host will need the 
 1. `git clone github-chimodiazz:chimodiazz/website.git /opt/docker/chimodiazz-src`
 2. Seed the two data directories from the image, as above. This is the step that is easy to skip and
    fails silently.
-3. `cd /opt/docker && docker-compose -f docker-compose.projects.yml --profile chimodiazz up -d chimodiazz_shopware`
+3. `cd /opt/docker && docker compose -f docker-compose.projects.yml --profile chimodiazz up -d chimodiazz_shopware`
 4. Rotate dockware's default administrator password **before** the public name points at it, and run
    `hardening/dockware-db-account.sh chimodiazz_shopware` so the shop stops using dockware's database
    root. See [infrastructure.md](infrastructure.md#database-accounts).

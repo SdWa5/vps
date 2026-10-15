@@ -59,11 +59,49 @@ docker image prune -a                 # remove images not used by any container
 data** (databases, uploads). Never blanket-prune volumes here. All persistent state lives in bind mounts
 under `/opt/docker/`, which Restic backs up daily — but restore is slower than not deleting.
 
+## Docker packages
+
+Docker comes from Docker's own apt repository since 2026-10-15, not from Debian. Debian 12's docker.io
+20.10.24 carried runc 1.1.5 and containerd 1.6.20, both behind the 2024 and 2025 container escape
+fixes, and Debian 13 would still ship runc 1.1.15.
+
+| Package | Version on 2026-10-15 |
+|---|---|
+| `docker-ce`, `docker-ce-cli` | 29.9.1 |
+| `containerd.io` | 2.4.2, bundles runc 1.5.2 |
+| `docker-compose-plugin` | 5.6.0 |
+
+The key is `/etc/apt/keyrings/docker.asc` (fingerprint `9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF
+CD88`) and the source is `/etc/apt/sources.list.d/docker.list`. The host has no gpg, so the key is
+stored armored. It was installed with `--no-install-recommends`, which leaves out buildx and the
+rootless extras, because nothing here builds images. `nftables` came in as a hard dependency, and its
+service stays disabled, because `/etc/nftables.conf` would flush the firewall at boot.
+
+unattended-upgrades covers only Debian origins, so Docker updates are manual. That is deliberate, because
+every daemon restart stops and restarts every container. Update in a quiet hour:
+
+```bash
+apt-get update && apt-get install --no-install-recommends docker-ce docker-ce-cli containerd.io docker-compose-plugin
+docker info --format '{{.ServerVersion}} {{.Driver}}'   # expect overlay2, the store the images live in
+systemctl restart sdwa5-firewall                         # Docker rebuilds its chains on start
+```
+
+The switch from docker.io took ca. 2 minutes of downtime on 2026-10-15. Both compose files went down
+first, then the packages were swapped, then the stack came back under Compose v2. overlay2 and every
+image survived the upgrade, and the containers were recreated because v2 labels them differently.
+
+`docker-compose.service` has `Requires=docker.service`. Stopping or upgrading Docker therefore stops
+the unit too, and its `ExecStop` runs `down` on the main stack, which removes those containers and
+networks. They come back with `systemctl start docker-compose.service`. docker-compose.projects.yml is
+not part of the unit and needs its own `up`.
+
 ## Compose version
 
-The host runs Compose v1, `docker-compose` 1.29.2 from Debian's docker.io, and the commands in these
-docs are written for it. docker-ce ships Compose v2 as the `docker compose` plugin and no
-`docker-compose` at all, so the scripts do not hard-code either.
+The host runs Compose v2, the `docker compose` plugin, and the commands in these docs are written for
+it. docker-compose v1 1.29.2 is still installed from Debian and still answers, but **do not run
+`docker-compose up` with it**. v1 and v2 label containers differently, so every `up` from the other
+version recreates every container.
+
 [`tools/compose.sh`](../tools/compose.sh) sets `DOCKER_COMPOSE` to `docker compose` where the plugin
 exists and to `docker-compose` otherwise, and `monitoring/lib.sh`, `tools/mariadb/reset-root-password.sh`
 and the boot unit use it. A `DOCKER_COMPOSE` set in the environment wins.
@@ -78,8 +116,8 @@ systemctl daemon-reload
 ```
 
 Compose v5.6.0 was checked against both compose files on 2026-10-15. It renders the same project,
-container and network names, warns only about the obsolete `version:` key, and its first `up` recreates
-every container once, because v1 and v2 label containers differently.
+container and network names and the same environment, ports, mounts and networks per service, and it
+warns only about the obsolete `version:` key.
 
 ## Log growth prevention
 
@@ -91,7 +129,7 @@ Log opts apply on container (re)creation, not to running containers:
 
 ```bash
 cd /opt/docker
-docker-compose up -d                                              # recreates changed services
+docker compose up -d                                              # recreates changed services
 docker inspect --format '{{.HostConfig.LogConfig}}' shopware      # expect: {json-file map[max-file:3 max-size:10m]}
 ```
 
@@ -102,7 +140,7 @@ be kept in step. To change the cap, edit both and recreate.
 ## Image versions
 
 Every image was on `:latest` until 2026-09-08, and only Vaultwarden was ever pulled. So `:latest`
-delivered neither updates nor reproducibility, and the real hazard was a `docker-compose pull` at some
+delivered neither updates nor reproducibility, and the real hazard was a `docker compose pull` at some
 future date crossing a major version under a live database. `mariadb:latest`, `lts`, `12` and `12.3`
 all pointed at the same digest when measured, so `latest` was 12.3 and would have followed to 13 on
 its own.
@@ -139,7 +177,7 @@ So after this change `up -d` recreates `dolibarr_db` alone. Check before running
 ```bash
 cd /opt/docker
 for s in shopware dolibarr dolibarr_cron dolibarr_db; do
-  cfg=$(docker-compose config | awk -v svc="  $s:" '$0==svc{f=1} f&&/image:/{print $2; exit}')
+  cfg=$(docker compose config | awk -v svc="  $s:" '$0==svc{f=1} f&&/image:/{print $2; exit}')
   run=$(docker inspect -f '{{.Image}}' "$s")
   want=$(docker image inspect -f '{{.Id}}' "$cfg" 2>/dev/null || echo not-local)
   echo "$s: $cfg recreate=$([ "$run" = "$want" ] && echo no || echo YES)"
@@ -153,7 +191,7 @@ cd /opt/docker
 # 1. Check what the new tag would be, and read that project's release notes.
 # 2. Edit the image line in docker-compose.yml.
 # 3. Back up first. Dolibarr and Shopware both migrate forward-only.
-docker-compose pull dolibarr
-docker-compose up -d dolibarr
-docker-compose logs --tail=50 dolibarr
+docker compose pull dolibarr
+docker compose up -d dolibarr
+docker compose logs --tail=50 dolibarr
 ```

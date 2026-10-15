@@ -3,10 +3,32 @@
 Bitwarden-compatible self-hosted password manager.
 
 - URL: https://vault.sdwa5.org
-- Admin panel: https://vault.sdwa5.org/admin
+- Admin panel: **not public**. Caddy answers `/admin` with 404 since 2026-10-15. Use the SSH
+  tunnel described under "Admin panel through the tunnel".
 - Admin token: `VAULTWARDEN_ADMIN_TOKEN` in `/opt/docker/.env` — Argon2 PHC hash, NOT plaintext.
   Plaintext token lives in the admins' password managers; log into `/admin` with the plaintext.
 - Data: `vaultwarden-data/`
+
+## Admin panel through the tunnel
+
+Vaultwarden listens on `127.0.0.1:8000` only, and Caddy blocks `/admin` for the public hostname. The
+panel is reached by forwarding that loopback port over SSH.
+
+```bash
+ssh -S none -N -L 8000:127.0.0.1:8000 root@sdwa5.org
+```
+
+Then open http://localhost:8000/admin and log in with the plaintext admin token. Browsers treat
+`localhost` as a secure context, so the admin cookie works over plain HTTP there. Ctrl+C on the SSH
+command closes the tunnel.
+
+`-S none` matters when `ControlMaster` is set in the SSH config. Without it the command hands the
+forward to the running master connection and exits at once, and the port stays open until the
+master ends, which with `ControlPersist` can be minutes after the terminal was closed. A forward
+added that way is closed with `ssh -O cancel -L 8000:127.0.0.1:8000 root@sdwa5.org`.
+
+Tested 2026-10-15 through the tunnel before the public block went live. Without the cookie
+`/admin/users/overview` answered 401, and after the token login it answered 200 with the user list.
 
 ## Admin token rotation
 
@@ -420,7 +442,7 @@ below rather than assuming the vault is damaged and rolling anything back.
 
 The admin token's plaintext is documented at the top of this file as living "in the admins' password
 managers", and the password manager is this vault. If the vault is unreachable or the master password
-is lost, `/admin` is unreachable with it. The recovery path is the offline export from step 1 plus a
+is lost, `/admin` is unreachable with it, through the tunnel or otherwise. The recovery path is the offline export from step 1 plus a
 restic restore of `vaultwarden-data/`, both of which have to exist before they are needed. Nothing
 else closes the loop today.
 

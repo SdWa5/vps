@@ -65,9 +65,9 @@
        Open:
         - Whether Egitlweg 6 is a pick-up place.
         - SKRAM licensing. The model is built from Josh Ricci's CAD, and his package states no terms. A mail
-          asking him was drafted on 2026-10-15. It goes through jwsound.live/contact with a request to forward it,
-          because data-bass.com/contact is broken. The same question applies to the public `meshes/skram.stl` in
-          `SdWa5/3d`. Stefan sends the mail himself, because the contact form has a reCAPTCHA.
+          asking him went out through the jwsound.live contact form on 2026-10-15, with a request to
+          forward it, and the answer is pending. The same question applies to the public `meshes/skram.stl` in
+          `SdWa5/3d`.
 7. Checkout end-to-end test — no real order flow tested yet
    (deferred — not selling products yet)
 8. SEO — **the sitemap is fine and regenerating again.** Re-measured 2026-09-08: it exists at

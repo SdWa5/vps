@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.65.1] - 2026-10-15
+
+### Changed
+
+- `docs/shopware/merch.md`: list prices of the print models, €5,00 and €8,00.
+- `docs/shopware/TODO.md`: item 6.5 with the set list prices and the proposed rig set.
+
 ## [1.65.0] - 2026-10-15
 
 ### Added

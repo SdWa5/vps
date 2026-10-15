@@ -441,6 +441,17 @@ inbound    ping 3/3, 0% loss, 58 ms
 inbound    ssh -6 root@2a02:c206:3015:7801::1 logs in
 ```
 
+**The address is static and comes from [`hardening/netplan/60-ipv6.yaml`](../hardening/netplan/60-ipv6.yaml).**
+Contabo serves neither DHCPv6 nor router advertisements. At the first Debian 13 boot on 2026-10-15
+cloud-init ran despite `/etc/cloud/cloud-init.disabled`, rewrote `50-cloud-init.yaml` to `dhcp4` plus
+`dhcp6` and dropped the static address, so eth0 had link-local only and every IPv6 probe timed out until
+2026-10-16. The separate file survives such a rewrite, and
+[`hardening/cloud-init/99-disable-network-config.cfg`](../hardening/cloud-init/99-disable-network-config.cfg)
+stops cloud-init from rendering network config at all. Deploy both, then
+`netplan generate && networkctl reload && networkctl reconfigure eth0`, which touches eth0 only and
+leaves Docker's bridges alone. On 2026-10-16 the address and route were up at once, but replies from
+outside started ca. 2 minutes later, so wait before calling a fresh IPv6 setup broken.
+
 `curl -6 https://[2a02:...]/` returns `000` and that is **not** a network failure. A literal-IP URL
 sends no SNI and Caddy closes the handshake, which is correct behaviour.
 

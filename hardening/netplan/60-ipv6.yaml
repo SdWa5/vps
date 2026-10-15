@@ -1,0 +1,19 @@
+# Static IPv6 for eth0, deployed to /etc/netplan/60-ipv6.yaml with mode 600.
+#
+# Contabo assigns the address statically and serves neither DHCPv6 nor router advertisements, so the
+# dhcp6 that cloud-init writes into 50-cloud-init.yaml leaves eth0 with link-local only. That happened
+# at the first Debian 13 boot on 2026-10-15, when cloud-init rewrote 50-cloud-init.yaml and dropped the
+# static address. This file sorts after it, netplan merges the two by the eth0 key, and a later rewrite
+# of 50-cloud-init.yaml no longer removes IPv6. Apply with `netplan apply`.
+network:
+  version: 2
+  ethernets:
+    eth0:
+      dhcp6: false
+      accept-ra: false
+      addresses:
+        - "2a02:c206:3015:7801::1/64"
+      routes:
+        - to: "::/0"
+          via: "fe80::1"
+          on-link: true

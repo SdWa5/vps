@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.73.2] - 2026-10-16
+
+### Fixed
+
+- IPv6 is back: `hardening/netplan/60-ipv6.yaml` restores the static address and route that cloud-init
+  dropped at the first Debian 13 boot on 2026-10-15, deployed and verified inbound and outbound.
+
+### Added
+
+- `hardening/cloud-init/99-disable-network-config.cfg`, so cloud-init no longer renders network config.
+
+### Changed
+
+- `docs/ssh-hardening.md`, `docs/maintenance.md` and README describe the static IPv6 setup and the missed
+  cloud-init leftover of the Debian 13 upgrade.
+
 ## [1.73.1] - 2026-10-16
 
 ### Changed

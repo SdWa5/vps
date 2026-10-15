@@ -401,7 +401,10 @@ credentials or full container environments.
 6. Two leftovers broke on the first Debian 13 boot. `/etc/cron.d/staticroute` had CRLF line endings
    that cron 3.0pl1-197 rejects with "bad minute"; convert it with `sed -i 's/\r$//'`. The old
    Bookworm `/etc/init.d/cloud-init`, an unmodified obsolete conffile, became a generated LSB unit
-   that hung for 5 minutes; move it out of `/etc/init.d` and `systemctl daemon-reload`.
+   that hung for 5 minutes; move it out of `/etc/init.d` and `systemctl daemon-reload`. A third one went
+   unnoticed until 2026-10-16: cloud-init still ran and rewrote the netplan file without the static IPv6
+   address. Deploy `hardening/netplan/60-ipv6.yaml` and `hardening/cloud-init/` before the reboot, and
+   check `ip -6 addr show dev eth0 scope global` after it.
 7. fail2ban 1.1 defaults to the nftables banaction on Debian 13. Deploy `hardening/fail2ban/jail.local`,
    which pins `iptables-multiport`, before judging the firewall check.
 

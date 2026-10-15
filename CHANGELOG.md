@@ -6,6 +6,43 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.71.4] - 2026-10-15
+
+### Changed
+
+- Production runs Dolibarr 23.0.4 on Debian 13 (trixie); README, infrastructure docs and the
+  maintenance runbook record the executed window.
+- The runbook keeps cron running across the reboot, since `/etc/cron.d/staticroute` sets the eth0
+  route `@reboot`, and holds the business jobs aside instead.
+- The runbook stops the dockware MySQL with SIGTERM to `mysqld`, because the containers ignore it.
+
+### Fixed
+
+- fail2ban pins `banaction = iptables-multiport`. Debian 13 defaults to nftables, which left
+  `vps-health.sh` reporting the `f2b-sshd` jump as missing.
+- The runbook covers the CRLF `staticroute` cron file and the obsolete `cloud-init` LSB script that
+  broke the first Debian 13 boot.
+
+## [1.71.3] - 2026-10-15
+
+### Added
+
+- An isolated Dolibarr upgrade rehearsal with independent migration checks, a full SQL restore,
+  old-image rollback and private evidence. Its default invocation changes nothing.
+- A combined Dolibarr and Debian maintenance runbook with write suspension, recovery gates and
+  explicit recovery of both Compose stacks after a Docker restart.
+
+### Changed
+
+- Prepare Dolibarr 23.0.4 for the web, cron and inactive project definitions. Production remains
+  on 23.0.2 until the approved maintenance window; inactive instances remain stopped.
+- Correct comments about the completed SQL restore drills and the current Compose plugin.
+
+### Fixed
+
+- Normalize three malformed inline comments in Dolibarr 23.0.4 SQL definitions before the official
+  entrypoint runs. The unmodified image produced MariaDB syntax errors during isolated migration.
+
 ## [1.71.2] - 2026-10-15
 
 ### Removed

@@ -37,6 +37,8 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt koalaman/shellcheck:stable -x \
     restic/backup.sh \
     hardening/firewall/sdwa5-firewall.sh \
     tools/dolibarr/deploy-module.sh \
+    tools/dolibarr/rehearse-upgrade.sh \
+    tools/dolibarr/entrypoint.sh \
     tools/dolibarr/doli.sh \
     tools/dolibarr/set-address.sh \
     tools/dolibarr/sync-pm.sh \

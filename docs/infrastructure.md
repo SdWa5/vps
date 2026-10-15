@@ -1,6 +1,6 @@
 # SdWa5 VPS Infrastructure
 
-Contabo VPS · Debian 12 (bookworm) · all services in `/opt/docker/`
+Contabo VPS · Debian 13 (trixie) · all services in `/opt/docker/`
 
 ## Overview diagram
 
@@ -8,7 +8,7 @@ Contabo VPS · Debian 12 (bookworm) · all services in `/opt/docker/`
 flowchart LR
     U((Internet))
 
-    subgraph vps ["Contabo VPS · Debian 12"]
+    subgraph vps ["Contabo VPS · Debian 13"]
         C["Caddy<br/>systemd · TLS via Let's Encrypt"]
 
         subgraph docker ["Docker · /opt/docker"]

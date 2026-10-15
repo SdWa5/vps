@@ -101,9 +101,11 @@ xclip -selection clipboard -o | ssh root@sdwa5.org 'install -m 0400 -o 1000 -g 1
 ```
 
 Adding a file needs no restart. Creating the directory after the containers started needs
-`docker compose up -d dolibarr dolibarr_cron`, because the bind mount resolves at container start.
-The VPS has only the standalone `docker-compose` v1 and no `docker compose` plugin. v1 recreates the
-linked `dolibarr_db` along with them, which took ca. 1 minute of ERP downtime on 2026-10-05.
+`docker compose up -d --no-deps dolibarr dolibarr_cron`, because the bind mount resolves at container
+start. The VPS uses Docker CE and the Compose plugin since 2026-10-15. The old standalone v1
+recreated the linked database too on 2026-10-05, causing ca. 1 minute of ERP downtime; avoid that
+dependency recreation with `--no-deps`. Image upgrades follow the
+[maintenance runbook](maintenance.md#sec-05-and-sec-25-maintenance-window).
 
 ## Project 2 + Project 3 instances
 

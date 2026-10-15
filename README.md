@@ -111,6 +111,9 @@ tools/dolibarr/sync-pm.sh
 # Install or update a Dolibarr custom module at a tag, on the VPS as root (see docs/dolibarr.md)
 tools/dolibarr/deploy-module.sh banksync https://github.com/SdWa5/banksync.git v1.0.0
 
+# Preview the isolated Dolibarr migration rehearsal without changing anything.
+bash tools/dolibarr/rehearse-upgrade.sh
+
 # Show which merch products a data file would create in the shop (--apply writes, see docs/shopware/merch.md)
 tools/shopware/create-products.sh tools/shopware/products/print-models.json
 # Bring the images of existing products in line with the data file
@@ -160,6 +163,10 @@ The Contabo console remains the fallback and is unaffected by any of it, because
 getty and PAM rather than sshd. See [docs/ssh-hardening.md](docs/ssh-hardening.md).
 
 ## Tests
+
+Production runs Dolibarr 23.0.4 on Debian 13 since 2026-10-15, deployed through the
+[SEC-05/SEC-25 maintenance runbook](docs/maintenance.md#sec-05-and-sec-25-maintenance-window).
+The inactive project definitions are updated without starting those services.
 
 ```bash
 tests/run.sh

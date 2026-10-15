@@ -148,7 +148,7 @@ its own.
 | Service | Tag | Why |
 |---|---|---|
 | `shopware` | `dockware/shopware:6.7.11.1` | Exact. dockware publishes no `6.7` series tag, so a pin here can only be exact. An update is a deliberate bump of the line |
-| `dolibarr`, `dolibarr_cron` | `dolibarr/dolibarr:23.0.2` | Exact. A Dolibarr minor upgrade runs forward-only database migrations, and no restore drill has been done yet. The `23` tag exists and would let 23.x move on its own, which is why it is not used |
+| `dolibarr`, `dolibarr_cron` | `dolibarr/dolibarr:23.0.4` proposed; production 23.0.2 before maintenance | Exact. SQL restore drills passed on 2026-10-15. Application migration and rollback still require their own rehearsal before deployment |
 | `dolibarr_db` and the project DBs | `mariadb:12.3` | Minor series. Patch updates inside 12.3 are safe and wanted; crossing a major version is the one-way door |
 | `vaultwarden` | `vaultwarden/server:latest` | Deliberately unpinned. [`monitoring/vaultwarden-autoupdate.sh`](../monitoring/vaultwarden-autoupdate.sh) pulls it daily and verifies the result, and a pin would silently freeze security updates for a password vault. See [vaultwarden.md](vaultwarden.md) |
 | `restic` | `creativeprojects/resticprofile:0.33.1-amd64` | Exact. Used only for the restic, rclone, crond and flock it ships; the schedule and the run are [`restic/`](../restic/). `latest` is rebuilt weekly and would move restic and rclone on its own. Until 2026-10-15 this was `lobaro/restic-backup-docker:latest`, frozen since 2021-05-05 at restic 0.12.0. A bump is followed by the [restore drill](backup.md#restore-drill) |
@@ -191,7 +191,222 @@ cd /opt/docker
 # 1. Check what the new tag would be, and read that project's release notes.
 # 2. Edit the image line in docker-compose.yml.
 # 3. Back up first. Dolibarr and Shopware both migrate forward-only.
-docker compose pull dolibarr
-docker compose up -d dolibarr
+docker compose pull dolibarr dolibarr_cron
+# For Dolibarr, follow the maintenance procedure below before starting either service.
 docker compose logs --tail=50 dolibarr
 ```
+
+## SEC-05 and SEC-25 maintenance window
+
+Executed on 2026-10-15 between 17:24 and 19:30. Production now runs Debian 13.7 with kernel
+6.12.111+deb13-cloud-amd64 and Dolibarr 23.0.4. The ERP was down ca. 10 minutes, all public sites
+ca. 1 hour 10 minutes. Every gate below passed, and the corrections the execution forced are written
+into the steps. The baseline before the window was Debian 12.15, kernel 6.1.0-53-cloud-amd64,
+Dolibarr 23.0.2, Docker CE 29.9.1 and Compose plugin 5.6.0. Caddy 2.11.7 already used the upstream
+repository and was not touched.
+
+Repeat it for the next major upgrade with these timings in mind. `apt full-upgrade` took ca. 25
+minutes, most of it regenerating all 509 locales enabled in `/etc/locale.gen`. The first boot of
+Debian 13 took 5 minutes because of the stale `cloud-init` LSB script described below.
+
+### Preparation evidence on 2026-10-15
+
+The isolated rehearsal passed with the version-specific comment normalization described below.
+The image and database reported 23.0.4, all four business-record counts matched, installation lock
+mode was 400, and external TCP egress was blocked. A fresh full dump imported and passed all table
+checks in a separate database. Restoring the original archive into an empty schema and starting
+the exact old image also passed. All seven production image IDs remained unchanged.
+
+The pulled target manifest is
+`sha256:89283ec0b936f7abbfe6eb881d155a8530a0d7431cb6e4a48d83f37ece36ccb7`.
+Both temporary Caddy candidates validated without activation. The isolated Trixie APT simulation
+proposed 428 package installations/upgrades and 25 removals. Twenty-four removed libraries have
+their corresponding t64 replacements; the remaining removal is `insserv`. Caddy stays unchanged,
+Docker CE/containerd/Compose retain their upstream versions with Trixie package suffixes, and no
+Debian Docker packages replace them. Active APT sources and installed packages were not changed.
+Refresh the simulation and review any changed result immediately before the actual upgrade.
+
+### Prepare and rehearse
+
+Pull only `dolibarr/dolibarr:23.0.4`. Record its digest and every running container's image ID.
+Retain the old ERP and database images. Do not prune images or pull other floating tags. Before a
+whole-stack recreation, compare cached image IDs to the running baseline. A database patch upgrade
+is a separate change. Do not start project2, project3, Minecraft or Ollama.
+
+```bash
+cd /opt/docker
+docker pull dolibarr/dolibarr:23.0.4
+DATABASE_BACKUP_CONTAINERS=dolibarr_db monitoring/database-backup.sh
+bash tools/dolibarr/rehearse-upgrade.sh                       # preview only
+bash tools/dolibarr/rehearse-upgrade.sh --apply database-backup/dolibarr_db.tar.gz
+```
+
+The applied rehearsal runs as root. It verifies the archive's database image against the running
+database, copies documents and custom modules, and imports the archive into an isolated database.
+The internal Docker network has no external egress. HTTP checks use the container's loopback through
+`docker exec`; no host port is published and no production credential mount is supplied. Native
+database events and the application cron stay off. Docker CE 29 discarded the published-port
+mapping on an internal network during the first rehearsal probe, so host-port readiness is not used.
+Scratch credentials travel through private files, not process arguments or terminal output.
+
+The stock 23.0.4 image reproduced three SQL syntax errors near `--ip used to create record`.
+The SQL parser removes inline comments only when whitespace follows `--`. The mounted
+`tools/dolibarr/entrypoint.sh` normalizes only those three comments, then executes the official
+entrypoint with its original command. It is idempotent and rejects changed definitions or another
+Dolibarr version. Review/remove it when upgrading the image again. The rehearsal uses the same
+wrapper as the proposed production definitions. Duplicate objects and already-completed DROP
+operations accepted by upstream are classified separately; syntax errors remain a failed gate.
+
+The gates require version 23.0.4 in the image and database, unchanged counts of users, third parties,
+invoices and bank entries, successful migration output without SQL/PHP errors, and installation lock
+mode 400. HTML output can be nonempty on success. An HTTP health check alone is insufficient.
+The helper then makes a full dump with routines/events/triggers, invokes the existing isolated
+restore check, and tests the old image against an empty schema restored from the original archive.
+It removes disposable containers, network and data on exit. A mode-700 evidence directory under
+`/var/tmp/sec05-evidence.*` retains the source archive, image IDs and private diagnostics. Treat it as
+sensitive backup material and keep it outside Git. No production container is stopped or changed.
+
+Prepare ERP-only and whole-host maintenance Caddy candidates from the current live configuration.
+Return HTTP 503 with `Retry-After` to ordinary clients. Permit loopback and a verified operator
+address through `remote_ip`, never a forwarded-header bypass. Keep all existing security blocks,
+headers and shop `header_up Host {host}` settings. Validate the candidates before installation.
+Preserve a private original and its checksum so the temporary guard can be removed exactly.
+
+### Apply the ERP patch
+
+After the user approves the window, install the validated ERP-only guard, then drain requests and
+stop both old application containers. The database stays running.
+
+```bash
+cd /opt/docker
+docker compose stop --timeout 120 dolibarr_cron dolibarr
+DATABASE_BACKUP_CONTAINERS=dolibarr_db monitoring/database-backup.sh
+monitoring/database-restore-check.sh dolibarr_db
+```
+
+Preserve the resulting archive under a distinct mode-600 filename in the root-only preparation
+directory. Also preserve documents, custom modules and their ownership. The rolling archive alone
+is insufficient because the next backup replaces it. Record original cron-job activation states.
+
+Deploy only the reviewed Compose changes. Remove the real installation lock only after both old
+application containers have stopped, then start the web service without recreating its database.
+
+```bash
+rm /opt/docker/dolibarr-documents-data/install.lock
+docker compose up -d --no-deps dolibarr
+```
+
+Repeat the independent rehearsal gates. Require image and database version 23.0.4, consistent
+business counts, a locked installer and clean migration output. Take another full dump and restore
+it successfully. A new foreign-key problem is a failed gate, not permission for an automatic repair.
+The user verifies admin login and BankSync access. Verify the read-only REST API and API-explorer
+404, then start `dolibarr_cron` with `--no-deps`. Observe ordinary scheduled-runner authentication
+and preserve job activation states. Do not force a financial import. The user performs the SMTP
+test and confirms mailbox receipt. Keep implicit TLS on port 465 unless separately validated.
+
+ERP rollback requires user authorization. Stop both application services, restore the application
+schema from the preserved archive into an empty schema, restore documents/custom modules and their
+ownership, and start both services with the preserved 23.0.2 image. Use the exact sequence proven
+in rehearsal. Never rely on the entrypoint's automatic-restore message or downgrade the image alone.
+
+### Establish the host recovery checkpoint
+
+Install the validated whole-host guard on the four public sites. Drain accepted requests and
+scheduled business work. Record active/enabled/masked states of cron, APT jobs and the Compose boot
+unit before changing them. **Do not mask `cron.service`.** `/etc/cron.d/staticroute` adds the eth0
+link route `@reboot`, so a masked cron boots the upgraded host without it. Move the business jobs
+out of `/etc/cron.d` into a root-only holding directory instead (`chimodiazz-*`, `database-backup`,
+`shopware-worker`, `vaultwarden-*`, `vps-health`) and keep `staticroute` and `e2scrub_all`. Mask the
+package-update timers/services for the window and disable automatic Compose startup across reboot. Stop application-internal schedulers as well.
+These restrictions must survive reboot, and their original state must be recoverable from the
+checkpoint. Keep Caddy available for the maintenance response and controlled operator probes.
+
+Create fresh complete dumps of all three SQL databases and the consistent Vaultwarden copy. Run
+all SQL restore checks and the documented Vaultwarden restore drill, then run restic and verify its
+new snapshot. Protect distinct pre-window archives against scheduled replacement. The backup job
+can exit successfully when another run holds its lock, so verify the archive timestamps too.
+
+```bash
+/opt/docker/monitoring/database-backup.sh
+/opt/docker/monitoring/vaultwarden-db-backup.sh
+/opt/docker/monitoring/database-restore-check.sh dolibarr_db
+/opt/docker/monitoring/database-restore-check.sh shopware
+/opt/docker/monitoring/database-restore-check.sh chimodiazz_shopware
+docker exec restic /bin/sh /opt/restic/backup.sh
+docker exec restic restic snapshots
+```
+
+Cleanly stop the active applications and databases with sufficient shutdown time. Confirm clean
+database shutdowns before taking the host snapshot. Stop the boot unit after the containers are
+already stopped so its `down` cannot interrupt database shutdown. That `down` removes the main
+stack's containers and networks; the data survives because every database is a bind mount.
+
+The dockware images ignore SIGTERM, so `docker stop` kills their internal MySQL after the timeout
+(exit 137) and leaves an unclean InnoDB. `service mysql stop` inside the container failed as well.
+What worked: find `mysqld` with `docker top <container> -eo pid,comm`, wait for a "ready for
+connections" line from the current start, send `kill -TERM <pid>` from the host, wait until the PID is
+gone and confirm "Shutdown complete" in `/var/log/mysql/error.log`, then stop the container. The user creates a Contabo
+snapshot and verifies that it is ready and can be restored. Do not proceed without this gate.
+This checkpoint includes Dolibarr 23.0.4 and the maintenance restrictions.
+
+Keep VNC off by default. Contabo's rescue environment provides SSH independently of the installed
+OS. Have the panel recovery instructions available before starting. Enable VNC if console access
+is actually needed. Its disable toggle hard-reset this VM on 2026-10-15; stop databases and power
+off cleanly before any such toggle. The user enters panel, rescue and console credentials directly.
+
+### Upgrade Debian
+
+Use `screen` and a second independent SSH connection with `ssh -S none`. Save package inventory,
+APT sources, network/route settings, SSH configuration, GRUB configuration and firewall baselines
+in the root-only preparation directory. Record all command output privately without printing
+credentials or full container environments.
+
+1. Finish Bookworm point updates. Add `/etc/cloud/cloud-init.disabled` before the upgraded boot.
+   Preserve the existing static netplan configuration, route and SSH hardening.
+2. Remove `bookworm-backports` from the upgrade sources. Switch the remaining Debian suites and
+   Docker's source to Trixie. Leave Caddy's upstream source unchanged. Keep backports disabled.
+3. Review APT simulations. Reject unexpected removals, replacement of Docker CE with `docker.io`,
+   and unrelated Caddy/Docker version changes. Then run the minimal upgrade followed by full upgrade.
+   Preserve modified conffiles with `--force-confdef --force-confold` and `UCF_FORCE_CONFFOLD=1`.
+4. Require a clean `dpkg --audit`, successful `sshd -t`, fresh key-based SSH login, the cloud-kernel
+   package and generated GRUB entry. Check `udevadm test-builtin net_setup_link /sys/class/net/eth0`,
+   fail2ban's SSH filter and `linux-sysctl-defaults`. Keep `nftables.service` disabled.
+5. Reboot. Verify Debian 13, its cloud kernel, IPv4/IPv6 and the static route, fresh SSH access,
+   boot logs, SSH effective settings and Caddy validation before application startup.
+6. Two leftovers broke on the first Debian 13 boot. `/etc/cron.d/staticroute` had CRLF line endings
+   that cron 3.0pl1-197 rejects with "bad minute"; convert it with `sed -i 's/\r$//'`. The old
+   Bookworm `/etc/init.d/cloud-init`, an unmodified obsolete conffile, became a generated LSB unit
+   that hung for 5 minutes; move it out of `/etc/init.d` and `systemctl daemon-reload`.
+7. fail2ban 1.1 defaults to the nftables banaction on Debian 13. Deploy `hardening/fail2ban/jail.local`,
+   which pins `iptables-multiport`, before judging the firewall check.
+
+Use `apt upgrade --without-new-pkgs` followed by `apt full-upgrade` after the reviewed source changes.
+Do not change sources and execute a blind noninteractive full upgrade in one unattended command.
+Docker packages remain from download.docker.com. Keep password and keyboard-interactive SSH
+authentication disabled; retain the existing root key-only policy.
+
+### Restore services and accept
+
+Start only the active application services with their captured image versions while public access
+and business schedulers remain restricted. Docker restart stops `docker-compose.service` because
+that unit requires Docker and its `ExecStop` runs `down`. Restoring the Docker daemon alone does not
+restore the whole stack. Start Chimo explicitly through its own Compose file and profile.
+Reapply `sdwa5-firewall` after the networks exist and verify the fail2ban jump afterwards.
+
+Before allowing new writes, verify both shops with their correct Host headers, shop administration
+and health endpoints, Vaultwarden `/api/config`, ERP login/API and all SEC-04 denial probes. Repeat
+the SEC-03 isolation matrix. Verify Caddy, certificates/HTTP3, INPUT/DOCKER-USER rules, cloud-init
+state, unit states and the independent SSH login. Compare results to the pre-window baseline.
+
+If a production gate fails, stop, preserve evidence and request the prepared rollback. Snapshot
+restoration returns Debian 12 with Dolibarr 23.0.4; restore the recorded scheduler and boot-unit
+states deliberately because the checkpoint contains maintenance restrictions. Once public writes
+or scheduled business work resume, snapshot restoration additionally needs explicit approval of
+the resulting data loss. Do not silently repair unrelated production issues.
+
+After the pre-resume gates pass, restore original cron/APT/boot-unit states, start the ERP cron and
+restic services, and remove the temporary Caddy guard. Verify all seven running containers, health
+checks where defined, ordinary scheduled work, fresh backups and `vps-health.sh --dry-run`.
+Keep rollback material until these checks pass. Defer autoremove and image pruning. Update the
+running-version documentation and close the SEC backlog entries only with actual acceptance
+evidence. No memory update is implicit in this procedure.

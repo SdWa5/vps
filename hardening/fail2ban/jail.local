@@ -15,6 +15,11 @@ bantime  = 1h
 findtime = 10m
 maxretry = 5
 
+# Debian 13 sets banaction = nftables in jail.d/defaults-debian.conf. Pinned to the
+# iptables f2b-sshd chain that sdwa5-firewall.sh re-adds and vps-health.sh checks.
+banaction          = iptables-multiport
+banaction_allports = iptables-allports
+
 # Repeat offenders escalate: 1h, 2h, 4h and so on, capped at one week.
 bantime.increment = true
 bantime.factor    = 2

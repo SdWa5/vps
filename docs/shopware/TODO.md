@@ -48,6 +48,15 @@
         - The legal wording for a binding prepaid sale with a later delivery date, which goes into
           the same AGB pass as item 12. Taking money for goods not yet ordered is the part a
           non-profit should get right on paper.
+    5. Print models (`SDWA5-MT-001` SdWa5 Top, `SDWA5-MS-001` SKRAM, both 1:12) are online but not orderable.
+       The name avoids "Tecnare", which is the maker's trademark. Three things are open before they can be
+       ordered.
+        - Price, list price and whether shipping is pick-up only.
+        - SKRAM licensing. The model is built from Josh Ricci's CAD, and his package states no terms. Ask him
+          before the SKRAM model is sold. The same question applies to the public `meshes/skram.stl` in
+          `SdWa5/3d`.
+        - A solo SKRAM photo. The product has only the rig photo, because the subs in it touch and no single
+          one could be cut out.
 7. Checkout end-to-end test — no real order flow tested yet
    (deferred — not selling products yet)
 8. SEO — **the sitemap is fine and regenerating again.** Re-measured 2026-09-08: it exists at

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.62.1] - 2026-10-15
+
+### Added
+
+- `docs/shopware/merch.md`: the print models SdWa5 Top and SKRAM at 1:12 with their estimated purchase prices and the basis of the estimate.
+- `docs/shopware/TODO.md`: item 6.5 with the open decisions for the print models.
+
 ## [1.62.0] - 2026-10-15
 
 ### Added

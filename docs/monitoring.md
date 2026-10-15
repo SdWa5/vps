@@ -299,13 +299,21 @@ directly in `monitoring/lib.sh`, which would have published it the moment the re
 so it moved to `.env` on 2026-09-08 with the effective recipient list unchanged. `.env` is
 gitignored.
 
-Mail goes out through `curl` to `smtps://smtp.gmail.com:465` as `MONITOR_SMTP_USER`, reusing the
-Gmail app password Vaultwarden already sends from. The local exim4 would deliver direct-to-MX from a
-Contabo address and land in Gmail's spam folder, which for an alerting channel is the same as not
-sending at all.
+Mail goes out through `curl` to the Google Workspace SMTP relay, `smtp-relay.gmail.com:587` with
+STARTTLS, and needs no credential. The local exim4 would deliver direct-to-MX from a Contabo address
+and land in Gmail's spam folder, which for an alerting channel is the same as not sending at all.
 
-The password is handed to `curl` through a config file on stdin, so it never appears in the process
-list.
+The relay is set in the Workspace Admin console under Apps, Google Workspace, Gmail, Routing, SMTP
+relay service (https://admin.google.com/ac/apps/gmail/routing), entry "Contabo VPS". It accepts only
+senders in the Workspace domains, only from the host's IPv4 and IPv6 addresses, without SMTP
+authentication and only over TLS. Measured on 2026-10-15: IPv4 and IPv6 with STARTTLS are accepted,
+plaintext is refused with 550. Both addresses are listed because `curl` on the host reaches the relay
+over IPv6 first, while containers leave through IPv4. Vaultwarden and the shop send through the same
+relay. A new host address has to be added there, or every sender fails with 550.
+
+Setting `MONITOR_SMTP_PASSWORD` switches to an authenticated login as `MONITOR_SMTP_USER`, for a
+server that needs one. The password is then handed to `curl` through a config file on stdin, so it
+never appears in the process list.
 
 ### Configuration
 
@@ -313,21 +321,13 @@ list.
 
 | Key | Default | Meaning |
 |-----|---------|---------|
-| `MONITOR_SMTP_PASSWORD` | — | required, Gmail app password for `MONITOR_SMTP_USER` |
-| `MONITOR_SMTP_USER` | `ripper@sdwa5.org` | SMTP login and envelope sender |
-| `MONITOR_SMTP_HOST` | `smtp.gmail.com` | |
-| `MONITOR_SMTP_PORT` | `465` | implicit TLS |
+| `MONITOR_SMTP_HOST` | `smtp-relay.gmail.com` | |
+| `MONITOR_SMTP_PORT` | `587` | STARTTLS; `465` switches to implicit TLS |
+| `MONITOR_SMTP_USER` | `ripper@sdwa5.org` | envelope sender, and the login when a password is set |
+| `MONITOR_SMTP_PASSWORD` | — | unset for the relay; set only for a server that needs a login |
 | `MONITOR_MAIL_TO` | `ripper@sdwa5.org` | space-separated; the host sets its own list in `.env` |
 
-Vaultwarden already holds the same app password. Copy it across without ever printing it:
-
-```bash
-python3 -c 'import json;print("MONITOR_SMTP_PASSWORD="+json.load(open("/opt/docker/vaultwarden-data/config.json"))["smtp_password"])' >> /opt/docker/.env
-chmod 600 /opt/docker/.env
-```
-
-Rotating the Gmail app password means updating it in both places, the Vaultwarden admin panel and
-`/opt/docker/.env`.
+`vps-health.sh --test-mail` sends one mail and reports whether the relay took it.
 
 ## SQL database backup monitoring
 

@@ -601,10 +601,15 @@ Container started." health
     [[ "$(mail_body)" == *"Monitoring test mail"* ]]
 }
 
-@test "a missing SMTP password fails loudly instead of silently dropping the alert" {
+@test "the test mail goes out through the relay without a password" {
     MONITOR_SMTP_PASSWORD="" health --test-mail
+    [ "$status" -eq 0 ]
+    [ "$(mail_count)" -eq 1 ]
+}
+
+@test "a refused delivery fails loudly instead of silently dropping the alert" {
+    STUB_MAIL_RC=55 health --test-mail
     [ "$status" -eq 1 ]
-    [ "$(mail_count)" -eq 0 ]
 }
 
 @test "an unknown option is rejected" {

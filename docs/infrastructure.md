@@ -121,7 +121,7 @@ unaffected, because it runs on the host and talks to the loopback publishes. A c
 another application's loopback publish through its gateway either, since those listen on `127.0.0.1`
 only. The host firewall no longer accepts the bridges in `INPUT`, so a container reaches the host on
 22, 80 and 443 only, the same as anyone on the internet. Nothing needed more. Mail goes to
-`smtp.gmail.com` or to the shop's own in-container mailcatcher, and DNS is Docker's embedded resolver.
+the Workspace relay `smtp-relay.gmail.com` or to the shop's own in-container mailcatcher, and DNS is Docker's embedded resolver.
 
 Every running service also drops `NET_RAW`, which takes away raw sockets and with them ARP and ICMP
 tricks on its bridge.

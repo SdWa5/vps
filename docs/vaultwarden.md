@@ -474,9 +474,10 @@ recorded inside the vault and deliberately not in this public file.
 
 ## Notes
 
-- SMTP is configured through the admin panel and stored in `vaultwarden-data/config.json`. It sends
-  as `vault@sdwa5.org` through `smtp.gmail.com` with a Workspace app password. The monitoring
-  scripts reuse the same credential, see [monitoring.md](monitoring.md).
+- SMTP is configured through the admin panel and stored in `vaultwarden-data/config.json`, which
+  overrides the Compose environment. It sends as `vault@sdwa5.org` through the Workspace relay
+  `smtp-relay.gmail.com:587` with STARTTLS and without a login, see [monitoring.md](monitoring.md)
+  for the relay's settings.
 - Users must be invited or registered via admin panel.
 - Signups are disabled (`signups_allowed: false`).
 - The container binds to `127.0.0.1:8000` only. Everything public goes through Caddy.

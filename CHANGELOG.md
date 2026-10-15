@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.59.8] - 2026-10-15
+
+### Changed
+
+- `docs/infrastructure.md`: swap layout and missing zswap re-verified on kernel 6.1.0-53.
+
 ## [1.59.7] - 2026-10-15
 
 ### Added

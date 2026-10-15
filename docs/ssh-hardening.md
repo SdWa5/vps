@@ -37,9 +37,9 @@ group with `(ALL : ALL) ALL`, had a password, and had no `authorized_keys` at al
 alone would have left it open, and the bots were already trying it 306 times a day.
 
 **A work key held sole root on the private server.** `authorized_keys` contained exactly one entry,
-an 8196-bit RSA key with the comment `sri@sri-VirtualBox`, which is a work key also used for
-`github.com` and `git.myndc.de`. A work credential should not be the way into the private box that
-carries the Vaultwarden vault, and the reverse exposure is just as unwanted.
+an 8196-bit RSA work key that is also used for `github.com` and the employer's Git server. A work
+credential should not be the way into the private box that carries the Vaultwarden vault, and the
+reverse exposure is just as unwanted.
 
 **The flood was also a partial denial of service.** With `MaxStartups 10:30:100`, sshd starts
 dropping new connections once ten sit in the pre-auth phase. Concurrency was at 30, the log showed

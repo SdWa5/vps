@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.59.5] - 2026-10-15
+
+### Changed
+
+- `docs/ssh-hardening.md` and the 1.x changelog entry describe the former work key without its
+  comment or the employer's Git host.
+
 ## [1.59.4] - 2026-10-15
 
 ### Changed
@@ -2136,10 +2143,10 @@ From the 2026-09-13 audit of all three repositories. The root repository's
 ### Changed
 
 - root's `authorized_keys` on the VPS holds one personal ed25519 key,
-  `SHA256:3r0Dk1tFl8W/iHyFC6rsOFbQ1JznqEeP5+06iYug0mA`, instead of the 8196-bit work RSA key
-  `sri@sri-VirtualBox` that was previously its only entry. That work key is also used for
-  `github.com` and `git.myndc.de`, and a work credential holding sole root on the private box that
-  carries the vault is a boundary problem in both directions. The old key is verified rejected.
+  `SHA256:3r0Dk1tFl8W/iHyFC6rsOFbQ1JznqEeP5+06iYug0mA`, instead of the 8196-bit work RSA key that
+  was previously its only entry. That work key is also used for `github.com` and the employer's Git
+  server, and a work credential holding sole root on the private box that carries the vault is a
+  boundary problem in both directions. The old key is verified rejected.
 
 ### Fixed
 

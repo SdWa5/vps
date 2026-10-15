@@ -114,6 +114,10 @@ tools/shopware/sync-production-cost.sh
 # Replace text in CMS slots or mail templates from an edits file (--apply writes, see docs/shopware/content-cms.md)
 tools/shopware/edit-slots.sh tools/shopware/slot-edits/hardware-m2122.json
 
+# Correct confirmation/cancellation copy and preview both languages without sending mail
+tools/shopware/edit-slots.sh tools/shopware/slot-edits/order-mail-copy.json
+tools/shopware/check-order-mail.sh ORDER_ID
+
 # Turn product photos into cutout, white, light and dark shop images (Docker)
 tools/shopware/images/shop-images.sh run tools/shopware/images/print-models.jobs PHOTO_DIR OUT_DIR
 

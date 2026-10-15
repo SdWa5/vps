@@ -182,10 +182,10 @@ mail_setup() {
 
 @test "a mail template edit with an unknown field stops the run before any request" {
     mail_setup
-    jq '.edits[0].field = "subject"' "$EDITS" > "$EDITS.new" && mv "$EDITS.new" "$EDITS"
+    jq '.edits[0].field = "description"' "$EDITS" > "$EDITS.new" && mv "$EDITS.new" "$EDITS"
     edit_slots "$EDITS" --apply
     [ "$status" -ne 0 ]
-    [[ "$output" == *"contentHtml or contentPlain"* ]]
+    [[ "$output" == *"subject or senderName"* ]]
     [ ! -s "$STUB_SW_LOG" ]
 }
 
@@ -214,4 +214,33 @@ mail_setup() {
         and all(.new | contains("unitPrice == 0") and contains("listPrice") and contains("{% endif %}"))' "$f"
     [ "$status" -eq 0 ]
     [ "$(jq -r '[.edits[].field] | sort | join(" ")' "$f")" = "contentHtml contentHtml contentPlain contentPlain" ]
+}
+
+@test "mail subjects and senders are edited together without changing either body" {
+    mail_setup
+    jq '.data[0] += {subject: "New document", senderName: "Storefront"}' \
+        "$STUB_SW_DIR/_api_search_mail-template-translation" > "$STUB_SW_DIR/m"
+    mv "$STUB_SW_DIR/m" "$STUB_SW_DIR/_api_search_mail-template-translation"
+    jq '.edits = [
+        {label: "subject", target: "mail-template", template: "tpl1", field: "subject", lang: "en",
+         old: "New document", new: "Order cancelled"},
+        {label: "sender", target: "mail-template", template: "tpl1", field: "senderName", lang: "en",
+         old: "Storefront", new: "SdWa5"}
+    ]' "$EDITS" > "$EDITS.new" && mv "$EDITS.new" "$EDITS"
+    edit_slots "$EDITS" --apply
+    [ "$status" -eq 0 ]
+    [ "$(count '^PATCH /api/mail-template/tpl1 ')" -eq 1 ]
+    body="$(grep '^PATCH /api/mail-template/tpl1 ' "$STUB_SW_LOG" | sed 's|^PATCH /api/mail-template/tpl1 ||')"
+    [ "$(jq -r .subject <<<"$body")" = "Order cancelled" ]
+    [ "$(jq -r .senderName <<<"$body")" = "SdWa5" ]
+    [ "$(jq -r .contentHtml <<<"$body")" = "<p>Hi</p><strong>Your order:</strong>" ]
+    [ "$(jq -r .contentPlain <<<"$body")" = "$(printf 'Hi\n\nYour order:')" ]
+
+    jq --argjson body "$body" '.data[0] += $body' "$STUB_SW_DIR/_api_search_mail-template-translation" \
+        > "$STUB_SW_DIR/m" && mv "$STUB_SW_DIR/m" "$STUB_SW_DIR/_api_search_mail-template-translation"
+    : > "$STUB_SW_LOG"
+    edit_slots "$EDITS" --apply
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"0 changed, 2 already current."* ]]
+    [ "$(count '^PATCH ')" -eq 0 ]
 }

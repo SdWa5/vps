@@ -3,7 +3,11 @@
 - Docker: dockware image, ports 8001 (HTTP) / 8443 (HTTPS), reverse-proxied via **Caddy**, not nginx.
   See [../caddy.md](../caddy.md)
 - Volume: `./shopware-html-data:/var/www/html`, `./shopware-mysql-data:/var/lib/mysql`
-- APP_URL: `https://sdwa5.org` (set in `/opt/docker/shopware-html-data/.env`)
+- APP_URL: `https://sdwa5.org`. Keep it in `/opt/docker/shopware-html-data/.env.local`, because
+  Dockware's `/var/www/scripts/shopware6/update_domain.sh` rewrites `.env` to HTTP on startup.
+  FPM clears inherited environment variables, so the Compose variable alone does not cover web requests.
+  On 2026-10-15 HTTP in FPM triggered `ShopIdChangeSuggestedException` in the cart while the CLI check
+  passed with HTTPS. The `.env.local` override restored HTTP 200 in EN/DE and the existing shop ID was kept.
 - DockwareSamplePlugin: uninstalled
 - `composer.json`/`.lock`, `symfony.lock` and `config/{packages,routes*,services.yaml,bundles.php}` are tracked
   in the repo (everything else in `shopware-html-data/` — `.env`, `var/`, `vendor/`, `public/`, `files/`,

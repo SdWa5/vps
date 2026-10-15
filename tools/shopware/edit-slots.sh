@@ -7,7 +7,7 @@
 # The old text has to occur exactly once in that slot's content, so an edit
 # never lands in the wrong table row. An edit with "target": "mail-template"
 # names a mail template id in `template` and the field it changes in `field`,
-# contentHtml or contentPlain, instead of a slot. An edit whose old text is gone and whose
+# contentHtml, contentPlain, subject or senderName, instead of a slot. An edit whose old text is gone and whose
 # new text is present counts as already done, so a second run is a no-op.
 #
 # Every edit is checked before anything is written. A typo in the last edit
@@ -63,9 +63,9 @@ jq -e '.edits | all(has("lang") and (.old | type == "string" and length > 0) and
     "$EDITS" >/dev/null || die "every edit needs slot, lang, a non-empty old and a new text"
 jq -e '.edits | all((.target // "cms-slot") as $t
         | if $t == "cms-slot" then has("slot")
-          elif $t == "mail-template" then has("template") and (.field == "contentHtml" or .field == "contentPlain")
+          elif $t == "mail-template" then has("template") and (.field == "contentHtml" or .field == "contentPlain" or .field == "subject" or .field == "senderName")
           else false end)' "$EDITS" >/dev/null \
-    || die "every edit needs a slot, or target mail-template with a template and field contentHtml or contentPlain"
+    || die "every edit needs a slot, or target mail-template with a template and field contentHtml, contentPlain, subject or senderName"
 
 # The edits with `lang` resolved to an id, the target and label defaulted, and
 # the entity id and the field named the same way for both targets.
@@ -96,10 +96,11 @@ if jq -e 'any(.target == "mail-template")' <<<"$RESOLVED" >/dev/null; then
     found="$(sw_api POST /search/mail-template-translation "$(jq -c '{
         limit: 500,
         filter: [{type: "equalsAny", field: "mailTemplateId", value: ([.[] | select(.target == "mail-template") | .id] | unique)}],
-        includes: {mail_template_translation: ["mailTemplateId", "languageId", "contentHtml", "contentPlain"]}}' <<<"$RESOLVED")")"
+        includes: {mail_template_translation: ["mailTemplateId", "languageId", "contentHtml", "contentPlain", "subject", "senderName"]}}' <<<"$RESOLVED")")"
     jq -e '.data | type == "array"' <<<"$found" >/dev/null 2>&1 || die "mail template search failed: $found"
     ROWS="$(jq -c --argjson f "$found" '. + [$f.data[] | {target: "mail-template", id: .mailTemplateId, lang: .languageId,
-        values: {contentHtml: (.contentHtml // ""), contentPlain: (.contentPlain // "")}}]' <<<"$ROWS")"
+        values: {contentHtml: (.contentHtml // ""), contentPlain: (.contentPlain // ""),
+                 subject: (.subject // ""), senderName: (.senderName // "")}}]' <<<"$ROWS")"
 fi
 
 # Pass 1 builds one write per entity and language, and dies on the first edit

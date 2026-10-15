@@ -15,6 +15,7 @@
     {
       "productNumber": "SDWA5-MT-001",
       "purchasePrice": 1.75,
+      "listPrice": 5,
       "weightKg": 0.033,
       "dimensionsMm": {
         "width": 41,
@@ -41,6 +42,7 @@
     {
       "productNumber": "SDWA5-MS-001",
       "purchasePrice": 2.77,
+      "listPrice": 8,
       "weightKg": 0.056,
       "dimensionsMm": {
         "width": 52,
@@ -58,6 +60,29 @@
       "description": {
         "en": "<p>A scale model of one of our self-built SKRAM subwoofers at 1:12. It measures about 5.2 × 7.7 × 6.8 cm and is 3D printed in PLA, with the vent array of its horn mouth and the 21\" driver behind it.</p><p>The SKRAM is a design by Josh Ricci, and the model is built from his CAD. Our 3D models of the SdWa5 PA are published at <a href=\"https://github.com/SdWa5/3d\">github.com/SdWa5/3d</a>.</p>",
         "de": "<p>Ein Maßstabsmodell eines unserer selbstgebauten SKRAM-Subwoofer im Maßstab 1:12. Es misst etwa 5,2 × 7,7 × 6,8 cm und ist aus PLA 3D-gedruckt, mit dem Gitter seiner Hornöffnung und dem 21-Zoll-Treiber dahinter.</p><p>Der SKRAM ist ein Entwurf von Josh Ricci, und das Modell ist aus seinem CAD gebaut. Unsere 3D-Modelle der SdWa5-PA sind unter <a href=\"https://github.com/SdWa5/3d\">github.com/SdWa5/3d</a> veröffentlicht.</p>"
+      }
+    },
+    {
+      "productNumber": "SDWA5-MR-001",
+      "purchasePrice": 19.1,
+      "listPrice": 45,
+      "weightKg": 0.379,
+      "dimensionsMm": {
+        "width": 260,
+        "height": 157,
+        "length": 68
+      },
+      "media": [
+        "media/sdwa5-print-model-rig-set-light.jpg",
+        "media/sdwa5-print-model-rig-set-dark.jpg"
+      ],
+      "name": {
+        "en": "SdWa5 Rig Model Set 1:12",
+        "de": "SdWa5 Rig-Modellset 1:12"
+      },
+      "description": {
+        "en": "<p>A set of scale models of our PA at 1:12: five SKRAM subwoofers and three tops, enough to build the rig in the picture. Side by side the subs measure about 26 cm across, and the set is 3D printed in PLA.</p><p>The SKRAM is a design by Josh Ricci, and its model is built from his CAD. The tops come from our open 3D models of the SdWa5 PA, which are published at <a href=\"https://github.com/SdWa5/3d\">github.com/SdWa5/3d</a>. Sepp printed them on an Anycubic Kobra 3 Max.</p>",
+        "de": "<p>Ein Set aus Maßstabsmodellen unserer PA im Maßstab 1:12: fünf SKRAM-Subwoofer und drei Tops, genug für das Rig im Bild. Nebeneinander messen die Subs etwa 26 cm, und das Set ist aus PLA 3D-gedruckt.</p><p>Der SKRAM ist ein Entwurf von Josh Ricci, und sein Modell ist aus seinem CAD gebaut. Die Tops stammen aus unseren offenen 3D-Modellen der SdWa5-PA, die unter <a href=\"https://github.com/SdWa5/3d\">github.com/SdWa5/3d</a> veröffentlicht sind. Sepp hat sie auf einem Anycubic Kobra 3 Max gedruckt.</p>"
       }
     }
   ]

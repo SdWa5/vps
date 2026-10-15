@@ -25,7 +25,8 @@
 #
 # DATA.json holds the shop ids once (taxId, currencyId, salesChannelId,
 # mediaFolderId, categoryIds, languages.en, languages.de) and a products array.
-# Each product has productNumber, purchasePrice, weightKg, dimensionsMm
+# Each product has productNumber, purchasePrice, an optional listPrice (shown
+# crossed out next to the price of 0), weightKg, dimensionsMm
 # {width,height,length}, media (paths relative to the data file), and name and
 # description keyed en and de. tools/shopware/products/print-models.json is
 # the worked example.
@@ -108,7 +109,9 @@ product_payload() {
         | {
             id: $pid, productNumber: $p.productNumber, active: true, stock: 0, isCloseout: true,
             taxId: $c.taxId,
-            price: [{currencyId: $c.currencyId, net: 0, gross: 0, linked: true}],
+            price: [{currencyId: $c.currencyId, net: 0, gross: 0, linked: true}
+                + (if $p.listPrice then {listPrice: {currencyId: $c.currencyId, net: $p.listPrice,
+                    gross: $p.listPrice, linked: true}} else {} end)],
             purchasePrices: [{currencyId: $c.currencyId, net: $p.purchasePrice, gross: $p.purchasePrice, linked: true}],
             weight: $p.weightKg, width: $p.dimensionsMm.width, height: $p.dimensionsMm.height,
             length: $p.dimensionsMm.length,

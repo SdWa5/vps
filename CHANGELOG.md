@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.66.0] - 2026-10-15
+
+### Added
+
+- `create-products.sh` sends an optional `listPrice`, shown crossed out next to the price of 0.
+- Print model `SDWA5-MR-001`, a rig set of 5 SKRAM and 3 tops at a list price of €45,00, with its image job.
+
+### Changed
+
+- The top and SKRAM print models carry their list prices of €5,00 and €8,00 in `print-models.json`.
+- `merch.md` and TODO 6.5 record the rig set, and the Ricci mail goes through jwsound.live/contact.
+
 ## [1.65.1] - 2026-10-15
 
 ### Changed

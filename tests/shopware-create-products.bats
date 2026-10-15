@@ -96,6 +96,13 @@ count() {
     [ "$(jq -r '.visibilities[0].salesChannelId' <<<"$body")" = "sc1" ]
     [ "$(jq -r '.translations["lang-de"].name' <<<"$body")" = "Beispiel Eins" ]
     [ "$(jq -c '[.weight, .width, .height, .length]' <<<"$body")" = '[0.033,41,80,43]' ]
+    [ "$(jq -c '.price[0].listPrice' <<<"$body")" = 'null' ]
+}
+
+@test "a list price is sent crossed out next to the price of 0" {
+    jq '.products[0].listPrice = 5' "$DATA_DIR/products.json" > "$DATA_DIR/p.json" && mv "$DATA_DIR/p.json" "$DATA_DIR/products.json"
+    create_products "$DATA_DIR/products.json" --apply
+    [ "$(jq -c '.price[0] | [.gross, .listPrice.gross, .listPrice.net, .listPrice.currencyId]' <<<"$(product_body 1)")" = '[0,5,5,"eur1"]' ]
 }
 
 @test "the first image becomes the cover, in the order of the data file" {
@@ -136,7 +143,7 @@ count() {
 @test "the shipped print-model data names existing images and no trademark" {
     create_products "$REPO_ROOT/tools/shopware/products/print-models.json"
     [ "$status" -eq 0 ]
-    [[ "$output" == *"would create 2, skipped 0"* ]]
+    [[ "$output" == *"would create 3, skipped 0"* ]]
     run grep -ci tecnare "$REPO_ROOT/tools/shopware/products/print-models.json"
     [ "$output" = "0" ]
 }

@@ -17,8 +17,10 @@ maxretry = 5
 
 # Debian 13 sets banaction = nftables in jail.d/defaults-debian.conf. Pinned to the
 # iptables f2b-sshd chain that sdwa5-firewall.sh re-adds and vps-health.sh checks.
-banaction          = iptables-multiport
-banaction_allports = iptables-allports
+# fail2ban 1.1 creates that chain only on the first ban unless actionstart_on_demand is
+# off, which left the jump absent and vps-health on CRIT after every restart.
+banaction          = iptables-multiport[actionstart_on_demand=false]
+banaction_allports = iptables-allports[actionstart_on_demand=false]
 
 # Repeat offenders escalate: 1h, 2h, 4h and so on, capped at one week.
 bantime.increment = true

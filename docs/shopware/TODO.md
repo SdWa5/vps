@@ -50,10 +50,18 @@
           the same AGB pass as item 12. Taking money for goods not yet ordered is the part a
           non-profit should get right on paper.
     5. Print models (`SDWA5-MT-001` SdWa5 Top, `SDWA5-MS-001` SKRAM, both 1:12) are online but not orderable.
-       The name avoids "Tecnare", which is the maker's trademark. Three things are open before they can be
-       ordered.
-        - Price, list price and whether shipping is pick-up only.
-        - SKRAM licensing. The model is built from Josh Ricci's CAD, and his package states no terms. Ask him
+       The name avoids "Tecnare", which is the maker's trademark. Decided on 2026-10-15:
+        - Orders open once the models are finished, which means the price is set, pick-up is set up and the
+          SKRAM licence is answered.
+        - Pick-up only at first, at our events and possibly at Egitlweg 6. The shipping method
+          `Self Pickup at Event` exists. Standard and Express have to be switched off or ruled out for these
+          products before orders open.
+
+       Open:
+        - List price. Proposed €5,00 for the top and €8,00 for the SKRAM, about three times the cost, as for the
+          keychain.
+        - Whether Egitlweg 6 is a pick-up place.
+        - SKRAM licensing. A mail to Josh Ricci was drafted on 2026-10-15. The model is built from Josh Ricci's CAD, and his package states no terms. Ask him
           before the SKRAM model is sold. The same question applies to the public `meshes/skram.stl` in
           `SdWa5/3d`.
         - A solo SKRAM photo. The product has only the rig photo, because the subs in it touch and no single

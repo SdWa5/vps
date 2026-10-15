@@ -1,0 +1,50 @@
+{
+  "languages": {
+    "en": "2fbb5fe2e29a4d70aa5854ce7ce3e20b",
+    "de": "019c36d736207216a1f1d943de40f765"
+  },
+  "edits": [
+    {
+      "label": "Hardware, M2122 row, de",
+      "slot": "019f1428799a725d97adfa374688c8d5",
+      "lang": "de",
+      "old": "<tr><td>L2122 (custom L2122LT)</td><td>Tecnare</td><td>3</td><td>Horn 2-Wege-Top</td><td>150–20000</td><td>1450</td><td>—</td><td>18Sound 12NMB1000 ×2 + PRV Audio D280Ti-B + D4400Ti-Nd</td></tr>",
+      "new": "<tr><td>M2122</td><td>Tecnare / SdWa5</td><td>3 (2 Original, 1 Eigenbau)</td><td>3-Wege-Horn-Top mit 5 Treibern; Mittel- und Hochton über passive Weiche, daher 2 Verstärkerkanäle</td><td>150–20000</td><td>1560</td><td>—</td><td>18Sound 12NMB1000 ×2 (Tiefton) + PRV Audio D4400Ti-Nd (Mittelton) + D280Ti-B ×2 (Hochton)</td></tr>"
+    },
+    {
+      "label": "Hardware, M2122 row, en",
+      "slot": "019f1428799a725d97adfa374688c8d5",
+      "lang": "en",
+      "old": "<tr><td>L2122 (custom L2122LT)</td><td>Tecnare</td><td>3</td><td>Horn 2-way top</td><td>150–20000</td><td>1450</td><td>—</td><td>18Sound 12NMB1000 ×2 + PRV Audio D280Ti-B + D4400Ti-Nd</td></tr>",
+      "new": "<tr><td>M2122</td><td>Tecnare / SdWa5</td><td>3 (2 original, 1 self-built)</td><td>3-way horn top with 5 drivers; MF and HF on a passive crossover, so 2 amp channels</td><td>150–20000</td><td>1560</td><td>—</td><td>18Sound 12NMB1000 ×2 (LF) + PRV Audio D4400Ti-Nd (MF) + D280Ti-B ×2 (HF)</td></tr>"
+    },
+    {
+      "label": "Hardware, active configuration, MF+HF channel, de",
+      "slot": "019f14287889719aaa533225b8a2d1f9",
+      "lang": "de",
+      "old": "<td>Tecnare Horn (Hochton, ×1/Seite)</td><td>2500–20000</td><td>250</td>",
+      "new": "<td>Tecnare Horn (Mittel- und Hochton über passive Weiche, ×1/Seite)</td><td>2500–20000</td><td>360</td>"
+    },
+    {
+      "label": "Hardware, active configuration, MF+HF channel, en",
+      "slot": "019f14287889719aaa533225b8a2d1f9",
+      "lang": "en",
+      "old": "<td>Tecnare Horn (HF, ×1/side)</td><td>2500–20000</td><td>250</td>",
+      "new": "<td>Tecnare Horn (MF + HF on a passive crossover, ×1/side)</td><td>2500–20000</td><td>360</td>"
+    },
+    {
+      "label": "Hardware, SKRAM row, de",
+      "slot": "019f1428799a725d97adfa374688c8d5",
+      "lang": "de",
+      "old": "<tr><td>SKRAM (in Produktion)</td><td>Josh Ricci</td><td>2</td>",
+      "new": "<tr><td>SKRAM</td><td>Josh Ricci</td><td>2 (2 weitere in Produktion, geplant 6)</td>"
+    },
+    {
+      "label": "Hardware, SKRAM row, en",
+      "slot": "019f1428799a725d97adfa374688c8d5",
+      "lang": "en",
+      "old": "<tr><td>SKRAM (in production)</td><td>Josh Ricci</td><td>2</td>",
+      "new": "<tr><td>SKRAM</td><td>Josh Ricci</td><td>2 (2 more in production, 6 planned)</td>"
+    }
+  ]
+}

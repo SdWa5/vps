@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.65.0] - 2026-10-15
+
+### Added
+
+- `tools/shopware/edit-slots.sh`: replaces text in CMS text slots from an edits file, checks every edit before the first write, dry run by default.
+- `tools/shopware/slot-edits/hardware-m2122.json`: the Hardware page correction of the M2122 and SKRAM rows.
+- `tests/shopware-edit-slots.bats`.
+- `docs/shopware/content-cms.md`: editing text slots.
+
+### Changed
+
+- `docs/shopware/TODO.md`: item 6.5 records the decisions on ordering and pick-up and the proposed list prices.
+
 ## [1.64.2] - 2026-10-15
 
 ### Changed

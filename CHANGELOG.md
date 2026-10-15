@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.69.1] - 2026-10-15
+
+### Added
+
+- `check-order-mail.sh` renders the live EN/DE confirmation and cancellation templates without sending mail,
+  and checks zero/positive payment copy plus winter/summer timezone conversion.
+
+### Fixed
+
+- Order email copy uses one greeting, the SdWa5 sender name, cancellation subjects and Vienna local time.
+  Free-order confirmations no longer wait for payment or offer an additional payment.
+- `edit-slots.sh` supports translated mail subjects and sender names alongside HTML and plain text.
+- Document the persistent HTTPS APP_URL override that restored the storefront cart without changing its shop ID.
+
 ## [1.69.0] - 2026-10-15
 
 ### Added

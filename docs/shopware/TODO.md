@@ -9,9 +9,9 @@
    an AI image editor, a Copilot and an event ingestion service active on its shop is open. Decide per
    app, then either deactivate the unwanted ones or cover them in the same privacy pass as item 12
    (`decision`)
-2. update email templates (order confirmation etc. still default Shopware copy). Since 2026-10-15 the order
-   confirmation carries a voluntary donation note for merch, from `slot-edits/order-mail-donation.json`, and the
-   rest is still default copy
+2. Review the remaining default Shopware email templates. Confirmation and cancellation copy, sender names,
+   cancellation subjects and local order times are corrected in EN/DE as documented in
+   [content-cms.md](content-cms.md#order-mail-copy-and-verification). Other templates remain to be reviewed.
     1. dont get too fancy (e.g. with corporate or blogging style expressions)
     2. en and de
 3. Layout for 404 pages Assign layout...
@@ -72,9 +72,6 @@
           asking him went out through the jwsound.live contact form on 2026-10-15, with a request to
           forward it, and the answer is pending. The same question applies to the public `meshes/skram.stl` in
           `SdWa5/3d`.
-7. Checkout end-to-end test — no real order flow tested yet. The top model is orderable since 2026-10-15, so
-   one order of it with pick-up is due. A Store API cart check on 2026-10-15 put the top in at €0 without
-   errors and refused the SKRAM, but it placed no order, so the confirmation mail and the admin view are untested.
 8. SEO — **the sitemap is fine and regenerating again.** Re-measured 2026-09-08: it exists at
    `https://sdwa5.org/sitemap.xml`, returns HTTP 200, is a valid `sitemapindex`, holds **32 URLs** covering the
    homepage, 13 CMS pages, 5 category listings and 13 products, and `robots.txt` advertises it **twice**, for the

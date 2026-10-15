@@ -47,7 +47,7 @@ tools/shopware/edit-slots.sh tools/shopware/slot-edits/hardware-m2122.json --app
 ```
 
 The same tool edits mail templates. An edit with `"target": "mail-template"` names the template id in
-`template` and the field in `field`, `contentHtml` or `contentPlain`, instead of a slot. All edits to one
+`template` and the field in `field`, `contentHtml`, `contentPlain`, `subject` or `senderName`, instead of a slot. All edits to one
 template and language go out in one PATCH under that language. An insertion keeps its anchor in the new text,
 and the tool counts it as current once the new text is there, so a second run does not insert it twice.
 `order-mail-donation.json` adds the voluntary donation note to the order confirmation mail in English and
@@ -56,6 +56,32 @@ German, wrapped in a Twig condition that prints it only when the order holds a d
 ```bash
 tools/shopware/edit-slots.sh tools/shopware/slot-edits/order-mail-donation.json --apply
 ```
+
+### Order mail copy and verification
+
+`order-mail-copy.json` corrects the confirmation and cancellation templates in EN and DE, in HTML and
+plain text. Both use the sender name SdWa5 and a single greeting. Confirmation mails show payment
+instructions only when `order.amountTotal > 0`; a free order keeps the donation-at-pickup note without
+asking for payment or offering an additional payment. Cancellation subjects name the cancellation and
+order number, and the body names SdWa5. Both templates format order dates in `Europe/Vienna` explicitly,
+so an event rendered with a UTC context still shows local time, including daylight saving time.
+
+```bash
+tools/shopware/edit-slots.sh tools/shopware/slot-edits/order-mail-copy.json
+tools/shopware/edit-slots.sh tools/shopware/slot-edits/order-mail-copy.json --apply
+tools/shopware/check-order-mail.sh ORDER_ID
+```
+
+The last command only renders. It does not send mail or modify an order. It checks the persisted templates
+in strict mode against the selected order, checks both payment branches with synthetic totals, and checks
+winter and summer time conversion. It requires the same API credentials as the editing tool. Its synthetic
+checks use the no-send build endpoint provided by the project's pinned Shopware 6.7.
+
+On 2026-10-15 guest test order 10000 contained two top models at a payable total of €0 and a suggested
+donation of €10. The guest checkout completed, the owner confirmed receipt of the confirmation and
+cancellation emails, and the order state was verified as cancelled. The copy corrections above were then
+verified with strict no-send previews in both languages and formats, including the same 09:15 local order
+time while the input context used UTC. Inbox delivery of another corrected email has not been checked.
 
 Slot ids come from a read-only search on `cms-slot-translation`, filtered by a word of the old text. Mail
 template ids come from one on `mail-template-translation`.

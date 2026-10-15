@@ -1,0 +1,314 @@
+{
+    "languages": {
+        "en": "2fbb5fe2e29a4d70aa5854ce7ce3e20b",
+        "de": "019c36d736207216a1f1d943de40f765"
+    },
+    "edits": [
+        {
+            "label": "confirmation de senderName sender",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "senderName",
+            "lang": "de",
+            "old": "{{ salesChannel.translated.name }}",
+            "new": "SdWa5"
+        },
+        {
+            "label": "confirmation de contentHtml greeting",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "contentHtml",
+            "lang": "de",
+            "old": "Hallo {% if order.orderCustomer.salutation %}{{ order.orderCustomer.salutation.translated.letterName ~ ' ' }}{% endif %}{{ order.orderCustomer.firstName }} {{ order.orderCustomer.lastName }},",
+            "new": "Guten Tag {{ order.orderCustomer.firstName }} {{ order.orderCustomer.lastName }},"
+        },
+        {
+            "label": "confirmation de contentHtml local time",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "contentHtml",
+            "lang": "de",
+            "old": "order.orderDateTime|format_datetime('medium', 'short', locale='de-DE')",
+            "new": "order.orderDateTime|format_datetime('medium', 'short', locale='de-DE', timezone='Europe/Vienna')"
+        },
+        {
+            "label": "confirmation de contentHtml payment condition",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "contentHtml",
+            "lang": "de",
+            "old": "Sobald ein Zahlungseingang erfolgt ist, erhalten Sie eine separate Benachrichtigung und Ihre Bestellung wird verarbeitet.",
+            "new": "{% if order.amountTotal > 0 %}Sobald ein Zahlungseingang erfolgt ist, erhalten Sie eine separate Benachrichtigung und Ihre Bestellung wird verarbeitet.{% else %}Für diese Bestellung ist keine Zahlung im Shop erforderlich.{% endif %}"
+        },
+        {
+            "label": "confirmation de contentHtml payment link condition",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "contentHtml",
+            "lang": "de",
+            "old": "Über diesen Link können Sie auch die Bestellung bearbeiten, die Zahlungsart wechseln oder nachträglich eine Zahlung durchführen.",
+            "new": "{% if order.amountTotal > 0 %}Über diesen Link können Sie auch die Bestellung bearbeiten, die Zahlungsart wechseln oder nachträglich eine Zahlung durchführen.{% else %}Über diesen Link können Sie auch Ihre Bestellung einsehen und bearbeiten.{% endif %}"
+        },
+        {
+            "label": "confirmation de contentPlain greeting",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "contentPlain",
+            "lang": "de",
+            "old": "Hallo {% if order.orderCustomer.salutation %}{{ order.orderCustomer.salutation.translated.letterName ~ ' ' }}{% endif %}{{ order.orderCustomer.firstName }} {{ order.orderCustomer.lastName }},",
+            "new": "Guten Tag {{ order.orderCustomer.firstName }} {{ order.orderCustomer.lastName }},"
+        },
+        {
+            "label": "confirmation de contentPlain local time",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "contentPlain",
+            "lang": "de",
+            "old": "order.orderDateTime|format_datetime('medium', 'short', locale='de-DE')",
+            "new": "order.orderDateTime|format_datetime('medium', 'short', locale='de-DE', timezone='Europe/Vienna')"
+        },
+        {
+            "label": "confirmation de contentPlain payment condition",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "contentPlain",
+            "lang": "de",
+            "old": "Sobald ein Zahlungseingang erfolgt ist, erhalten Sie eine separate Benachrichtigung und Ihre Bestellung wird verarbeitet.",
+            "new": "{% if order.amountTotal > 0 %}Sobald ein Zahlungseingang erfolgt ist, erhalten Sie eine separate Benachrichtigung und Ihre Bestellung wird verarbeitet.{% else %}Für diese Bestellung ist keine Zahlung im Shop erforderlich.{% endif %}"
+        },
+        {
+            "label": "confirmation de contentPlain payment link condition",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "contentPlain",
+            "lang": "de",
+            "old": "Über diesen Link können Sie auch die Bestellung bearbeiten, die Zahlungsart wechseln oder nachträglich eine Zahlung durchführen.",
+            "new": "{% if order.amountTotal > 0 %}Über diesen Link können Sie auch die Bestellung bearbeiten, die Zahlungsart wechseln oder nachträglich eine Zahlung durchführen.{% else %}Über diesen Link können Sie auch Ihre Bestellung einsehen und bearbeiten.{% endif %}"
+        },
+        {
+            "label": "confirmation en senderName sender",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "senderName",
+            "lang": "en",
+            "old": "{{ salesChannel.translated.name }}",
+            "new": "SdWa5"
+        },
+        {
+            "label": "confirmation en contentHtml greeting",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "contentHtml",
+            "lang": "en",
+            "old": "{% if order.orderCustomer.salutation %}{{ order.orderCustomer.salutation.translated.letterName ~ ' ' }}{% endif %}{{ order.orderCustomer.firstName }} {{ order.orderCustomer.lastName }},",
+            "new": "Hello {{ order.orderCustomer.firstName }} {{ order.orderCustomer.lastName }},"
+        },
+        {
+            "label": "confirmation en contentHtml local time",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "contentHtml",
+            "lang": "en",
+            "old": "order.orderDateTime|format_datetime('medium', 'short', locale='en-GB')",
+            "new": "order.orderDateTime|format_datetime('medium', 'short', locale='en-GB', timezone='Europe/Vienna')"
+        },
+        {
+            "label": "confirmation en contentHtml payment condition",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "contentHtml",
+            "lang": "en",
+            "old": "As soon as your payment has been made, you will receive a separate notification and your order will be processed.",
+            "new": "{% if order.amountTotal > 0 %}As soon as your payment has been made, you will receive a separate notification and your order will be processed.{% else %}No payment in the shop is required for this order.{% endif %}"
+        },
+        {
+            "label": "confirmation en contentHtml payment link condition",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "contentHtml",
+            "lang": "en",
+            "old": "You may use this link to edit your order, change the payment method or make additional payments.",
+            "new": "{% if order.amountTotal > 0 %}You may use this link to edit your order, change the payment method or make additional payments.{% else %}You may also use this link to view and edit your order.{% endif %}"
+        },
+        {
+            "label": "confirmation en contentPlain greeting",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "contentPlain",
+            "lang": "en",
+            "old": "{% if order.orderCustomer.salutation %}{{ order.orderCustomer.salutation.translated.letterName ~ ' ' }}{% endif %}{{ order.orderCustomer.firstName }} {{ order.orderCustomer.lastName }},",
+            "new": "Hello {{ order.orderCustomer.firstName }} {{ order.orderCustomer.lastName }},"
+        },
+        {
+            "label": "confirmation en contentPlain local time",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "contentPlain",
+            "lang": "en",
+            "old": "order.orderDateTime|format_datetime('medium', 'short', locale='en-GB')",
+            "new": "order.orderDateTime|format_datetime('medium', 'short', locale='en-GB', timezone='Europe/Vienna')"
+        },
+        {
+            "label": "confirmation en contentPlain payment condition",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "contentPlain",
+            "lang": "en",
+            "old": "As soon as your payment has been made, you will receive a separate notification and your order will be processed.",
+            "new": "{% if order.amountTotal > 0 %}As soon as your payment has been made, you will receive a separate notification and your order will be processed.{% else %}No payment in the shop is required for this order.{% endif %}"
+        },
+        {
+            "label": "confirmation en contentPlain payment link condition",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "contentPlain",
+            "lang": "en",
+            "old": "You may use this link to edit your order, change the payment method or make additional payments.",
+            "new": "{% if order.amountTotal > 0 %}You may use this link to edit your order, change the payment method or make additional payments.{% else %}You may also use this link to view and edit your order.{% endif %}"
+        },
+        {
+            "label": "cancellation de senderName sender",
+            "target": "mail-template",
+            "template": "019c36d7772772d283b3fa711d1aba37",
+            "field": "senderName",
+            "lang": "de",
+            "old": "{{ salesChannel.translated.name }}",
+            "new": "SdWa5"
+        },
+        {
+            "label": "cancellation de subject subject",
+            "target": "mail-template",
+            "template": "019c36d7772772d283b3fa711d1aba37",
+            "field": "subject",
+            "lang": "de",
+            "old": "Neues Dokument für Ihre Bestellung",
+            "new": "Stornierung Ihrer Bestellung {{ order.orderNumber }}"
+        },
+        {
+            "label": "cancellation de contentHtml greeting",
+            "target": "mail-template",
+            "template": "019c36d7772772d283b3fa711d1aba37",
+            "field": "contentHtml",
+            "lang": "de",
+            "old": "{% if order.orderCustomer.salutation %}{{ order.orderCustomer.salutation.translated.letterName ~ ' ' }}{% endif %}{{ order.orderCustomer.firstName }} {{ order.orderCustomer.lastName }},",
+            "new": "Guten Tag {{ order.orderCustomer.firstName }} {{ order.orderCustomer.lastName }},"
+        },
+        {
+            "label": "cancellation de contentHtml local time",
+            "target": "mail-template",
+            "template": "019c36d7772772d283b3fa711d1aba37",
+            "field": "contentHtml",
+            "lang": "de",
+            "old": "order.orderDateTime|format_datetime('medium', 'short', locale='de-DE')",
+            "new": "order.orderDateTime|format_datetime('medium', 'short', locale='de-DE', timezone='Europe/Vienna')"
+        },
+        {
+            "label": "cancellation de contentHtml shop name",
+            "target": "mail-template",
+            "template": "019c36d7772772d283b3fa711d1aba37",
+            "field": "contentHtml",
+            "lang": "de",
+            "old": "{{ salesChannel.translated.name }}",
+            "new": "SdWa5"
+        },
+        {
+            "label": "cancellation de contentPlain greeting",
+            "target": "mail-template",
+            "template": "019c36d7772772d283b3fa711d1aba37",
+            "field": "contentPlain",
+            "lang": "de",
+            "old": "{% if order.orderCustomer.salutation %}{{ order.orderCustomer.salutation.translated.letterName ~ ' ' }}{% endif %}{{ order.orderCustomer.firstName }} {{ order.orderCustomer.lastName }},",
+            "new": "Guten Tag {{ order.orderCustomer.firstName }} {{ order.orderCustomer.lastName }},"
+        },
+        {
+            "label": "cancellation de contentPlain local time",
+            "target": "mail-template",
+            "template": "019c36d7772772d283b3fa711d1aba37",
+            "field": "contentPlain",
+            "lang": "de",
+            "old": "order.orderDateTime|format_datetime('medium', 'short', locale='de-DE')",
+            "new": "order.orderDateTime|format_datetime('medium', 'short', locale='de-DE', timezone='Europe/Vienna')"
+        },
+        {
+            "label": "cancellation de contentPlain shop name",
+            "target": "mail-template",
+            "template": "019c36d7772772d283b3fa711d1aba37",
+            "field": "contentPlain",
+            "lang": "de",
+            "old": "{{ salesChannel.translated.name }}",
+            "new": "SdWa5"
+        },
+        {
+            "label": "cancellation en senderName sender",
+            "target": "mail-template",
+            "template": "019c36d7772772d283b3fa711d1aba37",
+            "field": "senderName",
+            "lang": "en",
+            "old": "{{ salesChannel.translated.name }}",
+            "new": "SdWa5"
+        },
+        {
+            "label": "cancellation en subject subject",
+            "target": "mail-template",
+            "template": "019c36d7772772d283b3fa711d1aba37",
+            "field": "subject",
+            "lang": "en",
+            "old": "New document for your order",
+            "new": "Cancellation of your order {{ order.orderNumber }}"
+        },
+        {
+            "label": "cancellation en contentHtml greeting",
+            "target": "mail-template",
+            "template": "019c36d7772772d283b3fa711d1aba37",
+            "field": "contentHtml",
+            "lang": "en",
+            "old": "{% if order.orderCustomer.salutation %}{{ order.orderCustomer.salutation.translated.letterName ~ ' ' }}{% endif %}{{ order.orderCustomer.firstName }} {{ order.orderCustomer.lastName }},",
+            "new": "Hello {{ order.orderCustomer.firstName }} {{ order.orderCustomer.lastName }},"
+        },
+        {
+            "label": "cancellation en contentHtml local time",
+            "target": "mail-template",
+            "template": "019c36d7772772d283b3fa711d1aba37",
+            "field": "contentHtml",
+            "lang": "en",
+            "old": "order.orderDateTime|format_datetime('medium', 'short', locale='en-GB')",
+            "new": "order.orderDateTime|format_datetime('medium', 'short', locale='en-GB', timezone='Europe/Vienna')"
+        },
+        {
+            "label": "cancellation en contentHtml shop name",
+            "target": "mail-template",
+            "template": "019c36d7772772d283b3fa711d1aba37",
+            "field": "contentHtml",
+            "lang": "en",
+            "old": "{{ salesChannel.translated.name }}",
+            "new": "SdWa5"
+        },
+        {
+            "label": "cancellation en contentPlain greeting",
+            "target": "mail-template",
+            "template": "019c36d7772772d283b3fa711d1aba37",
+            "field": "contentPlain",
+            "lang": "en",
+            "old": "{% if order.orderCustomer.salutation %}{{ order.orderCustomer.salutation.translated.letterName ~ ' ' }}{% endif %}{{ order.orderCustomer.firstName }} {{ order.orderCustomer.lastName }},",
+            "new": "Hello {{ order.orderCustomer.firstName }} {{ order.orderCustomer.lastName }},"
+        },
+        {
+            "label": "cancellation en contentPlain local time",
+            "target": "mail-template",
+            "template": "019c36d7772772d283b3fa711d1aba37",
+            "field": "contentPlain",
+            "lang": "en",
+            "old": "order.orderDateTime|format_datetime('medium', 'short', locale='en-GB')",
+            "new": "order.orderDateTime|format_datetime('medium', 'short', locale='en-GB', timezone='Europe/Vienna')"
+        },
+        {
+            "label": "cancellation en contentPlain shop name",
+            "target": "mail-template",
+            "template": "019c36d7772772d283b3fa711d1aba37",
+            "field": "contentPlain",
+            "lang": "en",
+            "old": "{{ salesChannel.translated.name }}",
+            "new": "SdWa5"
+        }
+    ]
+}

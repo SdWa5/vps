@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.59.3] - 2026-10-15
+
+### Changed
+
+- `docs/ssh-hardening.md` records when the Contabo VNC console is reachable and its login test.
+
 ## [1.59.2] - 2026-10-15
 
 ### Changed

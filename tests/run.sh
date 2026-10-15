@@ -33,6 +33,8 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt koalaman/shellcheck:stable -x \
     monitoring/database-restore-check.sh \
     monitoring/shopware-worker.sh \
     monitoring/chimodiazz-deploy.sh \
+    restic/entrypoint.sh \
+    restic/backup.sh \
     hardening/firewall/sdwa5-firewall.sh \
     tools/dolibarr/deploy-module.sh \
     tools/dolibarr/doli.sh \

@@ -72,7 +72,7 @@ Domain → port mapping lives in the [Caddyfile](../Caddyfile); backup detail in
 | Dolibarr Project 3  | dolibarr/dolibarr:latest     | 8004            | https://project3.sdwa5.org | docker-compose.projects.yml             |
 | Chimo Diazz         | dockware/shopware:6.7.11.1   | 8005 / 8444     | https://chimodiazz.sdwa5.org | docker-compose.projects.yml (profile: chimodiazz) |
 | Ollama              | ollama/ollama:latest         | 11434           | (no domain, firewalled)    | docker-compose.yml                      |
-| Restic backup       | lobaro/restic-backup-docker  | —               | —                          | docker-compose.yml                      |
+| Restic backup       | creativeprojects/resticprofile | —               | —                          | docker-compose.yml                      |
 | Minecraft           | itzg/minecraft-server:latest | 25565           | —                          | docker-compose.yml (profile: minecraft) |
 
 Cron jobs (host, not Docker) — see [monitoring.md](monitoring.md):

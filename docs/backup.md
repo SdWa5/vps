@@ -193,7 +193,7 @@ Remote `[SdWa5]` — Google Drive (OAuth2). Config file at `rclone-config/rclone
 docker logs restic
 
 # Manual backup now
-docker exec restic /bin/backup
+docker exec restic /bin/sh /opt/restic/backup.sh
 
 # List snapshots
 docker exec restic restic snapshots
@@ -320,8 +320,18 @@ account.
 - `.gitignore` exclusions do NOT affect what restic backs up — restic backs up everything including data dirs and `.env`.
 - `rclone.conf` OAuth token auto-refreshes; the `expiry` field in the token will update on next use.
 - The restic container accumulates **zombie processes**. Measured 108 on 2026-09-08 after 51 days up.
-  Its PID 1 is `tail -fn0 /var/log/cron.log` with no init, so nothing reaps the `rclone` children each
-  run spawns. `init: true` on the service fixes it. Harmless at this rate against a `kernel.pid_max`
+  The old image's PID 1 was `tail -fn0 /var/log/cron.log` with no init, so nothing reaped the `rclone`
+  children each run spawned. `init: true` on the service fixes it and stays with the new image. Harmless at this rate against a `kernel.pid_max`
   of 4194304, but it is an unbounded leak.
-- The container runs **restic 0.12.0, built 2021**, because the image has not been rebuilt since. See
-  the image note in [TODO.md](../TODO.md).
+- The container runs **restic 0.19.1 and rclone 1.75.2** from the pinned
+  `creativeprojects/resticprofile:0.33.1-amd64` image since 2026-10-15. Only the binaries are used.
+  [`restic/entrypoint.sh`](../restic/entrypoint.sh) writes the crontab and runs crond in the foreground,
+  [`restic/backup.sh`](../restic/backup.sh) runs `backup` and then `forget`, and both keep the log lines
+  of the former `lobaro/restic-backup-docker` image, so `vps-health.sh` reads them unchanged. restic's own
+  output of the last run is in `/var/log/backup-last.log` inside the container.
+- The repository stays at **format version 1**. restic 0.19 reads and writes it without upgrading it.
+  Measured 2026-10-15 on a throwaway repository, restic 0.12.0 still listed, checked and restored it
+  after 0.19.1 had backed up and pruned, so going back to the old image stays possible. `restic migrate
+  upgrade_repo_v2` would end that and needs its own decision.
+- Unlike the old image, nothing here runs `restic init`. lobaro initialised a repository whenever
+  `restic snapshots` failed at start-up, so a transient Drive error could have started an empty one.

@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.70.0] - 2026-10-15
+
+### Added
+
+- `restic/entrypoint.sh` and `restic/backup.sh` schedule and run the restic backup with the log lines
+  `vps-health.sh` reads, and never run `restic init`.
+- `tests/restic-backup.bats` with a `restic` stub covers success, failure, exit status 3, forget and the
+  crontab the entrypoint writes.
+
+### Changed
+
+- The restic service runs the pinned `creativeprojects/resticprofile:0.33.1-amd64` (restic 0.19.1,
+  rclone 1.75.2) instead of `lobaro/restic-backup-docker:latest` (restic 0.12.0, last pushed 2021).
+  The repository stays at format version 1.
+- The unused `BACKUP_DIRS` setting is replaced by `BACKUP_PATH`, and `RCLONE_CONFIG` is set explicitly.
+
 ## [1.69.2] - 2026-10-15
 
 ### Changed

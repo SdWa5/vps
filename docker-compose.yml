@@ -233,13 +233,17 @@ services:
     networks: [ollama]
 
   restic:
-    # Not pinned, because there is nothing to pin to. Measured 2026-09-08: the
-    # repository publishes six tags, the newest version tag is 1.3.1-0.9.6 from
-    # 2020, and `latest` itself has not been pushed since 2021-05-05. So this
-    # tag is already frozen in practice. That the backup container's image is
-    # five years old and unmaintained is a real concern, filed in TODO.md.
-    image: lobaro/restic-backup-docker:latest
+    # Exact, and only for the restic, rclone, crond and flock it ships; the
+    # schedule and the backup run are restic/entrypoint.sh and restic/backup.sh.
+    # 0.33.1-amd64 measured 2026-10-15: restic 0.19.1, rclone 1.75.2, built
+    # 2026-10-11. `latest` is rebuilt weekly, so it is not used. Until
+    # 2026-10-15 this was lobaro/restic-backup-docker:latest, last pushed
+    # 2021-05-05 with restic 0.12.0. The repository stays at format version 1,
+    # which every restic since 0.9 reads; do not run `restic migrate` without a
+    # decision. See docs/backup.md.
+    image: creativeprojects/resticprofile:0.33.1-amd64
     container_name: restic
+    entrypoint: ["/bin/sh", "/opt/restic/entrypoint.sh"]
     restart: unless-stopped
     # restic records os.Hostname() on every snapshot, which in a container is
     # the container ID, and `restic forget` groups by `host,paths` by default.
@@ -248,13 +252,15 @@ services:
     # 61 snapshots, where one group would hold 17. Pinning the hostname makes
     # the retention policy mean what it says from here on. See docs/backup.md.
     hostname: sdwa5-vps
-    # PID 1 in this image is `tail -fn0 /var/log/cron.log`, which never reaps
-    # children, so every rclone process a backup run spawns became a zombie.
-    # Measured 108 of them on 2026-09-08 after 51 days up. An init reaps them.
+    # lobaro's PID 1 was `tail -fn0 /var/log/cron.log`, which never reaped
+    # children, so every rclone process a backup run spawned became a zombie.
+    # Measured 108 of them on 2026-09-08 after 51 days up. An init reaps them
+    # and stays, so the reaping does not depend on what the entrypoint runs.
     init: true
     logging: *default-logging
     volumes:
       - ./rclone-config:/root/.config/rclone
+      - ./restic:/opt/restic:ro
       - ./:/data:ro
     environment:
       - RESTIC_REPOSITORY=${RESTIC_REPOSITORY:-rclone:SdWa5:restic-backups}
@@ -265,8 +271,10 @@ services:
       # time, so the two are 2h10m apart rather than the 10 minutes the docs
       # used to claim. See docs/backup.md.
       - BACKUP_CRON=0 4 * * *
-      # This tells the scheduled job WHAT to back up
-      - BACKUP_DIRS=/data
+      # What restic/backup.sh backs up. lobaro's BACKUP_DIRS was never read,
+      # its script hard-coded /data as well.
+      - BACKUP_PATH=/data
+      - RCLONE_CONFIG=/root/.config/rclone/rclone.conf
       - RESTIC_FORGET_ARGS=--keep-daily 6 --keep-weekly 3 --keep-monthly 11 --keep-yearly 2 --prune
     networks: [backup]
     cap_drop: [NET_RAW]

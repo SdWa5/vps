@@ -1,0 +1,34 @@
+# Shop images for the print models (SDWA5-MT-001, SDWA5-MS-001), from Sepp's
+# three photos of 2026-10-14. The photos are not in the repository; IN_DIR is
+# wherever they were saved.
+#
+#   tools/shopware/images/shop-images.sh run tools/shopware/images/print-models.jobs IN_DIR OUT_DIR
+#
+# shopimg.py options, all boxes and points as fractions:
+#   --crop x0,y0,x1,y1         of the photo, applied first
+#   --erase / --keep BOX       of the cropped image, forced out of / into the mask
+#   --patch "x,y x,y ..."      polygon of the photo, filled from around it
+#   --quad "TL TR BR BL"       corners of a face that is a rectangle in reality,
+#                              in the photo; the cutout is warped to square it
+#   --gain G, --neutral        brightness, and grey balance for grey filament
+#
+# The quads were read off `shop-images.sh corners`. Both phone shots lean ca. 3
+# degrees on the left and 0 on the right, which is pitch plus roll.
+A="WhatsApp Image 2026-10-14 at 15.49.10.jpeg"
+B="WhatsApp Image 2026-10-14 at 15.49.11.jpeg"
+C="WhatsApp Image 2026-10-14 at 15.49.11_1.jpeg"
+
+# A cigarette pack stands on the arc and must not reach the shop. Its footprint
+# on the cabinet top is filled, and everything above the top's back edge is cut.
+shot "$A" tops-arc --crop 0.08,0.33,0.92,0.67 \
+    --patch "0.33,0.351 0.627,0.351 0.627,0.363 0.558,0.374 0.33,0.355" --erase 0.15,0,0.66,0.062 \
+    --quad "0.358,0.376 0.633,0.374 0.633,0.640 0.381,0.643"
+# The erase boxes take out the cable that enters the top cabinet from above.
+shot "$B" tops-pyramid --crop 0.25,0.15,0.78,0.72 --erase 0.45,0,0.6,0.044 \
+    --quad "0.366,0.177 0.625,0.173 0.626,0.453 0.392,0.453"
+shot "$C" rig --crop 0,0.15,1,0.72 --gain 1.15 --neutral \
+    --quad "0.049,0.549 0.922,0.512 0.922,0.651 0.061,0.712"
+shot "$B" top-single --crop 0.355,0.16,0.635,0.456 --erase 0.45,0,0.75,0.05 \
+    --quad "0.366,0.177 0.625,0.173 0.626,0.453 0.392,0.453"
+# No single SKRAM: the subs in photo C touch, so the model cannot separate one,
+# and a crop of one would be ca. 245 px wide.

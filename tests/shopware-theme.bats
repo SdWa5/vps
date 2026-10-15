@@ -170,7 +170,7 @@ snippet_keys() {
     f="$VIEWS/layout/share/share-links.html.twig"
     grep -q "attributes.get('sw-original-request-uri')" "$f"
     grep -q "attributes.get('sw-sales-channel-absolute-base-url')" "$f"
-    ! grep -q "attributes.get('resolved-uri')" "$f"
+    ! grep -q "attributes.get('resolved-uri')" "$f" || false
 }
 
 # The English hero text styles only the subtitle inline, the German one every

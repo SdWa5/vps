@@ -43,6 +43,10 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt koalaman/shellcheck:stable -x \
     tools/mariadb/reset-root-password.inner.sh \
     tools/compose.sh \
     tools/shopware/lib.sh \
+    tools/shopware/create-products.sh \
+    tools/shopware/images/shop-images.sh \
+    tools/shopware/print-cost/print-cost.sh \
+    tools/shopware/print-cost/slice-inner.sh \
     tools/shopware/set-address.sh \
     tools/shopware/set-homepage-sections.sh \
     tests/run.sh \
@@ -51,6 +55,13 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt koalaman/shellcheck:stable -x \
 
 docker run --rm -v "$REPO_ROOT:/code:ro" -w /code php:8.2-cli \
     php tests/shopware-database-client.php
+
+echo
+echo "== python =="
+# The versions the shop-images image resolves for rembg 2.0.84.
+docker run --rm -v "$REPO_ROOT:/code:ro" -w /code -e PIP_ROOT_USER_ACTION=ignore python:3.12-slim \
+    sh -c "pip install -q --disable-pip-version-check numpy==2.5.4 pillow==12.3.0 \
+        && python -I -B tests/shopware-merch-tools.py"
 
 echo
 echo "All checks passed."

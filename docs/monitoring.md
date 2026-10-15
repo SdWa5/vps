@@ -231,7 +231,7 @@ sqlite3 /tmp/restore/data/vaultwarden-db-backup/db.sqlite3 'PRAGMA integrity_che
 
 1. Pull `vaultwarden/server:latest` and compare image IDs. Unchanged means exit, silently.
 2. Snapshot `vaultwarden-data/` to `vaultwarden-data.bak-<timestamp>`. The newest 3 are kept.
-3. `docker-compose up -d vaultwarden`.
+3. `docker compose up -d vaultwarden`.
 4. Poll `https://vault.sdwa5.org/alive` for up to 60 s expecting 200.
 5. Success sends a short report naming the old and the new version.
 6. Failure restores the snapshot, pins the previous image in `docker-compose.override.yml`, brings
@@ -273,7 +273,7 @@ window the check reports `OK` and names the wait. Above it the check warns, and 
 means the update job is not working**, which is something to act on, rather than "upstream has
 shipped", which is not.
 
-The extra runs cost one `docker-compose pull` a day. An unchanged image exits silently.
+The extra runs cost one `docker compose pull` a day. An unchanged image exits silently.
 
 ## The two jobs watch each other
 

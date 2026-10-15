@@ -39,8 +39,8 @@ than on a start here. Verify it on the next deliberate start:
 
 ```bash
 cd /opt/docker
-docker-compose --profile minecraft up -d
-docker-compose logs -f minecraft | grep -iE "modrinth|Downloading|not found"
+docker compose --profile minecraft up -d
+docker compose logs -f minecraft | grep -iE "modrinth|Downloading|not found"
 # Expect 15 projects resolved and no "not found". Then check the jars landed:
 ls minecraft-data/mods/ | wc -l
 ```

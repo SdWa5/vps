@@ -99,13 +99,16 @@ iptables -A DOCKER-USER -i "$WAN" -j DROP
 iptables -A DOCKER-USER -j RETURN
 
 # There is no IPv6 half, and that is measured rather than skipped. Docker does
-# no IPv6 publishing on this host: ip6tables holds zero Docker rules, the v6 nat
-# table holds zero DNAT entries, both bridges carry only a link-local fe80::
-# address, and there is no /etc/docker/daemon.json enabling ipv6 or ip6tables.
-# So there is no v6 path to a container to filter. Enabling Docker's IPv6 would
-# change that, and then this needs a v6 counterpart written with nft, because
-# ip6tables reports the v6 DOCKER-USER chain as incompatible with its compat
-# layer.
+# no IPv6 publishing on this host: the v6 nat table holds zero DNAT entries, no
+# Docker network has IPv6 enabled and net.ipv6.conf.all.forwarding is 0. So there
+# is no v6 path to a container to filter. A port published on all interfaces,
+# such as minecraft's, is served over IPv6 by docker-proxy per Docker's docs,
+# which is a local socket judged by the v6 INPUT chain below. Not measured,
+# because minecraft is profile-gated and not running. Since docker-ce 29 (2026-10-15) Docker's ip6tables default is on,
+# so ip6tables holds its chain skeleton, 11 lines of `ip6tables -S`, and no DNAT.
+# Enabling Docker's IPv6 would change that, and then this needs a v6 counterpart
+# written with nft, because ip6tables reports the v6 DOCKER-USER chain as
+# incompatible with its compat layer.
 
 # ICMPv6 is accepted wholesale on purpose. Neighbour discovery and path MTU
 # discovery both ride on it, and dropping it does not harden IPv6, it removes it.

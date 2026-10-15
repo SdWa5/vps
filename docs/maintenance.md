@@ -137,6 +137,31 @@ docker inspect --format '{{.HostConfig.LogConfig}}' shopware      # expect: {jso
 referencing the one in `docker-compose.yml`, because YAML anchors do not cross files. Both blocks must
 be kept in step. To change the cap, edit both and recreate.
 
+## CI dependencies
+
+`tests/run.sh` uses exact version tags paired with immutable multi-platform image-index digests.
+The 2026-10-15 pins preserve these already-cached runtimes, measured with their version commands.
+Their digests were also verified as available from the upstream registries. The tags label the
+measured runtime versions. Docker selects the immutable digest when a tag points at a rebuilt image.
+
+| Test image | Measured runtime |
+|---|---|
+| `bats/bats:1.14.0` | Bats 1.14.0 |
+| `koalaman/shellcheck:v0.11.0` | ShellCheck 0.11.0 |
+| `php:8.2.33-cli` | PHP 8.2.33 |
+| `python:3.12.15-slim` | Python 3.12.15 |
+
+Review an image update, resolve its index digest with `docker buildx imagetools inspect`, verify the
+runtime and update its tag and digest together in `tests/run.sh`. Run `tests/run.sh` and verify the
+GitHub workflow for the resulting commit. Package installation still resolves repository metadata
+at run time, including the bats container's Alpine packages and the Python test dependencies.
+
+The workflow pins checkout to an upstream commit, explicitly grants read-only contents access and
+does not persist checkout credentials. It installs gitleaks 8.30.1 through
+`.github/scripts/install-ci-tool.sh`, which checks its committed SHA-256 before extracting or
+installing the archive member. A tool update requires reviewing the release and updating its version
+and checksum together. The normal test entry point includes the installer's regression suite.
+
 ## Image versions
 
 Every image was on `:latest` until 2026-09-08, and only Vaultwarden was ever pulled. So `:latest`

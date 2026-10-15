@@ -111,6 +111,9 @@ tools/dolibarr/sync-pm.sh
 # Install or update a Dolibarr custom module at a tag, on the VPS as root (see docs/dolibarr.md)
 tools/dolibarr/deploy-module.sh banksync https://github.com/SdWa5/banksync.git v1.0.0
 
+# Rebuild the local Dolibarr dev mirror from the newest production archive, on a workstation (see docs/dolibarr.md)
+tools/dolibarr/dev-instance.sh fetch && tools/dolibarr/dev-instance.sh restore
+
 # Preview the isolated Dolibarr migration rehearsal without changing anything.
 bash tools/dolibarr/rehearse-upgrade.sh
 

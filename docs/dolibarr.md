@@ -273,6 +273,34 @@ Dates are written as `YYYY-MM-DD` in the spec and stored as epoch seconds.
 Measured on 2026-09-15 after the first apply: seven projects, all open with `usage_task` 1, and 23
 tasks. A run against that state reports `0 to create, 0 to update, 28 already current`.
 
+## Local dev mirror
+
+Module and API work happens on a local copy of this instance, and production receives only a tagged
+module release through [`deploy-module.sh`](../tools/dolibarr/deploy-module.sh).
+[`tools/dolibarr/dev-instance.sh`](../tools/dolibarr/dev-instance.sh) builds that copy from the
+newest archive of `monitoring/database-backup.sh`, with the images `docker-compose.yml` pins and the
+same entrypoint wrapper.
+
+```bash
+tools/dolibarr/dev-instance.sh fetch      # copy the newest production archive over ssh
+tools/dolibarr/dev-instance.sh restore    # rebuild the mirror from it, http://localhost:8089/
+tools/dolibarr/dev-instance.sh up|down|status
+```
+
+The copy holds real member data, so it lives in `~/.local/share/sdwa5-dolibarr-dev` with mode 700
+and never in a repository. Before Apache starts, every restore and every `up` sets
+`MAIN_DISABLE_ALL_MAILS=1` and disables every scheduled job, and no cron container runs. The mirror
+has its own instance key, so secrets that production stored encrypted cannot be decrypted, and a
+production API key answers 401 there, which was measured on 2026-10-16. `/run/secrets` is not
+mounted, so module credentials such as BankSync's `paypal.json` are absent. The port is bound to
+`127.0.0.1` and the database sits on an internal network that only the application joins.
+
+Module checkouts are bind-mounted into `custom/` as working trees, `banksync` from
+`../sdwa5-banksync` by default. `SDWA5_DOLIBARR_DEV_MODULES="banksync=… pmtools=…"` sets the list,
+and `SDWA5_DOLIBARR_DEV_IMAGE` runs a different application image, for example the next Dolibarr
+release before it is rehearsed. Logins are the production ones. An API key for the mirror is
+generated on the user card and kept in a file of its own, never the production token file.
+
 ## Operations
 
 ```bash

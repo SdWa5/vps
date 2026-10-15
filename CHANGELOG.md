@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.67.2] - 2026-10-15
+
+### Changed
+
+- TODO 6.5 and 7, `merch.md`: the top model is orderable, print-to-order with pick-up, and `Payment on Pickup` is the default payment method.
+
 ## [1.67.1] - 2026-10-15
 
 ### Changed

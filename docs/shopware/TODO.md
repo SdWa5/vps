@@ -49,18 +49,20 @@
         - The legal wording for a binding prepaid sale with a later delivery date, which goes into
           the same AGB pass as item 12. Taking money for goods not yet ordered is the part a
           non-profit should get right on paper.
-    5. Print models (`SDWA5-MT-001` SdWa5 Top, `SDWA5-MS-001` SKRAM, both 1:12) are online but not orderable.
+    5. Print models (`SDWA5-MT-001` SdWa5 Top, `SDWA5-MS-001` SKRAM, `SDWA5-MR-001` rig set, all 1:12) are online.
        The name avoids "Tecnare", which is the maker's trademark. Decided on 2026-10-15:
         - List prices are set, €5,00 for the top and €8,00 for the SKRAM.
         - The rig set `SDWA5-MR-001` holds 5 SKRAM and 3 tops, following Stefan's rule of at least 3 SKRAM and
           2 tops with always more SKRAM than tops. It lists at €45,00 against €19,10 cost and €55,00 for the
           single models. Its image is the rig photo with the upper row of tops erased.
-        - Orders open once the models are finished, which means pick-up is set up and the SKRAM licence is
-          answered.
+        - The top is orderable since 2026-10-15, at €0 as a donation like the other merch, and print-to-order,
+          which means closeout is off and stock stays 0. The SKRAM and the rig set stay closeout until the SKRAM
+          licence is answered.
         - Pick-up only at first, at our events and possibly at Egitlweg 6. The shipping method
           `Self Pickup at Event` is the only active shipping method since 2026-10-15 and the default of both
           sales channels. Standard and Express are switched off, not deleted, so shipping comes back by
-          activating them.
+          activating them. `Payment on Pickup` is the Storefront's default payment method, because the old
+          default `Cash on delivery` is inactive and put an error into every cart.
 
        Open:
         - Whether Egitlweg 6 is a pick-up place.
@@ -68,8 +70,9 @@
           asking him went out through the jwsound.live contact form on 2026-10-15, with a request to
           forward it, and the answer is pending. The same question applies to the public `meshes/skram.stl` in
           `SdWa5/3d`.
-7. Checkout end-to-end test — no real order flow tested yet
-   (deferred — not selling products yet)
+7. Checkout end-to-end test — no real order flow tested yet. The top model is orderable since 2026-10-15, so
+   one order of it with pick-up is due. A Store API cart check on 2026-10-15 put the top in at €0 without
+   errors and refused the SKRAM, but it placed no order, so the confirmation mail and the admin view are untested.
 8. SEO — **the sitemap is fine and regenerating again.** Re-measured 2026-09-08: it exists at
    `https://sdwa5.org/sitemap.xml`, returns HTTP 200, is a valid `sitemapindex`, holds **32 URLs** covering the
    homepage, 13 CMS pages, 5 category listings and 13 products, and `robots.txt` advertises it **twice**, for the

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.60.1] - 2026-10-15
+
+### Fixed
+
+- `docs/vaultwarden.md`: the admin cookie is not `Secure` over plain HTTP, so the tunnel does not rely on the browser's secure-context rule; browser login through the tunnel recorded.
+
 ## [1.60.0] - 2026-10-15
 
 ### Added

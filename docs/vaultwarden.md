@@ -18,17 +18,20 @@ panel is reached by forwarding that loopback port over SSH.
 ssh -S none -N -L 8000:127.0.0.1:8000 root@sdwa5.org
 ```
 
-Then open http://localhost:8000/admin and log in with the plaintext admin token. Browsers treat
-`localhost` as a secure context, so the admin cookie works over plain HTTP there. Ctrl+C on the SSH
-command closes the tunnel.
+Then open http://localhost:8000/admin and log in with the plaintext admin token. Vaultwarden sets the
+`VW_ADMIN` cookie without the `Secure` flag when the request is plain HTTP, so the login works
+through the tunnel without TLS. The cookie stays `HttpOnly`, `SameSite=Strict` and limited to
+`/admin`. Ctrl+C on the SSH command closes the tunnel.
 
 `-S none` matters when `ControlMaster` is set in the SSH config. Without it the command hands the
 forward to the running master connection and exits at once, and the port stays open until the
 master ends, which with `ControlPersist` can be minutes after the terminal was closed. A forward
 added that way is closed with `ssh -O cancel -L 8000:127.0.0.1:8000 root@sdwa5.org`.
 
-Tested 2026-10-15 through the tunnel before the public block went live. Without the cookie
-`/admin/users/overview` answered 401, and after the token login it answered 200 with the user list.
+Tested 2026-10-15 through the tunnel. Before the public block went live, curl got 401 from
+`/admin/users/overview` without the cookie and 200 with the user list after the token login. After
+the block, a headless Chromium logged in through `ssh -S none` and opened the user list and the
+diagnostics page, and the local port was closed again as soon as the SSH command ended.
 
 ## Admin token rotation
 

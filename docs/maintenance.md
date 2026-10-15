@@ -98,9 +98,9 @@ not part of the unit and needs its own `up`.
 ## Compose version
 
 The host runs Compose v2, the `docker compose` plugin, and the commands in these docs are written for
-it. docker-compose v1 1.29.2 is still installed from Debian and still answers, but **do not run
-`docker-compose up` with it**. v1 and v2 label containers differently, so every `up` from the other
-version recreates every container.
+it. Debian's docker-compose v1 1.29.2 was removed on 2026-10-15, together with its Python dependencies
+and docker.io's leftovers (criu, tini). **Do not reinstall it.** v1 and v2 label containers
+differently, so every `up` from the other version recreates every container.
 
 [`tools/compose.sh`](../tools/compose.sh) sets `DOCKER_COMPOSE` to `docker compose` where the plugin
 exists and to `docker-compose` otherwise, and `monitoring/lib.sh`, `tools/mariadb/reset-root-password.sh`

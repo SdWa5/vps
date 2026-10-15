@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.64.2] - 2026-10-15
+
+### Changed
+
+- `docs/maintenance.md`: Compose v1 is removed from the VPS, so the section says so and warns against reinstalling it.
+
 ## [1.64.1] - 2026-10-15
 
 ### Added

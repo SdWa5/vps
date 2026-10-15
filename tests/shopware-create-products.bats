@@ -124,6 +124,60 @@ count() {
     [ "$(count '^DELETE ')" -eq 0 ]
 }
 
+# EX-1 exists with ex-b only, at position 0 and as the cover; ex-a is in the library.
+existing_with_one_image() {
+    printf '{"data":[{"id":"p-existing","coverId":"row-b","media":[{"id":"row-b","mediaId":"m-b","position":0}]}],"total":1}' \
+        > "$STUB_SW_DIR/_api_search_product"
+    printf '{"data":[{"id":"m-b"}],"total":1}' > "$STUB_SW_DIR/_api_search_media"
+}
+
+@test "sync-media in a dry run names the change and writes nothing" {
+    existing_with_one_image
+    create_products "$DATA_DIR/products.json" --sync-media
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"EX-1 images set to the 2 listed, the first as cover"* ]]
+    [[ "$output" == *"EX-2 images already current"* ]]
+    [[ "$output" == *"would sync images of 1"* ]]
+    [ "$(count '^PATCH ')" -eq 0 ]
+}
+
+@test "sync-media keeps an existing row and moves it to the front as the cover" {
+    printf '{"data":[{"id":"p-existing","coverId":"row-z","media":[{"id":"row-z","mediaId":"m-z","position":0},{"id":"row-b","mediaId":"m-b","position":1}]}],"total":1}' \
+        > "$STUB_SW_DIR/_api_search_product"
+    printf '{"data":[{"id":"m-b"}],"total":1}' > "$STUB_SW_DIR/_api_search_media"
+    jq '.products[0].media = ["media/ex-b.jpg"] | .products |= .[0:1]' "$DATA_DIR/products.json" > "$DATA_DIR/p.json"
+    create_products "$DATA_DIR/p.json" --sync-media --apply
+    [ "$status" -eq 0 ]
+    body="$(grep '^PATCH /api/product/p-existing ' "$STUB_SW_LOG" | sed 's|^PATCH /api/product/p-existing ||')"
+    [ "$body" = '{"media":[{"id":"row-b","mediaId":"m-b","position":0}],"coverId":"row-b"}' ]
+    [ "$(count '^POST /api/media ')" -eq 0 ]
+    [ "$(count '^DELETE /api/_action/cache')" -eq 1 ]
+}
+
+@test "sync-media uploads a missing image and adds it as a new row" {
+    printf '{"data":[{"id":"p-existing","coverId":null,"media":[]}],"total":1}' > "$STUB_SW_DIR/_api_search_product"
+    jq '.products |= .[1:2]' "$DATA_DIR/products.json" > "$DATA_DIR/p.json"
+    create_products "$DATA_DIR/p.json" --sync-media --apply
+    [ "$status" -eq 0 ]
+    [ "$(count '^POST /api/media ')" -eq 1 ]
+    body="$(grep '^PATCH /api/product/p-existing ' "$STUB_SW_LOG" | sed 's|^PATCH /api/product/p-existing ||')"
+    [ "$(jq -r '[(.media | length), (.media[0].id | length), (.coverId == .media[0].id)] | map(tostring) | join(" ")' <<<"$body")" = "1 32 true" ]
+    [ "$(count '^POST /api/product ')" -eq 0 ]
+}
+
+@test "sync-media leaves a product alone whose images already match" {
+    printf '{"data":[{"id":"p-existing","coverId":"row-x","media":[{"id":"row-x","mediaId":"m-x","position":0}]}],"total":1}' \
+        > "$STUB_SW_DIR/_api_search_product"
+    printf '{"data":[{"id":"m-x"}],"total":1}' > "$STUB_SW_DIR/_api_search_media"
+    jq '.products[1].media = ["media/ex-c.png"] | .products |= .[1:2]' "$DATA_DIR/products.json" > "$DATA_DIR/p.json"
+    create_products "$DATA_DIR/p.json" --sync-media --apply
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"EX-2 images already current"* ]]
+    [[ "$output" == *"synced images of 0"* ]]
+    [ "$(count '^PATCH ')" -eq 0 ]
+    [ "$(count '^DELETE ')" -eq 0 ]
+}
+
 @test "an image already in the media library is reused, not uploaded again" {
     printf '{"data":[{"id":"m-existing"}],"total":1}' > "$STUB_SW_DIR/_api_search_media"
     create_products "$DATA_DIR/products.json" --apply

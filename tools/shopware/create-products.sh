@@ -15,12 +15,19 @@
 # across the whole shop, which is why they carry a prefix such as
 # sdwa5-print-model-.
 #
+# --sync-media brings the images of a product that exists in line with the data
+# file instead of skipping it. Missing images are added, every listed image gets
+# its position from the list, and the first becomes the cover. Images the
+# product has but the list does not name are left alone.
+#
 # It writes to production, so it is **dry-run by default**. Claude Code's
 # auto-mode classifier blocks production mutations unless the owner allows them.
 #
 # Usage:
 #   tools/shopware/create-products.sh DATA.json              show what would be created
 #   tools/shopware/create-products.sh DATA.json --apply      create it
+#   tools/shopware/create-products.sh DATA.json --sync-media [--apply]
+#                                       also bring images of existing products in line
 #   tools/shopware/create-products.sh --help
 #
 # DATA.json holds the shop ids once (taxId, currencyId, salesChannelId,
@@ -43,10 +50,12 @@ set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
 APPLY=0
+SYNC_MEDIA=0
 DATA=""
 for arg in "$@"; do
     case "$arg" in
         --apply) APPLY=1 ;;
+        --sync-media) SYNC_MEDIA=1 ;;
         -h|--help) sw_usage; exit 0 ;;
         -*) die "unknown option: ${arg}. Try --help." ;;
         *) [[ -z "$DATA" ]] || die "only one data file, got $DATA and $arg"; DATA="$arg" ;;
@@ -125,7 +134,44 @@ product_payload() {
         + (if ($pm | length) > 0 then {media: $pm, coverId: $pm[0].id} else {} end)'
 }
 
-CREATED=0; SKIPPED=0
+# sync_media PRODUCT_ID PRODUCT_JSON MEDIA_IDS_JSON brings the product's image
+# rows in line with MEDIA_IDS_JSON. A row that holds a listed image keeps its id,
+# so nothing is removed and re-added. Prints "current" when nothing changes.
+sync_media() {
+    local pid="$1" p="$2" media="$3" product body
+    product="$(sw_api POST /search/product "$(jq -cn --arg i "$pid" \
+        '{ids:[$i],associations:{media:{}}}')" | jq -c '.data[0] // {}')"
+    body="$(jq -cn --argjson have "$product" --argjson want "$media" '
+        ($have.media // []) as $rows
+        | [$want | to_entries[] | .key as $k | .value as $m
+            | {id: (([$rows[] | select(.mediaId == $m) | .id] | first) // null), mediaId: $m, position: $k}]
+        | {media: ., coverId: .[0].id, current: (all(.id != null) and
+            ([.[] | .id as $i | .position as $pos | $rows[] | select(.id == $i) | .position == $pos] | all)
+            and $have.coverId == .[0].id)}')"
+    if [[ "$(jq -r .current <<<"$body")" == true ]]; then printf 'current'; return; fi
+    (( APPLY )) || { printf 'change'; return; }
+    body="$(jq -c '.media |= map(.id //= "new")' <<<"$body")"
+    local rows="[]" r id
+    while IFS= read -r r; do
+        id="$(jq -r .id <<<"$r")"; [[ "$id" == new ]] && id="$(uuid)"
+        rows="$(jq -c --argjson r "$r" --arg i "$id" '. + [$r + {id: $i}]' <<<"$rows")"
+    done < <(jq -c '.media[]' <<<"$body")
+    sw_write_ok "$(sw_api PATCH "/product/$pid" "$(jq -cn --argjson m "$rows" '{media: $m, coverId: $m[0].id}')")" \
+        "images of $(jq -r .productNumber <<<"$p")"
+    printf 'changed'
+}
+
+images_of() {
+    local rel mid ids="[]"
+    while IFS= read -r rel; do
+        mid="$(media_for "$DIR/$rel")"
+        printf '           image %s -> %s\n' "$rel" "$mid" >&2
+        ids="$(jq -c --arg m "$mid" '. + [$m]' <<<"$ids")"
+    done < <(jq -r '.media[]' <<<"$1")
+    printf '%s' "$ids"
+}
+
+CREATED=0; SKIPPED=0; SYNCED=0
 COUNT="$(jq '.products | length' "$DATA")"
 for (( i = 0; i < COUNT; i++ )); do
     P="$(jq -c ".products[$i]" "$DATA")"
@@ -133,16 +179,21 @@ for (( i = 0; i < COUNT; i++ )); do
 
     EXISTING="$(sw_api POST /search/product "$(jq -cn --arg n "$NUMBER" \
         '{limit:1,filter:[{type:"equals",field:"productNumber",value:$n}]}')" | jq -r '.data[0].id // empty')"
+    if [[ -n "$EXISTING" ]] && (( SYNC_MEDIA )); then
+        STATE="$(sync_media "$EXISTING" "$P" "$(images_of "$P")")"
+        if [[ "$STATE" == current ]]; then
+            sw_skip "$NUMBER images already current"; SKIPPED=$((SKIPPED + 1))
+        else
+            sw_report images "$NUMBER images set to the $(jq '.media | length' <<<"$P") listed, the first as cover"
+            SYNCED=$((SYNCED + 1))
+        fi
+        continue
+    fi
     if [[ -n "$EXISTING" ]]; then
         sw_skip "$NUMBER exists ($EXISTING)"; SKIPPED=$((SKIPPED + 1)); continue
     fi
 
-    MEDIA="[]"
-    while IFS= read -r rel; do
-        MID="$(media_for "$DIR/$rel")"
-        printf '           image %s -> %s\n' "$rel" "$MID"
-        MEDIA="$(jq -c --arg m "$MID" '. + [$m]' <<<"$MEDIA")"
-    done < <(jq -r '.media[]' <<<"$P")
+    MEDIA="$(images_of "$P")"
 
     PID="$(uuid)"
     if (( APPLY )); then
@@ -152,7 +203,9 @@ for (( i = 0; i < COUNT; i++ )); do
     CREATED=$((CREATED + 1))
 done
 
-if (( APPLY && CREATED )); then
+if (( APPLY && (CREATED || SYNCED) )); then
     sw_write_ok "$(sw_api DELETE /_action/cache)" "cache clear"
 fi
 printf '%s %d, skipped %d\n' "$( (( APPLY )) && echo created || echo would create)" "$CREATED" "$SKIPPED"
+(( SYNC_MEDIA )) && printf '%s images of %d\n' "$( (( APPLY )) && echo synced || echo would sync)" "$SYNCED"
+exit 0

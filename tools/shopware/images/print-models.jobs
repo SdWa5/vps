@@ -18,6 +18,13 @@ A="WhatsApp Image 2026-10-14 at 15.49.10.jpeg"
 B="WhatsApp Image 2026-10-14 at 15.49.11.jpeg"
 C="WhatsApp Image 2026-10-14 at 15.49.11_1.jpeg"
 
+# The SKRAM product shows a render, because the photos are too coarse for one sub alone. It comes from the
+# sdwa5-3d scene _solo/product-skram and is copied into IN_DIR as skram-render.png:
+#   ddev exec bin/console scene:render _solo/product-skram -c three-quarter -l studio --no-ground \
+#       -r 2000x2000 -o build/renders/product-skram.png
+R="skram-render.png"
+shot "$R" skram-render
+
 # A cigarette pack stands on the arc and must not reach the shop. Its footprint
 # on the cabinet top is filled, and everything above the top's back edge is cut.
 shot "$A" tops-arc --crop 0.08,0.33,0.92,0.67 \

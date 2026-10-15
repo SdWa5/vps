@@ -51,6 +51,9 @@ tools/shopware/images/shop-images.sh corners PHOTO.jpg zoom.jpg "0.36,0.18 0.62,
 # Products from a data file, dry run first. The file holds the shop ids, prices, texts and image paths.
 tools/shopware/create-products.sh tools/shopware/products/print-models.json
 tools/shopware/create-products.sh tools/shopware/products/print-models.json --apply
+
+# Existing products get their images in the order the data file lists them, the first as cover.
+tools/shopware/create-products.sh tools/shopware/products/print-models.json --sync-media --apply
 ```
 
 `print-cost.sh` builds an OrcaSlicer 2.4.2 image whose AppImage is pinned by checksum, and flattens the

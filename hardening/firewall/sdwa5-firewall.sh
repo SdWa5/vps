@@ -56,9 +56,13 @@ iptables -A INPUT -i lo -j ACCEPT
 iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
 iptables -A INPUT -m conntrack --ctstate INVALID -j DROP
 iptables -A INPUT -p icmp -j ACCEPT
-for bridge in $BRIDGES; do
-    iptables -A INPUT -i "$bridge" -j ACCEPT
-done
+# Containers get no blanket access to the host. Until 2026-10-15 every Docker
+# bridge was accepted here, which let any container reach whatever the host
+# serves on its gateway address. Measured before removing it: no container needs
+# the host. Mail goes straight to smtp.gmail.com or to the shop's own in-container
+# mailcatcher, DNS is Docker's embedded resolver, and Caddy talks to the
+# containers rather than the other way round. A container still reaches 22, 80
+# and 443 through the rules below, exactly as anyone on the internet does.
 iptables -A INPUT -p tcp --dport 22  -j ACCEPT
 iptables -A INPUT -p tcp --dport 80  -j ACCEPT
 iptables -A INPUT -p tcp --dport 443 -j ACCEPT

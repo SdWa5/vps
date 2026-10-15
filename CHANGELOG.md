@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.61.0] - 2026-10-15
+
+### Added
+
+- `hardening/dockware-db-account.sh`: each dockware shop gets a database account of its own, and `root@'%'` is dropped.
+- `docs/infrastructure.md`: container isolation, database accounts and the measurements after the cutover.
+
+### Changed
+
+- `docker-compose.yml`, `docker-compose.projects.yml`: one network per application, `erp_db` and the project DB networks `internal`, `links` replaced, `NET_RAW` dropped.
+- `hardening/firewall/sdwa5-firewall.sh`: Docker bridges are no longer accepted in `INPUT`, so containers reach the host on 22, 80 and 443 only.
+- `docs/chimodiazz.md`, `docs/ssh-hardening.md`: follow the new account script and firewall rules.
+
+### Removed
+
+- `root@'%'` on `dolibarr_db`.
+
 ## [1.60.1] - 2026-10-15
 
 ### Fixed

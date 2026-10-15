@@ -22,6 +22,8 @@ services:
       - ./vaultwarden-data:/data
     ports:
       - "127.0.0.1:8000:80"
+    networks: [vault]
+    cap_drop: [NET_RAW]
 
 
   shopware:
@@ -49,6 +51,8 @@ services:
       - ./shopware-mysql-data:/var/lib/mysql
       - ./shopware-html-data:/var/www/html
     restart: unless-stopped
+    networks: [shop]
+    cap_drop: [NET_RAW]
 
 
   minecraft:
@@ -98,6 +102,7 @@ services:
       # configuration rather than server state.
       - "./minecraft/modrinth-mods.txt:/extras/modrinth-mods.txt:ro"
     restart: unless-stopped
+    networks: [minecraft]
 
 
 
@@ -125,6 +130,10 @@ services:
     logging: *default-logging
     volumes:
       - ./dolibarr-mariadb-data:/var/lib/mysql
+    # The internal network has no gateway, so the database can neither be
+    # reached from nor reach anything outside the ERP.
+    networks: [erp_db]
+    cap_drop: [NET_RAW]
 
   dolibarr:
     # Exact pin, digest 9dbf09ca, which is what runs today. A Dolibarr minor
@@ -159,8 +168,8 @@ services:
       WWW_GROUP_ID: ${DOLIBARR_WWW_GROUP_ID:-1000}
     ports:
       - "127.0.0.1:8002:80"
-    links:
-      - dolibarr_db
+    networks: [erp, erp_db]
+    cap_drop: [NET_RAW]
     volumes:
       - ./dolibarr-documents-data:/var/www/documents
       - ./dolibarr-custom-data:/var/www/html/custom
@@ -197,8 +206,8 @@ services:
       DOLI_COMPANY_NAME: ${DOLIBARR_COMPANY_NAME:-SdWa5}
       WWW_USER_ID: ${DOLIBARR_WWW_USER_ID:-1000}
       WWW_GROUP_ID: ${DOLIBARR_WWW_GROUP_ID:-1000}
-    links:
-      - dolibarr_db
+    networks: [erp, erp_db]
+    cap_drop: [NET_RAW]
     volumes:
       - ./dolibarr-documents-data:/var/www/documents
       - ./dolibarr-custom-data:/var/www/html/custom
@@ -221,6 +230,7 @@ services:
       - "127.0.0.1:11434:11434"
     volumes:
       - ./ollama-data:/root/.ollama
+    networks: [ollama]
 
   restic:
     # Not pinned, because there is nothing to pin to. Measured 2026-09-08: the
@@ -258,3 +268,23 @@ services:
       # This tells the scheduled job WHAT to back up
       - BACKUP_DIRS=/data
       - RESTIC_FORGET_ARGS=--keep-daily 6 --keep-weekly 3 --keep-monthly 11 --keep-yearly 2 --prune
+    networks: [backup]
+    cap_drop: [NET_RAW]
+
+# One network per application instead of the shared default. Until 2026-10-15
+# every container sat on docker_default, and chimodiazz_shopware could open
+# shopware:3306, dolibarr_db:3306, vaultwarden:80 and dolibarr:80 by name.
+# Docker isolates user-defined bridges from each other, so a container now
+# reaches only its own application. Caddy is unaffected, because it runs on the
+# host and uses the loopback ports. Measured 2026-10-15: a container cannot
+# reach another network's loopback publish through its gateway either, since
+# those listeners are bound to 127.0.0.1. See docs/infrastructure.md.
+networks:
+  vault:
+  shop:
+  erp:
+  erp_db:
+    internal: true
+  backup:
+  minecraft:
+  ollama:

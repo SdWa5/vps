@@ -27,6 +27,7 @@ services:
       MARIADB_AUTO_UPGRADE: "1"
     volumes:
       - ./project2-dolibarr-mariadb-data:/var/lib/mysql
+    networks: [project2_db]
 
   project2_dolibarr:
     # Same exact pin as docker-compose.yml, for the same reason: Dolibarr
@@ -51,8 +52,7 @@ services:
       WWW_GROUP_ID: ${PROJECT2_WWW_GROUP_ID:-1000}
     ports:
       - "127.0.0.1:8003:80"
-    links:
-      - project2_dolibarr_db
+    networks: [project2, project2_db]
     volumes:
       - ./project2-dolibarr-documents-data:/var/www/documents
       - ./project2-dolibarr-custom-data:/var/www/html/custom
@@ -73,6 +73,7 @@ services:
       MARIADB_AUTO_UPGRADE: "1"
     volumes:
       - ./project3-dolibarr-mariadb-data:/var/lib/mysql
+    networks: [project3_db]
 
   project3_dolibarr:
     # Same exact pin as docker-compose.yml, for the same reason: Dolibarr
@@ -97,8 +98,7 @@ services:
       WWW_GROUP_ID: ${PROJECT3_WWW_GROUP_ID:-1000}
     ports:
       - "127.0.0.1:8004:80"
-    links:
-      - project3_dolibarr_db
+    networks: [project3, project3_db]
     volumes:
       - ./project3-dolibarr-documents-data:/var/www/documents
       - ./project3-dolibarr-custom-data:/var/www/html/custom
@@ -120,6 +120,10 @@ services:
     profiles: ["chimodiazz"]
     restart: unless-stopped
     logging: *default-logging
+    # Third-party code runs here, so this container gets a network of its own and
+    # no raw sockets. It used to share docker_default with every other service.
+    networks: [chimodiazz]
+    cap_drop: [NET_RAW]
     environment:
       - SHOP_DOMAIN=chimodiazz.sdwa5.org
       - APP_URL=https://chimodiazz.sdwa5.org
@@ -138,3 +142,15 @@ services:
       # Shopware's storefront build writes into the plugin's own dist directory,
       # which a read-only mount would break.
       - ./chimodiazz-src/shopware/custom/plugins/ChimodiazzTheme:/var/www/html/custom/plugins/ChimodiazzTheme
+
+# One network per application, see the networks block in docker-compose.yml.
+# Both files share the compose project name, so these names must not repeat
+# the ones defined there.
+networks:
+  project2:
+  project2_db:
+    internal: true
+  project3:
+  project3_db:
+    internal: true
+  chimodiazz:

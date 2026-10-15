@@ -105,7 +105,7 @@ systemctl reload caddy
 # Read the Dolibarr ERP from a workstation (see docs/dolibarr.md)
 tools/dolibarr/doli.sh status
 
-# Show what the project/task backlog would change in the ERP (--apply writes)
+# Show what the project, task and ticket backlog would change in the ERP (--apply writes)
 tools/dolibarr/sync-pm.sh
 
 # Install or update a Dolibarr custom module at a tag, on the VPS as root (see docs/dolibarr.md)

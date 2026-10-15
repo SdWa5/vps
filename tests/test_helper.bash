@@ -315,6 +315,15 @@ doli_pm_setup() {
          public:"0",statut:"1",usage_task:1}
     ]')"
     doli_pm_tasks '[]'
+    doli_pm_tickets '[]'
+
+    # The ticket dictionaries and users of the faked ERP. They are read only
+    # when the spec names a ticket.
+    doli_fixture setup_dictionary_ticket_severities \
+        "$(jq -n '[{code:"LOW"},{code:"NORMAL"},{code:"HIGH"},{code:"URGENT"},{code:"BLOCKING"}]')"
+    doli_fixture setup_dictionary_ticket_types "$(jq -n '[{code:"OTHER"},{code:"REQUEST"}]')"
+    doli_fixture setup_dictionary_ticket_categories "$(jq -n '[{code:"OTHER"}]')"
+    doli_fixture users "$(jq -n '[{id:"1",login:"admin"},{id:"2",login:"ada"}]')"
 
     # The new project comes first, so the id the stub hands back for its create
     # is the first one it hands out and a test can name it.
@@ -337,6 +346,11 @@ doli_pm_projects() {
 # a project the API user is not a contact on.
 doli_pm_tasks() {
     doli_fixture tasks "$1"
+}
+
+# Every ticket in the faked ERP, as one list, read the same way as the tasks.
+doli_pm_tickets() {
+    doli_fixture tickets "$1"
 }
 
 doli_pm_spec() {

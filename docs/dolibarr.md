@@ -192,6 +192,13 @@ priority the UI shows on the card and in the list, from Optional, Low, Normal an
 Blocking. A task has a `priority` column too, but no page of Dolibarr 23.0 displays it, measured
 against the live source on 2026-10-15. The script still writes tasks for a spec that names them.
 
+**A ticket cannot block another ticket in Dolibarr 23.0**, so a dependency is a line in the message.
+Tickets have no dependency field, and `ticket/card.php` excludes `ticket` from its own link-to block,
+read off the 23.0.2 image on 2026-10-15. The waiting ticket says `Blockiert durch TS… „<subject>“`
+and the blocker says `Blockiert TS… „<subject>“`, and how urgent the chain is stays the severity.
+Merging two tickets follows the same pattern: the surviving message takes over the text and names the
+merged ref, and the merged ticket is closed.
+
 ```bash
 tools/dolibarr/sync-pm.sh            # what would change
 tools/dolibarr/sync-pm.sh --apply    # write it

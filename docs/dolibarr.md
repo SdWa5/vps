@@ -181,11 +181,16 @@ the address from the member to the user it is linked to. The script still visits
 link is a property of those two records rather than a guarantee, and a visit to an already-current
 record costs one GET and reports a skip.
 
-## Projects and tasks
+## Projects, tasks and tickets
 
-The organisation's operational backlog lives in the Projects module rather than in the repositories'
-`TODO.md` files, which stay technical. [`tools/dolibarr/sync-pm.sh`](../tools/dolibarr/sync-pm.sh)
-rolls it in from a JSON spec.
+The organisation's operational backlog lives in the ERP rather than in the repositories' `TODO.md`
+files, which stay technical. [`tools/dolibarr/sync-pm.sh`](../tools/dolibarr/sync-pm.sh) rolls it in
+from a JSON spec.
+
+**Tickets carry the backlog since 2026-10-15**, each linked to its project. A ticket's severity is a
+priority the UI shows on the card and in the list, from Optional, Low, Normal and High to Urgent and
+Blocking. A task has a `priority` column too, but no page of Dolibarr 23.0 displays it, measured
+against the live source on 2026-10-15. The script still writes tasks for a spec that names them.
 
 ```bash
 tools/dolibarr/sync-pm.sh            # what would change
@@ -202,14 +207,25 @@ links private documents, and these repositories are going public.
 
 How it matches and what it writes:
 
-- A **project** is matched by its exact `title`, a **task** by its exact `label` within its project.
-  Renaming either in the spec creates a second record rather than renaming the first.
+- A **project** is matched by its exact `title`, a **task** by its exact `label` and a **ticket** by
+  its exact `subject`, both within their project. Renaming any of them in the spec creates a second
+  record rather than renaming the first.
+- A ticket entry carries `subject`, `message`, `severity`, `type`, `category` and `assignee`, and
+  `ticket_defaults` at the top of the spec fills in whatever an entry leaves out when the ticket is
+  created. An existing ticket gets no defaults, so an entry that only extends a message leaves the
+  severity and the assignee set in the UI alone. The message is
+  plain text, and the script turns each line break into the `<br>` the ERP stores. Severity, type
+  and category are checked against the ERP's ticket dictionaries and the assignee against the user
+  logins before anything is written, because Dolibarr stores an unknown code anyway and the UI then
+  shows it blank.
+- A new ticket with an assignee is created in status 2, Assigned, the status the UI gives an
+  assigned ticket. An update never touches the status.
 - Only the fields an entry names are written. A value set by hand in the UI survives unless the spec
   names that field, so an entry can carry nothing but a title and a task list.
 - **Nothing is ever deleted**, and a project the spec does not name is never read or written.
   Dropping an item from the spec leaves the ERP alone, and closing a task stays a UI job.
-- A title that differs from an existing one only in case aborts the run. The API offers no way to
-  undo the duplicate project it would otherwise create.
+- A title or a ticket subject that differs from an existing one only in case aborts the run. The
+  API offers no way to undo the duplicate it would otherwise create.
 
 ### What the API does that the script had to be built around
 
@@ -238,6 +254,12 @@ Read off the Dolibarr 23.0 source and confirmed against the live instance on 202
 - **Dolibarr HTML-escapes what it stores**, so `Allen & Heath` reads back as `Allen &amp; Heath`.
   Both sides are decoded before they are compared, or a description holding an ampersand would be
   rewritten on every run.
+- **A ticket message stores a line break as `<br>` followed by a newline** when it is written in the
+  UI or with `PUT`, while `POST /tickets` drops the `<br>` and keeps the newline, both measured on
+  2026-10-15. Both forms are reduced to the newline before the comparison.
+- `POST /tickets` requires `subject` and `message` and numbers the ticket itself when `ref` is
+  empty, so a ticket needs no `"auto"`. `PUT /tickets/{id}` answers with the whole ticket rather
+  than with its id. Read off the Dolibarr 23.0 source on 2026-10-15.
 
 Dates are written as `YYYY-MM-DD` in the spec and stored as epoch seconds.
 

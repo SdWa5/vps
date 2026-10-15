@@ -1,15 +1,19 @@
 #!/usr/bin/env bash
 #
-# Roll the project and task backlog into the Dolibarr ERP.
+# Roll the project, task and ticket backlog into the Dolibarr ERP.
 #
 # The backlog lives in a JSON spec and this script makes the ERP match it. It is
-# idempotent: every project and every task is read first and skipped when it
+# idempotent: every project, task and ticket is read first and skipped when it
 # already carries the wanted values, so a second run is a no-op and a
 # half-finished run can simply be repeated.
 #
+# Tickets carry the backlog, because their severity is what the UI shows as a
+# priority. A task's priority is stored and displayed nowhere. Tasks stay
+# supported for the projects that still hold them.
+#
 # It only ever creates and updates. Nothing is deleted, and a project the spec
 # does not name is never touched, so dropping an item from the spec leaves the
-# ERP alone and closing a task stays a job for the UI.
+# ERP alone and closing a task or a ticket stays a job for the UI.
 #
 # It writes to production, so it is **dry-run by default** and a human starts
 # it, the same split tools/dolibarr/set-address.sh uses.
@@ -42,7 +46,7 @@ TASK_FIELDS=(description date_start date_end progress planned_workload priority)
 
 APPLY=0
 
-usage() { sed -n '3,26p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '3,30p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
 die() { printf 'sync-pm.sh: %s\n' "$*" >&2; exit 1; }
 
 case "${1:-}" in
@@ -143,6 +147,11 @@ diff_payload() {
         def unescape:
             gsub("&lt;"; "<") | gsub("&gt;"; ">") | gsub("&quot;"; "\"")
             | gsub("&#0?39;"; "\u0027") | gsub("&nbsp;"; " ") | gsub("&amp;"; "&");
+        # A ticket message is HTML, and a line break in it is stored as
+        # "<br>" followed by a newline, measured on 2026-10-15. Both forms
+        # are reduced to the newline, so the spec can be written as plain text.
+        def plain:
+            unescape | gsub("\r"; "") | gsub("<br\\s*/?>\n?"; "\n");
         [ $des | to_entries[]
           | select(
               ($cur[.key] // null) as $c
@@ -151,7 +160,7 @@ diff_payload() {
                     if $c == null or $c == "" then .value != 0
                     else (($c | tostring | tonumber?) // null) != .value
                     end
-                else (($c // "") | tostring | unescape) != (.value | tostring | unescape)
+                else (($c // "") | tostring | plain) != (.value | tostring | plain)
                 end
             )
         ] | from_entries'
@@ -183,6 +192,111 @@ wanted_fields() {
     printf '%s' "$out"
 }
 
+# A new ticket's entry is laid over .ticket_defaults, so a spec states a common
+# severity or assignee once. An existing ticket gets no defaults, or a spec
+# entry that only adds to a ticket's message would also reset the severity and
+# the assignee set in the UI. Its record fields as a compact JSON object: the
+# message turns from plain text into the "<br>" lines the ERP stores, and the
+# assignee from a login into the user id.
+ticket_fields() {
+    local entry="$1" defaults="$2" assignee user_id=""
+    entry="$(printf '%s' "$defaults" | jq -c --argjson e "$entry" '. + $e')"
+    assignee="$(printf '%s' "$entry" | jq -r '.assignee // ""')"
+    if [[ -n "$assignee" ]]; then
+        user_id="$(printf '%s' "$USERS" | jq -r --arg l "$assignee" \
+            '[.[] | select(.login == $l)] | .[0].id // ""')"
+        [[ -n "$user_id" ]] || die "the ticket assignee \"$assignee\" is no user login in the ERP."
+    fi
+    printf '%s' "$entry" | jq -c --arg u "$user_id" '
+        def named($k): (.[$k] // "") | tostring | . != "";
+        {}
+        + (if named("message") then {message: (.message | split("\n") | join("<br>\n"))} else {} end)
+        + (if named("severity") then {severity_code: .severity} else {} end)
+        + (if named("type") then {type_code: .type} else {} end)
+        + (if named("category") then {category_code: .category} else {} end)
+        + (if $u != "" then {fk_user_assign: ($u | tonumber)} else {} end)'
+}
+
+# A severity, type or category code that is not in its dictionary is stored
+# anyway and shows up blank in the UI, so every code the spec uses is checked
+# against the ERP before anything is written.
+check_ticket_codes() {
+    local key="$1" dictionary="$2" used known unknown
+    used="$(printf '%s' "$SPEC" | jq -c --arg k "$key" \
+        '[(.ticket_defaults // {})[$k], (.projects[].tickets // [])[][$k]]
+         | map(select(. != null and . != "")) | unique')"
+    [[ "$used" == "[]" ]] && return 0
+    known="$(api_list "setup/dictionary/$dictionary")" || exit 1
+    known="$(printf '%s' "$known" | jq -c '[.[].code]')"
+    unknown="$(jq -rn --argjson u "$used" --argjson k "$known" '$u - $k | join(", ")')"
+    [[ -z "$unknown" ]] \
+        || die "unknown ticket $key $unknown. The ERP knows $(jq -rn --argjson k "$known" '$k | join(", ")')."
+}
+
+# The tickets of one project. A ticket is matched by its exact subject within
+# its project, the same way a task is matched by its label.
+sync_tickets() {
+    local project="$1" project_id="$2" title="$3"
+    local count i entry subject current near wanted payload existing='[]'
+    count="$(printf '%s' "$project" | jq '.tickets // [] | length')"
+    (( count )) || return 0
+
+    if [[ -n "$project_id" ]]; then
+        existing="$(printf '%s' "$EXISTING_TICKETS" \
+            | jq -c --arg p "$project_id" '[.[] | select((.fk_project | tostring) == $p)]')"
+    fi
+
+    for (( i = 0; i < count; i++ )); do
+        entry="$(printf '%s' "$project" | jq -c --argjson i "$i" '.tickets[$i]')"
+        subject="$(printf '%s' "$entry" | jq -r '.subject // ""')"
+        [[ -n "$subject" ]] || die "project $title has a ticket without a subject."
+
+        current="$(printf '%s' "$existing" | jq -c --arg s "$subject" '
+            def unescape: gsub("&quot;"; "\"") | gsub("&#0?39;"; "\u0027") | gsub("&amp;"; "&");
+            [.[] | select((.subject // "" | unescape) == $s)] | .[0] // null')"
+        if [[ "$current" == "null" ]]; then
+            near="$(printf '%s' "$existing" | jq -r --arg s "$subject" \
+                '[.[] | select((.subject // "" | ascii_downcase) == ($s | ascii_downcase))] | .[0].subject // ""')"
+            [[ -n "$near" ]] && die "the spec says ticket \"$subject\" and project $title already has \"$near\". Refusing to create a second one."
+        fi
+
+        if [[ "$current" == "null" ]]; then
+            wanted="$(ticket_fields "$entry" "$TICKET_DEFAULTS")" || exit 1
+        else
+            wanted="$(ticket_fields "$entry" '{}')" || exit 1
+        fi
+
+        if [[ "$current" == "null" ]]; then
+            printf '%s' "$wanted" | jq -e 'has("message")' >/dev/null \
+                || die "ticket $subject is new and needs a message, which Dolibarr requires."
+            printf '  %-6s ticket %s\n' "$( (( APPLY )) && echo create || echo would )" "$subject"
+            CREATED=$((CREATED + 1))
+            if (( APPLY )); then
+                # A ticket assigned in the UI moves to status 2, Assigned, while
+                # Ticket::create() writes 0, Not read, unless it is told
+                # otherwise. Read off the Dolibarr 23.0 source on 2026-10-15.
+                payload="$(printf '%s' "$wanted" | jq -c \
+                    --arg s "$subject" --arg p "$project_id" \
+                    '. + {subject: $s, fk_project: ($p | tonumber)}
+                     + (if has("fk_user_assign") then {status: 2} else {} end)')"
+                api_write POST 'tickets' "$payload" "ticket $subject" >/dev/null || exit 1
+            fi
+        else
+            payload="$(diff_payload "$current" "$wanted")"
+            if [[ "$payload" == "{}" ]]; then
+                printf '  %-6s ticket %s\n' "skip" "$subject"
+                SKIPPED=$((SKIPPED + 1))
+            else
+                printf '  %-6s ticket %s, %s\n' "$( (( APPLY )) && echo update || echo would )" \
+                    "$subject" "$(printf '%s' "$payload" | jq -r 'keys | join(", ")')"
+                UPDATED=$((UPDATED + 1))
+                (( APPLY )) && { api_write PUT "tickets/$(printf '%s' "$current" | jq -r '.id')" \
+                    "$payload" "ticket $subject" >/dev/null || exit 1; }
+            fi
+        fi
+    done
+}
+
 CREATED=0
 UPDATED=0
 SKIPPED=0
@@ -202,6 +316,23 @@ EXISTING_PROJECTS="$(api_list 'projects?limit=500')" || exit 1
 # list saw it and the per-project endpoint did not. Reading the global list
 # costs one request instead of one per project and does not filter that way.
 EXISTING_TASKS="$(api_list 'tasks?limit=2000')" || exit 1
+
+# Tickets, their dictionaries and the users are read only when the spec names a
+# ticket, so a spec of projects and tasks costs no extra request.
+EXISTING_TICKETS='[]'
+TICKET_DEFAULTS="$(printf '%s' "$SPEC" | jq -c '.ticket_defaults // {}')"
+USERS='[]'
+if printf '%s' "$SPEC" | jq -e '[.projects[].tickets // [] | length] | add // 0 | . > 0' >/dev/null; then
+    EXISTING_TICKETS="$(api_list 'tickets?limit=2000')" || exit 1
+    check_ticket_codes severity ticket_severities
+    check_ticket_codes type ticket_types
+    check_ticket_codes category ticket_categories
+    if printf '%s' "$SPEC" | jq -e \
+        '[(.ticket_defaults // {}).assignee, (.projects[].tickets // [])[].assignee] | map(select(. != null and . != "")) | length > 0' \
+        >/dev/null; then
+        USERS="$(api_list 'users?limit=500')" || exit 1
+    fi
+fi
 
 project_count="$(printf '%s' "$SPEC" | jq '.projects | length')"
 for (( p = 0; p < project_count; p++ )); do
@@ -252,6 +383,8 @@ for (( p = 0; p < project_count; p++ )); do
         fi
     fi
 
+    sync_tickets "$project" "$project_id" "$title"
+
     task_count="$(printf '%s' "$project" | jq '.tasks // [] | length')"
     (( task_count )) || continue
 
@@ -298,4 +431,4 @@ for (( p = 0; p < project_count; p++ )); do
 done
 
 printf '\n%d to create, %d to update, %d already current.\n' "$CREATED" "$UPDATED" "$SKIPPED"
-printf 'Nothing is ever deleted here. Closing a task is a job for the Dolibarr UI.\n'
+printf 'Nothing is ever deleted here. Closing a task or a ticket is a job for the Dolibarr UI.\n'

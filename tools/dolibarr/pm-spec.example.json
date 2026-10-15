@@ -4,20 +4,47 @@
     "pm-spec.json, which is gitignored because the real backlog names people and",
     "links private documents, and these repositories are going public.",
     "",
-    "A project is matched by its exact title and a task by its exact label, so",
-    "renaming either creates a second record rather than renaming the first one.",
-    "Only the fields an entry names are written; everything else on the record is",
-    "left as the UI has it. Dates are YYYY-MM-DD. Nothing is ever deleted."
+    "A project is matched by its exact title, a task by its exact label and a",
+    "ticket by its exact subject within its project, so renaming any of them",
+    "creates a second record rather than renaming the first one. Only the fields",
+    "an entry names are written; everything else on the record is left as the UI",
+    "has it. Dates are YYYY-MM-DD. Nothing is ever deleted.",
+    "",
+    "Tickets carry the backlog, because their severity is the priority the UI",
+    "shows. A ticket's message is plain text with \\n line breaks. severity, type",
+    "and category are codes of the ERP's ticket dictionaries, and assignee is a",
+    "user login. ticket_defaults fills in whatever a new ticket's entry leaves out,",
+    "and an existing ticket gets no defaults."
   ],
+  "ticket_defaults": {
+    "severity": "NORMAL",
+    "type": "OTHER",
+    "category": "OTHER",
+    "assignee": "admin"
+  },
   "projects": [
     {
       "title": "An existing project",
       "tasks": [
-        { "label": "A task that only needs a label" },
+        {
+          "label": "A task that only needs a label"
+        },
         {
           "label": "A task with a deadline",
           "description": "What has to happen, and what it depends on.",
           "date_end": "2026-12-31"
+        }
+      ],
+      "tickets": [
+        {
+          "subject": "A ticket that inherits the defaults",
+          "message": "What has to happen.\nWhat it depends on."
+        },
+        {
+          "subject": "An urgent ticket for someone else",
+          "message": "Why it is urgent.",
+          "severity": "URGENT",
+          "assignee": "another.login"
         }
       ]
     },

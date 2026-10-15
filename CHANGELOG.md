@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.72.0] - 2026-10-15
+
+### Added
+
+- `tools/dolibarr/sync-pm.sh` writes tickets, matched by subject within their project, with message,
+  severity, type, category and assignee, defaults for all of them and a dictionary check before any
+  write.
+
+### Changed
+
+- The Dolibarr backlog moves from tasks to tickets, whose severity the UI shows as a priority.
+
 ## [1.71.4] - 2026-10-15
 
 ### Changed

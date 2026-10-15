@@ -262,3 +262,155 @@ setup() {
     [[ "$output" == *"GET tasks?limit="* ]]
     [[ "$output" != *"/tasks "* ]]
 }
+
+# Tickets. Their severity is the priority the UI shows, which a task's priority
+# is not, so the backlog moved to them on 2026-10-15.
+
+@test "a spec without tickets reads no tickets, dictionaries or users" {
+    doli_sync_pm
+    [ "$status" -eq 0 ]
+    run doli_requests
+    [[ "$output" != *"GET tickets"* ]]
+    [[ "$output" != *"setup/dictionary"* ]]
+    [[ "$output" != *"GET users"* ]]
+}
+
+@test "a new ticket goes out with its project, codes, assignee and HTML line breaks" {
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{subject:"Eurokisten kaufen",
+        message:"Mehrere Größen.\nZu zweit tragbar.", severity:"HIGH", type:"REQUEST", assignee:"ada"}]}]}')"
+    doli_sync_pm --apply
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"create ticket Eurokisten kaufen"* ]]
+    run doli_requests
+    line="$(printf '%s\n' "$output" | grep '^POST tickets ')"
+    [[ "$line" == *'"subject":"Eurokisten kaufen"'* ]]
+    [[ "$line" == *'"fk_project":3'* ]]
+    [[ "$line" == *'"severity_code":"HIGH"'* ]]
+    [[ "$line" == *'"type_code":"REQUEST"'* ]]
+    [[ "$line" == *'"fk_user_assign":2'* ]]
+    [[ "$line" == *'"status":2'* ]]
+    [[ "$line" == *'"message":"Mehrere Größen.<br>\nZu zweit tragbar."'* ]]
+}
+
+@test "an unassigned new ticket is left in the status Dolibarr gives it" {
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{subject:"Eurokisten kaufen", message:"x"}]}]}')"
+    doli_sync_pm --apply
+    [ "$status" -eq 0 ]
+    run doli_requests
+    line="$(printf '%s\n' "$output" | grep '^POST tickets ')"
+    [[ "$line" != *'"status"'* ]]
+    [[ "$output" != *"GET users"* ]]
+}
+
+@test "ticket defaults apply and an entry overrides them" {
+    doli_pm_spec "$(jq -n '{ticket_defaults:{severity:"NORMAL", assignee:"admin"},
+        projects:[{title:"Inventur", tickets:[
+            {subject:"Eins", message:"a"},
+            {subject:"Zwei", message:"b", severity:"URGENT", assignee:"ada"}]}]}')"
+    doli_sync_pm --apply
+    [ "$status" -eq 0 ]
+    run doli_requests
+    one="$(printf '%s\n' "$output" | grep '"subject":"Eins"')"
+    [[ "$one" == *'"severity_code":"NORMAL"'* && "$one" == *'"fk_user_assign":1'* ]]
+    two="$(printf '%s\n' "$output" | grep '"subject":"Zwei"')"
+    [[ "$two" == *'"severity_code":"URGENT"'* && "$two" == *'"fk_user_assign":2'* ]]
+}
+
+# The idempotency claim for tickets. The ERP stores a line break as "<br>" and a
+# newline and escapes an ampersand, and neither may read as a change.
+@test "a ticket that matches the ERP is not written" {
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{subject:"Merch & Becher",
+        message:"Allen & Heath\nzweite Zeile", severity:"HIGH", assignee:"ada"}]}]}')"
+    doli_pm_tickets "$(jq -n '[{id:"7",fk_project:"3",subject:"Merch &amp; Becher",
+        message:"Allen &amp; Heath<br>\nzweite Zeile",severity_code:"HIGH",fk_user_assign:"2",status:"3"}]')"
+    doli_sync_pm --apply
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"skip   ticket Merch & Becher"* ]]
+    [ "$(doli_post_count)" -eq 0 ]
+    [ "$(doli_put_count)" -eq 0 ]
+}
+
+@test "a changed severity produces one PUT carrying only that field and no status" {
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{subject:"Eurokisten kaufen",
+        message:"x", severity:"URGENT"}]}]}')"
+    doli_pm_tickets "$(jq -n '[{id:"7",fk_project:"3",subject:"Eurokisten kaufen",message:"x",
+        severity_code:"HIGH",status:"3"}]')"
+    doli_sync_pm --apply
+    [ "$status" -eq 0 ]
+    [ "$(doli_put_count)" -eq 1 ]
+    run doli_requests
+    line="$(printf '%s\n' "$output" | grep '^PUT tickets/7')"
+    [[ "$line" == *'"severity_code":"URGENT"'* ]]
+    [[ "$line" != *"message"* && "$line" != *"status"* ]]
+}
+
+@test "a ticket of another project with the same subject is not a match" {
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{subject:"Eurokisten kaufen", message:"x"}]}]}')"
+    doli_pm_tickets "$(jq -n '[{id:"7",fk_project:"4",subject:"Eurokisten kaufen",message:"x"}]')"
+    doli_sync_pm --apply
+    [ "$status" -eq 0 ]
+    [ "$(doli_post_count)" -eq 1 ]
+}
+
+# The task pass skips a project without tasks, and the ticket pass must not be
+# skipped with it.
+@test "the tickets of a project without tasks are synced" {
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{subject:"Eins", message:"a"}]}]}')"
+    doli_sync_pm
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"would  ticket Eins"* ]]
+}
+
+@test "an unknown severity aborts before any write" {
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{subject:"Eins", message:"a", severity:"HIHG"}]}]}')"
+    doli_sync_pm --apply
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"unknown ticket severity HIHG"* ]]
+    [ "$(doli_post_count)" -eq 0 ]
+}
+
+@test "an unknown assignee aborts" {
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{subject:"Eins", message:"a", assignee:"nobody"}]}]}')"
+    doli_sync_pm --apply
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"no user login"* ]]
+    [ "$(doli_post_count)" -eq 0 ]
+}
+
+@test "a ticket subject that differs only in case aborts" {
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{subject:"EUROKISTEN KAUFEN", message:"x"}]}]}')"
+    doli_pm_tickets "$(jq -n '[{id:"7",fk_project:"3",subject:"Eurokisten kaufen",message:"x"}]')"
+    doli_sync_pm --apply
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"Refusing to create a second one"* ]]
+    [ "$(doli_post_count)" -eq 0 ]
+}
+
+@test "a ticket without a subject is refused" {
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{message:"x"}]}]}')"
+    doli_sync_pm
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"without a subject"* ]]
+}
+
+@test "a new ticket without a message is refused" {
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{subject:"Eins"}]}]}')"
+    doli_sync_pm
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"needs a message"* ]]
+}
+
+# An entry that only extends the message of a ticket made in the UI must not
+# reset the severity or the assignee set there.
+@test "ticket defaults are not applied to an existing ticket" {
+    doli_pm_spec "$(jq -n '{ticket_defaults:{severity:"NORMAL", assignee:"admin"},
+        projects:[{title:"Inventur", tickets:[{subject:"Merch Tabelle", message:"neu"}]}]}')"
+    doli_pm_tickets "$(jq -n '[{id:"22",fk_project:"3",subject:"Merch Tabelle",message:"alt",
+        severity_code:"URGENT",fk_user_assign:"2"}]')"
+    doli_sync_pm --apply
+    [ "$status" -eq 0 ]
+    run doli_requests
+    line="$(printf '%s\n' "$output" | grep '^PUT tickets/22')"
+    [[ "$line" == *'"message":"neu"'* ]]
+    [[ "$line" != *"severity_code"* && "$line" != *"fk_user_assign"* ]]
+}

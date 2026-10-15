@@ -4,13 +4,55 @@ Reverse proxy handling TLS termination for all public-facing services.
 
 - Systemd service (NOT in Docker): `systemctl status caddy`
 - Config: `/etc/caddy/Caddyfile`
-- TLS: Let's Encrypt automatic, email `ripper@sdwa5.org`
+- TLS: Let's Encrypt automatic, email `ripper@sdwa5.org`, ZeroSSL over ACME as fallback
+- Package: `caddy` from the official Caddy apt repository, 2.11.7 since 2026-10-15
+
+## Package and updates
+
+Caddy comes from the official repository at `dl.cloudsmith.io/public/caddy/stable`, not from
+Debian. Debian 12 ships 2.6.2-5, built in April 2023 with Go 1.19.8 and never rebuilt, so it lacks
+the Go HTTP/2 fixes since then (Rapid Reset, CVE-2023-39325, and the CONTINUATION flood,
+CVE-2023-45288). Debian's release notes give Go packages only limited security support.
+
+The key is stored armored as `/usr/share/keyrings/caddy-stable-archive-keyring.asc`, because the
+host has no `gpg` to dearmor it. `/etc/apt/sources.list.d/caddy-stable.list` is the upstream
+`debian.deb.txt` with its `signed-by` path pointed at that file.
+
+```bash
+k=/usr/share/keyrings/caddy-stable-archive-keyring.asc
+curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/gpg.key > $k
+curl -1sLf https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt \
+  | sed "s#/usr/share/keyrings/caddy-stable-archive-keyring.gpg#$k#" \
+  > /etc/apt/sources.list.d/caddy-stable.list
+apt-get update
+apt-get install -o Dpkg::Options::=--force-confold caddy
+```
+
+`--force-confold` keeps the deployed `/etc/caddy/Caddyfile`, which the package lists as a conffile.
+Unattended upgrades cover only Debian origins, so a new Caddy release is installed by hand with
+`apt-get install caddy`. The upgrade restarts Caddy, which took ca. 5 seconds on 2026-10-15.
+
+**Before an upgrade, check the shops against the new binary.** 2.11 sends the upstream address as
+`Host` to an HTTPS upstream, where 2.6.2 passed the client's `Host` through. Shopware picks its
+sales channel by `Host`, so both shops answered `400 Sales Channel Not Found` for ca. 45 seconds on
+2026-10-15 until the rollback. Both shop blocks now set `header_up Host {host}`. A test instance on
+another port does not catch this, because the port in `Host` fails the sales channel lookup on
+every version.
+
+Rollback to Debian's package:
+
+```bash
+rm /etc/apt/sources.list.d/caddy-stable.list
+apt-get update
+apt-get download caddy=2.6.2-5
+apt-get install --allow-downgrades -o Dpkg::Options::=--force-confold ./caddy_2.6.2-5_amd64.deb
+```
 
 ## Routing
 
 | Domain                    | Upstream            | Notes                              |
 |---------------------------|---------------------|------------------------------------|
-| sdwa5.org                 | https://127.0.0.1:8443 | TLS skip verify; de-browser 302→/de (see below) |
+| sdwa5.org                 | https://127.0.0.1:8443 | TLS skip verify, client `Host` passed through; de-browser 302→/de (see below) |
 | vault.sdwa5.org           | http://localhost:8000 | sets `X-Real-IP` for Vaultwarden; `/admin` 404, HSTS |
 | erp.sdwa5.org             | http://localhost:8002 | API explorer 404, HSTS           |
 | project2.sdwa5.org     | http://localhost:8003 |                                  |

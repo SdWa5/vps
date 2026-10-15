@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.62.0] - 2026-10-15
+
+### Added
+
+- `docs/caddy.md`: Caddy from the official apt repository, its install, upgrade and rollback steps.
+
+### Changed
+
+- Caddy 2.6.2 from Debian replaced by 2.11.7 from the official repository.
+
+### Fixed
+
+- `Caddyfile`: both shop proxies pass the client `Host` to the HTTPS dockware upstream, which Caddy 2.11 replaces with the upstream address.
+
 ## [1.61.0] - 2026-10-15
 
 ### Added

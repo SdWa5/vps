@@ -74,6 +74,15 @@
     3. monitoring runs on the monitored host, so a dead vps sends nothing and the silence looks
        healthy. an external dead-man's switch would close that gap, deliberately deferred
        (ca. 45 Minuten)
+    4. **a reboot makes `monitoring/shopware-worker.sh` send false alarms.** measured on 2026-10-15,
+       when switching VNC off in the Contabo panel hard-reset the vm at 02:26. both containers were up
+       at 02:27:08 and 02:27:20, the worker ran at 02:27:15, and mysqld inside the dockware images only
+       started at 02:27:43 and 02:27:56. both shops mailed `SQLSTATE[HY000] [2002] Connection refused`
+       although nothing was broken, and the next runs succeeded. the solution needs exploring first.
+       candidates are a grace period after the container's `StartedAt`, a database ping before the
+       task run, mailing only after a few consecutive failures, or a container healthcheck that
+       covers mysqld so the worker can wait for `healthy`. each of these can also hide a real outage,
+       so the choice should say how long a real failure may stay silent (ca. 1 Stunde)
 7. security follow-ups from the 2026-09-07 ssh hardening ([docs/ssh-hardening.md](docs/ssh-hardening.md))
     1. move the accounts still on pbkdf2 to argon2id. the kdf is per-account and only its holder can
        change it, so this is a message to those people rather than an action here. **which accounts

@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Fake restic for restic/backup.sh. Every call is appended to STUB_RESTIC_CALLS,
+# and the exit status of each subcommand comes from STUB_RESTIC_<SUBCOMMAND>_RC.
+echo "$*" >> "${STUB_RESTIC_CALLS:-/dev/null}"
+
+case "${1:-}" in
+    backup) echo "snapshot 0123abcd saved"; exit "${STUB_RESTIC_BACKUP_RC:-0}" ;;
+    forget) echo "remove 1 snapshots"; exit "${STUB_RESTIC_FORGET_RC:-0}" ;;
+    unlock) exit 0 ;;
+esac
+exit 0

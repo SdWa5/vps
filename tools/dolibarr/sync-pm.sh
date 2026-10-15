@@ -192,13 +192,15 @@ wanted_fields() {
     printf '%s' "$out"
 }
 
-# A ticket entry is laid over .ticket_defaults, so a spec states a common
-# severity or assignee once. Its record fields as a compact JSON object: the
+# A new ticket's entry is laid over .ticket_defaults, so a spec states a common
+# severity or assignee once. An existing ticket gets no defaults, or a spec
+# entry that only adds to a ticket's message would also reset the severity and
+# the assignee set in the UI. Its record fields as a compact JSON object: the
 # message turns from plain text into the "<br>" lines the ERP stores, and the
 # assignee from a login into the user id.
 ticket_fields() {
-    local entry="$1" assignee user_id=""
-    entry="$(printf '%s' "$TICKET_DEFAULTS" | jq -c --argjson e "$entry" '. + $e')"
+    local entry="$1" defaults="$2" assignee user_id=""
+    entry="$(printf '%s' "$defaults" | jq -c --argjson e "$entry" '. + $e')"
     assignee="$(printf '%s' "$entry" | jq -r '.assignee // ""')"
     if [[ -n "$assignee" ]]; then
         user_id="$(printf '%s' "$USERS" | jq -r --arg l "$assignee" \
@@ -258,7 +260,11 @@ sync_tickets() {
             [[ -n "$near" ]] && die "the spec says ticket \"$subject\" and project $title already has \"$near\". Refusing to create a second one."
         fi
 
-        wanted="$(ticket_fields "$entry")" || exit 1
+        if [[ "$current" == "null" ]]; then
+            wanted="$(ticket_fields "$entry" "$TICKET_DEFAULTS")" || exit 1
+        else
+            wanted="$(ticket_fields "$entry" '{}')" || exit 1
+        fi
 
         if [[ "$current" == "null" ]]; then
             printf '%s' "$wanted" | jq -e 'has("message")' >/dev/null \

@@ -13,7 +13,8 @@
     "Tickets carry the backlog, because their severity is the priority the UI",
     "shows. A ticket's message is plain text with \\n line breaks. severity, type",
     "and category are codes of the ERP's ticket dictionaries, and assignee is a",
-    "user login. ticket_defaults fills in whatever a ticket entry leaves out."
+    "user login. ticket_defaults fills in whatever a new ticket's entry leaves out,",
+    "and an existing ticket gets no defaults."
   ],
   "ticket_defaults": {
     "severity": "NORMAL",

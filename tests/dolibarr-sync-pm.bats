@@ -399,3 +399,18 @@ setup() {
     [ "$status" -eq 1 ]
     [[ "$output" == *"needs a message"* ]]
 }
+
+# An entry that only extends the message of a ticket made in the UI must not
+# reset the severity or the assignee set there.
+@test "ticket defaults are not applied to an existing ticket" {
+    doli_pm_spec "$(jq -n '{ticket_defaults:{severity:"NORMAL", assignee:"admin"},
+        projects:[{title:"Inventur", tickets:[{subject:"Merch Tabelle", message:"neu"}]}]}')"
+    doli_pm_tickets "$(jq -n '[{id:"22",fk_project:"3",subject:"Merch Tabelle",message:"alt",
+        severity_code:"URGENT",fk_user_assign:"2"}]')"
+    doli_sync_pm --apply
+    [ "$status" -eq 0 ]
+    run doli_requests
+    line="$(printf '%s\n' "$output" | grep '^PUT tickets/22')"
+    [[ "$line" == *'"message":"neu"'* ]]
+    [[ "$line" != *"severity_code"* && "$line" != *"fk_user_assign"* ]]
+}

@@ -211,7 +211,9 @@ How it matches and what it writes:
   its exact `subject`, both within their project. Renaming any of them in the spec creates a second
   record rather than renaming the first.
 - A ticket entry carries `subject`, `message`, `severity`, `type`, `category` and `assignee`, and
-  `ticket_defaults` at the top of the spec fills in whatever an entry leaves out. The message is
+  `ticket_defaults` at the top of the spec fills in whatever an entry leaves out when the ticket is
+  created. An existing ticket gets no defaults, so an entry that only extends a message leaves the
+  severity and the assignee set in the UI alone. The message is
   plain text, and the script turns each line break into the `<br>` the ERP stores. Severity, type
   and category are checked against the ERP's ticket dictionaries and the assignee against the user
   logins before anything is written, because Dolibarr stores an unknown code anyway and the UI then

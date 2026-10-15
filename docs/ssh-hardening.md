@@ -572,6 +572,11 @@ accepts only a VNC password of exactly 8 characters, which is too short to leave
 internet. The route was tested the same day, when a VNC login reached the QEMU console of the VM
 while VNC was briefly on.
 
+**Switching VNC off hard-resets the VM.** It did so on 2026-10-15 at 02:26, without a shutdown, and
+the journal and the databases came back through crash recovery. Setting the VNC password earlier
+that day did not restart anything. Plan the switch-off as a reboot, and do it when a restart is
+acceptable or right after the console has done its job.
+
 That is why disabling SSH password authentication costs nothing in recoverability. SSH passwords
 were never the fallback.
 

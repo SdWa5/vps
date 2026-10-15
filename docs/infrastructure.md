@@ -126,6 +126,14 @@ only. The host firewall no longer accepts the bridges in `INPUT`, so a container
 Every running service also drops `NET_RAW`, which takes away raw sockets and with them ARP and ICMP
 tricks on its bridge.
 
+Measured after the cutover on 2026-10-15. From `chimodiazz_shopware`, `shopware` and `dolibarr`,
+every port of every other application was closed by IP. The one open path was `dolibarr` to
+`dolibarr_db:3306`. The gateway answered on 22, 80 and 443 and refused 25, 2019, 3306, 8000, 8002,
+8443 and 33113. DNS and HTTPS egress worked in both shops, in Dolibarr, in vaultwarden and in restic,
+and `dolibarr_db` had no egress at all. All sites answered as before, the database dumps and their
+restore checks passed for all three databases, and `vps-health.sh` reported no fault. The cutover
+recreated the containers in ca. 2 minutes.
+
 ### Database accounts
 
 Each dockware shop connects with an account of its own, `shopware@localhost`, limited to its own
@@ -140,7 +148,10 @@ entrypoint runs under `set -e`. A changed root password would therefore stop the
 The remote root is what mattered, and with `root@'%'` gone a root login works only from inside the
 container, where the shop's own `.env` already grants full access to its database. Tested on a
 throwaway container before the live change: after the script and a restart, dockware booted, its
-boot script updated the domain as `root@localhost`, and the storefront answered 200.
+boot script updated the domain as `root@localhost`, and the storefront answered 200. Both live shops
+booted the same way on the new networks. The `ERROR 1062 ... Duplicate entry` line in their boot log
+is `update_domain.sh` inserting a domain that already exists, so it shows the root login worked and
+the boot continued.
 
 `dolibarr_db` had a `root@'%'` as well, from the MariaDB image's default `MARIADB_ROOT_HOST`. It is
 dropped, and Dolibarr keeps using its own `dolidbuser`.

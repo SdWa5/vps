@@ -119,9 +119,22 @@ module_mounts() {
 }
 
 start_application() {
-    local -a mounts=()
+    local -a mounts=() startup=()
     local item
     while IFS= read -r -d '' item; do mounts+=("$item"); done < <(module_mounts)
+    # Without install.lock the image compares the database version with its own
+    # and migrates only when the database is older, so another image upgrades
+    # the copy and the same image just locks again.
+    rm -f -- "$DEV_DIR/documents/install.lock"
+    # The production wrapper only patches the image production pins. Another
+    # image, such as the next release under rehearsal, starts with its own.
+    if [[ "$(app_image)" == "$(compose_image dolibarr)" ]]; then
+        startup=(--entrypoint /bin/bash
+            --mount "type=bind,src=$REPO_ROOT/tools/dolibarr/entrypoint.sh,dst=/opt/sdwa5-dolibarr-entrypoint.sh,readonly")
+        set -- /opt/sdwa5-dolibarr-entrypoint.sh apache2-foreground
+    else
+        set -- apache2-foreground
+    fi
     docker network inspect "$WEB_NETWORK" >/dev/null 2>&1 || docker network create "$WEB_NETWORK" >/dev/null
     docker run --detach --name "$APP" --network "$WEB_NETWORK" \
         --publish "127.0.0.1:$DEV_PORT:80" \
@@ -130,11 +143,9 @@ start_application() {
         --env DOLI_INIT_DEMO=0 --env DOLI_INSTALL_AUTO=1 --env DOLI_CRON=0 \
         --env "DOLI_URL_ROOT=http://localhost:$DEV_PORT" \
         --env WWW_USER_ID="$(id -u)" --env WWW_GROUP_ID="$(id -g)" \
-        --entrypoint /bin/bash \
-        --mount "type=bind,src=$REPO_ROOT/tools/dolibarr/entrypoint.sh,dst=/opt/sdwa5-dolibarr-entrypoint.sh,readonly" \
         --mount "type=bind,src=$DEV_DIR/documents,dst=/var/www/documents" \
-        "${mounts[@]}" \
-        "$(app_image)" /opt/sdwa5-dolibarr-entrypoint.sh apache2-foreground >/dev/null
+        "${startup[@]}" "${mounts[@]}" \
+        "$(app_image)" "$@" >/dev/null
     # A port cannot be published from an --internal network, so the application
     # starts on its own network and joins the database's afterwards. The
     # database stays reachable from the application only.

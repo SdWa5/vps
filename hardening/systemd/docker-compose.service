@@ -1,0 +1,26 @@
+# Starts the services of /opt/docker/docker-compose.yml at boot and takes them
+# down at shutdown. Installed as /etc/systemd/system/docker-compose.service.
+#
+# tools/compose.sh picks `docker compose` (v2 plugin) or `docker-compose` (v1),
+# so the unit survives the move from Debian's docker.io to docker-ce. `$$` is a
+# literal `$` for bash, because systemd expands `$VAR` in Exec lines itself.
+#
+# The profile-gated services and docker-compose.projects.yml are not started here.
+
+[Unit]
+Description=Docker Compose application services in /opt/docker
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/docker
+ExecStart=/bin/bash -c '. tools/compose.sh && exec $$DOCKER_COMPOSE up -d'
+ExecStop=/bin/bash -c '. tools/compose.sh && exec $$DOCKER_COMPOSE down'
+TimeoutStartSec=0
+Restart=no
+SyslogIdentifier=docker-compose
+
+[Install]
+WantedBy=multi-user.target

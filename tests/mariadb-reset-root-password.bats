@@ -52,5 +52,5 @@ reset_root() {
     [ ! -s "$STUB_COMPOSE_LOG" ]
     reset_root --help
     [ "$status" -eq 0 ]
-    [[ "$output" == *'docker-compose stop SERVICE'* ]]
+    [[ "$output" == *'docker compose stop SERVICE'* ]]
 }

@@ -11,8 +11,9 @@ MONITORING_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # checkout of this repository, so monitoring/ sits directly inside it.
 COMPOSE_DIR="${COMPOSE_DIR:-$(dirname "$MONITORING_DIR")}"
 
-# The VPS runs docker-compose v1 (1.29.2). "docker compose" does not exist there.
-DOCKER_COMPOSE="${DOCKER_COMPOSE:-docker-compose}"
+# DOCKER_COMPOSE: `docker compose` where the v2 plugin exists, else `docker-compose`.
+# shellcheck source=tools/compose.sh
+. "$MONITORING_DIR/../tools/compose.sh"
 
 # State shared between the two scripts. vps-health.sh touches last-run on every
 # run; vaultwarden-autoupdate.sh reads it to detect that health checks stopped.

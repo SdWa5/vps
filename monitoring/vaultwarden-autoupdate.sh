@@ -227,7 +227,7 @@ main() {
 
     if ! ( cd "$COMPOSE_DIR" && $DOCKER_COMPOSE pull "$SERVICE" ) >&2; then
         send_mail "[sdwa5] Vaultwarden update: pull failed" \
-"docker-compose pull $SERVICE failed on $(hostname). Vaultwarden is untouched and still running $old_version." \
+"$DOCKER_COMPOSE pull $SERVICE failed on $(hostname). Vaultwarden is untouched and still running $old_version." \
             || log "pull failed"
         exit 1
     fi

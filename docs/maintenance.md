@@ -59,6 +59,28 @@ docker image prune -a                 # remove images not used by any container
 data** (databases, uploads). Never blanket-prune volumes here. All persistent state lives in bind mounts
 under `/opt/docker/`, which Restic backs up daily — but restore is slower than not deleting.
 
+## Compose version
+
+The host runs Compose v1, `docker-compose` 1.29.2 from Debian's docker.io, and the commands in these
+docs are written for it. docker-ce ships Compose v2 as the `docker compose` plugin and no
+`docker-compose` at all, so the scripts do not hard-code either.
+[`tools/compose.sh`](../tools/compose.sh) sets `DOCKER_COMPOSE` to `docker compose` where the plugin
+exists and to `docker-compose` otherwise, and `monitoring/lib.sh`, `tools/mariadb/reset-root-password.sh`
+and the boot unit use it. A `DOCKER_COMPOSE` set in the environment wins.
+
+The boot unit is [`hardening/systemd/docker-compose.service`](../hardening/systemd/docker-compose.service).
+It runs `up -d` for `docker-compose.yml` at boot and `down` at shutdown. Install it without starting it,
+because a restart of the unit runs `down` and then `up` on the live stack:
+
+```bash
+install -m 644 -o root -g root /opt/docker/hardening/systemd/docker-compose.service /etc/systemd/system/
+systemctl daemon-reload
+```
+
+Compose v5.6.0 was checked against both compose files on 2026-10-15. It renders the same project,
+container and network names, warns only about the obsolete `version:` key, and its first `up` recreates
+every container once, because v1 and v2 label containers differently.
+
 ## Log growth prevention
 
 Container logs are capped in `docker-compose.yml` via the `x-logging` anchor (json-file, `max-size: 10m`,

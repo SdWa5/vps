@@ -28,6 +28,10 @@ shot "$B" tops-pyramid --crop 0.25,0.15,0.78,0.72 --erase 0.45,0,0.6,0.044 \
     --quad "0.366,0.177 0.625,0.173 0.626,0.453 0.392,0.453"
 shot "$C" rig --crop 0,0.15,1,0.72 --gain 1.15 --neutral \
     --quad "0.049,0.549 0.922,0.512 0.922,0.651 0.061,0.712"
+# The set shows 5 SKRAM and 3 tops, so the upper row of tops is erased.
+shot "$C" rig-set --crop 0,0.15,1,0.72 --gain 1.15 --neutral \
+    --erase 0.25,0,0.443,0.378 --erase 0.443,0,0.592,0.392 --erase 0.592,0,0.75,0.385 \
+    --quad "0.049,0.549 0.922,0.512 0.922,0.651 0.061,0.712"
 shot "$B" top-single --crop 0.355,0.16,0.635,0.456 --erase 0.45,0,0.75,0.05 \
     --quad "0.366,0.177 0.625,0.173 0.626,0.453 0.392,0.453"
 # No single SKRAM: the subs in photo C touch, so the model cannot separate one,

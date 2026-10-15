@@ -52,6 +52,9 @@
     5. Print models (`SDWA5-MT-001` SdWa5 Top, `SDWA5-MS-001` SKRAM, both 1:12) are online but not orderable.
        The name avoids "Tecnare", which is the maker's trademark. Decided on 2026-10-15:
         - List prices are set, €5,00 for the top and €8,00 for the SKRAM.
+        - The rig set `SDWA5-MR-001` holds 5 SKRAM and 3 tops, following Stefan's rule of at least 3 SKRAM and
+          2 tops with always more SKRAM than tops. It lists at €45,00 against €19,10 cost and €55,00 for the
+          single models. Its image is the rig photo with the upper row of tops erased.
         - Orders open once the models are finished, which means pick-up is set up and the SKRAM licence is
           answered.
         - Pick-up only at first, at our events and possibly at Egitlweg 6. The shipping method
@@ -59,11 +62,10 @@
           products before orders open.
 
        Open:
-        - A rig set. Stefan's rule is at least 3 SKRAM and 2 tops, always more SKRAM than tops. Proposed at
-          €30,00 for 3 SKRAM and 2 tops, against €11,81 cost and €34,00 for the single models.
         - Whether Egitlweg 6 is a pick-up place.
         - SKRAM licensing. The model is built from Josh Ricci's CAD, and his package states no terms. A mail
-          asking him was drafted on 2026-10-15, to go through data-bass.com/contact or jwsound.live/contact. The same question applies to the public `meshes/skram.stl` in
+          asking him was drafted on 2026-10-15. It goes through jwsound.live/contact with a request to forward it,
+          because data-bass.com/contact is broken. The same question applies to the public `meshes/skram.stl` in
           `SdWa5/3d`.
         - A solo SKRAM photo. The product has only the rig photo, because the subs in it touch and no single
           one could be cut out.

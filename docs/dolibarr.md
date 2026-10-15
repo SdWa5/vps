@@ -254,8 +254,9 @@ Read off the Dolibarr 23.0 source and confirmed against the live instance on 202
 - **Dolibarr HTML-escapes what it stores**, so `Allen & Heath` reads back as `Allen &amp; Heath`.
   Both sides are decoded before they are compared, or a description holding an ampersand would be
   rewritten on every run.
-- **A ticket message stores a line break as `<br>` followed by a newline**, measured on 2026-10-15.
-  Both forms are reduced to the newline before the comparison.
+- **A ticket message stores a line break as `<br>` followed by a newline** when it is written in the
+  UI or with `PUT`, while `POST /tickets` drops the `<br>` and keeps the newline, both measured on
+  2026-10-15. Both forms are reduced to the newline before the comparison.
 - `POST /tickets` requires `subject` and `message` and numbers the ticket itself when `ref` is
   empty, so a ticket needs no `"auto"`. `PUT /tickets/{id}` answers with the whole ticket rather
   than with its id. Read off the Dolibarr 23.0 source on 2026-10-15.

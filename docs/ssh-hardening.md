@@ -136,8 +136,9 @@ bought that.
 The private key is stored in Vaultwarden since 2026-09-08, as the personal SSH-key item
 `id_ed25519_sdwa5`. It replaced an earlier attachment copy of the same key, which went to the trash
 the same day. Verified 2026-10-15 by fingerprint and by a root login with only the vault copy, with
-the agent and the local file bypassed and the passphrase typed from memory. A second copy with the same passphrase is on stefan-notebook
-since 2026-10-04, with the fingerprint above.
+the agent and the local file bypassed and the passphrase typed from memory. A second copy with the
+same passphrase is on stefan-notebook since 2026-10-04, with the fingerprint above. A root login from
+the notebook with that copy was tested on 2026-10-15.
 
 Vaultwarden running on the very host this key unlocks looks circular, and that was the initial
 reasoning for keeping it out. It does not hold up. If the key file is lost the vault is still up and

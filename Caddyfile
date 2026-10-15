@@ -25,6 +25,18 @@
     }
 }
 
+# Response headers that name the software behind each site. Caddy adds its own
+# Server header and passes the upstream's through, so every site answered with
+# two of them, e.g. "Caddy" plus "Apache/2.4.58 (Ubuntu)" or "Rocket". A
+# deletion is deferred until the response is written, so it also catches what
+# the upstream sent.
+(hide_server_headers) {
+    header {
+        -Server
+        -X-Powered-By
+    }
+}
+
 # Main domain - Shopware
 https://sdwa5.org {
     # First-visit browser-language redirect: German browsers land on /de.
@@ -41,6 +53,7 @@ https://sdwa5.org {
     }
 
     import block_dockware_tools
+    import hide_server_headers
 
     handle {
         reverse_proxy https://127.0.0.1:8443 {
@@ -51,15 +64,39 @@ https://sdwa5.org {
     }
 }
 
-# Other services
+# Vaultwarden. The admin panel is reachable only through an SSH tunnel to the
+# loopback port, see docs/vaultwarden.md. Clients never use /admin, so a flat
+# 404 costs nothing. The upstream sends no HSTS of its own, unlike Shopware.
 vault.sdwa5.org {
-    reverse_proxy localhost:8000 {
-        header_up X-Real-IP {remote_host}
+    import hide_server_headers
+    header Strict-Transport-Security "max-age=31536000"
+
+    @admin path /admin /admin/*
+    handle @admin {
+        respond "Not Found" 404
+    }
+
+    handle {
+        reverse_proxy localhost:8000 {
+            header_up X-Real-IP {remote_host}
+        }
     }
 }
 
+# Dolibarr. The REST API stays public for its clients, but the API explorer
+# listed every endpoint to anyone, see docs/dolibarr.md.
 erp.sdwa5.org {
-    reverse_proxy localhost:8002
+    import hide_server_headers
+    header Strict-Transport-Security "max-age=31536000"
+
+    @api_explorer path /api/index.php/explorer /api/index.php/explorer/*
+    handle @api_explorer {
+        respond "Not Found" 404
+    }
+
+    handle {
+        reverse_proxy localhost:8002
+    }
 }
 
 project2.sdwa5.org {
@@ -76,6 +113,7 @@ project3.sdwa5.org {
 # this block falls back to while the instance is down for maintenance.
 chimodiazz.sdwa5.org {
     import block_dockware_tools
+    import hide_server_headers
 
     handle {
         reverse_proxy https://127.0.0.1:8444 {

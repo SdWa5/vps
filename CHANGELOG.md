@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.60.0] - 2026-10-15
+
+### Added
+
+- `docs/vaultwarden.md`: admin panel through an SSH tunnel, with `-S none` against a held-open `ControlMaster` forward.
+- `docs/caddy.md`: hardening table and the deploy steps for `/etc/caddy/Caddyfile`.
+
+### Changed
+
+- `Caddyfile`: `/admin` on vault and the Dolibarr API explorer answer 404.
+- `Caddyfile`: `Server` and `X-Powered-By` stripped on every live site.
+- `Caddyfile`: HSTS for vault and erp.
+- `docs/ssh-hardening.md`: root login with the notebook key copy tested.
+
+### Removed
+
+- `docs/caddy.md`: the stale inline copy of the Caddyfile.
+
 ## [1.59.8] - 2026-10-15
 
 ### Changed

@@ -11,73 +11,44 @@ Reverse proxy handling TLS termination for all public-facing services.
 | Domain                    | Upstream            | Notes                              |
 |---------------------------|---------------------|------------------------------------|
 | sdwa5.org                 | https://127.0.0.1:8443 | TLS skip verify; de-browser 302→/de (see below) |
-| vault.sdwa5.org           | http://localhost:8000 | sets `X-Real-IP` for Vaultwarden |
-| erp.sdwa5.org             | http://localhost:8002 |                                  |
+| vault.sdwa5.org           | http://localhost:8000 | sets `X-Real-IP` for Vaultwarden; `/admin` 404, HSTS |
+| erp.sdwa5.org             | http://localhost:8002 | API explorer 404, HSTS           |
 | project2.sdwa5.org     | http://localhost:8003 |                                  |
 | project3.sdwa5.org          | http://localhost:8004 |                                  |
 | chimodiazz.sdwa5.org      | https://127.0.0.1:8444 | TLS skip verify, same shape as sdwa5.org |
 
 ## Caddyfile
 
+The config is [`Caddyfile`](../Caddyfile) in the repository root, and `/etc/caddy/Caddyfile` is a
+copy of it, not a link. Deploy after `git pull` in `/opt/docker`:
+
+```bash
+caddy validate --adapter caddyfile --config /opt/docker/Caddyfile
+install -m 644 -o root -g root /opt/docker/Caddyfile /etc/caddy/Caddyfile
+systemctl reload caddy
 ```
-# Global options
-{
-    email ripper@sdwa5.org  # For Let's Encrypt notifications
-}
 
-# Main domain - Shopware
-https://sdwa5.org {
-    # First-visit browser-language redirect: German browsers land on /de.
-    # Only on root path; lang_redirect cookie marks "already redirected once"
-    # (Shopware switcher is URL-based, sets no cookie of its own).
-    @deFirstVisit {
-        path /
-        header_regexp Accept-Language ^de
-        not header_regexp Cookie (^|;\s*)lang_redirect=
-    }
-    handle @deFirstVisit {
-        header +Set-Cookie "lang_redirect=1; Path=/; Max-Age=31536000; Secure; SameSite=Lax"
-        redir * /de 302
-    }
+`caddy validate` warns that the input is not formatted. That is the file's space indentation and
+is harmless.
 
-    reverse_proxy https://127.0.0.1:8443 {
-        transport http {
-            tls_insecure_skip_verify
-        }
-    }
-}
+## Hardening
 
-# Other services
-vault.sdwa5.org {
-    reverse_proxy localhost:8000 {
-        header_up X-Real-IP {remote_host}
-    }
-}
+Each blocked path answers a flat `404` from Caddy and never reaches the container.
 
-erp.sdwa5.org {
-    reverse_proxy localhost:8002
-}
+| Site | Blocked | Why |
+|---|---|---|
+| sdwa5.org, chimodiazz.sdwa5.org | `/adminer`, `/mailcatcher`, `/logs` | dockware's development tools, public until 2026-09-15 |
+| vault.sdwa5.org | `/admin` | Admin panel, reached through an SSH tunnel instead, see [vaultwarden.md](vaultwarden.md) |
+| erp.sdwa5.org | `/api/index.php/explorer` | Dolibarr's API explorer listed every endpoint. The REST API itself stays public |
 
-project2.sdwa5.org {
-    reverse_proxy localhost:8003
-}
+`hide_server_headers` strips `Server` and `X-Powered-By` from every live site. Before 2026-10-15
+each response carried Caddy's own `Server` header plus the upstream's, for example
+`Apache/2.4.58 (Ubuntu)` or `Rocket`.
 
-project3.sdwa5.org {
-    reverse_proxy localhost:8004
-}
+HSTS is set by Caddy for vault and erp with `max-age=31536000`. The two Shopware sites send
+`max-age=31536000; includeSubDomains` from the upstream, so Caddy leaves them alone.
 
-# chimodiazz.sdwa5.org — Shopware as a CMS, same shape as sdwa5.org above.
-# Served a static placeholder from chimodiazz-placeholder/ between 2026-09-15 and
-# the first start of the container; that directory is kept, because it is what
-# this block falls back to while the instance is down for maintenance.
-chimodiazz.sdwa5.org {
-    reverse_proxy https://127.0.0.1:8444 {
-        transport http {
-            tls_insecure_skip_verify
-        }
-    }
-}
-```
+project2 and project3 have no DNS record and no running service, and are left unchanged.
 
 ## Browser-language redirect (Shopware /de)
 

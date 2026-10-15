@@ -269,7 +269,7 @@ services:
       # membership of the Shared Drive "SdWa5 Backup". Its key is
       # rclone-config/restic-sa.json, mode 600. The drive ID stays in .env.
       # The former remote [SdWa5] was an OAuth token with scope `drive` on the
-      # owner's whole Drive. See docs/backup.md.
+      # owner's whole Drive, revoked on 2026-10-15. See docs/backup.md.
       - RCLONE_CONFIG_SDWA5BACKUP_TYPE=drive
       - RCLONE_CONFIG_SDWA5BACKUP_SCOPE=drive
       - RCLONE_CONFIG_SDWA5BACKUP_SERVICE_ACCOUNT_FILE=/root/.config/rclone/restic-sa.json

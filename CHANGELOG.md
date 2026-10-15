@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.71.2] - 2026-10-15
+
+### Removed
+
+- The old OAuth remote `[SdWa5]`: token revoked at Google, section removed from `rclone.conf`.
+- The note on OAuth token refresh in the backup docs.
+
+### Changed
+
+- The infrastructure diagram and directory tree describe the service account key instead of OAuth tokens.
+
 ## [1.71.1] - 2026-10-15
 
 ### Changed

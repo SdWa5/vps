@@ -13,6 +13,14 @@
       "label": "Share",
       "email": "Email",
       "text": "SdWa5 is a free tekno sound system from Austria."
+    },
+    "donation": {
+      "title": "Voluntary donation",
+      "text": "You pay nothing in the shop. Donate what you like when you pick it up at one of our events.",
+      "suggested": "Suggested donation",
+      "cost": "Production cost (estimate)",
+      "card": "Voluntary donation · suggested %price%",
+      "cartNote": "Nothing is charged in the shop. Donate what you like when you pick up your order. The suggested donation is %price% in total."
     }
   }
 }

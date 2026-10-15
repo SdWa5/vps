@@ -141,9 +141,77 @@ patch_body() {
     [ "$(count '^POST /api/search')" -eq 0 ]
 }
 
-@test "the shipped edits name a label, a known language and both texts" {
-    run jq -e '(.languages | keys) as $l
-        | .edits | length > 0 and all(.label and .slot and (.lang as $x | $l | index($x)) and .old and .new)' \
-        "$REPO_ROOT/tools/shopware/slot-edits/hardware-m2122.json"
+# A mail template with an HTML and a plain field in one language, and an
+# insertion edit into each that keeps its anchor.
+mail_setup() {
+    jq -n '{total: 1, data: [{mailTemplateId: "tpl1", languageId: "lang-en",
+        contentHtml: "<p>Hi</p><strong>Your order:</strong>", contentPlain: "Hi\n\nYour order:"}]}' \
+        > "$STUB_SW_DIR/_api_search_mail-template-translation"
+    jq '.edits = [
+        {label: "mail html", target: "mail-template", template: "tpl1", field: "contentHtml", lang: "en",
+         old: "<strong>Your order:</strong>", new: "<p>Donate.</p><strong>Your order:</strong>"},
+        {label: "mail plain", target: "mail-template", template: "tpl1", field: "contentPlain", lang: "en",
+         old: "Your order:", new: "Donate.\n\nYour order:"}]' "$EDITS" > "$EDITS.new" && mv "$EDITS.new" "$EDITS"
+}
+
+@test "a mail template edit writes both fields in one request, under the edit's language" {
+    mail_setup
+    edit_slots "$EDITS" --apply
     [ "$status" -eq 0 ]
+    [[ "$output" == *"2 changed, 0 already current."* ]]
+    [ "$(count '^POST /api/search/cms-slot-translation')" -eq 0 ]
+    [ "$(jq -c '.filter[0].value' <<<"$(grep '^POST /api/search/mail-template-translation ' "$STUB_SW_LOG" \
+        | sed 's|^POST /api/search/mail-template-translation ||')")" = '["tpl1"]' ]
+    [ "$(count '^PATCH /api/mail-template/tpl1 ')" -eq 1 ]
+    body="$(grep '^PATCH /api/mail-template/tpl1 ' "$STUB_SW_LOG" | sed 's|^PATCH /api/mail-template/tpl1 ||')"
+    [ "$(jq -r .contentHtml <<<"$body")" = "<p>Hi</p><p>Donate.</p><strong>Your order:</strong>" ]
+    [ "$(jq -r .contentPlain <<<"$body")" = "$(printf 'Hi\n\nDonate.\n\nYour order:')" ]
+    [ "$(count '^DELETE /api/_action/cache')" -eq 1 ]
+}
+
+@test "an insertion that is already in place is skipped, although its anchor is still there" {
+    mail_setup
+    jq '.data[0].contentHtml = "<p>Hi</p><p>Donate.</p><strong>Your order:</strong>"
+        | .data[0].contentPlain = "Hi\n\nDonate.\n\nYour order:"' "$STUB_SW_DIR/_api_search_mail-template-translation" \
+        > "$STUB_SW_DIR/m" && mv "$STUB_SW_DIR/m" "$STUB_SW_DIR/_api_search_mail-template-translation"
+    edit_slots "$EDITS" --apply
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"0 changed, 2 already current."* ]]
+    [ "$(count '^PATCH ')" -eq 0 ]
+}
+
+@test "a mail template edit with an unknown field stops the run before any request" {
+    mail_setup
+    jq '.edits[0].field = "subject"' "$EDITS" > "$EDITS.new" && mv "$EDITS.new" "$EDITS"
+    edit_slots "$EDITS" --apply
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"contentHtml or contentPlain"* ]]
+    [ ! -s "$STUB_SW_LOG" ]
+}
+
+@test "a template without the edit's language stops the run" {
+    mail_setup
+    jq '.edits[1].lang = "de"' "$EDITS" > "$EDITS.new" && mv "$EDITS.new" "$EDITS"
+    edit_slots "$EDITS" --apply
+    [ "$status" -ne 0 ]
+    [[ "$output" == *"mail template tpl1 has no translation in language lang-de"* ]]
+    [ "$(count '^PATCH ')" -eq 0 ]
+}
+
+@test "the shipped edits name a label, a known language and both texts" {
+    for f in "$REPO_ROOT"/tools/shopware/slot-edits/*.json; do
+        run jq -e '(.languages | keys) as $l
+            | .edits | length > 0 and all(.label and (.slot or (.template and .field))
+                and (.lang as $x | $l | index($x)) and .old and .new)' "$f"
+        [ "$status" -eq 0 ] || { echo "$f"; false; }
+    done
+}
+
+@test "the order mail insertions keep their anchors and only show for donation items" {
+    f="$REPO_ROOT/tools/shopware/slot-edits/order-mail-donation.json"
+    run jq -e '.edits | length == 4
+        and all(. as $e | $e.new | endswith($e.old))
+        and all(.new | contains("unitPrice == 0") and contains("listPrice") and contains("{% endif %}"))' "$f"
+    [ "$status" -eq 0 ]
+    [ "$(jq -r '[.edits[].field] | sort | join(" ")' "$f")" = "contentHtml contentHtml contentPlain contentPlain" ]
 }

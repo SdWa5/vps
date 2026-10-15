@@ -1,0 +1,11 @@
+{% sw_extends '@Storefront/storefront/component/product/card/badges.html.twig' %}
+
+{# The core marks a product with a list price with a red "%" badge. For merch the
+   list price is the suggested donation, not a discount, so the badge is left
+   out there, see buy-widget-price.html.twig. #}
+{% block component_product_badges_discount %}
+    {% set sdwa5Price = product.calculatedPrices.count > 0 ? product.calculatedPrices.last : product.calculatedPrice %}
+    {% if not (sdwa5Price.unitPrice == 0 and sdwa5Price.listPrice) %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}

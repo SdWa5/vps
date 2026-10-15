@@ -1,0 +1,27 @@
+{# The price of a merch item, which costs nothing in the shop and is paid for by
+   a voluntary donation at pick-up. A product counts as merch when its price is 0
+   and it has a list price, which holds the suggested donation. The production
+   cost is the custom field sdwa5_production_cost, copied from the purchase price
+   by tools/shopware/sync-production-cost.sh, and is left out when it is empty.
+   See docs/shopware/theme.md, "Donation display".
+
+   Variables: sdwa5ListPrice (the suggested donation per piece), sdwa5Cost (or
+   null), sdwa5DonationVariant 'detail' (buy box) or 'card' (listing). #}
+{% if sdwa5DonationVariant == 'card' %}
+    <span class="product-price sdwa5-donation-card">
+        {{ 'sdwa5.donation.card'|trans({'%price%': sdwa5ListPrice|currency})|sw_sanitize }}
+    </span>
+{% else %}
+    <div class="sdwa5-donation-price">
+        <p class="product-detail-price sdwa5-donation-price__title">{{ 'sdwa5.donation.title'|trans|sw_sanitize }}</p>
+        <p class="sdwa5-donation-price__text">{{ 'sdwa5.donation.text'|trans|sw_sanitize }}</p>
+        <dl class="sdwa5-donation-price__figures">
+            <dt>{{ 'sdwa5.donation.suggested'|trans|sw_sanitize }}</dt>
+            <dd>{{ sdwa5ListPrice|currency }}</dd>
+            {% if sdwa5Cost %}
+                <dt>{{ 'sdwa5.donation.cost'|trans|sw_sanitize }}</dt>
+                <dd>{{ sdwa5Cost|currency }}</dd>
+            {% endif %}
+        </dl>
+    </div>
+{% endif %}

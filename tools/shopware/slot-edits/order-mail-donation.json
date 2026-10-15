@@ -1,0 +1,44 @@
+{
+    "languages": {
+        "en": "2fbb5fe2e29a4d70aa5854ce7ce3e20b",
+        "de": "019c36d736207216a1f1d943de40f765"
+    },
+    "edits": [
+        {
+            "label": "order mail html en",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "contentHtml",
+            "lang": "en",
+            "old": "<strong>Information on your order:</strong><br>",
+            "new": "{% set sdwa5Suggested = 0 %}{% for sdwa5Item in order.lineItems %}{% if sdwa5Item.unitPrice == 0 and sdwa5Item.price.listPrice %}{% set sdwa5Suggested = sdwa5Suggested + sdwa5Item.price.listPrice.price * sdwa5Item.quantity %}{% endif %}{% endfor %}{% if sdwa5Suggested > 0 %}<strong>Voluntary donation:</strong> Nothing is charged for this order. You donate what you like when you pick it up. The suggested donation is {{ sdwa5Suggested|currency(currencyIsoCode) }} in total.<br>\n    <br>\n    {% endif %}<strong>Information on your order:</strong><br>"
+        },
+        {
+            "label": "order mail plain en",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "contentPlain",
+            "lang": "en",
+            "old": "Information on your order:",
+            "new": "{% set sdwa5Suggested = 0 %}{% for sdwa5Item in order.lineItems %}{% if sdwa5Item.unitPrice == 0 and sdwa5Item.price.listPrice %}{% set sdwa5Suggested = sdwa5Suggested + sdwa5Item.price.listPrice.price * sdwa5Item.quantity %}{% endif %}{% endfor %}{% if sdwa5Suggested > 0 %}Voluntary donation: Nothing is charged for this order. You donate what you like when you pick it up. The suggested donation is {{ sdwa5Suggested|currency(currencyIsoCode) }} in total.\n\n{% endif %}Information on your order:"
+        },
+        {
+            "label": "order mail html de",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "contentHtml",
+            "lang": "de",
+            "old": "<strong>Informationen zu Ihrer Bestellung:</strong><br>",
+            "new": "{% set sdwa5Suggested = 0 %}{% for sdwa5Item in order.lineItems %}{% if sdwa5Item.unitPrice == 0 and sdwa5Item.price.listPrice %}{% set sdwa5Suggested = sdwa5Suggested + sdwa5Item.price.listPrice.price * sdwa5Item.quantity %}{% endif %}{% endfor %}{% if sdwa5Suggested > 0 %}<strong>Freiwillige Spende:</strong> Für diese Bestellung wird nichts verrechnet. Sie spenden, was Sie möchten, wenn Sie die Bestellung abholen. Die empfohlene Spende beträgt insgesamt {{ sdwa5Suggested|currency(currencyIsoCode) }}.<br>\n    <br>\n    {% endif %}<strong>Informationen zu Ihrer Bestellung:</strong><br>"
+        },
+        {
+            "label": "order mail plain de",
+            "target": "mail-template",
+            "template": "019c36d74d667149a8b27e389caea3d9",
+            "field": "contentPlain",
+            "lang": "de",
+            "old": "Informationen zu Ihrer Bestellung:",
+            "new": "{% set sdwa5Suggested = 0 %}{% for sdwa5Item in order.lineItems %}{% if sdwa5Item.unitPrice == 0 and sdwa5Item.price.listPrice %}{% set sdwa5Suggested = sdwa5Suggested + sdwa5Item.price.listPrice.price * sdwa5Item.quantity %}{% endif %}{% endfor %}{% if sdwa5Suggested > 0 %}Freiwillige Spende: Für diese Bestellung wird nichts verrechnet. Sie spenden, was Sie möchten, wenn Sie die Bestellung abholen. Die empfohlene Spende beträgt insgesamt {{ sdwa5Suggested|currency(currencyIsoCode) }}.\n\n{% endif %}Informationen zu Ihrer Bestellung:"
+        }
+    ]
+}

@@ -9,7 +9,9 @@
    an AI image editor, a Copilot and an event ingestion service active on its shop is open. Decide per
    app, then either deactivate the unwanted ones or cover them in the same privacy pass as item 12
    (`decision`)
-2. update email templates (order confirmation etc. still default Shopware copy)
+2. update email templates (order confirmation etc. still default Shopware copy). Since 2026-10-15 the order
+   confirmation carries a voluntary donation note for merch, from `slot-edits/order-mail-donation.json`, and the
+   rest is still default copy
     1. dont get too fancy (e.g. with corporate or blogging style expressions)
     2. en and de
 3. Layout for 404 pages Assign layout...

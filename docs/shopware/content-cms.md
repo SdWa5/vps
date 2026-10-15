@@ -46,7 +46,19 @@ tools/shopware/edit-slots.sh tools/shopware/slot-edits/hardware-m2122.json      
 tools/shopware/edit-slots.sh tools/shopware/slot-edits/hardware-m2122.json --apply    # write it
 ```
 
-Slot ids come from a read-only search on `cms-slot-translation`, filtered by a word of the old text.
+The same tool edits mail templates. An edit with `"target": "mail-template"` names the template id in
+`template` and the field in `field`, `contentHtml` or `contentPlain`, instead of a slot. All edits to one
+template and language go out in one PATCH under that language. An insertion keeps its anchor in the new text,
+and the tool counts it as current once the new text is there, so a second run does not insert it twice.
+`order-mail-donation.json` adds the voluntary donation note to the order confirmation mail in English and
+German, wrapped in a Twig condition that prints it only when the order holds a donation item.
+
+```bash
+tools/shopware/edit-slots.sh tools/shopware/slot-edits/order-mail-donation.json --apply
+```
+
+Slot ids come from a read-only search on `cms-slot-translation`, filtered by a word of the old text. Mail
+template ids come from one on `mail-template-translation`.
 `set-address.sh` predates the tool and keeps its own slot logic, because it also writes the system config and
 the document templates.
 

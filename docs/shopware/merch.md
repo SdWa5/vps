@@ -1,6 +1,7 @@
 # Merch catalog (currently shown as: "no longer available")
 
-Prices: selling price = €0 (voluntary donation), list price = Verkaufswert (crossed out), purchase price = Stückkosten
+Prices: selling price = €0 (voluntary donation), list price = suggested donation, purchase price = Stückkosten,
+shown as the production cost estimate
 
 | Product                              | Purchase price | List price |
 |--------------------------------------|----------------|------------|
@@ -34,6 +35,16 @@ infill, 33 g and 1 h 36 min for the top, 56 g and 2 h 18 min for the SKRAM). The
 €0.34/kWh and wear of €999 over 3000 hours, plus 10 % for failed prints. Labour is not included. The scale of
 1:12 was measured from Sepp's photo against a cigarette pack of known size.
 
+## Donation display
+
+The storefront shows a product at €0 with a list price as a voluntary donation, with the list price as the
+suggested donation and the purchase price as the production cost estimate. The cart, the confirm page and
+the order confirmation mail add the suggested total. [theme.md](theme.md#merch-as-a-donation) lists the
+templates. The Store API does not return purchase prices, so the storefront reads them from the custom field
+`sdwa5_production_cost` of the set `sdwa5_merch`. The purchase price in the admin stays the only source.
+`create-products.sh` fills the field for a new product, and `sync-production-cost.sh` copies it after a
+purchase price changed.
+
 ## Tools
 
 The three steps behind the print models are scripted under `tools/shopware/`, so the next product follows the
@@ -55,6 +66,10 @@ tools/shopware/create-products.sh tools/shopware/products/print-models.json --ap
 
 # Existing products get their images in the order the data file lists them, the first as cover.
 tools/shopware/create-products.sh tools/shopware/products/print-models.json --sync-media --apply
+
+# Copy every purchase price into the production cost field the storefront shows.
+tools/shopware/sync-production-cost.sh
+tools/shopware/sync-production-cost.sh --apply
 ```
 
 `print-cost.sh` builds an OrcaSlicer 2.4.2 image whose AppImage is pinned by checksum, and flattens the

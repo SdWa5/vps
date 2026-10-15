@@ -50,6 +50,7 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt koalaman/shellcheck:stable -x \
     tools/shopware/print-cost/slice-inner.sh \
     tools/shopware/set-address.sh \
     tools/shopware/set-homepage-sections.sh \
+    tools/shopware/sync-production-cost.sh \
     tests/run.sh \
     tests/test_helper.bash \
     tests/stubs/*

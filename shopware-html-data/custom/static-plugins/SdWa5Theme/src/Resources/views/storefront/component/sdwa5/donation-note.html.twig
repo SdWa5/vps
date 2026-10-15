@@ -1,0 +1,21 @@
+{# One note above the cart and on the confirm page while the cart holds merch,
+   which costs nothing in the shop and is paid for by a voluntary donation at
+   pick-up. The suggested total is the list price times the quantity of every
+   line item whose price is 0. See docs/shopware/theme.md, "Donation display".
+
+   Variables: sdwa5LineItems, the cart's line items. #}
+{% set sdwa5Suggested = 0 %}
+{% for sdwa5Item in sdwa5LineItems %}
+    {% if sdwa5Item.price and sdwa5Item.price.unitPrice == 0 and sdwa5Item.price.listPrice %}
+        {% set sdwa5Suggested = sdwa5Suggested + sdwa5Item.price.listPrice.price * sdwa5Item.quantity %}
+    {% endif %}
+{% endfor %}
+
+{% if sdwa5Suggested > 0 %}
+    <div class="sdwa5-donation-note">
+        {% sw_include '@Storefront/storefront/utilities/alert.html.twig' with {
+            type: 'info',
+            content: 'sdwa5.donation.cartNote'|trans({'%price%': sdwa5Suggested|currency})|sw_sanitize
+        } %}
+    </div>
+{% endif %}

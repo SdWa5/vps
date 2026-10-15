@@ -3,8 +3,9 @@
    The target is the theme config field sdwa5-donation-url, so it changes in the
    theme manager without a deploy. The wording says "voluntary donation" and
    nothing more. It never claims a charitable status or a tax benefit, because
-   the association is registered only as not aimed at profit, and it never ties
-   a donation to merch. tests/shopware-theme.bats guards the snippets.
+   the association is registered only as not aimed at profit. Merch shows as a
+   donation elsewhere, see component/sdwa5/. tests/shopware-theme.bats guards
+   the snippets.
 
    Variables: sdwa5DonateVariant is 'button' (header), 'offcanvas' or 'footer'. #}
 {% set sdwa5DonateUrl = theme_config('sdwa5-donation-url') ?: 'https://paypal.me/SdWa5' %}

@@ -561,14 +561,16 @@ running, all 3461 files still owned, Dolibarr still returning 200, all three con
 getty and PAM rather than sshd, so `PasswordAuthentication no` does not touch it. If the key is ever
 lost:
 
-1. Contabo panel, reset the root password if needed, open the VNC console.
+1. Contabo panel, enable VNC with a new password, reset the root password if needed, open the
+   VNC console.
 2. Log in as root. `admin` cannot be used since 2026-09-08, see the section on it below. Contabo
    can reset the root password from the panel, so this route never depends on a stored credential.
 3. Append a fresh public key to `/root/.ssh/authorized_keys`.
 
-The VNC listener exists only while a VNC password is set in the panel. Without one its port refuses
-connections. Measured 2026-10-15. After a password was set, a VNC login reached the QEMU console of
-the VM the same day. VNC authentication uses at most 8 characters of that password.
+VNC is switched off in the panel since 2026-10-15, and its port then refuses connections. Contabo
+accepts only a VNC password of exactly 8 characters, which is too short to leave reachable from the
+internet. The route was tested the same day, when a VNC login reached the QEMU console of the VM
+while VNC was briefly on.
 
 That is why disabling SSH password authentication costs nothing in recoverability. SSH passwords
 were never the fallback.

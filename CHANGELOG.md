@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.59.4] - 2026-10-15
+
+### Changed
+
+- `docs/ssh-hardening.md`: VNC stays off between uses, and the break-glass starts by enabling it.
+
 ## [1.59.3] - 2026-10-15
 
 ### Changed

@@ -307,6 +307,21 @@ The hot copy `vaultwarden-data/db.sqlite3` was restored in the same run purely t
 returned `ok` without its `-wal`. That is the finding recorded above: a clean `integrity_check` says
 nothing about whether a hot restore is complete.
 
+### The drill after the image switch
+
+Rerun on 2026-10-15 after the restic service moved to `creativeprojects/resticprofile:0.33.1-amd64`, so
+restic 0.19.1 and rclone 1.75.2 against the same Drive repository. A manual run of
+[`restic/backup.sh`](../restic/backup.sh) wrote snapshot `688240b9` (8.922 GiB) in 258 seconds
+including `forget --prune`, which repacked 404 packs and left 109.133 GiB in the repository.
+
+| | Result |
+|---|---|
+| Restore wall time | **8 seconds** for the vault database alone |
+| `PRAGMA integrity_check` | `ok` |
+| Users, ciphers | 6 and 472, the same as the live consistent copy at that moment |
+| Schema migration | `20260902120000` |
+| `vps-health.sh --dry-run` | every check `OK`, backup `Newest restic snapshot 0h ago` |
+
 ### Not drilled, and why
 
 The **Contabo Auto Backup** restores only as an entire VM image, so testing it means replacing the

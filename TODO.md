@@ -64,17 +64,10 @@
        checks for new tags and how often. renovate would open the PRs automatically but needs the
        repos public or a token, so it waits on the go-public work. until then it is a manual window,
        and nothing schedules one (`decision`, ca. 30 Minuten)
-    2. the restic backup container runs `lobaro/restic-backup-docker:latest`, whose `latest` tag has
-       not been pushed since **2021-05-05**, and whose newest version tag is `1.3.1-0.9.6` from 2020.
-       so the image carrying both backups is five years old and unmaintained, and it cannot be pinned
-       to anything better. either accept it explicitly or move to a maintained image, which changes
-       the backup path and therefore needs a restic restore drill first. the sql drills in
-       [docs/backup.md](docs/backup.md#consistent-sql-database-archives) cover only the local archives
-       (ca. 2 Stunden)
-    3. monitoring runs on the monitored host, so a dead vps sends nothing and the silence looks
+    2. monitoring runs on the monitored host, so a dead vps sends nothing and the silence looks
        healthy. an external dead-man's switch would close that gap, deliberately deferred
        (ca. 45 Minuten)
-    4. **a reboot makes `monitoring/shopware-worker.sh` send false alarms.** measured on 2026-10-15,
+    3. **a reboot makes `monitoring/shopware-worker.sh` send false alarms.** measured on 2026-10-15,
        when switching VNC off in the Contabo panel hard-reset the vm at 02:26. both containers were up
        at 02:27:08 and 02:27:20, the worker ran at 02:27:15, and mysqld inside the dockware images only
        started at 02:27:43 and 02:27:56. both shops mailed `SQLSTATE[HY000] [2002] Connection refused`

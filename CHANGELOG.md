@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.70.1] - 2026-10-15
+
+### Changed
+
+- Record the restore drill after the restic image switch: manual backup with prune, vault database
+  restore and health check all passed against the live repository.
+
+### Removed
+
+- TODO 6.2, the unmaintained restic image, replaced in 1.70.0.
+
 ## [1.70.0] - 2026-10-15
 
 ### Added

@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.64.0] - 2026-10-15
+
+### Added
+
+- `tools/shopware/create-products.sh`: creates merch products with images and EN/DE texts from a JSON data file, dry run by default.
+- `tools/shopware/products/`: the print-model data file and its eight shop images.
+- `tools/shopware/images/`: rembg-based shop image tool with perspective correction, and the jobs file for the print-model photos.
+- `tools/shopware/print-cost/`: OrcaSlicer 2.4.2 slicing in Docker with the cost per piece for the Kobra 3 Max.
+- `docs/shopware/merch.md`: a tools section.
+- Tests for the three tools, and a Python step in `tests/run.sh`.
+
+### Fixed
+
+- Negated assertions in the bats tests fail the test, which a bare `!` before the last line did not.
+
 ## [1.63.0] - 2026-10-15
 
 ### Added

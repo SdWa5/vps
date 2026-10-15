@@ -24,7 +24,8 @@
    exists. A CMS-page search would bring it back on every page
 6. Merch / Products
     1. Make use of variants and other product related shopware features
-    2. Add missing product images, remove background / opacity from existing images
+    2. Add missing product images, remove background / opacity from existing images.
+       `tools/shopware/images/shop-images.sh` does the background removal, see [merch.md](merch.md#tools)
     3. Non-binding preorders / interest capture — no native Shopware 6 core feature for this.
        `GET /api/product-notification` → 404 confirms. Options:
         - Contact form (zero effort): link from product/category pages to /Requests-Contact/ — captures interest via

@@ -236,7 +236,7 @@ setup() {
     doli_sync_pm --apply
     [ "$status" -eq 0 ]
     grep -q 'DOLAPIKEY' "$STUB_DOLI_CONFIG"
-    ! grep -q 'fake-api-key' "$STUB_DOLI_ARGS"
+    ! grep -q 'fake-api-key' "$STUB_DOLI_ARGS" || false
 }
 
 # Dolibarr HTML-escapes what it stores, so "Allen & Heath" comes back as

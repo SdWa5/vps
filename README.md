@@ -102,6 +102,15 @@ tools/dolibarr/sync-pm.sh
 
 # Install or update a Dolibarr custom module at a tag, on the VPS as root (see docs/dolibarr.md)
 tools/dolibarr/deploy-module.sh banksync https://github.com/SdWa5/banksync.git v1.0.0
+
+# Show which merch products a data file would create in the shop (--apply writes, see docs/shopware/merch.md)
+tools/shopware/create-products.sh tools/shopware/products/print-models.json
+
+# Turn product photos into cutout, white, light and dark shop images (Docker)
+tools/shopware/images/shop-images.sh run tools/shopware/images/print-models.jobs PHOTO_DIR OUT_DIR
+
+# Slice STL models for the Kobra 3 Max and print grams, time and cost per piece (Docker)
+tools/shopware/print-cost/print-cost.sh MODEL.stl...
 ```
 
 The scripts reach Compose through `tools/compose.sh`, which prefers the v2 plugin `docker compose`

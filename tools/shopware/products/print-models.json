@@ -1,0 +1,64 @@
+{
+  "taxId": "019c36d7b868714d954d6b53360d0e2a",
+  "currencyId": "b7d2554b0ce847cd82f3ac9bd1c0dfca",
+  "salesChannelId": "019c36d914f7706bbebf391b033a74d0",
+  "mediaFolderId": "019c36d74a7d72e2a7405a4a4fb55ff7",
+  "categoryIds": [
+    "71013c9ebbb04224aa3e53536e8f5ce6",
+    "cae39b7948ee4791a232083d81a236ec"
+  ],
+  "languages": {
+    "en": "2fbb5fe2e29a4d70aa5854ce7ce3e20b",
+    "de": "019c36d736207216a1f1d943de40f765"
+  },
+  "products": [
+    {
+      "productNumber": "SDWA5-MT-001",
+      "purchasePrice": 1.75,
+      "weightKg": 0.033,
+      "dimensionsMm": {
+        "width": 41,
+        "height": 80,
+        "length": 43
+      },
+      "media": [
+        "media/sdwa5-print-model-top-single-light.jpg",
+        "media/sdwa5-print-model-top-single-dark.jpg",
+        "media/sdwa5-print-model-tops-arc-light.jpg",
+        "media/sdwa5-print-model-tops-arc-dark.jpg",
+        "media/sdwa5-print-model-tops-pyramid-light.jpg",
+        "media/sdwa5-print-model-tops-pyramid-dark.jpg"
+      ],
+      "name": {
+        "en": "SdWa5 Top Model 1:12",
+        "de": "SdWa5 Top Modell 1:12"
+      },
+      "description": {
+        "en": "<p>A scale model of one of the tops of our PA at 1:12. It measures about 4.1 × 8.0 × 4.3 cm and is 3D printed in black PLA.</p><p>The geometry comes from our open 3D models of the SdWa5 PA, which are published at <a href=\"https://github.com/SdWa5/3d\">github.com/SdWa5/3d</a>. Sepp printed it on an Anycubic Kobra 3 Max.</p>",
+        "de": "<p>Ein Maßstabsmodell eines der Tops unserer PA im Maßstab 1:12. Es misst etwa 4,1 × 8,0 × 4,3 cm und ist aus schwarzem PLA 3D-gedruckt.</p><p>Die Geometrie stammt aus unseren offenen 3D-Modellen der SdWa5-PA, die unter <a href=\"https://github.com/SdWa5/3d\">github.com/SdWa5/3d</a> veröffentlicht sind. Sepp hat es auf einem Anycubic Kobra 3 Max gedruckt.</p>"
+      }
+    },
+    {
+      "productNumber": "SDWA5-MS-001",
+      "purchasePrice": 2.77,
+      "weightKg": 0.056,
+      "dimensionsMm": {
+        "width": 52,
+        "height": 77,
+        "length": 68
+      },
+      "media": [
+        "media/sdwa5-print-model-rig-light.jpg",
+        "media/sdwa5-print-model-rig-dark.jpg"
+      ],
+      "name": {
+        "en": "SKRAM Model 1:12",
+        "de": "SKRAM Modell 1:12"
+      },
+      "description": {
+        "en": "<p>A scale model of one of our self-built SKRAM subwoofers at 1:12. It measures about 5.2 × 7.7 × 6.8 cm and is 3D printed in PLA, with the vent array of its horn mouth and the 21\" driver behind it.</p><p>The SKRAM is a design by Josh Ricci, and the model is built from his CAD. Our 3D models of the SdWa5 PA are published at <a href=\"https://github.com/SdWa5/3d\">github.com/SdWa5/3d</a>.</p>",
+        "de": "<p>Ein Maßstabsmodell eines unserer selbstgebauten SKRAM-Subwoofer im Maßstab 1:12. Es misst etwa 5,2 × 7,7 × 6,8 cm und ist aus PLA 3D-gedruckt, mit dem Gitter seiner Hornöffnung und dem 21-Zoll-Treiber dahinter.</p><p>Der SKRAM ist ein Entwurf von Josh Ricci, und das Modell ist aus seinem CAD gebaut. Unsere 3D-Modelle der SdWa5-PA sind unter <a href=\"https://github.com/SdWa5/3d\">github.com/SdWa5/3d</a> veröffentlicht.</p>"
+      }
+    }
+  ]
+}

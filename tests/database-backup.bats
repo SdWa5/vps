@@ -60,7 +60,7 @@ restore_database() {
     [ "$status" -eq 1 ]
     [ ! -f "$DATABASE_BACKUP_DIR/dolibarr_db.tar.gz" ]
     [ -f "$DATABASE_BACKUP_DIR/dolibarr_db.failed" ]
-    ! grep -q -- '-- dump' "$STUB_DOCKER_LOG"
+    ! grep -q -- '-- dump' "$STUB_DOCKER_LOG" || false
 }
 
 @test "duplicate foreign key names fail the backup and keep the previous archive" {
@@ -149,7 +149,7 @@ restore_database() {
     grep -q -- 'CHECK TABLE `records`, `other`' "$STUB_DOCKER_LOG"
     grep -q -- 'rm -f sdwa5-restore-' "$STUB_DOCKER_LOG"
     grep -q -- 'volume rm sdwa5-restore-' "$STUB_DOCKER_LOG"
-    ! grep -q -- 'type=bind' "$STUB_DOCKER_LOG"
+    ! grep -q -- 'type=bind' "$STUB_DOCKER_LOG" || false
 }
 
 @test "MySQL restore uses the exact archived image and names the server socket" {
@@ -178,7 +178,7 @@ restore_database() {
     STUB_RESTORE_INIT_PENDING=1 RESTORE_READY_TIMEOUT=2 restore_database dolibarr_db
     [ "$status" -eq 1 ]
     [[ "$output" == *'did not become ready within 2 seconds'* ]]
-    ! grep -q -- '--execute=SELECT 1' "$STUB_DOCKER_LOG"
+    ! grep -q -- '--execute=SELECT 1' "$STUB_DOCKER_LOG" || false
     grep -q -- 'volume rm sdwa5-restore-' "$STUB_DOCKER_LOG"
 }
 
@@ -219,5 +219,5 @@ restore_database() {
     printf 'broken' > "$DATABASE_BACKUP_DIR/shopware.tar.gz"
     restore_database shopware
     [ "$status" -ne 0 ]
-    ! grep -q '^run ' "$STUB_DOCKER_LOG"
+    ! grep -q '^run ' "$STUB_DOCKER_LOG" || false
 }

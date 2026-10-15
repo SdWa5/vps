@@ -25,7 +25,7 @@ reset_root() {
     reset_root dolibarr_db
     [ "$status" -eq 1 ]
     [[ "$output" == *'Stop dolibarr_db first'* ]]
-    ! grep -q '^run' "$STUB_COMPOSE_LOG"
+    ! grep -q '^run' "$STUB_COMPOSE_LOG" || false
 }
 
 @test "a run that exits 0 without the success line is not taken as a reset" {

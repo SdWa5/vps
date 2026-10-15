@@ -6,8 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.73.0] - 2026-10-16
+
 ### Added
 
+- `tools/dolibarr/dev-instance.sh` builds a local Dolibarr dev mirror from the newest production
+  archive, with mail and scheduled jobs disabled, its own instance key and module checkouts mounted.
 - A checksum-verified CI tool installer and regression tests for valid and nested archives,
   corruption, failed downloads and preservation of an existing installation after failed verification.
 

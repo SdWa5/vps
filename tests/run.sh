@@ -43,6 +43,7 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt "$CI_SHELLCHECK_IMAGE" -x \
     restic/backup.sh \
     hardening/firewall/sdwa5-firewall.sh \
     tools/dolibarr/deploy-module.sh \
+    tools/dolibarr/dev-instance.sh \
     tools/dolibarr/rehearse-upgrade.sh \
     tools/dolibarr/entrypoint.sh \
     tools/dolibarr/doli.sh \

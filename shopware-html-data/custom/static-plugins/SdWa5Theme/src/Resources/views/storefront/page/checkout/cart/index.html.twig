@@ -1,0 +1,7 @@
+{% sw_extends '@Storefront/storefront/page/checkout/cart/index.html.twig' %}
+
+{# The donation note under the cart heading, see component/sdwa5/donation-note.html.twig. #}
+{% block page_checkout_cart_header %}
+    {{ parent() }}
+    {% sw_include '@SdWa5Theme/storefront/component/sdwa5/donation-note.html.twig' with { sdwa5LineItems: page.cart.lineItems } %}
+{% endblock %}

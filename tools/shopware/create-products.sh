@@ -7,7 +7,9 @@
 # and dimensions, the given categories, storefront visibility, and its images
 # uploaded into the product media folder. The first image becomes the cover.
 # New products start like the rest of the merch: active, stock 0 and closeout,
-# so the storefront shows them as not available.
+# so the storefront shows them as not available. The purchase price is also
+# written into the custom field sdwa5_production_cost, which the storefront
+# shows as the production cost, see tools/shopware/sync-production-cost.sh.
 #
 # The script is idempotent. A product whose number exists is skipped as a
 # whole, and an image whose file name exists in the media library is reused
@@ -127,8 +129,10 @@ product_payload() {
             categories: ($c.categoryIds | map({id: .})),
             visibilities: [{salesChannelId: $c.salesChannelId, visibility: 30}],
             translations: {
-                ($c.languages.en): {name: $p.name.en, description: $p.description.en},
-                ($c.languages.de): {name: $p.name.de, description: $p.description.de}
+                ($c.languages.en): {name: $p.name.en, description: $p.description.en,
+                    customFields: {sdwa5_production_cost: $p.purchasePrice}},
+                ($c.languages.de): {name: $p.name.de, description: $p.description.de,
+                    customFields: {sdwa5_production_cost: $p.purchasePrice}}
             }
           }
         + (if ($pm | length) > 0 then {media: $pm, coverId: $pm[0].id} else {} end)'

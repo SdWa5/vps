@@ -108,7 +108,10 @@ tools/shopware/create-products.sh tools/shopware/products/print-models.json
 # Bring the images of existing products in line with the data file
 tools/shopware/create-products.sh tools/shopware/products/print-models.json --sync-media
 
-# Replace text in CMS slots from an edits file (--apply writes, see docs/shopware/content-cms.md)
+# Copy purchase prices into the production cost field the shop shows (--apply writes, see docs/shopware/merch.md)
+tools/shopware/sync-production-cost.sh
+
+# Replace text in CMS slots or mail templates from an edits file (--apply writes, see docs/shopware/content-cms.md)
 tools/shopware/edit-slots.sh tools/shopware/slot-edits/hardware-m2122.json
 
 # Turn product photos into cutout, white, light and dark shop images (Docker)

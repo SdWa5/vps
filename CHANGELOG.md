@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.69.0] - 2026-10-15
+
+### Added
+
+- SdWa5Theme 1.2.0 shows merch at €0 with a list price as a voluntary donation; the product page shows the
+  suggested donation and the production cost as an estimate, cards show the suggested donation, and the cart and
+  the confirm page carry a note with the suggested total, in English and German
+- `tools/shopware/sync-production-cost.sh` copies every purchase price into the product custom field
+  `sdwa5_production_cost`, creating the set `sdwa5_merch` when it is missing
+- `edit-slots.sh` edits mail templates with `"target": "mail-template"`, `template` and `field`
+- `slot-edits/order-mail-donation.json` adds the donation note to the order confirmation mail
+
+### Changed
+
+- `create-products.sh` writes the purchase price into `sdwa5_production_cost` of every new product
+- `edit-slots.sh` counts an insertion whose new text keeps the old one as current once the new text is there
+- The donation copy rule no longer forbids tying a donation to merch, per Stefan's decision of 2026-10-15
+
+### Removed
+
+- The discount badge and the struck-through list price on donation items
+
 ## [1.68.0] - 2026-10-15
 
 ### Changed

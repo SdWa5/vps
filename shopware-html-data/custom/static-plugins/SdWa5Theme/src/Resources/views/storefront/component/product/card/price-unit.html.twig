@@ -14,3 +14,25 @@
     {% set sdwa5Block %}{{ parent() }}{% endset %}
     {% if sdwa5Block|striptags|trim is not empty %}{{ sdwa5Block }}{% endif %}
 {% endblock %}
+
+{# Merch shows its suggested donation instead of "€0.00 €5.00 (100% saved)", see
+   buy-widget-price.html.twig. The screen reader label says the same. #}
+{% block component_product_box_price_label %}
+    {% if price.unitPrice == 0 and price.listPrice %}
+        <span class="visually-hidden product-price-label">{{ 'sdwa5.donation.title'|trans|sw_sanitize }}</span>
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}
+
+{% block component_product_box_main_price %}
+    {% if price.unitPrice == 0 and price.listPrice %}
+        {% sw_include '@SdWa5Theme/storefront/component/sdwa5/donation-price.html.twig' with {
+            sdwa5ListPrice: price.listPrice.price,
+            sdwa5Cost: null,
+            sdwa5DonationVariant: 'card'
+        } %}
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}

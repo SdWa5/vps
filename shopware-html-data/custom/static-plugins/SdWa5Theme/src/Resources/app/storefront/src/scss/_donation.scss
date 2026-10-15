@@ -1,0 +1,37 @@
+// Donation display for merch, see docs/shopware/theme.md "Donation display".
+// The buy box shows the donation in place of the price, the card one line.
+
+.sdwa5-donation-price {
+  margin-bottom: 1rem;
+}
+
+.sdwa5-donation-price__title {
+  margin-bottom: 0.25rem;
+}
+
+.sdwa5-donation-price__text {
+  margin-bottom: 0.5rem;
+  color: var(--sdwa5-muted-immutable);
+}
+
+.sdwa5-donation-price__figures {
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: start;
+  column-gap: 1.5rem;
+  row-gap: 0.125rem;
+  margin: 0;
+
+  dt {
+    font-weight: 400;
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 600;
+  }
+}
+
+.sdwa5-donation-card {
+  font-size: 0.875rem;
+}

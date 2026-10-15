@@ -111,14 +111,45 @@ snippet_keys() {
 }
 
 # The association is registered only as not aimed at profit, so the copy must
-# not claim charitable status or a tax benefit, and the question whether merch
-# may be tied to a donation is still open.
+# not claim charitable status or a tax benefit. Tying merch to a voluntary
+# donation was an open question until Stefan decided it on 2026-10-15, so the
+# donation copy may now name merch, see docs/shopware/theme.md.
 @test "donation copy promises nothing beyond a voluntary donation" {
     for f in "$SNIPPET_EN" "$SNIPPET_DE"; do
-        run jq -r '.sdwa5.donate[], .sdwa5.footer[]' "$f"
+        run jq -r '.sdwa5.donate[], .sdwa5.footer[], .sdwa5.donation[]' "$f"
         [ "$status" -eq 0 ]
-        echo "$output" | { ! grep -iE 'gemeinn|charit|tax|steuer|absetzbar|quittung|receipt|merch|shirt|hoodie'; }
+        echo "$output" | { ! grep -iE 'gemeinn|charit|tax|steuer|absetzbar|quittung|receipt'; }
     done
+}
+
+@test "merch is shown as a voluntary donation in both languages" {
+    [ "$(jq -r .sdwa5.donation.title "$SNIPPET_EN")" = "Voluntary donation" ]
+    [ "$(jq -r .sdwa5.donation.title "$SNIPPET_DE")" = "Freiwillige Spende" ]
+    for f in "$SNIPPET_EN" "$SNIPPET_DE"; do
+        jq -e '.sdwa5.donation.cost | test("estimate|geschätzt")' "$f" >/dev/null || { echo "$f: cost not marked as an estimate"; return 1; }
+        jq -e '.sdwa5.donation.card | contains("%price%")' "$f" >/dev/null
+        jq -e '.sdwa5.donation.cartNote | contains("%price%")' "$f" >/dev/null
+    done
+}
+
+# Every place that shows merch differently uses the same test, price 0 with a
+# list price, so a product cannot read as a donation in one place and as a
+# discount in the next.
+@test "the donation display keys on price 0 with a list price everywhere" {
+    for f in component/buy-widget/buy-widget-price component/product/card/price-unit component/product/card/badges; do
+        grep -qE 'unitPrice == 0 and [a-zA-Z0-9]+\.listPrice' "$VIEWS/$f.html.twig" || { echo "$f lacks the donation test"; return 1; }
+    done
+    grep -q 'unitPrice == 0 and sdwa5Item.price.listPrice' "$VIEWS/component/sdwa5/donation-note.html.twig"
+    for f in page/checkout/cart/index page/checkout/confirm/index; do
+        grep -q "donation-note.html.twig' with { sdwa5LineItems: page.cart.lineItems }" "$VIEWS/$f.html.twig"
+    done
+}
+
+# The storefront cannot read purchase prices, so the cost comes from the custom
+# field tools/shopware/sync-production-cost.sh fills.
+@test "the production cost comes from the custom field the sync script writes" {
+    grep -q 'customFields.sdwa5_production_cost' "$VIEWS/component/buy-widget/buy-widget-price.html.twig"
+    grep -q '^FIELD="sdwa5_production_cost"$' "$REPO_ROOT/tools/shopware/sync-production-cost.sh"
 }
 
 @test "the donation label says voluntary in both languages" {

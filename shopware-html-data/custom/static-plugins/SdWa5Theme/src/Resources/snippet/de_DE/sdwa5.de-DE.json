@@ -13,6 +13,14 @@
       "label": "Teilen",
       "email": "E-Mail",
       "text": "SdWa5 ist ein Free-Tekno-Soundsystem aus Österreich."
+    },
+    "donation": {
+      "title": "Freiwillige Spende",
+      "text": "Im Shop zahlst du nichts. Du spendest, was du möchtest, wenn du es bei einer unserer Veranstaltungen abholst.",
+      "suggested": "Empfohlene Spende",
+      "cost": "Herstellungskosten (geschätzt)",
+      "card": "Freiwillige Spende · empfohlen %price%",
+      "cartNote": "Im Shop wird nichts verrechnet. Du spendest, was du möchtest, wenn du deine Bestellung abholst. Die empfohlene Spende beträgt insgesamt %price%."
     }
   }
 }

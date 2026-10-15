@@ -97,6 +97,7 @@ count() {
     [ "$(jq -r '.translations["lang-de"].name' <<<"$body")" = "Beispiel Eins" ]
     [ "$(jq -c '[.weight, .width, .height, .length]' <<<"$body")" = '[0.033,41,80,43]' ]
     [ "$(jq -c '.price[0].listPrice' <<<"$body")" = 'null' ]
+    [ "$(jq -c '[.translations[].customFields.sdwa5_production_cost]' <<<"$body")" = '[1.75,1.75]' ]
 }
 
 @test "a list price is sent crossed out next to the price of 0" {

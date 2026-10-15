@@ -19,9 +19,11 @@ replaces the Shopware default Storefront theme, whose stored config stays as the
 | `…/_header.scss` | sticky glass header, logo, donation button, shop context |
 | `…/_hero.scss` | homepage hero crop, hero text, link tiles |
 | `…/_footer.scss` | footer, donation line, share bar |
+| `…/_donation.scss` | donation price box on the product page, card line, cart note |
 | `app/storefront/src/assets/` | fonts with their OFL licence, `logo/sdwa5-logo.webp` |
 | `views/storefront/` | Twig overrides, each block calls `parent()` unless it replaces it on purpose |
 | `views/storefront/component/product/card/` | listing cards without empty boxes, see [Product cards](#product-cards) |
+| `views/storefront/component/sdwa5/` | the donation price and the donation note, see [Merch as a donation](#merch-as-a-donation) |
 | `snippet/{en_GB,de_DE}/` | every text the theme adds, under `sdwa5.*` |
 
 The theme config merges in this order, measured in Shopware's `DatabaseConfigLoader`: the Storefront
@@ -150,8 +152,32 @@ with the PayPal page as its default. It is `scss: false`, so changing it needs n
 
 The copy says "Voluntary Donation" and "Freiwillige Spende". It never calls the association
 gemeinnützig or charitable and never promises a tax benefit, because the association is registered
-only as not aimed at profit. It also never ties a donation to merch, because that legal question is
-open. A test fails on any of those words in the donation snippets.
+only as not aimed at profit. A test fails on any of those words in the donation snippets.
+
+Until 2026-10-15 the copy also never tied a donation to merch, because that legal question was open and
+still waits on the Obmann or the board (item 12 of [TODO.md](TODO.md)). On 2026-10-15 Stefan decided to
+show merch as a voluntary donation anyway, see the next section.
+
+## Merch as a donation
+
+All merch sells at €0, and the list price holds the suggested donation. Without the theme the buy box read
+"€0.00 · Regular price €5.00 (100% saved)", which looks like a discount. The theme shows it as a donation
+instead, on every product and line item whose unit price is 0 and which has a list price. Every override
+falls back to `parent()` for anything else.
+
+| Where | What the theme shows | Template |
+|---|---|---|
+| Product page | "Voluntary donation", one sentence on donating at pick-up, the suggested donation and the production cost as an estimate | `component/buy-widget/buy-widget-price.html.twig` |
+| Listing card | "Voluntary donation · suggested €X" instead of the struck-through price | `component/product/card/price-unit.html.twig` |
+| Badge | no discount badge on donation items | `component/product/card/badges.html.twig` |
+| Cart and confirm page | one info alert with the suggested donation in total | `page/checkout/{cart,confirm}/index.html.twig` |
+
+The shared markup lives in `component/sdwa5/donation-price.html.twig` and `donation-note.html.twig`. The
+production cost comes from the product custom field `sdwa5_production_cost`, because the Store API leaves
+purchase prices out. `tools/shopware/sync-production-cost.sh` copies the purchase price into it, see
+[merch.md](merch.md#donation-display), and the line is left out when the field is empty. The order
+confirmation mail carries the same note. It is not a theme template but an edit of the live mail template,
+see [content-cms.md](content-cms.md#editing-text-slots).
 
 ## Share links
 
@@ -284,6 +310,8 @@ plugin author, for the global decoration, or to Shopware, for the fragile valida
 - the views order, the fonts with their licence, and the logo file
 - colour literals only in `_tokens.scss`, equal light and dark token sets, dark blocks with tokens only
 - the donation copy, its label, its default URL and `rel` on every external link
+- merch shows as a donation in both languages, every donation template keys on price 0 with a list price,
+  and the production cost comes from the field the sync script writes
 - the VAT wording is untouched, and every override calls `parent()` unless it replaces a block on purpose
 
 `tests/shopware-homepage-sections.bats` covers the sections script, including that the classes it sets

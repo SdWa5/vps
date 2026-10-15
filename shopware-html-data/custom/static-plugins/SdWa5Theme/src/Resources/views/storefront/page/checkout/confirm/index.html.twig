@@ -1,0 +1,7 @@
+{% sw_extends '@Storefront/storefront/page/checkout/confirm/index.html.twig' %}
+
+{# The donation note after the confirm page's own alerts, see component/sdwa5/donation-note.html.twig. #}
+{% block page_checkout_confirm_alerts %}
+    {{ parent() }}
+    {% sw_include '@SdWa5Theme/storefront/component/sdwa5/donation-note.html.twig' with { sdwa5LineItems: page.cart.lineItems } %}
+{% endblock %}

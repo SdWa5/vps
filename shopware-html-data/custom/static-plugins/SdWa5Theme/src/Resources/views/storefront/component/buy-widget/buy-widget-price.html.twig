@@ -1,0 +1,17 @@
+{% sw_extends '@Storefront/storefront/component/buy-widget/buy-widget-price.html.twig' %}
+
+{# Merch costs nothing and lists the suggested donation as its list price. The
+   core shows that as "Sale price €0.00, regular price €5.00 (100% saved)", which
+   reads as a discount, so the theme prints the donation instead. Any other
+   product keeps the core price box. #}
+{% block buy_widget_price_content %}
+    {% if price.unitPrice == 0 and price.listPrice %}
+        {% sw_include '@SdWa5Theme/storefront/component/sdwa5/donation-price.html.twig' with {
+            sdwa5ListPrice: price.listPrice.price,
+            sdwa5Cost: product.translated.customFields.sdwa5_production_cost ?? null,
+            sdwa5DonationVariant: 'detail'
+        } %}
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}

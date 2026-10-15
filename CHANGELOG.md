@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.73.1] - 2026-10-16
+
+### Changed
+
+- `dev-instance.sh` uses the production entrypoint wrapper only for the image production pins, so
+  `SDWA5_DOLIBARR_DEV_IMAGE` can rehearse the next release on the mirror.
+
+### Fixed
+
+- `dev-instance.sh` removes `install.lock` before every start, so a newer image migrates the copy.
+
 ## [1.73.0] - 2026-10-16
 
 ### Added

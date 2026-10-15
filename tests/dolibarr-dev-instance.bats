@@ -117,3 +117,30 @@ archive_with() {
     [ "$status" -ne 0 ]
     [[ "$output" == *'no directory'* ]]
 }
+
+start_with_image() {
+    mkdir -p "$SDWA5_DOLIBARR_DEV_DIR/documents" "$SDWA5_DOLIBARR_DEV_DIR/archive" "$BATS_TEST_TMPDIR/mod"
+    printf 'database\tdolidb\n' > "$SDWA5_DOLIBARR_DEV_DIR/archive/manifest.tsv"
+    touch "$SDWA5_DOLIBARR_DEV_DIR/documents/install.lock"
+    stub docker "printf '%s\n' \"\$@\" >> '$BATS_TEST_TMPDIR/docker-args'"
+    run env SDWA5_DOLIBARR_DEV_MODULES="m=$BATS_TEST_TMPDIR/mod" SDWA5_DOLIBARR_DEV_IMAGE="$1" \
+        bash -c 'source "$DEV_SCRIPT"; start_application'
+}
+
+@test "the production image starts through the production entrypoint wrapper" {
+    start_with_image "$(awk '/^  dolibarr:$/{f=1} f&&/image:/{print $2; exit}' "$BATS_TEST_DIRNAME/../docker-compose.yml")"
+    [ "$status" -eq 0 ]
+    grep -qx '/opt/sdwa5-dolibarr-entrypoint.sh' "$BATS_TEST_TMPDIR/docker-args"
+}
+
+@test "another image starts with its own entrypoint" {
+    start_with_image dolibarr/dolibarr:99.0.0
+    [ "$status" -eq 0 ]
+    ! grep -q 'sdwa5-dolibarr-entrypoint' "$BATS_TEST_TMPDIR/docker-args"
+    grep -qx 'dolibarr/dolibarr:99.0.0' "$BATS_TEST_TMPDIR/docker-args"
+}
+
+@test "every start removes install.lock so the image can migrate" {
+    start_with_image dolibarr/dolibarr:99.0.0
+    [ ! -e "$SDWA5_DOLIBARR_DEV_DIR/documents/install.lock" ]
+}

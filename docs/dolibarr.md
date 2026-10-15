@@ -298,7 +298,9 @@ mounted, so module credentials such as BankSync's `paypal.json` are absent. The 
 Module checkouts are bind-mounted into `custom/` as working trees, `banksync` from
 `../sdwa5-banksync` by default. `SDWA5_DOLIBARR_DEV_MODULES="banksync=… pmtools=…"` sets the list,
 and `SDWA5_DOLIBARR_DEV_IMAGE` runs a different application image, for example the next Dolibarr
-release before it is rehearsed. Logins are the production ones. An API key for the mirror is
+release before it is rehearsed. That image starts without the production entrypoint wrapper, and
+every start removes `install.lock`, so a newer image migrates the copy. 23.0.4 to 24.0.1 migrated
+cleanly on 2026-10-16. Logins are the production ones. An API key for the mirror is
 generated on the user card and kept in a file of its own, never the production token file.
 
 ## Operations

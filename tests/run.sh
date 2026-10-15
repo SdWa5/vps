@@ -44,6 +44,7 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt koalaman/shellcheck:stable -x \
     tools/compose.sh \
     tools/shopware/lib.sh \
     tools/shopware/create-products.sh \
+    tools/shopware/edit-slots.sh \
     tools/shopware/images/shop-images.sh \
     tools/shopware/print-cost/print-cost.sh \
     tools/shopware/print-cost/slice-inner.sh \

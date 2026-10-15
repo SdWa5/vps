@@ -106,6 +106,9 @@ tools/dolibarr/deploy-module.sh banksync https://github.com/SdWa5/banksync.git v
 # Show which merch products a data file would create in the shop (--apply writes, see docs/shopware/merch.md)
 tools/shopware/create-products.sh tools/shopware/products/print-models.json
 
+# Replace text in CMS slots from an edits file (--apply writes, see docs/shopware/content-cms.md)
+tools/shopware/edit-slots.sh tools/shopware/slot-edits/hardware-m2122.json
+
 # Turn product photos into cutout, white, light and dark shop images (Docker)
 tools/shopware/images/shop-images.sh run tools/shopware/images/print-models.jobs PHOTO_DIR OUT_DIR
 

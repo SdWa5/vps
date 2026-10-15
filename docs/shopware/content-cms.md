@@ -33,6 +33,23 @@ CSS — no custom CSS needed:
   `<td>Pioneer XDJ-RR</td>`). Column order is `Model` then `Brand` (matches the original
   Enclosures/Amplifiers tables — kept consistent across Hardware page, 2026-07-02 rework).
 
+## Editing text slots
+
+Text in a `text` slot is changed with `tools/shopware/edit-slots.sh` and an edits file, rather than by
+hand-written PATCH calls. Each edit names the slot, the language, the exact old text and the new text. The old
+text has to occur exactly once, and every edit is checked before the first write, so a typo leaves the page
+untouched. A slot's config is one JSON column, so the script writes the whole config back with only the content
+string changed. The edits that were run stay in `tools/shopware/slot-edits/` as a record and as examples.
+
+```bash
+tools/shopware/edit-slots.sh tools/shopware/slot-edits/hardware-m2122.json            # what would change
+tools/shopware/edit-slots.sh tools/shopware/slot-edits/hardware-m2122.json --apply    # write it
+```
+
+Slot ids come from a read-only search on `cms-slot-translation`, filtered by a word of the old text.
+`set-address.sh` predates the tool and keeps its own slot logic, because it also writes the system config and
+the document templates.
+
 ## Navigation & CMS pages
 
 Main nav root: "SdWa5" category (homepage → Homepage CMS page)

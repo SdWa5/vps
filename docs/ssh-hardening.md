@@ -133,9 +133,10 @@ until 2026-10-04, because `id_rsa` was removed from `authorized_keys` here and `
 not exist on that machine then. Replacing the key rather than only adding a passphrase to it is what
 bought that.
 
-The private key is stored in Vaultwarden since 2026-09-08, as item
-`00fceed1-965b-4857-9b91-2d371d0c6662`, uploaded by path and then downloaded again and compared
-byte-for-byte against the file on disk. A second copy with the same passphrase is on stefan-notebook
+The private key is stored in Vaultwarden since 2026-09-08, as the personal SSH-key item
+`id_ed25519_sdwa5`. It replaced an earlier attachment copy of the same key, which went to the trash
+the same day. Verified 2026-10-15 by fingerprint and by a root login with only the vault copy, with
+the agent and the local file bypassed and the passphrase typed from memory. A second copy with the same passphrase is on stefan-notebook
 since 2026-10-04, with the fingerprint above.
 
 Vaultwarden running on the very host this key unlocks looks circular, and that was the initial

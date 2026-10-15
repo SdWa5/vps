@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.59.6] - 2026-10-15
+
+### Changed
+
+- `docs/ssh-hardening.md`: switching Contabo VNC off hard-resets the VM.
+
 ## [1.59.5] - 2026-10-15
 
 ### Changed

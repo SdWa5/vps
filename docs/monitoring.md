@@ -308,8 +308,8 @@ relay service (https://admin.google.com/ac/apps/gmail/routing), entry "Contabo V
 senders in the Workspace domains, only from the host's IPv4 and IPv6 addresses, without SMTP
 authentication and only over TLS. Measured on 2026-10-15: IPv4 and IPv6 with STARTTLS are accepted,
 plaintext is refused with 550. Both addresses are listed because `curl` on the host reaches the relay
-over IPv6 first, while containers leave through IPv4. Vaultwarden and the shop send through the same
-relay. A new host address has to be added there, or every sender fails with 550.
+over IPv6 first, while containers leave through IPv4. Vaultwarden, the shop and Dolibarr send through
+the same relay. A new host address has to be added there, or affected senders can fail with 550.
 
 Setting `MONITOR_SMTP_PASSWORD` switches to an authenticated login as `MONITOR_SMTP_USER`, for a
 server that needs one. The password is then handed to `curl` through a config file on stdin, so it
@@ -328,6 +328,30 @@ never appears in the process list.
 | `MONITOR_MAIL_TO` | `ripper@sdwa5.org` | space-separated; the host sets its own list in `.env` |
 
 `vps-health.sh --test-mail` sends one mail and reports whether the relay took it.
+
+### Outgoing email verification
+
+Delivery through the passwordless relay was confirmed by the mailbox owner on 2026-10-15 for all
+four senders:
+
+| Sender | Transport | Verification |
+|---|---|---|
+| Monitoring | STARTTLS, port 587 | Monitoring test arrived at both configured recipients |
+| Vaultwarden | STARTTLS, port 587 | Admin-panel SMTP test arrived |
+| SdWa5 Shopware | STARTTLS, port 587 | Both application test messages arrived |
+| SdWa5 Dolibarr | Implicit TLS, port 465 | Application relay test arrived |
+
+Dolibarr needs the [port 465 configuration](dolibarr.md#outgoing-email) because its current
+no-authentication path skips STARTTLS. Keep certificate validation enabled for every sender.
+
+The owner confirmed revocation of the old Dolibarr, Vaultwarden and Shopware Gmail app passwords.
+Five old Vaultwarden configuration files containing SMTP passwords were then deleted from the live
+VPS. The active Vaultwarden configuration was checked for the relay host and empty SMTP credentials.
+The database backups were preserved.
+
+This cleanup does not establish that historical restic snapshots or SQL archives are free of old
+credentials. After a restore, verify relay settings and remove restored SMTP credentials before
+resuming mail. Revoked app passwords remain invalid even if an old backup restores their values.
 
 ## SQL database backup monitoring
 

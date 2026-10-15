@@ -24,6 +24,39 @@ Admin login for all instances: `admin` (see `*_ADMIN_PASSWORD` in .env)
   `dolibarr-secrets/`, all gitignored. `dolibarr-custom-data/` holds `GeoLite2-Country.mmdb` (MaxMind
   GeoIP DB, re-downloadable) and the custom modules below.
 
+### Outgoing email
+
+Configure outgoing email under Home → Setup → Emails (`/admin/mails.php`). The SdWa5 instance uses
+Google Workspace's IP-authorized relay with these settings:
+
+| Setting | Value |
+|---|---|
+| Sending method | SMTP/SMTPS socket library |
+| SMTP host | `smtp-relay.gmail.com` |
+| Port | `465` |
+| Authentication | None |
+| SMTP username and password | Both empty |
+| TLS (SSL) encryption | Yes |
+| TLS (STARTTLS) encryption | No |
+| Allow self-signed certificates | No |
+| Sender for automatic emails | `erp@sdwa5.org` |
+
+Dolibarr 23.0.2's live `core/class/smtps.class.php` calls its STARTTLS negotiation from the
+SMTP authentication path. With empty credentials, `sendMsg()` takes the separate HELO path and
+skips that negotiation. A test on port 587 with STARTTLS selected and empty credentials was rejected
+by Google with SMTP 550. Implicit TLS on port 465 avoids this path and keeps transport encryption
+and certificate validation enabled. Google's [relay setup guide](https://support.google.com/a/answer/176600)
+lists port 465 as supported. Recheck this behavior before changing the port after a Dolibarr upgrade.
+
+On 2026-10-15, the application accepted the passwordless relay test for delivery and the mailbox
+owner confirmed receipt. The owner subsequently confirmed revocation of all three old Gmail app
+passwords. The shared [relay notes](monitoring.md#outgoing-email-verification) cover the other senders
+and restore precautions.
+
+To validate after a change, click **Test sending**, choose the intended recipient, use a distinct
+subject and send one message. Check both the application result and receipt in the destination
+mailbox. An accepted SMTP response alone does not prove inbox delivery.
+
 ### Custom modules
 
 Custom modules are git checkouts of a tag inside `dolibarr-custom-data/`, which both containers

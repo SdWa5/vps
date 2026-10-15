@@ -477,7 +477,10 @@ recorded inside the vault and deliberately not in this public file.
 - SMTP is configured through the admin panel and stored in `vaultwarden-data/config.json`, which
   overrides the Compose environment. It sends as `vault@sdwa5.org` through the Workspace relay
   `smtp-relay.gmail.com:587` with STARTTLS and without a login, see [monitoring.md](monitoring.md)
-  for the relay's settings.
+  for the relay's settings. The owner confirmed receipt of its admin-panel SMTP test on 2026-10-15.
+  After app-password revocation, five old Vaultwarden configuration files containing SMTP passwords
+  were removed from the VPS. The active configuration and database backups were preserved. Historical
+  snapshots may still contain revoked credentials; recheck relay settings after a restore.
 - Users must be invited or registered via admin panel.
 - Signups are disabled (`signups_allowed: false`).
 - The container binds to `127.0.0.1:8000` only. Everything public goes through Caddy.

@@ -105,3 +105,10 @@ restic_backup() {
     grep -q 'entrypoint: \["/bin/sh", "/opt/restic/entrypoint.sh"\]' "$REPO_ROOT/docker-compose.yml"
     grep -q -- '- ./restic:/opt/restic:ro' "$REPO_ROOT/docker-compose.yml"
 }
+
+@test "the repository goes through the service account remote, not the old OAuth remote" {
+    grep -q 'RESTIC_REPOSITORY=${RESTIC_REPOSITORY:-rclone:sdwa5backup:restic-backups}' "$REPO_ROOT/docker-compose.yml"
+    grep -q 'RCLONE_CONFIG_SDWA5BACKUP_SERVICE_ACCOUNT_FILE=/root/.config/rclone/restic-sa.json' "$REPO_ROOT/docker-compose.yml"
+    grep -q 'RCLONE_CONFIG_SDWA5BACKUP_TEAM_DRIVE=${RESTIC_SHARED_DRIVE_ID:-}' "$REPO_ROOT/docker-compose.yml"
+    ! grep -q 'rclone:SdWa5:' "$REPO_ROOT/docker-compose.yml"
+}

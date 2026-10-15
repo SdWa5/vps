@@ -42,10 +42,11 @@ Automated backups via **Restic** + **rclone** to Google Drive.
 |-------------------|------------------------------------|
 | Schedule          | Daily at **04:00 UTC**, which is 06:00 CEST / 05:00 CET — the restic container has no `TZ` set and runs UTC |
 | Source            | `/data` (= `/opt/docker/` read-only mount) |
-| Repository        | `rclone:SdWa5:restic-backups` (Google Drive) |
+| Repository        | `rclone:sdwa5backup:restic-backups`, Shared Drive "SdWa5 Backup" |
 | Retention         | 6 daily, 3 weekly, 11 monthly, 2 yearly |
 | Restic password   | `RESTIC_PASSWORD` in `.env`        |
-| rclone config     | `/opt/docker/rclone-config/rclone.conf` |
+| rclone remote     | `sdwa5backup`, defined by `RCLONE_CONFIG_SDWA5BACKUP_*` in `docker-compose.yml` |
+| Identity          | service account `restic-backup`, key `/opt/docker/rclone-config/restic-sa.json` (mode 600) |
 
 ## The Vaultwarden database is copied consistently first
 
@@ -184,7 +185,29 @@ Delete the restored scratch copy afterward because it contains application data.
 
 ## rclone remote
 
-Remote `[SdWa5]` — Google Drive (OAuth2). Config file at `rclone-config/rclone.conf` contains OAuth client credentials and refresh token. **Never commit this file.**
+The remote `sdwa5backup` is a Google Drive remote defined entirely through environment variables in
+`docker-compose.yml`, so it needs no entry in `rclone.conf`. It authenticates as the service account
+`restic-backup` in the Google Cloud project `pro-icon-447800-e5` of the organisation sdwa5.org. The
+account holds no IAM role. Its only Drive access is membership as **Content manager** of the Shared
+Drive "SdWa5 Backup", whose ID is `RESTIC_SHARED_DRIVE_ID` in `.env`. Its own My Drive is empty.
+
+Measured on 2026-10-15 before the switch: the service account listed exactly one Shared Drive, "SdWa5
+Backup", and nothing in its own drive. Its predecessor, the OAuth remote `[SdWa5]` with scope
+`drive`, listed the owner's whole My Drive (113 GB, of which the repository was 109 GB) and four
+Shared Drives, two of them private. A stolen token from this host therefore exposed far more than
+the backups.
+
+The key file `rclone-config/restic-sa.json` is a long-lived credential and is gitignored with the
+rest of `rclone-config/`. **Never commit it, never print it.** The organisation enforces
+`iam.disableServiceAccountKeyCreation`. The key was created during a temporary project-level override
+that was removed again right after. A replacement key needs the same override, by an account with
+Organisation Policy Administrator on sdwa5.org. Revoke an old key under the service account's
+**Keys** tab once its replacement works.
+
+The repository was copied server-side from the owner's My Drive (`rclone copy --drive-server-side-across-configs`,
+22 945 files, 109.17 GiB, 0 errors, 12:41 to 13:59 CEST on 2026-10-15), and `rclone check --one-way`
+compared checksums afterwards with 0 differences. The My Drive copy stays
+untouched as a fallback until the grace period noted in the changelog ends.
 
 ## Operations
 

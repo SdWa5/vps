@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.71.0] - 2026-10-15
+
+### Changed
+
+- restic reaches its repository through the remote `sdwa5backup`, defined in `docker-compose.yml` as
+  the service account `restic-backup` whose only Drive access is the Shared Drive "SdWa5 Backup",
+  instead of the OAuth remote `[SdWa5]` with access to the owner's whole Drive.
+- `.env.example` lists `RESTIC_REPOSITORY` and `RESTIC_SHARED_DRIVE_ID`.
+
 ## [1.70.1] - 2026-10-15
 
 ### Changed

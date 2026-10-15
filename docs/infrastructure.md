@@ -143,7 +143,8 @@ is the whole point of that chain.
 ## Memory & swap
 
 5.8 GiB RAM. Two-tier swap: compressed zram first, swapfile as overflow.
-Verified live 2026-07-04 (kernel 6.1.0-47-cloud-amd64).
+Verified live 2026-07-04 on kernel 6.1.0-47-cloud-amd64, and again on 2026-10-15 on
+6.1.0-53-cloud-amd64 after the reboot into it.
 
 ```
 NAME       TYPE      SIZE  USED PRIO
@@ -157,7 +158,7 @@ NAME       TYPE      SIZE  USED PRIO
 - **Swapfile** `/swapfile` 6G, `/etc/fstab` entry `/swapfile none swap sw 0 0`,
   priority -2 → only used when zram is full.
 - **No zswap** — the Debian cloud kernel is built without it
-  (`CONFIG_ZSWAP is not set` in `/boot/config-6.1.0-47-cloud-amd64`), so zram
+  (`CONFIG_ZSWAP is not set` in `/boot/config-6.1.0-53-cloud-amd64`), so zram
   is the only in-RAM compression option here.
 - Sysctls at Debian defaults: `vm.swappiness=60`, `vm.page-cluster=3`.
 

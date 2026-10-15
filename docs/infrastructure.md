@@ -51,7 +51,7 @@ flowchart LR
     DLC --> DLDB
     P2 --> P2DB
     P3 --> P3DB
-    RS -- " rclone (OAuth2) " --> GD
+    RS -- " rclone (service account) " --> GD
     HC -. " checks " .-> C & SW & VW & DL & RS
     AU -- " updates " --> VW
     HC & AU -- " SMTP alerts " --> MB[("Mail<br/>MONITOR_MAIL_TO")]
@@ -198,8 +198,9 @@ again, as step 4 in [chimodiazz.md](chimodiazz.md#how-it-was-brought-up) does.
 │   ├── server.properties           # gitignored — holds generated secrets, see minecraft.md
 │   │   (except config/Discord-Integration.toml — contains the bot token, stays gitignored)
 │   └── world/, backup/, mods/, logs/, versions/, libraries/, cache/   # gitignored (data/rebuildable)
-└── rclone-config/                  # gitignored — rclone.conf with OAuth tokens
-    └── rclone.conf
+└── rclone-config/                  # gitignored
+    ├── restic-sa.json              # service account key of the restic remote, mode 600
+    └── rclone.conf                 # empty since 2026-10-15, the remote lives in docker-compose.yml
 ```
 
 ## Memory & swap

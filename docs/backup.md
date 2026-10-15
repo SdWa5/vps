@@ -195,7 +195,8 @@ Measured on 2026-10-15 before the switch: the service account listed exactly one
 Backup", and nothing in its own drive. Its predecessor, the OAuth remote `[SdWa5]` with scope
 `drive`, listed the owner's whole My Drive (113 GB, of which the repository was 109 GB) and four
 Shared Drives, two of them private. A stolen token from this host therefore exposed far more than
-the backups.
+the backups. That token was revoked through Google's revoke endpoint on 2026-10-15 (HTTP 200, a
+probe afterwards failed with `invalid_grant`), and its section was removed from `rclone.conf`.
 
 The key file `rclone-config/restic-sa.json` is a long-lived credential and is gitignored with the
 rest of `rclone-config/`. **Never commit it, never print it.** The organisation enforces
@@ -362,7 +363,6 @@ account.
 
 - The restic container mounts all of `/opt/docker/` as `/data` read-only.
 - `.gitignore` exclusions do NOT affect what restic backs up — restic backs up everything including data dirs and `.env`.
-- `rclone.conf` OAuth token auto-refreshes; the `expiry` field in the token will update on next use.
 - The restic container accumulates **zombie processes**. Measured 108 on 2026-09-08 after 51 days up.
   The old image's PID 1 was `tail -fn0 /var/log/cron.log` with no init, so nothing reaped the `rclone`
   children each run spawned. `init: true` on the service fixes it and stays with the new image. Harmless at this rate against a `kernel.pid_max`

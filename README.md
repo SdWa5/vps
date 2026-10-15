@@ -34,6 +34,14 @@ docker compose up -d
 
 All secrets live in `.env` — never committed. See `.env.example` for required variable names.
 
+## Outgoing email
+
+Monitoring, Vaultwarden, the SdWa5 shop and the SdWa5 ERP send through the Google Workspace relay
+without SMTP credentials. Monitoring, Vaultwarden and Shopware use STARTTLS on port 587. Dolibarr
+uses implicit TLS on port 465 because its no-authentication path skips STARTTLS. See
+[relay configuration and verification](docs/monitoring.md#outgoing-email-verification) and
+[Dolibarr email settings](docs/dolibarr.md#outgoing-email).
+
 ## Documentation
 
 `docs/` here holds the technical/ops documentation (*how* services run:

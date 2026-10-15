@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.69.2] - 2026-10-15
+
+### Changed
+
+- Document the SdWa5 Dolibarr passwordless relay configuration with implicit TLS on port 465 and the
+  Dolibarr 23.0.2 no-authentication path that skips STARTTLS.
+- Record confirmed relay delivery for monitoring, Vaultwarden, Shopware and Dolibarr, owner-confirmed
+  app-password revocation, removal of five old Vaultwarden configuration files and restore precautions.
+
 ## [1.69.1] - 2026-10-15
 
 ### Added

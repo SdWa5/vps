@@ -263,7 +263,17 @@ services:
       - ./restic:/opt/restic:ro
       - ./:/data:ro
     environment:
-      - RESTIC_REPOSITORY=${RESTIC_REPOSITORY:-rclone:SdWa5:restic-backups}
+      - RESTIC_REPOSITORY=${RESTIC_REPOSITORY:-rclone:sdwa5backup:restic-backups}
+      # The remote sdwa5backup is defined here rather than in rclone.conf. It is
+      # the service account restic-backup, whose only Drive access is
+      # membership of the Shared Drive "SdWa5 Backup". Its key is
+      # rclone-config/restic-sa.json, mode 600. The drive ID stays in .env.
+      # The former remote [SdWa5] was an OAuth token with scope `drive` on the
+      # owner's whole Drive. See docs/backup.md.
+      - RCLONE_CONFIG_SDWA5BACKUP_TYPE=drive
+      - RCLONE_CONFIG_SDWA5BACKUP_SCOPE=drive
+      - RCLONE_CONFIG_SDWA5BACKUP_SERVICE_ACCOUNT_FILE=/root/.config/rclone/restic-sa.json
+      - RCLONE_CONFIG_SDWA5BACKUP_TEAM_DRIVE=${RESTIC_SHARED_DRIVE_ID:-}
       - RESTIC_PASSWORD=${RESTIC_PASSWORD}
       # Daily, and this is 04:00 UTC rather than local: no TZ is set here, so
       # the container runs UTC and the job lands at 06:00 CEST / 05:00 CET.

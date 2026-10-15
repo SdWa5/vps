@@ -32,7 +32,9 @@ services:
   project2_dolibarr:
     # Same exact pin as docker-compose.yml, for the same reason: Dolibarr
     # minor upgrades run forward-only database migrations.
-    image: dolibarr/dolibarr:23.0.2
+    image: dolibarr/dolibarr:23.0.4
+    entrypoint: ["/bin/bash", "/opt/sdwa5-dolibarr-entrypoint.sh"]
+    command: ["apache2-foreground"]
     container_name: project2_dolibarr
     restart: unless-stopped
     logging: *default-logging
@@ -56,6 +58,7 @@ services:
     volumes:
       - ./project2-dolibarr-documents-data:/var/www/documents
       - ./project2-dolibarr-custom-data:/var/www/html/custom
+      - ./tools/dolibarr/entrypoint.sh:/opt/sdwa5-dolibarr-entrypoint.sh:ro
 
   project3_dolibarr_db:
     # Same pin as docker-compose.yml. Minor series rather than exact, so
@@ -78,7 +81,9 @@ services:
   project3_dolibarr:
     # Same exact pin as docker-compose.yml, for the same reason: Dolibarr
     # minor upgrades run forward-only database migrations.
-    image: dolibarr/dolibarr:23.0.2
+    image: dolibarr/dolibarr:23.0.4
+    entrypoint: ["/bin/bash", "/opt/sdwa5-dolibarr-entrypoint.sh"]
+    command: ["apache2-foreground"]
     container_name: project3_dolibarr
     restart: unless-stopped
     logging: *default-logging
@@ -102,6 +107,7 @@ services:
     volumes:
       - ./project3-dolibarr-documents-data:/var/www/documents
       - ./project3-dolibarr-custom-data:/var/www/html/custom
+      - ./tools/dolibarr/entrypoint.sh:/opt/sdwa5-dolibarr-entrypoint.sh:ro
 
   chimodiazz_shopware:
     # Same exact pin as the sdwa5.org instance in docker-compose.yml, and for the

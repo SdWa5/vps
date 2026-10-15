@@ -136,12 +136,14 @@ services:
     cap_drop: [NET_RAW]
 
   dolibarr:
-    # Exact pin, digest 9dbf09ca, which is what runs today. A Dolibarr minor
-    # upgrade runs forward-only database migrations and no restore drill has
-    # been done yet, so an update is a deliberate bump rather than whatever a
+    # Exact pin for the planned maintenance release. A Dolibarr minor
+    # upgrade runs forward-only database migrations. Restore drills passed on
+    # 2026-10-15, but an update remains a deliberate bump rather than whatever a
     # pull happens to fetch. The `23` tag exists and would allow 23.x to move
     # on its own, which is why it is not used.
-    image: dolibarr/dolibarr:23.0.2
+    image: dolibarr/dolibarr:23.0.4
+    entrypoint: ["/bin/bash", "/opt/sdwa5-dolibarr-entrypoint.sh"]
+    command: ["apache2-foreground"]
     container_name: dolibarr
     restart: unless-stopped
     logging: *default-logging
@@ -173,18 +175,21 @@ services:
     volumes:
       - ./dolibarr-documents-data:/var/www/documents
       - ./dolibarr-custom-data:/var/www/html/custom
+      - ./tools/dolibarr/entrypoint.sh:/opt/sdwa5-dolibarr-entrypoint.sh:ro
       # Credentials of custom modules, such as BankSync's paypal.json. A directory rather than a
       # file, because Docker creates a missing file mount as an empty directory. Kept out of the
       # database and its dumps on purpose, see docs/dolibarr.md.
       - ./dolibarr-secrets:/run/secrets:ro
 
   dolibarr_cron:
-    # Exact pin, digest 9dbf09ca, which is what runs today. A Dolibarr minor
-    # upgrade runs forward-only database migrations and no restore drill has
-    # been done yet, so an update is a deliberate bump rather than whatever a
+    # Exact pin for the planned maintenance release. A Dolibarr minor
+    # upgrade runs forward-only database migrations. Restore drills passed on
+    # 2026-10-15, but an update remains a deliberate bump rather than whatever a
     # pull happens to fetch. The `23` tag exists and would allow 23.x to move
     # on its own, which is why it is not used.
-    image: dolibarr/dolibarr:23.0.2
+    image: dolibarr/dolibarr:23.0.4
+    entrypoint: ["/bin/bash", "/opt/sdwa5-dolibarr-entrypoint.sh"]
+    command: ["apache2-foreground"]
     container_name: dolibarr_cron
     restart: unless-stopped
     logging: *default-logging
@@ -211,6 +216,7 @@ services:
     volumes:
       - ./dolibarr-documents-data:/var/www/documents
       - ./dolibarr-custom-data:/var/www/html/custom
+      - ./tools/dolibarr/entrypoint.sh:/opt/sdwa5-dolibarr-entrypoint.sh:ro
       # Credentials of custom modules, such as BankSync's paypal.json. A directory rather than a
       # file, because Docker creates a missing file mount as an empty directory. Kept out of the
       # database and its dumps on purpose, see docs/dolibarr.md.

@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.67.0] - 2026-10-15
+
+### Added
+
+- `create-products.sh --sync-media` brings the images of existing products in line with the data file.
+- A render of a single SKRAM as the cover of `SDWA5-MS-001`, with its image job.
+
+### Changed
+
+- TODO 6.5: pick-up is the only active shipping method, and the solo SKRAM photo is resolved by the render.
+
 ## [1.66.0] - 2026-10-15
 
 ### Added

@@ -198,16 +198,16 @@ docker compose logs --tail=50 dolibarr
 
 ## SEC-05 and SEC-25 maintenance window
 
-This is an execution runbook, not a claim that either upgrade has been deployed. The production
-baseline checked on 2026-10-15 was Debian 12.15, kernel 6.1.0-53-cloud-amd64, Dolibarr 23.0.2,
-Docker CE 29.9.1 and Compose plugin 5.6.0. Caddy 2.11.7 already uses the upstream repository.
-Recheck these facts and the public endpoints before the window. Keep the unrelated local TODO edits.
+Executed on 2026-10-15 between 17:24 and 19:30. Production now runs Debian 13.7 with kernel
+6.12.111+deb13-cloud-amd64 and Dolibarr 23.0.4. The ERP was down ca. 10 minutes, all public sites
+ca. 1 hour 10 minutes. Every gate below passed, and the corrections the execution forced are written
+into the steps. The baseline before the window was Debian 12.15, kernel 6.1.0-53-cloud-amd64,
+Dolibarr 23.0.2, Docker CE 29.9.1 and Compose plugin 5.6.0. Caddy 2.11.7 already used the upstream
+repository and was not touched.
 
-The proposed work takes ca. 5 hours 30 minutes. Allow ca. 15 minutes of ERP downtime and ca. 1 hour
-of full-service maintenance. These estimates are not measurements. The user must approve a window
-and have Contabo panel access. A Jira key is required before a branch or commit; the SEC labels
-alone do not establish Jira tickets. Do not merge, push, delete branches or restore production
-data without the applicable authorization.
+Repeat it for the next major upgrade with these timings in mind. `apt full-upgrade` took ca. 25
+minutes, most of it regenerating all 509 locales enabled in `/etc/locale.gen`. The first boot of
+Debian 13 took 5 minutes because of the stale `cloud-init` LSB script described below.
 
 ### Preparation evidence on 2026-10-15
 
@@ -313,8 +313,11 @@ in rehearsal. Never rely on the entrypoint's automatic-restore message or downgr
 
 Install the validated whole-host guard on the four public sites. Drain accepted requests and
 scheduled business work. Record active/enabled/masked states of cron, APT jobs and the Compose boot
-unit before changing them. Mask host cron and package-update timers/services for the window and
-disable automatic Compose startup across reboot. Stop application-internal schedulers as well.
+unit before changing them. **Do not mask `cron.service`.** `/etc/cron.d/staticroute` adds the eth0
+link route `@reboot`, so a masked cron boots the upgraded host without it. Move the business jobs
+out of `/etc/cron.d` into a root-only holding directory instead (`chimodiazz-*`, `database-backup`,
+`shopware-worker`, `vaultwarden-*`, `vps-health`) and keep `staticroute` and `e2scrub_all`. Mask the
+package-update timers/services for the window and disable automatic Compose startup across reboot. Stop application-internal schedulers as well.
 These restrictions must survive reboot, and their original state must be recoverable from the
 checkpoint. Keep Caddy available for the maintenance response and controlled operator probes.
 
@@ -335,7 +338,14 @@ docker exec restic restic snapshots
 
 Cleanly stop the active applications and databases with sufficient shutdown time. Confirm clean
 database shutdowns before taking the host snapshot. Stop the boot unit after the containers are
-already stopped so its `down` cannot interrupt database shutdown. The user creates a Contabo
+already stopped so its `down` cannot interrupt database shutdown. That `down` removes the main
+stack's containers and networks; the data survives because every database is a bind mount.
+
+The dockware images ignore SIGTERM, so `docker stop` kills their internal MySQL after the timeout
+(exit 137) and leaves an unclean InnoDB. `service mysql stop` inside the container failed as well.
+What worked: find `mysqld` with `docker top <container> -eo pid,comm`, wait for a "ready for
+connections" line from the current start, send `kill -TERM <pid>` from the host, wait until the PID is
+gone and confirm "Shutdown complete" in `/var/log/mysql/error.log`, then stop the container. The user creates a Contabo
 snapshot and verifies that it is ready and can be restored. Do not proceed without this gate.
 This checkpoint includes Dolibarr 23.0.4 and the maintenance restrictions.
 
@@ -363,6 +373,12 @@ credentials or full container environments.
    fail2ban's SSH filter and `linux-sysctl-defaults`. Keep `nftables.service` disabled.
 5. Reboot. Verify Debian 13, its cloud kernel, IPv4/IPv6 and the static route, fresh SSH access,
    boot logs, SSH effective settings and Caddy validation before application startup.
+6. Two leftovers broke on the first Debian 13 boot. `/etc/cron.d/staticroute` had CRLF line endings
+   that cron 3.0pl1-197 rejects with "bad minute"; convert it with `sed -i 's/\r$//'`. The old
+   Bookworm `/etc/init.d/cloud-init`, an unmodified obsolete conffile, became a generated LSB unit
+   that hung for 5 minutes; move it out of `/etc/init.d` and `systemctl daemon-reload`.
+7. fail2ban 1.1 defaults to the nftables banaction on Debian 13. Deploy `hardening/fail2ban/jail.local`,
+   which pins `iptables-multiport`, before judging the firewall check.
 
 Use `apt upgrade --without-new-pkgs` followed by `apt full-upgrade` after the reviewed source changes.
 Do not change sources and execute a blind noninteractive full upgrade in one unattended command.

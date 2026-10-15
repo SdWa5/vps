@@ -164,8 +164,7 @@ getty and PAM rather than sshd. See [docs/ssh-hardening.md](docs/ssh-hardening.m
 
 ## Tests
 
-The Compose definitions propose Dolibarr 23.0.4. Production was still on 23.0.2 when preparation
-started on 2026-10-15. Deployment requires the gates in the
+Production runs Dolibarr 23.0.4 on Debian 13 since 2026-10-15, deployed through the
 [SEC-05/SEC-25 maintenance runbook](docs/maintenance.md#sec-05-and-sec-25-maintenance-window).
 The inactive project definitions are updated without starting those services.
 

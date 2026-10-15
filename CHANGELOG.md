@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.72.1] - 2026-10-15
+
+### Fixed
+
+- fail2ban creates its `f2b-sshd` chains when the jail starts (`actionstart_on_demand=false`), so
+  the firewall check no longer reports the jump missing until the first ban.
+
 ## [1.72.0] - 2026-10-15
 
 ### Added

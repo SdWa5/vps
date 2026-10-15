@@ -96,8 +96,9 @@ will keep rewriting its own file on boot, and that no longer matters.
 Debian 13 changed the packaged default to `banaction = nftables`. `jail.local` pins
 `iptables-multiport` so bans keep landing in the `f2b-sshd` chain that `sdwa5-firewall.sh` and
 `vps-health.sh` rely on. Measured on 2026-10-15 after the upgrade: without the pin `vps-health`
-reported the jump missing although bans worked in `inet f2b-table`. fail2ban 1.1 creates the chain
-on the first ban, so right after a boot the jump can be absent until something gets banned.
+reported the jump missing although bans worked in `inet f2b-table`. fail2ban 1.1 also creates the
+chain only on the first ban by default, so the pin sets `actionstart_on_demand=false`. Measured on
+2026-10-15: with it, both the IPv4 and the IPv6 `f2b-sshd` chain exist right after the jail starts.
 
 [`hardening/fail2ban/jail.local`](../hardening/fail2ban/jail.local)
 

@@ -391,8 +391,9 @@ turned off at the source rather than filtered, which closes 5355 on TCP and UDP 
 
 ### The rules
 
-`INPUT` only, IPv4 and IPv6. Loopback, established and related, all ICMP, the Docker bridges, then
-22, 80 and 443, then a `DROP` policy.
+`INPUT` only, IPv4 and IPv6. Loopback, established and related, all ICMP, then 22, 80 and 443, then
+a `DROP` policy. The Docker bridges were accepted wholesale until 2026-10-15 and are not any more,
+see [infrastructure.md](infrastructure.md#container-isolation).
 
 **`iptables-restore` is deliberately not used, and neither is `iptables-persistent`.** Both replace
 every chain in the filter table, and Docker owns `DOCKER`, `DOCKER-USER`, `DOCKER-ISOLATION-*` and a

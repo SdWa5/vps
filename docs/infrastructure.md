@@ -98,6 +98,57 @@ except `25565`. So a container that publishes on `0.0.0.0` is **not** reachable 
 [`hardening/firewall/sdwa5-firewall.sh`](../hardening/firewall/sdwa5-firewall.sh) names its port, which
 is the whole point of that chain.
 
+## Container isolation
+
+Each application has a Docker network of its own since 2026-10-15. Before that every container sat
+on `docker_default`, and measured that night, `chimodiazz_shopware` opened `shopware:3306`,
+`dolibarr_db:3306`, `vaultwarden:80` and `dolibarr:80` by name, and logged into the main shop's
+database as dockware's `root`/`root`.
+
+| Network | Members | Note |
+|---|---|---|
+| `vault` | vaultwarden | |
+| `shop` | shopware | |
+| `erp` | dolibarr, dolibarr_cron | Egress for mail and the PayPal API |
+| `erp_db` | dolibarr_db, dolibarr, dolibarr_cron | `internal`, so the database has no gateway |
+| `backup` | restic | Egress to Google Drive |
+| `chimodiazz` | chimodiazz_shopware | Third-party theme code runs here |
+| `project2`, `project3` and their `_db` | the inactive Dolibarr instances | Same shape as the ERP |
+| `minecraft`, `ollama` | profile-gated services | |
+
+Docker keeps user-defined bridges apart, so a container reaches only its own application. Caddy is
+unaffected, because it runs on the host and talks to the loopback publishes. A container cannot reach
+another application's loopback publish through its gateway either, since those listen on `127.0.0.1`
+only. The host firewall no longer accepts the bridges in `INPUT`, so a container reaches the host on
+22, 80 and 443 only, the same as anyone on the internet. Nothing needed more. Mail goes to
+`smtp.gmail.com` or to the shop's own in-container mailcatcher, and DNS is Docker's embedded resolver.
+
+Every running service also drops `NET_RAW`, which takes away raw sockets and with them ARP and ICMP
+tricks on its bridge.
+
+### Database accounts
+
+Each dockware shop connects with an account of its own, `shopware@localhost`, limited to its own
+database. [`hardening/dockware-db-account.sh`](../hardening/dockware-db-account.sh) creates it,
+rewrites `DATABASE_URL` in the shop's `.env` and drops `root@'%'`. The password exists only in that
+`.env`, which sits in the html volume restic backs up. The backup jobs read the same `DATABASE_URL`,
+so they follow without a change.
+
+**`root@localhost` keeps dockware's default password, and that is deliberate.** dockware's entrypoint
+runs `update_domain.sh` on every start, that script logs in as `root`/`root` over `127.0.0.1`, and the
+entrypoint runs under `set -e`. A changed root password would therefore stop the shop from booting.
+The remote root is what mattered, and with `root@'%'` gone a root login works only from inside the
+container, where the shop's own `.env` already grants full access to its database. Tested on a
+throwaway container before the live change: after the script and a restart, dockware booted, its
+boot script updated the domain as `root@localhost`, and the storefront answered 200.
+
+`dolibarr_db` had a `root@'%'` as well, from the MariaDB image's default `MARIADB_ROOT_HOST`. It is
+dropped, and Dolibarr keeps using its own `dolidbuser`.
+
+A dump restored into an existing shop container keeps the account, because the dump carries the
+shop database and not the `mysql` schema. A shop rebuilt from a fresh dockware image needs the script
+again, as step 4 in [chimodiazz.md](chimodiazz.md#how-it-was-brought-up) does.
+
 ## Directory layout (`/opt/docker/`)
 
 ```

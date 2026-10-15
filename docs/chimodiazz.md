@@ -146,7 +146,9 @@ Kept as a recipe, because the next Shopware instance on this host will need the 
 2. Seed the two data directories from the image, as above. This is the step that is easy to skip and
    fails silently.
 3. `cd /opt/docker && docker-compose -f docker-compose.projects.yml --profile chimodiazz up -d chimodiazz_shopware`
-4. Rotate dockware's default administrator password **before** the public name points at it.
+4. Rotate dockware's default administrator password **before** the public name points at it, and run
+   `hardening/dockware-db-account.sh chimodiazz_shopware` so the shop stops using dockware's database
+   root. See [infrastructure.md](infrastructure.md#database-accounts).
 5. `docker exec chimodiazz_shopware php bin/console plugin:refresh`, then
    `plugin:install --activate ChimodiazzTheme`, then `theme:compile`, then `cache:clear`.
 6. Swap the Caddy block to the `reverse_proxy`, `install -m 644 -o root -g root /opt/docker/Caddyfile

@@ -32,17 +32,11 @@ jobs:
     # it was cancelled. Two Docker pulls and 155 bats tests have no business anywhere near ten minutes.
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
 
       - run: tests/run.sh
-
-  # NOTE, 2026-09-14: this runs now. The note that stood here said nothing in any of the three SdWa5
-  # repositories had ever executed, because every run failed within seconds with "The job was not
-  # started because recent account payments have failed or your spending limit needs to be
-  # increased", measured 2026-09-08. Runs complete from 2026-09-13 onwards, so this pipeline is
-  # verified on GitHub rather than only locally. The repositories are still private, so the minutes
-  # are still metered and the runner still has two cores where a public one has four. See the
-  # go-public item in the root repository's TODO.md.
 
   # Secret scanning, on the working tree and on the full history.
   #
@@ -63,21 +57,23 @@ jobs:
     timeout-minutes: 15
     env:
       GITLEAKS_VERSION: 8.30.1
+      GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
+          persist-credentials: false
           # The history scan needs the history.
           fetch-depth: 0
 
-      - name: Install gitleaks
+      - name: Install checksum-verified gitleaks
         run: |
-          curl -sSfL -o /tmp/gitleaks.tar.gz \
-            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
-          tar -xzf /tmp/gitleaks.tar.gz -C /tmp gitleaks
-          /tmp/gitleaks version
+          bash .github/scripts/install-ci-tool.sh \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            "$GITLEAKS_SHA256" gitleaks "$RUNNER_TEMP/gitleaks"
+          "$RUNNER_TEMP/gitleaks" version
 
       - name: Scan the working tree
-        run: /tmp/gitleaks dir . --redact --no-banner --config .gitleaks.toml
+        run: '"$RUNNER_TEMP/gitleaks" dir . --redact --no-banner --config .gitleaks.toml'
 
       - name: Scan the full history
-        run: /tmp/gitleaks git . --redact --no-banner --config .gitleaks.toml
+        run: '"$RUNNER_TEMP/gitleaks" git . --redact --no-banner --config .gitleaks.toml'

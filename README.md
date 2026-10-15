@@ -172,9 +172,10 @@ The inactive project definitions are updated without starting those services.
 tests/run.sh
 ```
 
-Runs the bats suite for the monitoring scripts and `tools/`, shellcheck and the PHP database-client
-checks inside Docker.
-Nothing has to be installed on the host.
+Runs the bats suite for the monitoring scripts and `tools/`, shellcheck, the PHP database-client
+checks, the Python tool checks and the CI installer regression tests inside Docker. Test images use
+exact tags and immutable digests. Nothing has to be installed on the host beyond Docker. See
+[CI dependency maintenance](docs/maintenance.md#ci-dependencies) for the recorded versions and updates.
 
 [`.github/workflows/tests.yml`](.github/workflows/tests.yml) runs the same script on every push, so
 CI and a local run are the same thing, and adds a secret scan over the working tree and the full
@@ -184,6 +185,11 @@ history:
 gitleaks dir . --redact --config .gitleaks.toml
 gitleaks git . --redact --config .gitleaks.toml
 ```
+
+The workflow grants `contents: read`, pins checkout to an upstream commit and does not retain
+checkout credentials. The gitleaks 8.30.1 archive must match its committed SHA-256 before extraction
+or installation. Regression tests reject corrupted archives and failed downloads before extraction,
+preserve an existing installation on failure, and cover both flat and nested release archives.
 
 The tree scan flags `minecraft-data/server.properties` when you run it on a deploy checkout. That is
 correct and expected: the live file holds a generated `rcon.password`, which is exactly why it is not

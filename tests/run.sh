@@ -18,13 +18,19 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
+# Exact tags and index digests preserve the measured test runtimes on every host.
+CI_BATS_IMAGE='bats/bats:1.14.0@sha256:5322b877351fda0cc435de8c6116de7d0a2ec79d7c680132a0ef329a633bc66f'
+CI_SHELLCHECK_IMAGE='koalaman/shellcheck:v0.11.0@sha256:bb596a0d169b85ddd81d8b6d3a2ff6d5baf5fca10b97f575ebc647c3dff62b3d'
+CI_PHP_IMAGE='php:8.2.33-cli@sha256:0ca296c0ae905940c0a333a15de437f3acaa81743333a9437221f6a44e3f0981'
+CI_PYTHON_IMAGE='python:3.12.15-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1'
+
 echo "== bats =="
-docker run --rm -v "$REPO_ROOT:/code" -w /code --entrypoint sh bats/bats:latest \
+docker run --rm -v "$REPO_ROOT:/code" -w /code --entrypoint sh "$CI_BATS_IMAGE" \
     -c "apk add --no-cache coreutils jq git >/dev/null 2>&1 && bats ${*:-tests/}"
 
 echo
 echo "== shellcheck =="
-docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt koalaman/shellcheck:stable -x \
+docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt "$CI_SHELLCHECK_IMAGE" -x \
     monitoring/lib.sh \
     monitoring/vps-health.sh \
     monitoring/vaultwarden-autoupdate.sh \
@@ -57,18 +63,20 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt koalaman/shellcheck:stable -x \
     tools/shopware/set-homepage-sections.sh \
     tools/shopware/sync-production-cost.sh \
     tests/run.sh \
+    .github/scripts/install-ci-tool.sh \
     tests/test_helper.bash \
     tests/stubs/*
 
-docker run --rm -v "$REPO_ROOT:/code:ro" -w /code php:8.2-cli \
+docker run --rm -v "$REPO_ROOT:/code:ro" -w /code "$CI_PHP_IMAGE" \
     php tests/shopware-database-client.php
 
 echo
 echo "== python =="
 # The versions the shop-images image resolves for rembg 2.0.84.
-docker run --rm -v "$REPO_ROOT:/code:ro" -w /code -e PIP_ROOT_USER_ACTION=ignore python:3.12-slim \
+docker run --rm -v "$REPO_ROOT:/code:ro" -w /code -e PIP_ROOT_USER_ACTION=ignore "$CI_PYTHON_IMAGE" \
     sh -c "pip install -q --disable-pip-version-check numpy==2.5.4 pillow==12.3.0 \
-        && python -I -B tests/shopware-merch-tools.py"
+        && python -I -B tests/shopware-merch-tools.py \
+        && python -B -m unittest discover -s .github/tests -v"
 
 echo
 echo "All checks passed."

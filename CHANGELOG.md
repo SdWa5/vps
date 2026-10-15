@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- A checksum-verified CI tool installer and regression tests for valid and nested archives,
+  corruption, failed downloads and preservation of an existing installation after failed verification.
+
+### Changed
+
+- GitHub Actions pins checkout to an upstream commit and does not persist checkout credentials.
+- gitleaks 8.30.1 is verified against its committed SHA-256 before extraction or installation.
+- Test images use exact tags and immutable digests for the existing Bats 1.14.0, ShellCheck 0.11.0,
+  PHP 8.2.33 and Python 3.12.15 runtimes.
+- The normal test entry point includes the CI installer tests and shellcheck for the installer.
+- README and maintenance guidance describe CI dependency verification and image updates.
+
 ## [1.72.1] - 2026-10-15
 
 ### Fixed

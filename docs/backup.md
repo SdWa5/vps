@@ -204,6 +204,12 @@ that was removed again right after. A replacement key needs the same override, b
 Organisation Policy Administrator on sdwa5.org. Revoke an old key under the service account's
 **Keys** tab once its replacement works.
 
+Switched on 2026-10-15 at 14:10 CEST by setting `RESTIC_REPOSITORY` in `.env`. Before the switch,
+`restic check --read-data-subset 2%` through the service account found no errors, all 69 snapshots
+were listed, and the vault restore drill passed (integrity `ok`, 6 users, 472 ciphers, 44 seconds with
+a cold cache). The first backup after the switch, snapshot `f65ba272`, took 286 seconds including
+`forget --prune`, and `vps-health.sh --dry-run` reported every check `OK`.
+
 The repository was copied server-side from the owner's My Drive (`rclone copy --drive-server-side-across-configs`,
 22 945 files, 109.17 GiB, 0 errors, 12:41 to 13:59 CEST on 2026-10-15), and `rclone check --one-way`
 compared checksums afterwards with 0 differences. The My Drive copy stays

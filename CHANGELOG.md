@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.71.1] - 2026-10-15
+
+### Changed
+
+- Record the switch of the restic repository to the service account remote: check, restore drill,
+  first backup and health check all passed.
+- The infrastructure diagram names the Shared Drive remote.
+
 ## [1.71.0] - 2026-10-15
 
 ### Changed

@@ -566,6 +566,10 @@ lost:
    can reset the root password from the panel, so this route never depends on a stored credential.
 3. Append a fresh public key to `/root/.ssh/authorized_keys`.
 
+The VNC listener exists only while a VNC password is set in the panel. Without one its port refuses
+connections. Measured 2026-10-15. After a password was set, a VNC login reached the QEMU console of
+the VM the same day. VNC authentication uses at most 8 characters of that password.
+
 That is why disabling SSH password authentication costs nothing in recoverability. SSH passwords
 were never the fallback.
 

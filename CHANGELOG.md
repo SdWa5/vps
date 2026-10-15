@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.67.1] - 2026-10-15
+
+### Changed
+
+- TODO 6.5: the mail to Josh Ricci went out, and the answer is pending.
+
 ## [1.67.0] - 2026-10-15
 
 ### Added

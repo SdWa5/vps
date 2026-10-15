@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   PHP 8.2.33 and Python 3.12.15 runtimes.
 - The normal test entry point includes the CI installer tests and shellcheck for the installer.
 - README and maintenance guidance describe CI dependency verification and image updates.
+- `docs/dolibarr.md` records how ticket dependencies and merges are written, since Dolibarr 23.0 has
+  no ticket-to-ticket link.
 
 ## [1.72.1] - 2026-10-15
 

@@ -74,11 +74,11 @@ load_env() {
     done < "$env_file"
 }
 
-# Mail configuration. Defaults match the Gmail account Vaultwarden already
-# sends from; only the password has to come from .env.
+# Mail configuration. The default is the Workspace SMTP relay, which accepts
+# mail from this host's addresses without a login and requires TLS.
 mail_defaults() {
-    MONITOR_SMTP_HOST="${MONITOR_SMTP_HOST:-smtp.gmail.com}"
-    MONITOR_SMTP_PORT="${MONITOR_SMTP_PORT:-465}"
+    MONITOR_SMTP_HOST="${MONITOR_SMTP_HOST:-smtp-relay.gmail.com}"
+    MONITOR_SMTP_PORT="${MONITOR_SMTP_PORT:-587}"
     MONITOR_SMTP_USER="${MONITOR_SMTP_USER:-ripper@sdwa5.org}"
     MONITOR_SMTP_FROM="${MONITOR_SMTP_FROM:-$MONITOR_SMTP_USER}"
     MONITOR_MAIL_TO="${MONITOR_MAIL_TO:-ripper@sdwa5.org}"
@@ -87,20 +87,17 @@ mail_defaults() {
 
 # send_mail SUBJECT BODY
 #
-# Delivers one mail to every address in MONITOR_MAIL_TO. Returns non-zero if the
-# credentials are missing or curl fails, so callers can fall back to logging.
+# Delivers one mail to every address in MONITOR_MAIL_TO. Returns non-zero if
+# curl fails, so callers can fall back to logging.
 #
-# The password is passed to curl through a config file on stdin rather than as
-# an argument, so it never appears in the process list.
+# Port 465 uses implicit TLS, every other port STARTTLS, and both refuse to send
+# unencrypted. A login is sent only when MONITOR_SMTP_PASSWORD is set. The
+# password then travels to curl through a config file on stdin rather than as an
+# argument, so it never appears in the process list.
 send_mail() {
     local subject="$1" body="$2"
 
     mail_defaults
-
-    if [[ -z "$MONITOR_SMTP_PASSWORD" ]]; then
-        log "MONITOR_SMTP_PASSWORD is not set, cannot send mail. Subject was: $subject"
-        return 1
-    fi
 
     local msg rcpt_args=()
     msg="$(mktemp)"
@@ -122,12 +119,16 @@ send_mail() {
         printf '\n%s\n' "$body"
     } > "$msg"
 
-    printf 'user = "%s:%s"\n' "$MONITOR_SMTP_USER" "$MONITOR_SMTP_PASSWORD" \
-        | curl --silent --show-error --config - \
-            --ssl-reqd \
-            --max-time 60 \
-            --url "smtps://${MONITOR_SMTP_HOST}:${MONITOR_SMTP_PORT}" \
-            --mail-from "$MONITOR_SMTP_FROM" \
-            "${rcpt_args[@]}" \
-            --upload-file "$msg"
+    local scheme=smtp
+    [[ "$MONITOR_SMTP_PORT" == 465 ]] && scheme=smtps
+
+    if [[ -n "$MONITOR_SMTP_PASSWORD" ]]; then
+        printf 'user = "%s:%s"\n' "$MONITOR_SMTP_USER" "$MONITOR_SMTP_PASSWORD"
+    fi | curl --silent --show-error --config - \
+        --ssl-reqd \
+        --max-time 60 \
+        --url "${scheme}://${MONITOR_SMTP_HOST}:${MONITOR_SMTP_PORT}" \
+        --mail-from "$MONITOR_SMTP_FROM" \
+        "${rcpt_args[@]}" \
+        --upload-file "$msg"
 }

@@ -98,9 +98,12 @@ if [[ "$args" == *"/api/"* && -n "${STUB_SW_DIR:-}" ]]; then
     exit 0
 fi
 
-# Mail delivery: send_mail pipes a config file into stdin.
+# Mail delivery: send_mail pipes a config file into stdin, empty when it sends
+# without a login. Config and arguments are captured so a test can prove where
+# the mail went and that no credential was offered.
 if [[ "$args" == *"--config -"* ]]; then
-    cat > /dev/null
+    cat > "${STUB_MAIL_CONFIG:-/dev/null}"
+    printf '%s' "$args" > "${STUB_MAIL_ARGS:-/dev/null}"
     upload=""
     prev=""
     for a in "$@"; do

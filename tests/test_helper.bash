@@ -9,7 +9,7 @@ common_setup() {
 
     export STATE_DIR="$BATS_TEST_TMPDIR/state"
     export ENV_FILE=/dev/null
-    export MONITOR_SMTP_PASSWORD=dummy
+    unset MONITOR_SMTP_PASSWORD
     export MONITOR_MAIL_TO="alerts@example.com"
     export STUB_MAIL_LOG="$BATS_TEST_TMPDIR/mail.log"
     : > "$STUB_MAIL_LOG"

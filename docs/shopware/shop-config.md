@@ -70,9 +70,10 @@ Two languages on the Storefront Sales Channel, subpath domain structure (set up 
 
 ## SMTP
 
-- Host: smtp.gmail.com:587, STARTTLS
-- Auth: a Google Workspace mailbox with an App Password; the login is set in the Shopware admin under
-  Settings, System, Mailer and is not named here
+- Host: smtp-relay.gmail.com:587, STARTTLS, the Workspace relay described in
+  [monitoring.md](../monitoring.md)
+- Auth: none; the relay admits the host by its IP address. Set in the Shopware admin under Settings,
+  System, Mailer
 - Sender: shop@sdwa5.org / "Scheiß die Wand an 5"
 
 ## Tax / Payment / Shipping

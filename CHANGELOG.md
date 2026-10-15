@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.68.0] - 2026-10-15
+
+### Changed
+
+- Monitoring mail goes through the Workspace SMTP relay `smtp-relay.gmail.com:587` with STARTTLS and
+  without a login; `MONITOR_SMTP_PASSWORD` is optional and only adds a login for a server that needs one
+- `send_mail` picks implicit TLS for port 465 and STARTTLS for every other port, and refuses plaintext
+  on both
+- `docs/monitoring.md` documents the relay's Admin console settings and the two host addresses it
+  admits; Vaultwarden, shop, infrastructure and firewall notes name the relay
+
+### Removed
+
+- The instruction to copy Vaultwarden's app password into `.env`
+
 ## [1.67.2] - 2026-10-15
 
 ### Changed

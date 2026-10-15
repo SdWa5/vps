@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.59.7] - 2026-10-15
+
+### Added
+
+- `TODO.md` item 6.4: false worker alarms after a reboot, with candidate solutions to explore.
+
 ## [1.59.6] - 2026-10-15
 
 ### Changed

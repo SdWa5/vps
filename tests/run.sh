@@ -41,6 +41,7 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt koalaman/shellcheck:stable -x \
     tools/mariadb/recreate-foreign-keys.sh \
     tools/mariadb/reset-root-password.sh \
     tools/mariadb/reset-root-password.inner.sh \
+    tools/compose.sh \
     tools/shopware/lib.sh \
     tools/shopware/set-address.sh \
     tools/shopware/set-homepage-sections.sh \

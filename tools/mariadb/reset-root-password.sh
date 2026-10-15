@@ -13,17 +13,18 @@
 # The service must be stopped first, because two servers on one datadir corrupt
 # it. Downtime is the time this runs, ca. 1 minute.
 #
-# Usage, on the host from /opt/docker:
-#   docker-compose stop SERVICE
+# Usage, on the host from /opt/docker (`docker-compose` where Compose v2 is missing):
+#   docker compose stop SERVICE
 #   tools/mariadb/reset-root-password.sh SERVICE
-#   docker-compose up -d SERVICE
+#   docker compose up -d SERVICE
 
 set -uo pipefail
 
-DOCKER_COMPOSE="${DOCKER_COMPOSE:-docker-compose}"
+# shellcheck source=tools/compose.sh
+. "$(dirname "${BASH_SOURCE[0]}")/../compose.sh"
 
 usage() {
-    sed -n '/^# Usage/,/^# *docker-compose up/p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+    sed -n '/^# Usage/,/^# *docker compose up/p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
 }
 
 main() {
@@ -38,7 +39,7 @@ main() {
 
     id="$($DOCKER_COMPOSE ps -q "$service")" || { printf 'The service could not be listed.\n' >&2; return 1; }
     if [[ -n "$id" && "$(docker inspect -f '{{.State.Running}}' "$id")" == true* ]]; then
-        printf 'Stop %s first: docker-compose stop %s\n' "$service" "$service" >&2
+        printf 'Stop %s first: %s stop %s\n' "$service" "$DOCKER_COMPOSE" "$service" >&2
         return 1
     fi
     # The success line is required, because a run that never received the

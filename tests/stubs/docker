@@ -4,6 +4,19 @@
 # STUB_DOCKER_LOG records the calls. The path filter is tested by whether
 # theme:compile was reached at all, so the assertion is the absence of a call
 # rather than an exit status.
+#
+# `docker compose` exists only with STUB_COMPOSE_PLUGIN=1, like docker-ce, and then
+# hands its arguments to the docker-compose stub, so both log to STUB_COMPOSE_LOG.
+# It is not logged here, so the Compose detection leaves STUB_DOCKER_LOG untouched.
+if [[ "${1:-}" == compose ]]; then
+    if [[ "${STUB_COMPOSE_PLUGIN:-}" != 1 ]]; then
+        echo "docker: 'compose' is not a docker command." >&2
+        exit 1
+    fi
+    [[ "${2:-}" == version ]] && { echo "Docker Compose version v5.6.0"; exit 0; }
+    exec docker-compose "${@:2}"
+fi
+
 [[ -n "${STUB_DOCKER_LOG:-}" ]] && printf '%s\n' "$*" >> "$STUB_DOCKER_LOG"
 
 case "${1:-}" in

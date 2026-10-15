@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.63.0] - 2026-10-15
+
+### Added
+
+- `tools/compose.sh`: picks `docker compose` where the v2 plugin exists, `docker-compose` otherwise; a caller's `DOCKER_COMPOSE` wins.
+- `hardening/systemd/docker-compose.service`: the boot unit, tracked in the repository and routed through `tools/compose.sh`.
+- `tests/compose-command.bats`: the Compose choice and both callers with and without the plugin.
+- `docs/maintenance.md`: Compose version, the boot unit and the Compose v5.6.0 check against both compose files.
+
+### Changed
+
+- `monitoring/lib.sh`, `tools/mariadb/reset-root-password.sh`: Compose command from `tools/compose.sh` instead of a fixed `docker-compose`.
+- `monitoring/vaultwarden-autoupdate.sh`: the pull-failure mail names the Compose command actually used.
+
+### Fixed
+
+- `tests/sdwa5-firewall.bats`: asserts that no bridge is accepted on INPUT, matching the firewall since 1.61.0.
+
 ## [1.62.1] - 2026-10-15
 
 ### Added

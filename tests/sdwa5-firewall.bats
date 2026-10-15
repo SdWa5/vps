@@ -34,10 +34,10 @@ wrote() {
     wrote "--dport 443 -j ACCEPT"
 }
 
-@test "every discovered bridge is accepted on INPUT" {
+@test "no bridge is accepted on INPUT, so containers reach the host on the service ports only" {
     STUB_BRIDGES="docker0 br-abc123" firewall
-    wrote "-i docker0 -j ACCEPT"
-    wrote "-i br-abc123 -j ACCEPT"
+    [ "$status" -eq 0 ]
+    ! grep -E -- "-A INPUT .*-i (docker0|br-abc123)" "$STUB_IPT_LOG"
 }
 
 # --- DOCKER-USER -----------------------------------------------------------

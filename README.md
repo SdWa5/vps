@@ -104,6 +104,10 @@ tools/dolibarr/sync-pm.sh
 tools/dolibarr/deploy-module.sh banksync https://github.com/SdWa5/banksync.git v1.0.0
 ```
 
+The scripts reach Compose through `tools/compose.sh`, which prefers the v2 plugin `docker compose`
+and falls back to `docker-compose` v1, the version the host runs. See
+[docs/maintenance.md](docs/maintenance.md#compose-version).
+
 ## Monitoring
 
 The cron jobs watch the box and mail every address in `MONITOR_MAIL_TO` when something is wrong.

@@ -36,7 +36,7 @@ flowchart LR
         SSHD["sshd :22<br/>key-only · fail2ban"]
     end
 
-    GD[("Google Drive<br/>rclone:SdWa5:restic-backups")]
+    GD[("Shared Drive SdWa5 Backup<br/>rclone:sdwa5backup:restic-backups")]
     U -- " sdwa5.org " --> C
     U -- " vault.sdwa5.org " --> C
     U -- " erp.sdwa5.org " --> C

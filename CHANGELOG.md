@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.79.2] - 2026-10-16
+
+### Added
+
+- `docs/dolibarr.md` explains the ticket types RECURRING, PURCHASE, COM and OTHER and the blocking
+  line for an event.
+
 ## [1.79.1] - 2026-10-16
 
 ### Changed

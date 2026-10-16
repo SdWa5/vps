@@ -68,6 +68,7 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt "$CI_SHELLCHECK_IMAGE" -x \
     tools/shopware/set-homepage-sections.sh \
     tools/shopware/sync-production-cost.sh \
     tests/run.sh \
+    tests/storefront/run.sh \
     .github/scripts/install-ci-tool.sh \
     tests/test_helper.bash \
     tests/stubs/* \

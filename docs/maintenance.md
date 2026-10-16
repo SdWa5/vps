@@ -150,6 +150,10 @@ measured runtime versions. Docker selects the immutable digest when a tag points
 | `koalaman/shellcheck:v0.11.0` | ShellCheck 0.11.0 |
 | `php:8.2.33-cli` | PHP 8.2.33 |
 | `python:3.12.15-slim` | Python 3.12.15 |
+| `mcr.microsoft.com/playwright:v1.63.0-noble` | Playwright 1.63.0, in `tests/storefront/run.sh` |
+
+The Playwright image tag must match `@playwright/test` in `tests/storefront/package.json`, because the
+browsers come with the image. Update both together and regenerate `package-lock.json` in the image.
 
 Review an image update, resolve its index digest with `docker buildx imagetools inspect`, verify the
 runtime and update its tag and digest together in `tests/run.sh`. Run `tests/run.sh` and verify the

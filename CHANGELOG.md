@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.83.0] - 2026-10-16
+
+### Added
+
+- `tests/storefront/run.sh` runs a Playwright suite in a pinned container against the live shop or the
+  dev mirror. It asserts that the header settings, the offcanvas settings and the offcanvas donate link
+  share one centre line, and that the homepage tiles end at their padding. Two element screenshots are
+  compared against baselines at three widths in light and dark mode.
+
 ## [1.82.3] - 2026-10-16
 
 ### Fixed

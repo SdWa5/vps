@@ -114,6 +114,9 @@ tools/dolibarr/sync-pm.sh
 # Install or update a Dolibarr custom module at a tag, on the VPS as root (see docs/dolibarr.md)
 tools/dolibarr/deploy-module.sh banksync https://github.com/SdWa5/banksync.git v1.0.0
 
+# Set up the Dolibarr MCP server and its service user, on the dev mirror by default (see docs/dolibarr.md)
+tools/dolibarr/mcp-setup.sh
+
 # Rebuild the local Dolibarr dev mirror from the newest production archive, on a workstation (see docs/dolibarr.md)
 tools/dolibarr/dev-instance.sh fetch && tools/dolibarr/dev-instance.sh restore
 

@@ -291,11 +291,9 @@
        defaults, while a zram-first setup usually runs a swappiness of ca. 100 to 180 and
        `page-cluster=0`, because readahead from compressed ram buys nothing. measure swap use and
        latency before and after rather than taking the values on trust
-17. **Check the Contabo Auto Backup on 16.10.2026.** `vmd157801-BU-7696152d` from 15.10. 12:16 still
-    showed "Backing up" at 20:00; if it is stuck, ask Contabo support (ca. 15 Minuten)
-18. **`apt autoremove` from 20.10.2026,** after a few quiet days on Debian 13. Removes the old 6.1
+17. **`apt autoremove` from 20.10.2026,** after a few quiet days on Debian 13. Removes the old 6.1
     kernels and the leftover Bookworm libraries (ca. 10 Minuten)
-19. **FOSS Dolibarr module for ticket dependencies and merges** (priority medium,
+18. **FOSS Dolibarr module for ticket dependencies and merges** (priority medium,
     [docs/dolibarr.md](docs/dolibarr.md#projects-tasks-and-tickets)). This becomes phase 3b of the
     PmTools module ([SdWa5/dolibarr-pmtools](https://github.com/SdWa5/dolibarr-pmtools)), live on
     production since 2026-10-16, and targets Dolibarr 24 rather than 23.0. Dolibarr has no
@@ -306,7 +304,7 @@
     [tools/dolibarr/deploy-module.sh](tools/dolibarr/deploy-module.sh)
     1. check Dolistore and GitHub for an existing module first (ca. 30 Minuten)
     2. build, test against the 23.0 image and publish (ca. 24 Stunden)
-20. **migrate the remaining Dolibarr workarounds into module endpoints**
+19. **migrate the remaining Dolibarr workarounds into module endpoints**
     ([docs/dolibarr.md](docs/dolibarr.md#custom-modules)). The rule is to extend Dolibarr through its
     own module mechanism, never around it, and to migrate each workaround when its area is touched.
     Three remain
@@ -319,3 +317,12 @@
     3. editing a membership subscription, which today is a recipe around `Subscription::update()`
        because the ui refuses reconciled lines and rewrites bank line dates. a module endpoint would
        wrap that call with its checks (ca. 4 Stunden)
+20. **2FA for the old Contabo panel `my.contabo.com`** (priority high, ca. 15 Minuten). It has its own login,
+    separate from `new.contabo.com`, and that login can take snapshots and reset or reinstall the VPS
+21. **update the Chimo Diazz shop to Shopware 6.7.15.1** ([docs/chimodiazz.md](docs/chimodiazz.md))
+    (ca. 3 Stunden). It still runs 6.7.11.1, and `composer audit --locked` with the vendored Composer reported
+    24 advisories in 9 packages on 2026-10-16. The procedure is the main shop's in
+    [docs/shopware/infrastructure.md](docs/shopware/infrastructure.md#updating-shopware). The mirror reads
+    its image only from `docker-compose.yml`, so for this shop it needs `SDWA5_SHOPWARE_DEV_IMAGE`,
+    `SDWA5_SHOPWARE_HTML` and `SDWA5_SHOPWARE_ARCHIVE` set as well, which is untested. The site comes from
+    the private `chimodiazz/website`, so the new lock presumably has to land there and needs Chimo's side

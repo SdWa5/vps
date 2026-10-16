@@ -180,5 +180,9 @@ for the old lock and none for the new one. That needed 6.7.15.1, because 6.7.11.
    `monitoring/database-restore-check.sh shopware`, the worker lock `/run/lock/shopware-worker.lock`
    held throughout, maintenance on, `system:update:prepare`, `git pull --ff-only`, `docker compose up -d
    shopware`, `composer install --no-dev` in the container, `system:update:finish`, `plugin:refresh`
-   and `plugin:update SdWa5Theme` for a bumped theme, `theme:compile --active-only`, `cache:clear`, the FPM reload and maintenance off.
+   and `plugin:update SdWa5Theme` for a bumped theme, `theme:compile --active-only`, `cache:clear`, the FPM reload with `pkill -USR2 -f '^php-fpm: master'` and maintenance off.
    The rollback is the previous image line and lock from git plus the SQL archive, or the snapshot.
+
+   Live on 2026-10-16 from 15:13:51 to 15:16:18, so ca. 2.5 minutes of maintenance. The install took 24 s and
+   the migrations 18 s. Afterwards the plugin list matched the previous one apart from SdWa5Theme 1.2.1, the
+   colour scan matched the mirror's, `security-recheck.sh` reported 29 OK and Dependabot had no open alert.

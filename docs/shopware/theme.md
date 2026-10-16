@@ -254,7 +254,7 @@ flock /run/lock/shopware-worker.lock sh -c 'set -e
   docker exec shopware bin/console plugin:install --activate SdWa5Theme
   docker exec shopware bin/console theme:change SdWa5Theme --sales-channel 019c36d914f7706bbebf391b033a74d0 --sync
   docker exec shopware bin/console cache:clear'
-docker exec -u root shopware sh -c 'kill -USR2 "$(pgrep -f "php-fpm: master")"'
+docker exec -u root shopware pkill -USR2 -f '^php-fpm: master'
 tools/shopware/set-homepage-sections.sh            # from a workstation, then again with --apply
 ```
 

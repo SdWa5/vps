@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.80.1] - 2026-10-16
+
+### Fixed
+
+- The FPM reload in the Shopware docs uses an anchored `pkill -USR2 -f '^php-fpm: master'`, because the
+  unanchored `pgrep` inside `sh -c` matched its own shell as well.
+
+### Changed
+
+- `docs/shopware/infrastructure.md` records the live 6.7.15.1 update of 2026-10-16.
+- `TODO.md` drops the checked Contabo Auto Backup and adds 2FA for `my.contabo.com` and the Chimo Diazz
+  update to 6.7.15.1.
+
 ## [1.80.0] - 2026-10-16
 
 ### Added

@@ -249,6 +249,10 @@
        because every upstream release then has to be merged by hand (`decision`)
     2. make the fork public. Paperless-ngx is GPL-3.0, and publishing the modified source keeps the
        fork in line with it and with the plan to take all sdwa5 repositories public
+    3. photograph all paper documents and upload them, Verein papers to paper.sdwa5.org and household papers
+       to paper.ripper.sdwa5.org. A Paperless mobile app uploads straight from the phone, and the uploader
+       becomes the owner. Household papers go in only after TODO #20, as `docs/paperless.md` requires for
+       private documents. The effort depends on the size of the pile, which is not counted yet
 11. **BankSync follow-ups** ([docs/dolibarr.md](docs/dolibarr.md#custom-modules)). Live since 2026-10-05 in
     dry run at v1.2.0, account 4 mapped, opening balance 333.40 € matched PayPal, daily job at
     06:00 UTC, queue mail to mail@sdwa5.org

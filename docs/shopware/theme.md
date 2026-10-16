@@ -100,6 +100,11 @@ curl -s "$css" | grep -aoE '[^{}]+\{([^{}]*;)?color:#(1fe51f|e5231f)[^{}]*\}' | 
 `TcinnCopyrightCustom` prints its copyright line with an inline `color:#fff`. The footer overrides it
 with the `muted` token.
 
+Below 768 px the footer columns collapse into rows. `_footer.scss` takes the core's `pb-4` off the
+Contact column, which made it 24 px taller than the others while collapsed. It also centres the
+title and the toggle icon in each row and hides the empty `.footer-logos` strip, so the donation line
+has the same space above and below.
+
 ## Header, logo and navigation
 
 - **A sticky glass bar with two rows on desktop.** The first row holds the logo, search, the account

@@ -132,3 +132,64 @@ test.describe('offcanvas menu', () => {
     await expectLevel(donate.locator('span:not(.icon)'), { heart: donate.locator('.icon svg') });
   });
 });
+
+test.describe('footer', () => {
+  test.beforeEach(async ({ page }) => {
+    await openHome(page);
+    // The core footer plugin collapses the columns on mobile once its script has run.
+    await page.waitForLoadState('networkidle');
+  });
+
+  // Below 768 px the last column's border is the visible edge above the line.
+  // From 768 px the columns have no border and end below their text, so the
+  // box gap says nothing about what the eye sees there.
+  test('donation line has as much space above as below', async ({ page }, testInfo) => {
+    test.skip(!testInfo.project.name.startsWith('phone'), 'the columns have a visible edge below 768 px');
+    const gaps = await page.evaluate(() => {
+      const box = (selector: string) => document.querySelector(selector)!.getBoundingClientRect();
+      const columns = document.querySelectorAll('.footer-column');
+      const line = box('.sdwa5-donate-line');
+      return {
+        above: line.top - columns[columns.length - 1].getBoundingClientRect().bottom,
+        below: box('.footer-bottom').top - line.bottom,
+      };
+    });
+    expect(Math.abs(gaps.above - gaps.below), `${gaps.above} px above against ${gaps.below} px below`).toBeLessThanOrEqual(TOLERANCE);
+  });
+
+  test('column toggles stay hidden from 768 px', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.name.startsWith('phone'), 'the columns collapse below 768 px');
+    await expect(page.locator('.footer-column-toggle').first()).toBeHidden();
+  });
+
+  test.describe('collapsed below 768 px', () => {
+    test.beforeEach(({}, testInfo) => {
+      test.skip(!testInfo.project.name.startsWith('phone'), 'the columns collapse below 768 px');
+    });
+
+    test('columns are equally tall', async ({ page }) => {
+      const heights = await page.locator('.footer-column').evaluateAll((columns) => columns.map((c) => c.getBoundingClientRect().height));
+      for (const height of heights) {
+        expect(Math.abs(height - heights[0]), `heights ${heights.join(', ')}`).toBeLessThanOrEqual(TOLERANCE);
+      }
+    });
+
+    test('titles and toggles share the headline centre', async ({ page }) => {
+      const offsets = await page.locator('.footer-column-headline').evaluateAll((headlines) => headlines.map((headline) => {
+        const box = headline.getBoundingClientRect();
+        const centre = box.top + box.height / 2;
+        // The title is a bare text node, or a link around one, so measure the text itself.
+        const walker = document.createTreeWalker(headline, NodeFilter.SHOW_TEXT, { acceptNode: (n) => (n.textContent!.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP) });
+        const range = document.createRange();
+        range.selectNodeContents(walker.nextNode()!);
+        const text = range.getBoundingClientRect();
+        const icon = headline.querySelector('.footer-column-toggle .icon:not([style*="none"]) svg')!.getBoundingClientRect();
+        return { title: headline.textContent!.trim(), text: text.top + text.height / 2 - centre, icon: icon.top + icon.height / 2 - centre };
+      }));
+      for (const { title, text, icon } of offsets) {
+        expect.soft(Math.abs(text), `${title} text off centre`).toBeLessThanOrEqual(TOLERANCE);
+        expect.soft(Math.abs(icon), `${title} toggle off centre`).toBeLessThanOrEqual(TOLERANCE);
+      }
+    });
+  });
+});

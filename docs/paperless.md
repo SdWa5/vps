@@ -115,6 +115,10 @@ docker exec -u paperless paperless_sdwa5 /command/with-contenv python3 manage.py
     | awk '{ printf "%s", $3 }' > PASSWORD_DIR/USER.token    # never printed
 ```
 
+`/command/with-contenv` loads the s6 container environment, which holds `PAPERLESS_SECRET_KEY`. A plain
+`docker exec` without it fails with `PAPERLESS_SECRET_KEY is not set`. Both production instances
+passed the check on 2026-10-17, and every user saw exactly the expected set.
+
 ## Dev mirror
 
 `tools/paperless/dev-instance.sh up|down|status|purge [sdwa5|home]` runs an empty instance from the

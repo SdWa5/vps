@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.86.10] - 2026-10-17
+
+### Added
+
+- docs/paperless.md records the passing production run of `visibility-check.sh` on both instances.
+
+### Fixed
+
+- The token command in the comment of `tools/paperless/lib.sh` runs through `/command/with-contenv`.
+
 ## [1.86.9] - 2026-10-17
 
 ### Added

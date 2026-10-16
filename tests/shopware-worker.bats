@@ -72,3 +72,37 @@ worker() {
     [ "$status" -eq 0 ]
     [[ "$output" == *"shopware-worker.sh"* ]]
 }
+
+@test "a fresh container whose database is not up yet is skipped without mail" {
+    # The 2026-10-15 reboot: container up, mysqld inside it not yet.
+    STUB_STARTED_AT="$(date -u -d '-30 seconds' +%FT%TZ)" STUB_DB_PING_FAILS=1 \
+        STUB_TASK_RUN_FAILS=1 worker
+    [ "$status" -eq 0 ]
+    [ "$(mail_count)" -eq 0 ]
+    [[ "$output" == *"grace period"* ]]
+}
+
+@test "a fresh container whose database answers runs and still mails a failure" {
+    STUB_STARTED_AT="$(date -u -d '-30 seconds' +%FT%TZ)" STUB_TASK_RUN_FAILS=1 worker
+    [ "$status" -eq 1 ]
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"scheduled tasks failed"* ]]
+}
+
+@test "an old container mails even when its database does not answer" {
+    STUB_DB_PING_FAILS=1 STUB_TASK_RUN_FAILS=1 worker
+    [ "$status" -eq 1 ]
+    [ "$(mail_count)" -eq 1 ]
+}
+
+@test "the grace period is configurable" {
+    STUB_STARTED_AT="$(date -u -d '-30 seconds' +%FT%TZ)" SHOPWARE_WORKER_BOOT_GRACE=10 \
+        STUB_DB_PING_FAILS=1 STUB_TASK_RUN_FAILS=1 worker
+    [ "$status" -eq 1 ]
+    [ "$(mail_count)" -eq 1 ]
+}
+
+@test "the dry run names the boot grace" {
+    worker --dry-run
+    [[ "$output" == *"Boot grace:   300s"* ]]
+}

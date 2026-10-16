@@ -107,6 +107,16 @@ turned off in `shopware-html-data/config/packages/shopware.yaml`, because Shopwa
 a CLI worker exists. See
 [shopware/infrastructure.md](shopware/infrastructure.md#runtime-what-runs-shopwares-background-work).
 
+**A container younger than five minutes gets a grace period.** On 2026-10-15 the VPS rebooted at
+02:26, the worker ran at 02:27:15 against containers that were up, and mysqld inside the dockware
+images only started at 02:27:43 and 02:27:56, so both shops mailed `Connection refused` although
+nothing was broken. Since 1.81.0 the worker reads the container's `StartedAt` and, inside
+`SHOPWARE_WORKER_BOOT_GRACE` seconds (default 300, the healthcheck's `start_period`), pings the
+database with `mysqladmin -h 127.0.0.1 ping` first. When it does not answer yet, the run logs and
+exits without mail. The ping needs no credentials, because `mysqladmin` exits 0 on any answer from
+the server, including "Access denied". The price is that a database that never comes up after a
+start is reported five minutes late, and a failure of an older container is reported as before.
+
 The backup check **asks the repository rather than the container log**, and it is worth saying why,
 because it was the log until 2026-09-08 and that produced two false alarms.
 

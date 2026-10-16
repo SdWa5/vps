@@ -247,6 +247,30 @@ a.line-item-label:hover,
   --bs-pagination-active-border-color: var(--sdwa5-green-immutable);
 }
 
+// ------------------------------------------------- Full-width sections
+
+// A CMS section sized "full width" gets --bs-gutter-x: 0 and therefore no side
+// padding from core, but its block row redeclares the 40px gutter and keeps its
+// -20px margins. The row then sticks out 20px on each side and the page scrolls
+// sideways on phones (the Gallery page). The gallery's thumbnail arrows sit at
+// -25px outside their column and overflow the same way on tablets.
+.cms-section .full-width {
+  .cms-block-container-row {
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  .gallery-slider-thumbnails-col.is-underneath {
+    .gallery-slider-thumbnails-controls-prev {
+      left: 0;
+    }
+
+    .gallery-slider-thumbnails-controls-next {
+      right: 0;
+    }
+  }
+}
+
 // ---------------------------------------------------- Off-canvas menu
 //
 // The core paints the off-canvas header, the sliding panels and every category

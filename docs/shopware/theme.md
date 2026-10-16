@@ -226,6 +226,11 @@ positions 0 and 2, dry run by default. The crop keeps the point `--sdwa5-hero-fo
 `50% 30%`, in `_tokens.scss`, which keeps the banner in the photo whole at 1440 px) in view. **Removing a class or the full-width mode in the admin breaks the
 layout**, see [content-cms.md](content-cms.md).
 
+Every section sized full width, the Gallery page's included, loses core's side padding while its
+block row keeps the -20 px gutter margins. `_base-elements.scss` zeroes those margins and pulls the
+gallery's thumbnail arrows inside their column, because otherwise the page scrolls sideways on phones
+and tablets.
+
 ## Not ported from Chimo Diazz
 
 These parts of `ChimodiazzTheme` are Chimo Diazz content rather than design, so they stayed behind:

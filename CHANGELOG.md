@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [1.86.4] - 2026-10-16
+## [1.86.5] - 2026-10-16
 
 ### Changed
 
@@ -14,6 +14,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   `docker compose run -T`, so a script piped into `ssh host bash -s` keeps its stdin.
 - `docs/maintenance.md` and `docs/shopware/plugins.md` point to that snapshot instead of the deleted
   host directories, and the SEC-05 evidence directory gets the same archive-then-delete step.
+
+## [1.86.4] - 2026-10-16
+
+### Fixed
+
+- SdWa5Theme 1.2.9 gives an expanded mobile footer column as much space below its last link as under
+  its title, about 27 px. Before, the inner padding, the list margin and Contact's `mb-4` stacked to
+  63 to 79 px below, and the core's 1rem top margin put Contact's first link 8 px lower than in the
+  other columns.
+
+### Added
+
+- A storefront test that expanded footer columns have equal space under the title and below the
+  last link.
 
 ## [1.86.3] - 2026-10-16
 

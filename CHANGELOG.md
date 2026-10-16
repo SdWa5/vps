@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.80.2] - 2026-10-16
+
+### Fixed
+
+- SdWa5Theme 1.2.2 drops the bottom margin of the last paragraph in the homepage link tiles, so a tile ends
+  at its 1.75rem padding instead of padding plus paragraph margin.
+
 ## [1.80.1] - 2026-10-16
 
 ### Fixed

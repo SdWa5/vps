@@ -138,7 +138,12 @@
     }
   }
 
-  // The last paragraph is the "Read more" link.
+  // The last paragraph is the "Read more" link. Its paragraph margin would
+  // stack on the container's bottom padding, so the card ends at the padding.
+  p:last-child {
+    margin-bottom: 0;
+  }
+
   p:last-child a {
     font-family: var(--sdwa5-font-mono);
     font-size: 0.75rem;

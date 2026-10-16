@@ -38,10 +38,13 @@
 // selectors below (0,2,0) beat the column classes. The Bootstrap spacing
 // utilities on the logo column carry !important, so the override does too.
 
+// The fixed 3 px accent stripe (body::before in _base-elements.scss) lies over
+// the top of the sticky header, so the top padding adds its height. The visible
+// space above the logo then matches the space below it.
 .header-row {
   flex-wrap: wrap;
   align-items: center;
-  padding: 0.5rem 0;
+  padding: calc(0.5rem + 3px) 0 0.5rem;
 
   > .sdwa5-header__burger {
     order: 0;
@@ -100,8 +103,6 @@
 
 @media (min-width: 576px) {
   .header-row {
-    padding: 0.5rem 0;
-
     > .header-search-col {
       order: 2;
       flex: 1 1 0;
@@ -129,6 +130,13 @@
 
 .header-logo-main {
   text-align: left;
+}
+
+// The core link is inline-block on the text baseline, and the 24 px line box
+// added 7 px of descender space below the logo, which pushed it up in its
+// centred column.
+.header-logo-main-link {
+  display: block;
 }
 
 .sdwa5-logo {

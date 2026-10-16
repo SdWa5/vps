@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.83.1] - 2026-10-16
+
+### Fixed
+
+- SdWa5Theme 1.2.5 gives the header logo as much visible space above as below. Before, it had 5 px
+  above and 15 px below, from descender space under the inline-block logo link and the accent stripe
+  lying over the top of the header.
+
+### Added
+
+- The storefront suite checks the header logo spacing at all three widths.
+
 ## [1.83.0] - 2026-10-16
 
 ### Added

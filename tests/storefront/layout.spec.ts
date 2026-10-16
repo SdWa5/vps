@@ -35,6 +35,37 @@ async function openOffcanvas(page: Page): Promise<Locator> {
   return offcanvas;
 }
 
+// Range boxes include the font's line gap, so text spacing compares the glyphs:
+// the baseline from the font box, the ink from the measured text. Installed
+// into the page, because evaluate() cannot take a function argument.
+function inkLines(root: Element): { top: number; bottom: number }[] {
+  const context = document.createElement('canvas').getContext('2d')!;
+  const lines: { top: number; bottom: number }[] = [];
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: (n) => (n.textContent!.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP) });
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const style = getComputedStyle(node.parentElement!);
+    context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    const text = node.textContent!.trim();
+    const metrics = context.measureText(style.textTransform === 'uppercase' ? text.toUpperCase() : text);
+    const range = document.createRange();
+    range.selectNodeContents(node);
+    const box = range.getClientRects()[0];
+    const baseline = box.top + box.height * metrics.fontBoundingBoxAscent / (metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent);
+    lines.push({ top: baseline - metrics.actualBoundingBoxAscent, bottom: baseline + metrics.actualBoundingBoxDescent });
+  }
+  return lines;
+}
+
+async function installInkLines(page: Page): Promise<void> {
+  await page.addScriptTag({ content: `window.inkLines = ${inkLines.toString()};` });
+}
+
+declare global {
+  interface Window {
+    inkLines: typeof inkLines;
+  }
+}
+
 test('header logo has as much visible space above as below', async ({ page }) => {
   await openHome(page);
   const row = await page.locator('.header-row').boundingBox();
@@ -199,26 +230,9 @@ test.describe('footer', () => {
       await expect(page.locator('.footer-column-content.show')).toHaveCount(await page.locator('.footer-column').count());
       await page.waitForFunction(() => document.querySelectorAll('.footer-column-content.collapsing').length === 0);
 
+      await installInkLines(page);
       const gaps = await page.locator('.footer-column').evaluateAll((columns) => {
-        const context = document.createElement('canvas').getContext('2d')!;
-        // Range boxes include the font's line gap, so compare the glyphs: the
-        // baseline from the font box, the ink from the measured text.
-        const ink = (root: Element) => {
-          const lines: { top: number; bottom: number }[] = [];
-          const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: (n) => (n.textContent!.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP) });
-          for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-            const style = getComputedStyle(node.parentElement!);
-            context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-            const text = node.textContent!.trim();
-            const metrics = context.measureText(style.textTransform === 'uppercase' ? text.toUpperCase() : text);
-            const range = document.createRange();
-            range.selectNodeContents(node);
-            const box = range.getClientRects()[0];
-            const baseline = box.top + box.height * metrics.fontBoundingBoxAscent / (metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent);
-            lines.push({ top: baseline - metrics.actualBoundingBoxAscent, bottom: baseline + metrics.actualBoundingBoxDescent });
-          }
-          return lines;
-        };
+        const ink = window.inkLines;
         return columns.map((column) => {
           const title = ink(column.querySelector('.footer-column-headline')!)[0];
           const links = ink(column.querySelector('.footer-column-content')!);
@@ -230,5 +244,22 @@ test.describe('footer', () => {
         expect.soft(Math.abs(bottom - top), `${title}: ${top} px under the title against ${bottom} px below`).toBeLessThanOrEqual(1);
       }
     });
+  });
+
+  // The core's link margins and a <br> after a block link spaced the three
+  // Contact lines 40 px and 25 px apart until SdWa5Theme 1.2.10.
+  test('Contact lines are evenly spaced', async ({ page }, testInfo) => {
+    if (testInfo.project.name.startsWith('phone')) {
+      await page.locator('.footer-column-toggle').first().click();
+      await expect(page.locator('.footer-contact.show')).toBeVisible();
+      await page.waitForFunction(() => document.querySelectorAll('.footer-column-content.collapsing').length === 0);
+    }
+    await installInkLines(page);
+    const gaps = await page.locator('.footer-contact-hotline').evaluate((hotline) => {
+      const lines = window.inkLines(hotline);
+      return lines.slice(1).map((line, i) => line.top - lines[i].bottom);
+    });
+    expect(gaps.length, 'Contact has three lines').toBe(2);
+    expect(Math.abs(gaps[0] - gaps[1]), `gaps ${gaps.join(' and ')} px`).toBeLessThanOrEqual(1);
   });
 });

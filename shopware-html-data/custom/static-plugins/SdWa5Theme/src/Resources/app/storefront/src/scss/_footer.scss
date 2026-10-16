@@ -53,8 +53,7 @@
   // An expanded column stacked the inner padding, the list's or paragraph's
   // 2rem margin and Contact's mb-4 below its last link, 63px against 27px
   // under the title. 0.75rem below the last link matches the gap under the
-  // title. The core gives the Contact links a 1rem top margin, which put the
-  // first one 8px lower than the first link of the other columns.
+  // title.
   .footer-column-content.mb-4 {
     margin-bottom: 0 !important;
   }
@@ -66,10 +65,6 @@
       margin-bottom: 0;
     }
   }
-
-  .footer-contact-hotline a:first-child {
-    margin-top: 0.5rem;
-  }
 }
 
 // No payment or shipping logos are configured, but the empty strip keeps its
@@ -78,8 +73,17 @@
   display: none;
 }
 
+// The Contact text is two block links around a plain line, joined by <br>.
+// The core's `margin: 1rem 0 .5rem` on the links and the <br> after the first
+// one, which opens an empty line below a block, spaced the lines 40px and
+// 25px apart. Even margins and no <br> after a link space them evenly.
 .footer-contact-hotline a {
+  margin: 0.5rem 0;
   color: var(--sdwa5-red-text-immutable);
+
+  + br {
+    display: none;
+  }
 }
 
 .footer-link {

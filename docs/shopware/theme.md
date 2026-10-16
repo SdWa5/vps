@@ -105,6 +105,8 @@ Contact column, which made it 24 px taller than the others while collapsed. It a
 title and the toggle icon in each row and hides the empty `.footer-logos` strip, so the donation line
 has the same space above and below. An expanded column has as much space below its last link as
 under its title.
+The three Contact lines are evenly spaced, because the links get even margins and the `<br>`
+after a link is hidden.
 
 ## Header, logo and navigation
 

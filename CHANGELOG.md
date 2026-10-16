@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.86.7] - 2026-10-16
+
+### Fixed
+
+- SdWa5Theme 1.2.10 spaces the three Contact lines in the footer evenly, 16 px instead of 40 px and
+  25 px. The core's `1rem 0 .5rem` margin on the links and the `<br>` after the e-mail link, which
+  opened an empty line below a block, caused the gap.
+
+### Changed
+
+- The storefront suite's glyph measurement is a shared helper, `inkLines()`.
+
+### Added
+
+- A storefront test that the Contact lines are evenly spaced.
+
 ## [1.86.6] - 2026-10-16
 
 ### Fixed

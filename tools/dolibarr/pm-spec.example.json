@@ -14,8 +14,23 @@
     "shows. A ticket's message is plain text with \\n line breaks. severity, type",
     "and category are codes of the ERP's ticket dictionaries, and assignee is a",
     "user login. ticket_defaults fills in whatever a new ticket's entry leaves out,",
-    "and an existing ticket gets no defaults."
+    "and an existing ticket gets no defaults.",
+    "",
+    "A ticket entry with a ref is matched by that ref in any project, so its",
+    "subject and its project can change. status is open, closed or canceled.",
+    "dictionaries maintains ticket_types, ticket_severities and ticket_categories",
+    "entries by code, before any ticket is written. status and dictionaries need",
+    "the Dolibarr module PmTools (SdWa5/dolibarr-pmtools)."
   ],
+  "dictionaries": {
+    "ticket_types": [
+      {
+        "code": "RECURRING",
+        "label": "Dauerauftrag",
+        "pos": 50
+      }
+    ]
+  },
   "ticket_defaults": {
     "severity": "NORMAL",
     "type": "OTHER",
@@ -45,6 +60,11 @@
           "message": "Why it is urgent.",
           "severity": "URGENT",
           "assignee": "another.login"
+        },
+        {
+          "ref": "TS2601-0001",
+          "subject": "An existing ticket, renamed and closed",
+          "status": "closed"
         }
       ]
     },

@@ -108,7 +108,8 @@ monitoring/security-recheck.sh
 # Read the Dolibarr ERP from a workstation (see docs/dolibarr.md)
 tools/dolibarr/doli.sh status
 
-# Show what the project, task and ticket backlog would change in the ERP (--apply writes)
+# Show what the project, task and ticket backlog would change in the ERP (--apply writes),
+# including ticket renames by ref, closing and ticket dictionaries through the PmTools module
 tools/dolibarr/sync-pm.sh
 
 # Install or update a Dolibarr custom module at a tag, on the VPS as root (see docs/dolibarr.md)
@@ -119,6 +120,9 @@ tools/dolibarr/mcp-setup.sh
 
 # Rebuild the local Dolibarr dev mirror from the newest production archive, on a workstation (see docs/dolibarr.md)
 tools/dolibarr/dev-instance.sh fetch && tools/dolibarr/dev-instance.sh restore
+
+# Give the mirror's admin a local API key for sync-pm.sh and the REST API
+tools/dolibarr/dev-instance.sh api-key
 
 # Preview the isolated Dolibarr migration rehearsal without changing anything.
 bash tools/dolibarr/rehearse-upgrade.sh

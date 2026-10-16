@@ -414,3 +414,144 @@ setup() {
     [[ "$line" == *'"message":"neu"'* ]]
     [[ "$line" != *"severity_code"* && "$line" != *"fk_user_assign"* ]]
 }
+
+# The PmTools module answers its routes with a list once it is enabled.
+pmtools_on() {
+    doli_fixture pmtools_dictionary_ticket_types "$(jq -n '[{rowid:"7",code:"OTHER",label:"Other",pos:"40",active:"1"}]')"
+}
+
+@test "a spec without status or dictionaries never asks for PmTools" {
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{subject:"Eins", message:"a"}]}]}')"
+    doli_sync_pm
+    [ "$status" -eq 0 ]
+    run doli_requests
+    [[ "$output" != *"pmtools"* ]]
+}
+
+@test "a status without the PmTools module aborts with its name" {
+    doli_pm_tickets "$(jq -n '[{id:"7",ref:"TS2610-0050",fk_project:"3",subject:"Eins",status:"2"}]')"
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{ref:"TS2610-0050", status:"closed"}]}]}')"
+    doli_sync_pm --apply
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"needs the Dolibarr module PmTools"* ]]
+    [ "$(doli_post_count)" -eq 0 ]
+}
+
+@test "an unknown status is refused" {
+    pmtools_on
+    doli_pm_tickets "$(jq -n '[{id:"7",ref:"TS2610-0050",fk_project:"3",subject:"Eins",status:"2"}]')"
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{ref:"TS2610-0050", status:"done"}]}]}')"
+    doli_sync_pm
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"unknown status done"* ]]
+}
+
+@test "a ref names an existing ticket only" {
+    pmtools_on
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{ref:"TS2610-9999", subject:"x"}]}]}')"
+    doli_sync_pm
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"no ticket TS2610-9999"* ]]
+}
+
+@test "a ticket matched by ref is renamed and moved with one PUT" {
+    doli_pm_tickets "$(jq -n '[{id:"11",ref:"TS2509-0011",fk_project:"4",subject:"CSD",message:"x",status:"2"}]')"
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{ref:"TS2509-0011", subject:"Teilnahme an CSD besprechen"}]}]}')"
+    doli_sync_pm --apply
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"update ticket Teilnahme an CSD besprechen (TS2509-0011), fk_project, subject"* ]]
+    [ "$(doli_post_count)" -eq 0 ]
+    run doli_requests
+    line="$(printf '%s\n' "$output" | grep '^PUT tickets/11')"
+    [[ "$line" == *'"subject":"Teilnahme an CSD besprechen"'* ]]
+    [[ "$line" == *'"fk_project":3'* ]]
+}
+
+@test "a ticket matched by ref that already matches is skipped" {
+    doli_pm_tickets "$(jq -n '[{id:"11",ref:"TS2509-0011",fk_project:"3",subject:"CSD &amp; Parade",message:"x",status:"8"}]')"
+    pmtools_on
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{ref:"TS2509-0011", subject:"CSD & Parade", status:"closed"}]}]}')"
+    doli_sync_pm --apply
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"skip   ticket CSD & Parade (TS2509-0011)"* ]]
+    [ "$(doli_post_count)" -eq 0 ]
+    [ "$(doli_put_count)" -eq 0 ]
+}
+
+@test "closing an open ticket goes through the PmTools close route" {
+    pmtools_on
+    doli_pm_tickets "$(jq -n '[{id:"50",ref:"TS2610-0050",fk_project:"3",subject:"Akku",message:"x",status:"2"}]')"
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{ref:"TS2610-0050", status:"closed"}]}]}')"
+    doli_sync_pm
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"would  ticket TS2610-0050 (TS2610-0050), close"* ]]
+    [ "$(doli_post_count)" -eq 0 ]
+    doli_sync_pm --apply
+    [ "$status" -eq 0 ]
+    run doli_requests
+    [[ "$output" == *"POST pmtools/tickets/50/close"* ]]
+    [[ "$output" != *"PUT tickets/50"* ]]
+}
+
+@test "a canceled ticket wanted closed is reopened first, then edited, then closed" {
+    pmtools_on
+    doli_pm_tickets "$(jq -n '[{id:"50",ref:"TS2610-0050",fk_project:"3",subject:"Akku",message:"x",status:"9"}]')"
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{ref:"TS2610-0050", subject:"Akku neu", status:"closed"}]}]}')"
+    doli_sync_pm --apply
+    [ "$status" -eq 0 ]
+    run doli_requests
+    order="$(printf '%s\n' "$output" | grep -E '^(POST pmtools|PUT tickets)' | cut -d' ' -f1,2 | tr '\n' '|')"
+    [ "$order" = "POST pmtools/tickets/50/reopen|PUT tickets/50|POST pmtools/tickets/50/close|" ]
+}
+
+@test "status open reopens a closed ticket and leaves an open one alone" {
+    pmtools_on
+    doli_pm_tickets "$(jq -n '[{id:"50",ref:"TS2610-0050",fk_project:"3",subject:"A",message:"x",status:"8"},
+                              {id:"51",ref:"TS2610-0051",fk_project:"3",subject:"B",message:"x",status:"3"}]')"
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{ref:"TS2610-0050", status:"open"},{ref:"TS2610-0051", status:"open"}]}]}')"
+    doli_sync_pm --apply
+    [ "$status" -eq 0 ]
+    run doli_requests
+    [[ "$output" == *"POST pmtools/tickets/50/reopen"* ]]
+    [[ "$output" != *"tickets/51/"* ]]
+}
+
+@test "a new dictionary entry is created before the tickets that use it" {
+    pmtools_on
+    doli_pm_spec "$(jq -n '{dictionaries:{ticket_types:[{code:"recurring", label:"Dauerauftrag", pos:50}]},
+        projects:[{title:"Inventur", tickets:[{subject:"Eins", message:"a", type:"RECURRING"}]}]}')"
+    doli_sync_pm
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"would    ticket_types RECURRING"* ]]
+    doli_sync_pm --apply
+    [ "$status" -eq 0 ]
+    run doli_requests
+    order="$(printf '%s\n' "$output" | grep '^POST' | cut -d' ' -f2 | tr '\n' '|')"
+    [ "$order" = "pmtools/dictionary/ticket_types|tickets|" ]
+    line="$(printf '%s\n' "$output" | grep '^POST pmtools/dictionary')"
+    [[ "$line" == *'"code":"RECURRING"'* && "$line" == *'"pos":50'* ]]
+}
+
+@test "a dictionary entry that matches is skipped and a changed one updated" {
+    doli_fixture pmtools_dictionary_ticket_types "$(jq -n '[{rowid:"7",code:"OTHER",label:"Other",pos:"40",active:"1"},
+        {rowid:"8",code:"RECURRING",label:"Dauerauftrag",pos:"50",active:"1"}]')"
+    doli_pm_spec "$(jq -n '{dictionaries:{ticket_types:[{code:"RECURRING", label:"Dauerauftrag", pos:50},{code:"OTHER", label:"Sonstiges"}]},
+        projects:[]}')"
+    doli_sync_pm --apply
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"skip     ticket_types RECURRING"* ]]
+    [[ "$output" == *"update   ticket_types OTHER, label"* ]]
+    [ "$(doli_post_count)" -eq 1 ]
+}
+
+@test "an unknown dictionary and a new entry without a label are refused" {
+    pmtools_on
+    doli_pm_spec "$(jq -n '{dictionaries:{c_ticket_type:[{code:"X", label:"x"}]}, projects:[]}')"
+    doli_sync_pm
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"unknown dictionary c_ticket_type"* ]]
+    doli_pm_spec "$(jq -n '{dictionaries:{ticket_types:[{code:"NEW"}]}, projects:[]}')"
+    doli_sync_pm
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"needs a label"* ]]
+}

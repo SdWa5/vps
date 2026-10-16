@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.77.0] - 2026-10-16
+
+### Added
+
+- `sync-pm.sh` matches a ticket entry by its `ref` when it names one, so the spec can rename a ticket
+  or move it to another project.
+- `sync-pm.sh` sets a ticket's `status` to open, closed or canceled and maintains ticket dictionary
+  entries from a top-level `dictionaries` object, both through the PmTools module
+  (SdWa5/dolibarr-pmtools), with their suite.
+- `dev-instance.sh api-key [LOGIN]` gives a mirror user an API key of the mirror's own, kept in a
+  private file and handed to the container on stdin.
+- The PmTools module in `docs/dolibarr.md`, under custom modules and the MCP server.
+
+### Changed
+
+- The dev mirror mounts `../sdwa5-pmtools` as `custom/pmtools` next to BankSync by default.
+- `docs/dolibarr.md` no longer calls the REST API read-only or closing a ticket a UI job.
+
 ## [1.76.1] - 2026-10-16
 
 ### Fixed

@@ -78,6 +78,7 @@ Dolibarr registers those only on activation.
 | Module | Repository | Purpose |
 |---|---|---|
 | `banksync` | [SdWa5/banksync](https://github.com/SdWa5/banksync), a fork of `vanyolai/dolibarr-banksync` | PayPal sync into bank account 4, automatic posting of the clear cases, a queue with Belege for the rest. The fork's `docs/paypal.md` covers setup and behaviour |
+| `pmtools` | [SdWa5/dolibarr-pmtools](https://github.com/SdWa5/dolibarr-pmtools) | REST routes for writing the ticket dictionaries and for closing, canceling and reopening tickets the way the ticket card does, and ticket, project and dictionary tools for the [MCP server](#mcp-server). Needs Dolibarr 24 |
 
 ### Module secrets
 
@@ -116,7 +117,8 @@ dependency recreation with `--no-deps`. Image upgrades follow the
 
 ## API access
 
-The REST API is used read-only from a workstation, through `tools/dolibarr/doli.sh`. It and the
+The REST API is used from a workstation, read-only through `tools/dolibarr/doli.sh` and for writes
+through the idempotent scripts below. It and the
 [MCP server](#mcp-server) are the programmatic ways in; the container is bound to `127.0.0.1:8002` and reachable from outside
 the host only through Caddy on `https://erp.sdwa5.org`.
 
@@ -143,9 +145,12 @@ tools/dolibarr/doli.sh company                     # the organisation record on 
 tools/dolibarr/doli.sh get 'thirdparties?limit=5'  # any GET
 ```
 
-Writing is out of scope on purpose. A write against the live ERP is a production mutation, so it
-belongs in its own idempotent script that a human starts, which is the split the Shopware work
-uses as well. The organisation address under Home → Setup → Company/Organization is set in the UI.
+`doli.sh` does not write on purpose. A write against the live ERP is a production mutation, so it
+belongs in its own idempotent script that a human starts, such as
+[`sync-pm.sh`](#projects-tasks-and-tickets), which is the split the Shopware work uses as well.
+What the core API cannot write gets a route in our own module rather than a workaround over ssh,
+which is why [PmTools](#custom-modules) exists. The organisation address under Home → Setup →
+Company/Organization is still set in the UI.
 
 ## Changing the postal address
 
@@ -216,7 +221,11 @@ How it matches and what it writes:
 
 - A **project** is matched by its exact `title`, a **task** by its exact `label` and a **ticket** by
   its exact `subject`, both within their project. Renaming any of them in the spec creates a second
-  record rather than renaming the first.
+  record rather than renaming the first, except for a ticket that names its `ref`.
+- A ticket entry with a **`ref`** such as `TS2509-0011` is matched by that ref in whatever project it
+  sits. Its `subject` and its project then become fields like any other, so changing the subject
+  renames the ticket and listing it under another project moves it. A ref the ERP does not know
+  aborts the run, because a ref names an existing ticket.
 - A ticket entry carries `subject`, `message`, `severity`, `type`, `category` and `assignee`, and
   `ticket_defaults` at the top of the spec fills in whatever an entry leaves out when the ticket is
   created. An existing ticket gets no defaults, so an entry that only extends a message leaves the
@@ -226,11 +235,22 @@ How it matches and what it writes:
   logins before anything is written, because Dolibarr stores an unknown code anyway and the UI then
   shows it blank.
 - A new ticket with an assignee is created in status 2, Assigned, the status the UI gives an
-  assigned ticket. An update never touches the status.
+  assigned ticket. An update touches the status only when the entry names a **`status`** of `open`,
+  `closed` or `canceled`. That goes through PmTools, which closes the way the ticket card does with
+  `date_close` and the closing trigger. A closed ticket that is wanted canceled, or the other way
+  round, is reopened first, and a closed ticket whose fields change is reopened before the change
+  and closed after it.
+- **`dictionaries`** at the top of the spec maintains ticket dictionary entries, keyed by
+  `ticket_types`, `ticket_severities` or `ticket_categories`, each a list of `code`, `label`, `pos`,
+  `description`, `active` and `use_default`. An entry is matched by its code and written through
+  PmTools before any ticket, so a ticket of the same run can already use a new type. A spec that
+  uses neither `status` nor `dictionaries` runs without PmTools, and one that does names the module
+  when it is missing.
 - Only the fields an entry names are written. A value set by hand in the UI survives unless the spec
   names that field, so an entry can carry nothing but a title and a task list.
 - **Nothing is ever deleted**, and a project the spec does not name is never read or written.
   Dropping an item from the spec leaves the ERP alone, and closing a task stays a UI job.
+  Closing a ticket is the `status` field above.
 - A title or a ticket subject that differs from an existing one only in case aborts the run. The
   API offers no way to undo the duplicate it would otherwise create.
 
@@ -280,8 +300,10 @@ API key, sent as `X-API-Key` or `Authorization: Bearer`, and runs every tool as 
 so that user's rights are the limit of what a client can do. A tool the user has no right for
 fails, and the protocol reports it as `Internal server error` while `dolibarr.log` says
 `Permission Denied`. The 24.0.1 core tools cover third parties, products, invoices, orders,
-categories and reports, but no tickets, projects or dictionaries, which is what our own module
-adds through the `addMcpTools` hook.
+categories and reports, but no tickets, projects or dictionaries. [PmTools](#custom-modules) adds
+ten `pm_*` tools for those through the `addMcpTools` hook. They fail with a readable `Error:` text
+instead of the bare internal error, and a dictionary write needs an admin or PmTools' own right
+5003021, which the `mcp` user does not get by default.
 
 [`tools/dolibarr/mcp-setup.sh`](../tools/dolibarr/mcp-setup.sh) sets it up through the same setup
 pages an administrator uses. It creates the service user `mcp` when it is missing, grants it ticket
@@ -310,6 +332,7 @@ newest archive of `monitoring/database-backup.sh`, with the images `docker-compo
 tools/dolibarr/dev-instance.sh fetch      # copy the newest production archive over ssh
 tools/dolibarr/dev-instance.sh restore    # rebuild the mirror from it, http://localhost:8089/
 tools/dolibarr/dev-instance.sh up|down|status
+tools/dolibarr/dev-instance.sh api-key    # a local API key for admin
 ```
 
 The copy holds real member data, so it lives in `~/.local/share/sdwa5-dolibarr-dev` with mode 700
@@ -321,11 +344,17 @@ mounted, so module credentials such as BankSync's `paypal.json` are absent. The 
 `127.0.0.1` and the database sits on an internal network that only the application joins.
 
 Module checkouts are bind-mounted into `custom/` as working trees, `banksync` from
-`../sdwa5-banksync` by default. `SDWA5_DOLIBARR_DEV_MODULES="banksync=… pmtools=…"` sets the list,
+`../sdwa5-banksync` and `pmtools` from `../sdwa5-pmtools` by default. `SDWA5_DOLIBARR_DEV_MODULES="banksync=… pmtools=…"` sets the list,
 and `SDWA5_DOLIBARR_DEV_IMAGE` runs a different application image, for example the next Dolibarr
 release before it is rehearsed. Every start removes `install.lock`, so a newer image migrates the copy. 23.0.4 to 24.0.1 migrated
-cleanly on 2026-10-16. Logins are the production ones. An API key for the mirror is
-generated on the user card and kept in a file of its own, never the production token file.
+cleanly on 2026-10-16. Logins are the production ones. `dev-instance.sh api-key [LOGIN]` gives a
+user, `admin` by default, an API key of the mirror's own in `~/.local/share/sdwa5-dolibarr-dev/api-key`,
+which is never the production token file. The scripts take it through their environment:
+
+```bash
+DOLIBARR_URL=http://localhost:8089 DOLIBARR_TOKEN_FILE=~/.local/share/sdwa5-dolibarr-dev/api-key \
+    tools/dolibarr/sync-pm.sh
+```
 
 ## Operations
 

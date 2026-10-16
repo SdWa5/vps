@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# Fake git for security-recheck.sh, which only reads.
+#
+#   STUB_GIT_LOCAL          HEAD of the checkout
+#   STUB_GIT_REMOTE         origin's branch head; empty means the remote is unreachable
+#   STUB_GIT_MODIFIED       lines "git status --porcelain" prints
+#   STUB_GIT_NOT_A_REPO     non-empty makes rev-parse fail
+[[ -n "${STUB_GIT_LOG:-}" ]] && printf '%s\n' "$*" >> "$STUB_GIT_LOG"
+case "$*" in
+    *"rev-parse HEAD"*)
+        [[ -n "${STUB_GIT_NOT_A_REPO:-}" ]] && exit 128
+        printf '%s\n' "${STUB_GIT_LOCAL:-5a5d5fe6584507affeadfb6966f2cecac7ed6915}"
+        ;;
+    *ls-remote*)
+        [[ -z "${STUB_GIT_REMOTE-5a5d5fe6584507affeadfb6966f2cecac7ed6915}" ]] && exit 128
+        printf '%s\trefs/heads/main\n' "${STUB_GIT_REMOTE-5a5d5fe6584507affeadfb6966f2cecac7ed6915}"
+        ;;
+    *"status --porcelain"*)
+        [[ -n "${STUB_GIT_MODIFIED:-}" ]] && printf '%s\n' "$STUB_GIT_MODIFIED"
+        ;;
+    *fetch*|*pull*|*reset*|*checkout*)
+        echo "security-recheck must not change the checkout: $*" >&2
+        exit 99
+        ;;
+esac
+exit 0

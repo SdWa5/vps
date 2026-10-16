@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# Fake docker for security-recheck.sh, modelled on the containers measured on 2026-10-15.
+#
+# Listening ports, addresses and gateways come from the fixture table below. The probe snippet that
+# security-recheck.sh runs through "docker exec SRC bash -c ..." is not executed; the stub answers
+# each target as open, filtered or refused instead:
+#   - "SRC>ADDRESS:PORT" listed in STUB_PROBE_OPEN is open,
+#   - a container gateway (172.x.y.1) on 22, 80 or 443 is open,
+#   - everything else is filtered.
+# STUB_PROBE_LOG records "SRC ADDRESS:PORT" per probed target. STUB_STOPPED lists stopped containers.
+#
+#   container            addresses                 gateways      listening ports
+fixture() {
+    case "$1" in
+        vaultwarden)         echo "172.21.0.2|172.21.0.1|80" ;;
+        shopware)            echo "172.18.0.2|172.18.0.1|22 80 443 1025 1080 3306" ;;
+        chimodiazz_shopware) echo "172.23.0.2|172.23.0.1|22 80 443 1025 1080 3306" ;;
+        dolibarr)            echo "172.19.0.2 172.20.0.3|172.19.0.1 |80" ;;
+        dolibarr_cron)       echo "172.19.0.3 172.20.0.4|172.19.0.1 |" ;;
+        dolibarr_db)         echo "172.20.0.2| |3306" ;;
+        restic)              echo "172.22.0.2|172.22.0.1|" ;;
+        *) return 1 ;;
+    esac
+}
+
+case "${1:-}" in
+    inspect)
+        format="$3"
+        name="$4"
+        row="$(fixture "$name")" || exit 1
+        IFS='|' read -r ips gateways _ <<<"$row"
+        case "$format" in
+            *State.Running*)
+                if [[ " ${STUB_STOPPED-} " == *" $name "* ]]; then echo false; else echo true; fi ;;
+            *IPAddress*) echo "$ips " ;;
+            *Gateway*) echo "$gateways " ;;
+        esac
+        ;;
+    exec)
+        name="$2"
+        shift 2
+        row="$(fixture "$name")" || exit 1
+        if [[ "$1" == cat ]]; then
+            IFS='|' read -r _ _ ports <<<"$row"
+            echo "  sl  local_address rem_address   st"
+            # A loopback listener and an established connection, which must both be skipped.
+            echo "   0: 0100007F:0CEA 00000000:0000 0A"
+            echo "   1: 020012AC:0050 010012AC:9C40 01"
+            i=2
+            for port in $ports; do
+                printf '   %d: 00000000:%04X 00000000:0000 0A\n' "$i" "$port"
+                i=$((i + 1))
+            done
+            exit 0
+        fi
+        # bash -c SNIPPET probe TIMEOUT TARGET...
+        shift 5
+        for target in "$@"; do
+            [[ -n "${STUB_PROBE_LOG:-}" ]] && printf '%s %s\n' "$name" "$target" >> "$STUB_PROBE_LOG"
+            if [[ " ${STUB_PROBE_OPEN-dolibarr>172.20.0.2:3306} " == *" $name>$target "* ]]; then
+                echo "$target open"
+            elif [[ "$target" =~ ^172\.[0-9]+\.[0-9]+\.1:(22|80|443)$ ]]; then
+                echo "$target open"
+            else
+                echo "$target filtered"
+            fi
+        done
+        ;;
+esac
+exit 0

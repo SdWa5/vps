@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.75.0] - 2026-10-16
+
+### Added
+
+- `monitoring/security-recheck.sh` repeats the exposure, firewall and isolation measurements of the
+  2026-10-15 hardening in one read-only run, from a workstation with the host part over ssh.
+- `tests/security-recheck.bats` with its own stubs in `tests/stubs-recheck/`.
+
+### Fixed
+
+- `docs/ssh-hardening.md` names the current deploy key id 166603542. GitHub deleted the old key when
+  the GitHub CLI grant was revoked on 2026-10-16.
+
 ## [1.74.0] - 2026-10-16
 
 ### Changed

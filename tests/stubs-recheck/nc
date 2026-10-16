@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Fake OpenBSD nc for security-recheck.sh: "nc -4|-6 -z -v -w N ADDRESS PORT".
+#
+#   STUB_NC_OPEN_V4, STUB_NC_OPEN_V6        ports that accept (default 22 80 443)
+#   STUB_NC_REFUSED_V4, STUB_NC_REFUSED_V6  ports that answer with a reset
+# Everything else times out, which is what the DROP policy makes a closed port do.
+family="${1#-}"
+port="${*: -1}"
+open_var="STUB_NC_OPEN_V$family"
+refused_var="STUB_NC_REFUSED_V$family"
+open="${!open_var-22 80 443}"
+refused="${!refused_var-}"
+if [[ " $open " == *" $port "* ]]; then
+    echo "Connection to host $port port [tcp/*] succeeded!" >&2
+    exit 0
+fi
+if [[ " $refused " == *" $port "* ]]; then
+    echo "nc: connect to host port $port (tcp) failed: Connection refused" >&2
+    exit 1
+fi
+echo "nc: connect to host port $port (tcp) timed out: Operation now in progress" >&2
+exit 1

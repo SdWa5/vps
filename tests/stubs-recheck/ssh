@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Fake ssh for security-recheck.sh. The arguments go to STUB_SSH_LOG, STUB_SSH_OUTPUT is printed
+# as the host part's output and STUB_SSH_RC is the exit status.
+[[ -n "${STUB_SSH_LOG:-}" ]] && printf '%s\n' "$*" >> "$STUB_SSH_LOG"
+[[ -n "${STUB_SSH_OUTPUT:-}" ]] && printf '%s\n' "$STUB_SSH_OUTPUT"
+exit "${STUB_SSH_RC:-0}"

@@ -432,6 +432,9 @@ Before allowing new writes, verify both shops with their correct Host headers, s
 and health endpoints, Vaultwarden `/api/config`, ERP login/API and all SEC-04 denial probes. Repeat
 the SEC-03 isolation matrix. Verify Caddy, certificates/HTTP3, INPUT/DOCKER-USER rules, cloud-init
 state, unit states and the independent SSH login. Compare results to the pre-window baseline.
+`monitoring/security-recheck.sh --restore` from a workstation covers the denial probes, the isolation
+matrix, HTTP/3, the firewall chains and the restore checks in one run, see
+[monitoring.md](monitoring.md#security-recheck).
 
 If a production gate fails, stop, preserve evidence and request the prepared rollback. Snapshot
 restoration returns Debian 12 with Dolibarr 23.0.4; restore the recorded scheduler and boot-unit

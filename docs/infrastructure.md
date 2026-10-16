@@ -132,7 +132,8 @@ every port of every other application was closed by IP. The one open path was `d
 8443 and 33113. DNS and HTTPS egress worked in both shops, in Dolibarr, in vaultwarden and in restic,
 and `dolibarr_db` had no egress at all. All sites answered as before, the database dumps and their
 restore checks passed for all three databases, and `vps-health.sh` reported no fault. The cutover
-recreated the containers in ca. 2 minutes.
+recreated the containers in ca. 2 minutes. `monitoring/security-recheck.sh` repeats this matrix, see
+[monitoring.md](monitoring.md#security-recheck).
 
 ### Database accounts
 

@@ -92,6 +92,9 @@ HSTS is set by Caddy for vault and erp with `max-age=31536000`. The two Shopware
 
 project2 and project3 have no DNS record and no running service, and are left unchanged.
 
+`monitoring/security-recheck.sh --external` checks the blocked paths with their bypass variants, the
+headers and HSTS, see [monitoring.md](monitoring.md#security-recheck).
+
 ## Browser-language redirect (Shopware /de)
 
 German-language browsers (`Accept-Language` starting with `de`) requesting `/` get a one-time

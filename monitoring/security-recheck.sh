@@ -59,7 +59,9 @@ RECHECK_TARGET_V6="${RECHECK_TARGET_V6-2a02:c206:3015:7801::1}"
 EXTERNAL_TCP_PORTS="${EXTERNAL_TCP_PORTS:-21 22 23 25 53 80 110 111 135 139 143 443 445 465 587 993 995 1433 2019 2375 2376 3000 3306 3389 5000 5355 5432 5900 6379 8000 8001 8002 8003 8004 8005 8080 8006 8007 8443 8444 9000 9200 11211 11434 25565 27017 33113}"
 EXPECTED_TCP_OPEN="${EXPECTED_TCP_OPEN:-22 80 443}"
 
-RECHECK_SITES="${RECHECK_SITES:-sdwa5.org chimodiazz.sdwa5.org vault.sdwa5.org erp.sdwa5.org paper.sdwa5.org paper.ripper.sdwa5.org}"
+# A site with a path is fetched there instead of at /, for an application whose / redirects to
+# its login, as Paperless-ngx does.
+RECHECK_SITES="${RECHECK_SITES:-sdwa5.org chimodiazz.sdwa5.org vault.sdwa5.org erp.sdwa5.org paper.sdwa5.org/accounts/login/ paper.ripper.sdwa5.org/accounts/login/}"
 HSTS_SITES="${HSTS_SITES:-vault.sdwa5.org erp.sdwa5.org paper.sdwa5.org paper.ripper.sdwa5.org}"
 HSTS_MIN_AGE="${HSTS_MIN_AGE:-31536000}"
 HTTP3_SITE="${HTTP3_SITE:-sdwa5.org}"
@@ -267,11 +269,11 @@ has_header() {
 
 # check_site SITE
 #
-# 200 on / and none of the headers hide_server_headers strips.
+# 200 on / (or on SITE's own path) and none of the headers hide_server_headers strips.
 check_site() {
     local site="$1" leaked=()
 
-    fetch "https://$site/"
+    if [[ "$site" == */* ]]; then fetch "https://$site"; else fetch "https://$site/"; fi
     if [[ "$FETCH_STATUS" != 200 ]]; then
         printf 'CRIT\t%s returned %s\n' "$site" "$FETCH_STATUS"
         return

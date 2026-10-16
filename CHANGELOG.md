@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.82.2] - 2026-10-16
+
+### Changed
+
+- `TODO.md` drops the 2FA for `my.contabo.com`, which is enabled, and the Chimo Diazz update moves to item 20.
+
 ## [1.82.1] - 2026-10-16
 
 ### Fixed

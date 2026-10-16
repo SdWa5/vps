@@ -295,7 +295,9 @@ The helper then makes a full dump with routines/events/triggers, invokes the exi
 restore check, and tests the old image against an empty schema restored from the original archive.
 It removes disposable containers, network and data on exit. A mode-700 evidence directory under
 `/var/tmp/sec05-evidence.*` retains the source archive, image IDs and private diagnostics. Treat it as
-sensitive backup material and keep it outside Git. No production container is stopped or changed.
+sensitive backup material and keep it outside Git. Once the upgrade it prepared has passed its gates,
+put the directory into an archive snapshot and delete it, see [backup.md](backup.md#archive-snapshots).
+No production container is stopped or changed.
 
 Prepare ERP-only and whole-host maintenance Caddy candidates from the current live configuration.
 Return HTTP 503 with `Retry-After` to ordinary clients. Permit loopback and a verified operator
@@ -357,8 +359,8 @@ passed the restore check, the API explorer returned 404, the admin login and all
 rendered without PHP errors, and an SMTP test mail was accepted. `dolibarr_cron` started last and
 its first run authenticated and completed. The upgrade made module `ai` active. The preserved
 archive, documents, custom modules and the 23.0.4 image ID were kept in a root-only
-`/var/tmp/dolibarr-24-preserve.*` directory for the rollback. SEC-11 moves that directory into an
-archive snapshot tagged `sdwa5-archive` and deletes it from the host, see
+`/var/tmp/dolibarr-24-preserve.*` directory for the rollback. SEC-11 moved that directory on 2026-10-16
+into the archive snapshot `bc1b03d1` and deleted it from the host, see
 [backup.md](backup.md#archive-snapshots).
 
 The 24.0.1 image writes a full database dump to `documents/backup-before-upgrade.sql` with mode 644.

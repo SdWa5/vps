@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.86.4] - 2026-10-16
+
+### Changed
+
+- `docs/backup.md` lists the SEC-11 archive snapshot `bc1b03d1` and runs the archive commands with
+  `docker compose run -T`, so a script piped into `ssh host bash -s` keeps its stdin.
+- `docs/maintenance.md` and `docs/shopware/plugins.md` point to that snapshot instead of the deleted
+  host directories, and the SEC-05 evidence directory gets the same archive-then-delete step.
+
 ## [1.86.3] - 2026-10-16
 
 ### Fixed

@@ -297,15 +297,16 @@ carries `--keep-tag sdwa5-archive`, so `forget` keeps every one of them. Its pat
 `/archive`, so it also forms a retention group of its own.
 
 It is taken through the restic service, so it uses the same repository, rclone identity and password
-file, and the sources are mounted read-only:
+file, and the sources are mounted read-only. `-T` keeps `docker compose run` off stdin, which would
+otherwise swallow the rest of a script piped into `ssh host bash -s`:
 
 ```bash
 cd /opt/docker
-docker compose run --rm --no-deps --entrypoint restic \
+docker compose run -T --rm --no-deps --entrypoint restic \
     -v /root/some-dump:/archive/root/some-dump:ro \
     -v /opt/docker/.env.bak-example:/archive/opt/docker/.env.bak-example:ro \
     restic backup /archive --tag sdwa5-archive --tag <reason>
-docker compose run --rm --no-deps --entrypoint restic restic snapshots --tag sdwa5-archive
+docker compose run -T --rm --no-deps --entrypoint restic restic snapshots --tag sdwa5-archive
 ```
 
 Before a source is deleted, the snapshot is restored into a directory only root can read and
@@ -313,7 +314,7 @@ compared with it:
 
 ```bash
 verify="$(mktemp -d /var/tmp/archive-verify.XXXXXX)"   # mode 700
-docker compose run --rm --no-deps --entrypoint restic -v "$verify:/restore" \
+docker compose run -T --rm --no-deps --entrypoint restic -v "$verify:/restore" \
     restic restore <snapshot id> --target /restore
 diff -r /root/some-dump "$verify/archive/root/some-dump" && echo identical
 rm -rf -- "$verify"
@@ -322,6 +323,10 @@ rm -rf -- "$verify"
 One item comes back the same way with `--include /archive/<path>`. Deleting the source with `rm`
 is enough. `shred` guarantees nothing on a journaling filesystem on a virtual disk, and the Contabo
 Auto Backup keeps the old copy until it rotates either way.
+
+| Snapshot | Date | Tags | Holds |
+|---|---|---|---|
+| `bc1b03d1` | 2026-10-16 | `sdwa5-archive`, `sec11` | 19 items, 194 MB: `/root/plugin-migration-2026-10-01`, `/root/platform-security-update-2026-10-01`, `/root/fw-backup-20260908-013958`, `/var/tmp/sec05-evidence.BXHI6S`, `/var/tmp/dolibarr-24-gate.ZXf8z3`, `/var/tmp/dolibarr-24-preserve.jQ0LIv` (the 23.0.4 rollback material), `/var/tmp/sec11-shop-env.iPloaf` (the main shop `.env` before its dedupe), `/opt/docker/.env.bak-cronkey-20261016024541`, `/opt/docker/.env.pre-sec11`, the shops' `.env.before-https-20261015`, `.env.local.before-https-20261015` and `.env.bak-2026-09-15`, the three `/opt/docker/backup/*.pre-git*` files, Vaultwarden's `db_20260207_160721.sqlite3` and two `db.sqlite3.bak-policy-*`, and Dolibarr's `backup-before-upgrade.sql`. All restored identical before the originals were deleted. |
 
 ## Restore drill
 

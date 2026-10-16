@@ -100,7 +100,9 @@ not an outage.
 The shop was in maintenance mode from about 07:22 to 07:27 Berlin.
 
 1. A database dump plus a tar of `custom/plugins/`, `vendor/`, `composer.json` and `composer.lock` went to
-   `/root/plugin-migration-2026-10-01/` on the host. The old plugin directories are there as well.
+   `/root/plugin-migration-2026-10-01/` on the host. The old plugin directories are there as well. SEC-11
+   moved the directory on 2026-10-16 into the restic archive snapshot `bc1b03d1` and deleted it from the
+   host, see [backup.md](../backup.md#archive-snapshots).
 2. The worker's lock `/run/lock/shopware-worker.lock` was held, so no queue run loaded plugins halfway.
 3. All eleven directories moved out of `custom/plugins/`, and one `composer require` with the eleven exact
    pins installed them into `vendor/`. Before that, nine plugins were not in composer at all, and

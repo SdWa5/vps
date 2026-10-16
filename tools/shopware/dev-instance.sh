@@ -348,12 +348,20 @@ cmd_console() {
     console "$@"
 }
 
+# docker inspect prints an empty line for a missing object before it fails,
+# so its output is dropped on failure rather than followed by the fallback.
+inspect_or_absent() {
+    local out
+    out="$(docker "$@" 2>/dev/null)" || out=''
+    printf '%s' "${out:-absent}"
+}
+
 cmd_status() {
     local state
-    state="$(docker inspect --format '{{.State.Status}}' "$APP" 2>/dev/null || printf 'absent')"
+    state="$(inspect_or_absent inspect --format '{{.State.Status}}' "$APP")"
     printf 'application\t%s\t%s\n' "$state" "$(app_image)"
-    printf 'proxy\t%s\t127.0.0.1:%s\n' "$(docker inspect --format '{{.State.Status}}' "$PROXY" 2>/dev/null || printf 'absent')" "$DEV_PORT"
-    printf 'egress\t%s\n' "$(docker network inspect --format '{{if .Internal}}none{{else}}OPEN{{end}}' "$NETWORK" 2>/dev/null || printf 'absent')"
+    printf 'proxy\t%s\t127.0.0.1:%s\n' "$(inspect_or_absent inspect --format '{{.State.Status}}' "$PROXY")" "$DEV_PORT"
+    printf 'egress\t%s\n' "$(inspect_or_absent network inspect --format '{{if .Internal}}none{{else}}OPEN{{end}}' "$NETWORK")"
     if [[ "$state" == running ]]; then
         printf 'version\t%s\n' "$(console --version 2>/dev/null || printf 'unknown')"
         printf 'mails\t%s\n' "$(console system:config:get core.mailerSettings.disableDelivery 2>/dev/null \

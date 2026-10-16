@@ -380,3 +380,13 @@ line_of() { grep -n -F -m1 -- "$1" "$DOCKER_LOG" | cut -d: -f1; }
     [ "$status" -eq 0 ]
     grep -q 'exec --user www-data --workdir /var/www/html sdwa5-shopware-dev php bin/console --no-interaction system:update:finish$' "$DOCKER_LOG"
 }
+
+@test "status of a stopped mirror shows absent on the same line" {
+    stub docker "printf '\\n'; exit 1"
+    run bash "$DEV_SCRIPT" status
+    [ "$status" -eq 0 ]
+    [ "${lines[0]}" = "application	absent	$(bash -c 'source "$DEV_SCRIPT"; app_image')" ]
+    [ "${lines[1]}" = 'proxy	absent	127.0.0.1:8090' ]
+    [ "${lines[2]}" = 'egress	absent' ]
+    [ "${#lines[@]}" -eq 3 ]
+}

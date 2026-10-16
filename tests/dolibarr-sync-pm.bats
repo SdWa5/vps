@@ -555,3 +555,55 @@ pmtools_on() {
     [ "$status" -eq 1 ]
     [[ "$output" == *"needs a label"* ]]
 }
+
+@test "a ticket closed in the UI while the spec sets no status is read back" {
+    doli_pm_tickets "$(jq -n '[{id:"7",ref:"TS2610-0050",fk_project:"3",subject:"Eins",message:"a",status:"8"},
+        {id:"8",ref:"TS2610-0051",fk_project:"3",subject:"Zwei",message:"b",status:"9"}]')"
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{subject:"Eins", message:"a"},
+        {subject:"Zwei", message:"b"}]}]}')"
+    doli_sync_pm
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"closed in the ERP while the spec sets no status"* ]]
+    [[ "$output" == *"TS2610-0050 Eins, closed"* ]]
+    [[ "$output" == *"TS2610-0051 Zwei, canceled"* ]]
+}
+
+@test "a ticket whose spec states its status is not read back as changed" {
+    pmtools_on
+    doli_pm_tickets "$(jq -n '[{id:"7",ref:"TS2610-0050",fk_project:"3",subject:"Eins",message:"a",status:"8"}]')"
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{ref:"TS2610-0050", status:"closed"}]}]}')"
+    doli_sync_pm
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"nothing changed outside the spec"* ]]
+}
+
+@test "an open ticket in a spec project that the spec does not name is read back" {
+    doli_pm_tickets "$(jq -n '[{id:"7",fk_project:"3",subject:"Eins",message:"a",status:"2"},
+        {id:"9",ref:"TS2610-0070",fk_project:"3",subject:"Neu &amp; frisch",message:"c",status:"0"},
+        {id:"10",ref:"TS2610-0071",fk_project:"3",subject:"Alt",message:"d",status:"8"},
+        {id:"11",ref:"TS2610-0072",fk_project:"99",subject:"Fremd",message:"e",status:"0"}]')"
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{subject:"Eins", message:"a"}]}]}')"
+    doli_sync_pm
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"open in a spec project but not in the spec"* ]]
+    [[ "$output" == *"TS2610-0070 Neu & frisch"* ]]
+    [[ "$output" != *"TS2610-0071"* ]]
+    [[ "$output" != *"TS2610-0072"* ]]
+}
+
+@test "the read back changes nothing" {
+    doli_pm_tickets "$(jq -n '[{id:"7",fk_project:"3",subject:"Eins",message:"a",status:"8"},
+        {id:"9",fk_project:"3",subject:"Neu",message:"c",status:"0"}]')"
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tickets:[{subject:"Eins", message:"a"}]}]}')"
+    doli_sync_pm --apply
+    [ "$status" -eq 0 ]
+    [ "$(doli_post_count)" -eq 0 ]
+    [ "$(doli_put_count)" -eq 0 ]
+}
+
+@test "a spec without tickets prints no read back" {
+    doli_pm_spec "$(jq -n '{projects:[{title:"Inventur", tasks:[{label:"Eins"}]}]}')"
+    doli_sync_pm
+    [ "$status" -eq 0 ]
+    [[ "$output" != *"Read back"* ]]
+}

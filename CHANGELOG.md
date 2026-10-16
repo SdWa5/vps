@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.82.0] - 2026-10-16
+
+### Added
+
+- `tools/dolibarr/sync-pm.sh` ends every run with a read back that lists tickets closed or canceled in
+  the ERP while their spec entry sets no `status`, and open tickets in the spec's projects that the
+  spec does not name. It only reports.
+
 ## [1.81.1] - 2026-10-16
 
 ### Fixed

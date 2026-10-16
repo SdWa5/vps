@@ -282,6 +282,12 @@ How it matches and what it writes:
 - **Nothing is ever deleted**, and a project the spec does not name is never read or written.
   Dropping an item from the spec leaves the ERP alone, and closing a task stays a UI job.
   Closing a ticket is the `status` field above.
+- **Every run ends with a read back** of what changed in the ERP outside the spec, since 1.82.0. It
+  lists the tickets closed or canceled in the UI whose entry sets no `status`, which a run would
+  otherwise only show as `skip`, and the open tickets in the spec's projects that the spec does not
+  name. Both lines carry the live ref, so the spec can be brought in line by hand. The section only
+  reports. The first run against production on 2026-10-16 found TS2610-0024 and TS2610-0026, both
+  closed in the UI on 2026-10-15.
 - A title or a ticket subject that differs from an existing one only in case aborts the run. The
   API offers no way to undo the duplicate it would otherwise create.
 

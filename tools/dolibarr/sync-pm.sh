@@ -22,6 +22,12 @@
 # way the UI does nor write a ticket dictionary. A spec that uses neither runs
 # without the module.
 #
+# It also reads back what changed in the ERP. A ticket the spec leaves without a
+# `status` is never closed or reopened here, so one closed in the UI would only
+# show as `skip`. The last section of every run therefore lists those tickets,
+# and the open tickets in the spec's projects that the spec does not name, so
+# the spec can follow the UI. That section only reports and changes nothing.
+#
 # It writes to production, so it is **dry-run by default** and a human starts
 # it, the same split tools/dolibarr/set-address.sh uses.
 #
@@ -335,7 +341,7 @@ apply_status() {
 # matched by its label.
 sync_tickets() {
     local project="$1" project_id="$2" title="$3"
-    local count i entry subject ref status current near wanted payload id steps label new_id existing='[]'
+    local count i entry subject ref status current near wanted payload id steps label live new_id existing='[]'
     count="$(printf '%s' "$project" | jq '.tickets // [] | length')"
     (( count )) || return 0
 
@@ -405,6 +411,15 @@ sync_tickets() {
             id="$(printf '%s' "$current" | jq -r '.id')"
             steps="$(status_steps "$status" "$(printf '%s' "$current" | jq -r '.status // .fk_statut // "0"')")" || exit 1
             label="$subject${ref:+ ($ref)}"
+            MATCHED_TICKETS+=("$id")
+            if [[ -z "$status" ]]; then
+                # The live ref, because an entry matched by subject has none.
+                live="$(printf '%s' "$current" | jq -r '.ref // "?"') $subject"
+                case "$(printf '%s' "$current" | jq -r '.status // .fk_statut // "0"')" in
+                    8) CLOSED_IN_ERP+=("$live, closed") ;;
+                    9) CLOSED_IN_ERP+=("$live, canceled") ;;
+                esac
+            fi
             if [[ "$payload" == "{}" && -z "$steps" ]]; then
                 printf '  %-6s ticket %s\n' "skip" "$label"
                 SKIPPED=$((SKIPPED + 1))
@@ -433,6 +448,9 @@ printf '\n'
 CREATED=0
 UPDATED=0
 SKIPPED=0
+MATCHED_TICKETS=()
+CLOSED_IN_ERP=()
+SPEC_PROJECT_IDS=()
 
 sync_dictionaries
 
@@ -513,6 +531,7 @@ for (( p = 0; p < project_count; p++ )); do
         fi
     fi
 
+    [[ -n "$project_id" ]] && SPEC_PROJECT_IDS+=("$project_id")
     sync_tickets "$project" "$project_id" "$title"
 
     task_count="$(printf '%s' "$project" | jq '.tasks // [] | length')"
@@ -559,6 +578,32 @@ for (( p = 0; p < project_count; p++ )); do
         fi
     done
 done
+
+# The read back. Only meaningful when the spec names tickets, because only then
+# are they read.
+if [[ "$EXISTING_TICKETS" != '[]' ]]; then
+    unnamed="$(printf '%s' "$EXISTING_TICKETS" | jq -r \
+        --argjson m "$(printf '%s\n' "${MATCHED_TICKETS[@]}" | jq -R 'select(. != "")' | jq -sc .)" \
+        --argjson p "$(printf '%s\n' "${SPEC_PROJECT_IDS[@]}" | jq -R 'select(. != "")' | jq -sc .)" '
+        def unescape: gsub("&quot;"; "\"") | gsub("&#0?39;"; "\u0027") | gsub("&amp;"; "&");
+        .[] | select((.fk_project | tostring) as $f | $p | index($f))
+            | select((.id | tostring) as $i | $m | index($i) | not)
+            | select(((.status // .fk_statut // "0") | tostring) | IN("8", "9") | not)
+            | "  \(.ref // "?") \(.subject // "" | unescape)"')"
+    printf '\nRead back from the ERP:\n'
+    if (( ${#CLOSED_IN_ERP[@]} == 0 )) && [[ -z "$unnamed" ]]; then
+        printf '  nothing changed outside the spec\n'
+    else
+        if (( ${#CLOSED_IN_ERP[@]} )); then
+            printf '  closed in the ERP while the spec sets no status:\n'
+            printf '    %s\n' "${CLOSED_IN_ERP[@]}"
+        fi
+        if [[ -n "$unnamed" ]]; then
+            printf '  open in a spec project but not in the spec:\n'
+            printf '%s\n' "$unnamed" | sed 's/^/  /'
+        fi
+    fi
+fi
 
 printf '\n%d to create, %d to update, %d already current.\n' "$CREATED" "$UPDATED" "$SKIPPED"
 printf 'Nothing is ever deleted here. Closing a task stays a job for the Dolibarr UI.\n'

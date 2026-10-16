@@ -381,3 +381,25 @@
        resolve, because Caddy retries ACME forever on a name without DNS
     3. the two names in `security-recheck.sh` (HSTS and TLS) and `docs/caddy.md`. `RECHECK_SITES` expects a
        200, so the check has to accept the redirect to PayPal there
+29. **change Dolibarr passwords through the API and the MCP server** ([docs/dolibarr.md](docs/dolibarr.md#mcp-server))
+    (ca. 4 Stunden). Dolibarr 24 already accepts `pass` in `PUT /users/{id}`, given the `user > password`
+    right or admin (`user/class/api_users.class.php`, read on 2026-10-16). `GET /users/{id}/setPassword`
+    only generates a random password and needs `API_ENABLE_LOGIN_API` and `API_ALLOW_PASSWORD_RESET`, so
+    it does not fit
+    1. a `set-password` command beside [tools/dolibarr/doli.sh](tools/dolibarr/doli.sh) that reads the new
+       password from a file or a pipe such as `<(bw get password ID)` and never prints it (ca. 1 Stunde 30 Minuten)
+    2. an MCP tool for the same call through the `addMcpTools` hook of PmTools. Decide first whether an MCP
+       client may change passwords at all, because the `mcp` user would need the password right for it
+       (ca. 2 Stunden 30 Minuten)
+30. **a new UI for Dolibarr that talks to it only over REST** (ca. 80 Stunden for a first version).
+    Dolibarr's own UI hides common actions. The password change is the case found on 2026-10-16. Dolibarr 24
+    has no button for it, the new password goes into the Password field of the Modify form
+    (`user/card.php?id=<id>&action=edit`), and the **Reinit password** button generates a random one instead
+    1. top-down. Layout and functionality are designed from the tasks the users actually do, independently
+       of how Dolibarr structures its pages and menus. Dolibarr is the backend behind the REST API and the
+       PmTools routes and does not shape the UI
+    2. a missing endpoint is added to Dolibarr as a module route, never worked around in the UI (TODO #19).
+       The password change uses the call of #29
+    3. no change to the Dolibarr core, so the UI survives its upgrades
+    4. open are the scope of a first version (which tasks), the stack, the hosting, and how it logs in, by an
+       API key per user or through the login API, which is off today

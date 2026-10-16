@@ -7,8 +7,10 @@
    `registry.services.shopware.io`. None of them appears in
    the 2026-07-22 legal review, which now lives in Google Drive, so whether a non-profit wants
    an AI image editor, a Copilot and an event ingestion service active on its shop is open. Decide per
-   app, then either deactivate the unwanted ones or cover them in the same privacy pass as item 12
-   (`decision`)
+   app, then either deactivate the unwanted ones or cover them in the same privacy pass as item 12.
+   The production backup of 2026-10-16 03:40 holds eight with seven active, because
+   `SwagRecommendations`, `SwagPreviewGenerator` and `SwagGmvReportingService` installed themselves
+   since (`decision`)
 2. Review the remaining default Shopware email templates. Confirmation and cancellation copy, sender names,
    cancellation subjects and local order times are corrected in EN/DE as documented in
    [content-cms.md](content-cms.md#order-mail-copy-and-verification). Other templates remain to be reviewed.

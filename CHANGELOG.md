@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.79.0] - 2026-10-16
+
+### Added
+
+- `tools/shopware/dev-instance.sh` builds a local mirror of the live shop from its files and the newest
+  database archive, for rehearsing updates. Shopware runs without egress behind a `127.0.0.1` proxy,
+  with mail delivery disabled, local domains, a new `APP_SECRET`, its own shop ID and `FroshShopmon`
+  deactivated, with its suite.
+
+### Changed
+
+- The Shopware docs record eight service apps with seven active in the 2026-10-16 backup.
+
 ## [1.78.0] - 2026-10-16
 
 ### Added

@@ -388,3 +388,10 @@ setup() {
     [ "$(recheck_status firewall:v4)" = CRIT ]
     [ "$(recheck_status host:output)" = CRIT ]
 }
+
+@test "a site with a path is checked at that path" {
+    export STUB_SITE_STATUS="paper.sdwa5.org=500"
+    recheck --external
+    [ "$(recheck_status site:paper.sdwa5.org/accounts/login/)" = CRIT ]
+    [ "$(recheck_status site:paper.ripper.sdwa5.org/accounts/login/)" = OK ]
+}

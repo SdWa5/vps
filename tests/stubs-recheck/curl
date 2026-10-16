@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Fake curl for security-recheck.sh, modelled on the measured 2026-10-15 behaviour of the four
-# sites behind Caddy. "/" answers 200 with HSTS, every other path is Caddy's own 404.
+# sites behind Caddy. "/" answers 200 with HSTS, and so does Paperless-ngx's "/accounts/login/".
+# Every other path is Caddy's own 404.
 #
 #   STUB_CURL_NO_HTTP3      non-empty: "curl -V" lists no HTTP3 feature
 #   STUB_HTTP3_VERSION      what --http3-only reports as %{http_version} (default 3)
-#   STUB_SITE_STATUS        "host=code ..." status of / per site
+#   STUB_SITE_STATUS        "host=code ..." status of / (or the login page) per site
 #   STUB_SERVER_HEADER      "host ..." sites that leak a Server header
 #   STUB_HSTS_AGE           HSTS max-age (default 63072000); empty sends no HSTS header
 #   STUB_UPSTREAM_PATHS     "host/path ..." answered by the upstream with its own 404 page
@@ -42,7 +43,7 @@ path="/${rest#*/}"
 
 status=404
 content="Not Found"
-if [[ "$path" == "/" ]]; then
+if [[ "$path" == "/" || "$path" == "/accounts/login/" ]]; then
     status=200
     content="<html>SECRET-PAGE-MARKER</html>"
     for pair in ${STUB_SITE_STATUS-}; do

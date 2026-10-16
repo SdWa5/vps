@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.86.3] - 2026-10-16
+
+### Fixed
+
+- `security-recheck.sh` checks both Paperless-ngx sites on `/accounts/login/`, because their `/`
+  redirects to it with 302 and was reported as CRIT. A `RECHECK_SITES` entry may now carry a path.
+
 ## [1.86.1] - 2026-10-16
 
 ### Fixed

@@ -372,3 +372,12 @@
     2. a share button per slide that calls `navigator.share` with that url, and the WhatsApp, Telegram
        and e-mail links as the fallback. the template notes that the deploy builds no storefront
        javascript, so this needs a storefront js build in the deploy first, or an inline script (ca. 6 Stunden)
+28. **redirect `d.sdwa5.org` and `donate.sdwa5.org` to the PayPal donation page** ([docs/caddy.md](docs/caddy.md))
+    (priority high, ca. 1 Stunde). The donation links on sdwa5.org point to `https://paypal.me/SdWa5`
+    (measured 2026-10-16). Neither name has a DNS record yet
+    1. two A records `d` and `donate` to 158.220.127.232 at Squarespace, entered by hand, since Squarespace
+       has no DNS API (TODO #15)
+    2. one Caddy block for both names with `redir https://paypal.me/SdWa5 302`, deployed only once the records
+       resolve, because Caddy retries ACME forever on a name without DNS
+    3. the two names in `security-recheck.sh` (HSTS and TLS) and `docs/caddy.md`. `RECHECK_SITES` expects a
+       200, so the check has to accept the redirect to PayPal there

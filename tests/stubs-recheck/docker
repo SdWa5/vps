@@ -10,12 +10,18 @@
 #   - everything else is filtered.
 # STUB_PROBE_LOG records "SRC ADDRESS:PORT" per probed target. STUB_STOPPED lists stopped containers.
 #
+# Environments: every container's docker inspect env holds only values the recheck must accept (a
+# *_FILE path, dockware's not-set, an argon2 hash, an empty token). STUB_CONFIG_ENV_LEAK adds
+# "container:NAME" entries as NAME=leaked. Process environments add MYSQL_PASSWORD to each *_db
+# container, the way MariaDB's file_env exports it. STUB_ENVIRON_UNREADABLE lists containers whose
+# /proc environ cannot be read. STUB_EXTRA_LISTEN adds "container:port" listeners.
+#
 #   container            addresses                 gateways      listening ports
 fixture() {
     case "$1" in
         vaultwarden)         echo "172.21.0.2|172.21.0.1|80" ;;
-        shopware)            echo "172.18.0.2|172.18.0.1|22 80 443 1025 1080 3306" ;;
-        chimodiazz_shopware) echo "172.23.0.2|172.23.0.1|22 80 443 1025 1080 3306" ;;
+        shopware)            echo "172.18.0.2|172.18.0.1|80 443 3306" ;;
+        chimodiazz_shopware) echo "172.23.0.2|172.23.0.1|80 443 1025 1080 3306" ;;
         dolibarr)            echo "172.19.0.2 172.20.0.3|172.19.0.1 |80" ;;
         dolibarr_cron)       echo "172.19.0.3 172.20.0.4|172.19.0.1 |" ;;
         dolibarr_db)         echo "172.20.0.2| |3306" ;;
@@ -44,14 +50,36 @@ case "${1:-}" in
                 if [[ " ${STUB_STOPPED-} " == *" $name "* ]]; then echo false; else echo true; fi ;;
             *IPAddress*) echo "$ips " ;;
             *Gateway*) echo "$gateways " ;;
+            *Config.Env*)
+                # shellcheck disable=SC2016 # a literal argon2 hash, nothing to expand
+                printf '%s\n' PATH=/usr/local/bin:/usr/bin MYSQL_PASSWORD_FILE=/run/sdwa5-secrets/db_password \
+                    SSH_PWD=not-set 'ADMIN_TOKEN=$argon2id$v=19$m=65540,t=3,p=4$c2FsdA$aGFzaA' EMPTY_TOKEN=
+                for entry in ${STUB_CONFIG_ENV_LEAK-}; do
+                    [[ "${entry%%:*}" == "$name" ]] && echo "${entry#*:}=leaked"
+                done
+                ;;
         esac
         ;;
     exec)
-        name="$2"
-        shift 2
+        shift
+        [[ "$1" == --user ]] && shift 2
+        name="$1"
+        shift
         row="$(fixture "$name")" || exit 1
+        if [[ "$1" == sh && "$3" == 'test -r /proc/1/environ' ]]; then
+            [[ " ${STUB_ENVIRON_UNREADABLE-} " != *" $name "* ]]
+            exit
+        fi
+        if [[ "$1" == sh && "$3" == *environ* ]]; then
+            printf 'PATH=/usr/bin\nHOME=/root\n\n'
+            [[ "$name" == *_db ]] && printf 'MYSQL_PASSWORD=residual\nMYSQL_PASSWORD_FILE=/run/sdwa5-secrets/x\n\n'
+            exit 0
+        fi
         if [[ "$1" == cat ]]; then
             IFS='|' read -r _ _ ports <<<"$row"
+            for entry in ${STUB_EXTRA_LISTEN-}; do
+                [[ "${entry%%:*}" == "$name" ]] && ports+=" ${entry#*:}"
+            done
             echo "  sl  local_address rem_address   st"
             # A loopback listener and an established connection, which must both be skipped.
             echo "   0: 0100007F:0CEA 00000000:0000 0A"

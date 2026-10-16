@@ -8,6 +8,17 @@
   FPM clears inherited environment variables, so the Compose variable alone does not cover web requests.
   On 2026-10-15 HTTP in FPM triggered `ShopIdChangeSuggestedException` in the cart while the CLI check
   passed with HTTPS. The `.env.local` override restored HTTP 200 in EN/DE and the existing shop ID was kept.
+- `.env`, `.env.local` and the other `.env*` files in `shopware-html-data/` are mode 600, owner
+  `www-data`. They hold `APP_SECRET` and the database password. `update_domain.sh` edits `.env` with
+  `sed -i`, which keeps the mode. It also leaves an empty line where the old `APP_URL` was on every
+  start, which is harmless. `.env` used to repeat `APP_ENV=dev` and `DATABASE_URL` from dockware's
+  own template further down. `.env.local` (`APP_ENV=prod`) won, but the second block was removed on
+  2026-10-16 so the file says what runs.
+- dockware's `sshd` and `mailcatcher` are stopped on every boot by
+  [`hardening/dockware-boot-end.sh`](../../hardening/dockware-boot-end.sh), mounted as
+  `/var/www/boot_end.sh`, see [../infrastructure.md](../infrastructure.md#no-sshd-in-the-shop-containers).
+  This shop sends through `core.mailerSettings` to `smtp-relay.gmail.com`, so mailcatcher had nothing
+  to catch.
 - DockwareSamplePlugin: uninstalled
 - `composer.json`/`.lock`, `symfony.lock` and `config/{packages,routes*,services.yaml,bundles.php}` are tracked
   in the repo (everything else in `shopware-html-data/` — `.env`, `var/`, `vendor/`, `public/`, `files/`,

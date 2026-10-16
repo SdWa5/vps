@@ -339,6 +339,12 @@ never appears in the process list.
 
 `vps-health.sh --test-mail` sends one mail and reports whether the relay took it.
 
+Every monitoring script reads `.env` through `load_env` in `monitoring/lib.sh`, which exports what it
+takes into the script and each child it starts. Since 2026-10-16 it skips every key whose name
+contains `PASS`, `TOKEN` or `SECRET` or ends in `_KEY`, because none of the scripts needs the stack's
+credentials. `MONITOR_*` keys always load, `MONITOR_SMTP_PASSWORD` included. A script that needs
+another secret names it in `LOAD_ENV_SECRETS`, separated by spaces.
+
 ### Outgoing email verification
 
 Delivery through the passwordless relay was confirmed by the mailbox owner on 2026-10-15 for all
@@ -406,6 +412,8 @@ status is 1 with any CRIT, 1 with any WARN under `--strict`, 2 for a usage error
 | `egress` | `dolibarr_db` reaches neither 1.1.1.1:443 nor 9.9.9.9:53 | | it does |
 | `revision` | `/opt/docker` HEAD equals `origin/main`, no tracked file modified | it differs, a tracked file is modified, or origin is unreachable | not a checkout |
 | `deployed` | the Caddyfile, jail.local, sshd drop-in, firewall script and unit, netplan and cloud-init files under `/etc` equal the checkout | one differs or is missing | |
+| `env` | per container of `ISOLATION_APPS`: no secret value in `docker inspect`; names a process environment still carries are listed in the message | a secret value in `docker inspect`, or the process environments cannot be read | |
+| `listeners` | neither `shopware` (22, 1025, 1080) nor `chimodiazz_shopware` (22) listens on a port its boot hook closes | one of them listens | |
 | `restore` | `database-restore-check.sh` passes for each database | | it fails |
 | `host` | the ssh part ran to its end | | ssh failed, or the output ended early or was malformed |
 
@@ -413,7 +421,20 @@ The isolation targets are read from each container's `/proc/net/tcp*`, so a new 
 without editing the script. The blocked-path variants are generated per path: trailing slash and
 suffix, query, doubled slash, upper case, a capitalised and a percent-encoded last segment, and dot
 segments, sent with `curl --path-as-is`. A revision lag is a WARN because the script never fetches
-and so cannot tell a missing security fix from a TODO commit. Every value is an environment variable
+and so cannot tell a missing security fix from a TODO commit.
+
+The `env` check reduces each environment to variable names inside the pipe that reads it, so no
+value is ever printed or held in a variable. A name counts when it contains `PASS`, `TOKEN` or
+`SECRET` or ends in `_KEY`, the rule `load_env` applies, and its value is not empty, not a `*_FILE`
+path, not dockware's `not-set` placeholder and not an argon2 hash such as Vaultwarden's `ADMIN_TOKEN`.
+A value in `docker inspect` is the regression it guards against, since SEC-11 moved those values into
+compose file secrets. A name that only a process environment carries is not a regression but the
+known residual. MariaDB's `file_env` and Paperless's s6 `init-env-file` export what they read from a
+`*_FILE`, so those processes still hold the value, and the OK message lists them so they stay visible.
+The `listeners` check reads `/proc/net/tcp*` like the isolation check, see
+[`hardening/dockware-boot-end.sh`](../hardening/dockware-boot-end.sh).
+
+Every value is an environment variable
 with a default, listed in the script's header. The first live run on 2026-10-16 took ca. 40 seconds.
 
 ## Installation

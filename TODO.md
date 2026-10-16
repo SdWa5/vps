@@ -334,3 +334,23 @@
     would need a network path to it, and document text would then never leave the VPS. RAM is the open
     question, because a model next to two shops and two Paperless instances on 5.9 GB needs measuring
     before it is switched on
+22. **the Chimo Diazz shop never delivers a mail** ([docs/chimodiazz.md](docs/chimodiazz.md#dockwares-bundled-tools-were-public-and-are-not-any-more))
+    (ca. 1 Stunde 30 Minuten). Measured 2026-10-16: its `core.mailerSettings.emailAgent` is empty, so
+    Shopware falls back to `.env`'s `MAILER_DSN=smtp://127.0.0.1`, which is dockware's MailCatcher. Order
+    confirmations and password resets land there. Give it the main shop's relay settings, check that the
+    Workspace relay accepts its sender address, send a test mail, then set `SDWA5_STOP_MAILCATCHER=1` for
+    it in `docker-compose.projects.yml` and adjust `CLOSED_LISTENERS` in `monitoring/security-recheck.sh`
+23. **a production image instead of dockware for both shops** (ca. 24 Stunden). dockware is a
+    development image. `hardening/dockware-boot-end.sh` stops its sshd and MailCatcher on every boot, and
+    Caddy blocks Adminer and the log viewer, but all of it is still installed, root and `dockware` keep
+    their default passwords, and www-data has passwordless sudo. Shopware's own production template
+    with a PHP-FPM image would remove that, and it also ends the root/root database login that
+    `hardening/dockware-db-account.sh` has to keep for dockware's boot script
+24. **remove the JetBrains remote-backend remnants in `/root`** (ca. 30 Minuten). `/root/.config/JetBrains`
+    and `/root/.local/share/JetBrains` hold ca. 3 GB of an old PhpStorm remote backend. A name search
+    found no secret in them. Check that no current workflow uses a remote backend, then delete them
+25. **confirm an off-host copy of the restic repository password** ([docs/backup.md](docs/backup.md))
+    (ca. 15 Minuten). Since 2026-10-16 it lives in `/opt/docker/secrets/restic_password`. A lost host
+    means a restore needs that password from somewhere else, and the repository cannot be opened without
+    it. Check that the vault holds the current value and that the vault itself can be reached without
+    this host

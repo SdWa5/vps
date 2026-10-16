@@ -484,3 +484,8 @@ recorded inside the vault and deliberately not in this public file.
 - Users must be invited or registered via admin panel.
 - Signups are disabled (`signups_allowed: false`).
 - The container binds to `127.0.0.1:8000` only. Everything public goes through Caddy.
+- `vaultwarden-data/` and its `vaultwarden-data.bak-*` snapshots are mode 700 with files 600 on the
+  host. Until 2026-10-16 they were 755 and 644, so any host account could read `rsa_key.pem`,
+  `config.json` and the database. Vaultwarden runs as root, so the container is unaffected.
+  `monitoring/vaultwarden-autoupdate.sh` takes its snapshots with `cp -a`, which keeps the modes, and
+  `vaultwarden-db-backup/` was 700 and 600 already.

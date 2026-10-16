@@ -134,7 +134,8 @@ unaffected, because it runs on the host and talks to the loopback publishes. A c
 another application's loopback publish through its gateway either, since those listen on `127.0.0.1`
 only. The host firewall no longer accepts the bridges in `INPUT`, so a container reaches the host on
 22, 80 and 443 only, the same as anyone on the internet. Nothing needed more. Mail goes to
-the Workspace relay `smtp-relay.gmail.com` or to the shop's own in-container mailcatcher, and DNS is Docker's embedded resolver.
+the Workspace relay `smtp-relay.gmail.com`, or for `chimodiazz_shopware` to its own in-container
+mailcatcher, and DNS is Docker's embedded resolver.
 
 Every running service also drops `NET_RAW`, which takes away raw sockets and with them ARP and ICMP
 tricks on its bridge.
@@ -174,13 +175,53 @@ A dump restored into an existing shop container keeps the account, because the d
 shop database and not the `mysql` schema. A shop rebuilt from a fresh dockware image needs the script
 again, as step 4 in [chimodiazz.md](chimodiazz.md#how-it-was-brought-up) does.
 
+### Secrets
+
+Since 2026-10-16 the passwords and keys of Dolibarr, Paperless and restic are compose file secrets
+rather than `.env` values, see the `secrets:` block of [docker-compose.yml](../docker-compose.yml).
+Each is a file in `/opt/docker/secrets/` (directory 700, files 400, root, no trailing newline,
+gitignored), bind-mounted read-only at `/run/sdwa5-secrets/<name>`, and
+[`tools/secrets/write-secret-files.sh`](../tools/secrets/write-secret-files.sh) writes them. They no
+longer appear in `docker inspect` or `docker compose config`. Whether a value still reaches a
+process environment depends on how the image reads its `*_FILE`, and no image was assumed to support
+one without reading its entrypoint:
+
+| Service | Reads | Where the value still is |
+|---|---|---|
+| `dolibarr`, `dolibarr_cron` | `DOLI_*_FILE` through the entrypoint's `get_env_value`, into a shell variable | `conf.php` (database password, 400 `www-data`); `/etc/cron.d/dolibarr` (644) and the `cron_run_jobs.php` command line (cron key) |
+| `dolibarr_db`, `paperless_*_db` | `MYSQL_*_FILE` through MariaDB's `file_env`, which exports the value | the environment of `mariadbd` |
+| `paperless_sdwa5`, `paperless_home` | `PAPERLESS_*_FILE` through the s6 `init-env-file`, which copies the value | `/run/s6/container_environment/` and the environment of every Paperless process |
+| `restic` | `RESTIC_PASSWORD_FILE`, read by restic itself | the file only |
+
+Vaultwarden's `ADMIN_TOKEN` stays in `.env`, because it is an argon2id hash rather than the token.
+The dockware shops carry no secret in their container environment, since dockware's `SSH_PWD`,
+`TIDEWAYS_KEY` and `SW_API_ACCESS_KEY` hold the literal `not-set`. Their database passwords are in
+each shop's `.env` in the html volume, see the database accounts above. `monitoring/security-recheck.sh`
+reports per container which secret names `docker inspect` or a process environment still carries,
+see [monitoring.md](monitoring.md#security-recheck).
+
+### No sshd in the shop containers
+
+dockware is a development image, and its entrypoint starts `sshd` with password login for `root` and
+`dockware` and `mailcatcher` on every boot. Neither port was published, but an application container
+has no use for `sshd`, and access goes through `docker exec`, as the CIS Docker Benchmark asks.
+[`hardening/dockware-boot-end.sh`](../hardening/dockware-boot-end.sh) is mounted read-only as
+dockware's own end-of-boot hook `/var/www/boot_end.sh` into both shops. It stops `sshd` in both and
+`mailcatcher` in the sdwa5.org shop, which sends through `core.mailerSettings`. `chimodiazz_shopware`
+keeps `mailcatcher`, because its mail still falls back to `.env`'s `MAILER_DSN=smtp://127.0.0.1`
+and lands there, see [chimodiazz.md](chimodiazz.md). Tested on a bare `dockware/shopware:6.7.15.1`
+on 2026-10-16, where the container booted, `sshd` was gone in both variants and `mailcatcher` only
+where the flag was set. A production image instead of dockware would remove both for good, see
+[TODO.md](../TODO.md).
+
 ## Directory layout (`/opt/docker/`)
 
 ```
 /opt/docker/
 ├── docker-compose.yml              # main services
 ├── docker-compose.projects.yml  # Project 2 + Project 3 Dolibarr
-├── .env                            # all secrets — NEVER commit
+├── .env                            # settings, Vaultwarden's ADMIN_TOKEN hash — NEVER commit
+├── secrets/                        # gitignored — compose file secrets, 700/400 root
 ├── .env.example                    # template for .env
 ├── Caddyfile                       # Caddy reverse proxy config (copy for ref)
 ├── docker/
@@ -189,7 +230,9 @@ again, as step 4 in [chimodiazz.md](chimodiazz.md#how-it-was-brought-up) does.
 ├── docs/                           # this documentation
 ├── hardening/                      # host SSH and fail2ban config, deployed to /etc
 │   ├── sshd_config.d/10-hardening.conf
-│   └── fail2ban/jail.local
+│   ├── fail2ban/jail.local
+│   ├── dockware-boot-end.sh        # mounted into both shops as /var/www/boot_end.sh
+│   └── dockware-db-account.sh      # gives a dockware shop its own database account
 ├── monitoring/                     # host cron scripts, deployed to /opt/docker/monitoring
 ├── vaultwarden-db-backup/          # gitignored — consistent sqlite copy for restic
 ├── shopware-html-data/             # partially tracked — Shopware web root + MySQL
@@ -210,6 +253,7 @@ again, as step 4 in [chimodiazz.md](chimodiazz.md#how-it-was-brought-up) does.
 ├── paperless-{sdwa5,home}-media/   # gitignored — Paperless originals and archive files
 ├── paperless-{sdwa5,home}-mariadb-data/  # gitignored — Paperless DBs
 ├── tools/paperless/                # Paperless dev mirror, setup and visibility check
+├── tools/secrets/                  # writes the compose file secrets
 ├── ollama-data/                    # gitignored — Ollama model cache
 ├── minecraft-data/                 # partially tracked — Minecraft world data
 │   ├── server.properties.example, eula.txt, ops.json, whitelist.json, banned-*.json, config/  # tracked

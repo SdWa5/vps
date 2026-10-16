@@ -54,3 +54,64 @@ reset_root() {
     [ "$status" -eq 0 ]
     [[ "$output" == *'docker compose stop SERVICE'* ]]
 }
+
+# The inner script runs inside the throwaway container. Here it runs against a
+# gosu that starts nothing and a mariadb client that answers like a server with
+# one root account, writes the statements it is fed to a file and accepts the
+# root login only with the expected password.
+inner_stubs() {
+    local bin="$BATS_TEST_TMPDIR/inner-bin"
+    mkdir -p "$bin"
+    printf '#!/bin/sh\nexit 0\n' > "$bin/gosu"
+    cat > "$bin/mariadb" <<'STUB'
+#!/usr/bin/env bash
+for arg; do
+    case "$arg" in
+        --execute=SELECT\ Host*) echo localhost; exit 0 ;;
+        --user=root) [[ "${MYSQL_PWD:-}" == "$STUB_EXPECT_PW" ]] || exit 1 ;;
+        --execute=*) exit 0 ;;
+    esac
+done
+cat > "$STUB_SQL_LOG"
+STUB
+    chmod +x "$bin/gosu" "$bin/mariadb"
+    export PATH="$bin:$PATH" STUB_SQL_LOG="$BATS_TEST_TMPDIR/sql.log"
+    unset MARIADB_ROOT_PASSWORD MYSQL_ROOT_PASSWORD MARIADB_ROOT_PASSWORD_FILE MYSQL_ROOT_PASSWORD_FILE
+}
+
+inner() {
+    run bash "$REPO_ROOT/tools/mariadb/reset-root-password.inner.sh"
+}
+
+@test "the inner script takes the root password from a _FILE secret without its newline" {
+    inner_stubs
+    printf 'from-file\n' > "$BATS_TEST_TMPDIR/root_pw"
+    export MYSQL_ROOT_PASSWORD_FILE="$BATS_TEST_TMPDIR/root_pw" STUB_EXPECT_PW=from-file
+    inner
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'Root password set for root@localhost and verified with a login.'* ]]
+    grep -qxF "SET PASSWORD FOR 'root'@'localhost' = PASSWORD('from-file');" "$STUB_SQL_LOG"
+    [[ "$output" != *from-file* ]]
+}
+
+@test "the inner script prefers a plain root password over a _FILE one" {
+    inner_stubs
+    printf 'from-file' > "$BATS_TEST_TMPDIR/root_pw"
+    export MARIADB_ROOT_PASSWORD=plain MARIADB_ROOT_PASSWORD_FILE="$BATS_TEST_TMPDIR/root_pw" STUB_EXPECT_PW=plain
+    inner
+    [ "$status" -eq 0 ]
+    grep -qF "PASSWORD('plain')" "$STUB_SQL_LOG"
+}
+
+@test "the inner script refuses an unreadable _FILE and a missing password" {
+    inner_stubs
+    export MYSQL_ROOT_PASSWORD_FILE="$BATS_TEST_TMPDIR/absent"
+    inner
+    [ "$status" -eq 1 ]
+    [[ "$output" == *'is not readable'* ]]
+    unset MYSQL_ROOT_PASSWORD_FILE
+    inner
+    [ "$status" -eq 1 ]
+    [[ "$output" == *'no root password configured'* ]]
+    [ ! -e "$STUB_SQL_LOG" ]
+}

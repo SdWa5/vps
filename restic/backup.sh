@@ -11,7 +11,7 @@
 # BACKUP_LOG instead, so the container log stays readable.
 #
 # Environment:
-#   RESTIC_REPOSITORY, RESTIC_PASSWORD   read by restic itself
+#   RESTIC_REPOSITORY, RESTIC_PASSWORD_FILE   read by restic itself
 #   RESTIC_JOB_ARGS      extra arguments for `restic backup` (word-split)
 #   RESTIC_FORGET_ARGS   arguments for `restic forget`; empty skips retention
 #   BACKUP_PATH          what to back up (default /data)

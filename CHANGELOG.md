@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.86.0] - 2026-10-16
+
+### Added
+
+- Compose file secrets for Dolibarr, Paperless and restic. The values move from `.env` into
+  `secrets/<name>` (700/400 root, gitignored), mounted at `/run/sdwa5-secrets/` and read through each
+  image's `*_FILE` variable, so they are gone from `docker inspect` and `docker compose config`.
+- `dolibarr_admin_init_password`, a random value the Dolibarr image uses only on an empty schema,
+  instead of the live admin password. `dolibarr_cron` gets no admin password at all.
+- `tools/secrets/write-secret-files.sh`, which copies a value from a running container into a secret
+  file, compares it with a second independent read and never prints it, or writes a random one.
+- `hardening/dockware-boot-end.sh`, mounted as dockware's `/var/www/boot_end.sh` into both shops. It
+  stops `sshd` in both and MailCatcher in the sdwa5.org shop.
+- `monitoring/security-recheck.sh` checks `env:<container>`, which warns on a secret value in
+  `docker inspect` and lists the secret names a process environment still carries, and
+  `listeners:<shop>`, which warns when dockware's sshd or MailCatcher listens again.
+- Archive snapshots in restic, tagged `sdwa5-archive` and kept by `--keep-tag`, for host files that
+  are deleted after archiving. See `docs/backup.md`.
+- `tools/mariadb/reset-root-password.inner.sh` reads `MARIADB_ROOT_PASSWORD_FILE` and
+  `MYSQL_ROOT_PASSWORD_FILE`.
+- Tests for `monitoring/lib.sh`, the secret writer, the reset script's inner part and the compose
+  secrets.
+
+### Changed
+
+- `load_env` in `monitoring/lib.sh` no longer exports secret-shaped `.env` keys into the monitoring
+  scripts. `MONITOR_*` keys still load, and `LOAD_ENV_SECRETS` names exceptions.
+- `.env.example` drops the migrated keys. The never-started Project 2 and Project 3 instances keep
+  plain variables, and `.env` carries no values for them.
+
+### Security
+
+- The live Dolibarr admin password, the database passwords, the cron key, the Paperless keys and
+  the restic password no longer appear in any container's configuration.
+
 ## [1.85.1] - 2026-10-16
 
 ### Fixed

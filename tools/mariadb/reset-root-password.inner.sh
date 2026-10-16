@@ -4,10 +4,22 @@
 # stdin. Starts the server with grants and networking off, sets the password of
 # every existing root account to the service's configured root password, proves
 # it with a root login and shuts the server down again.
+#
+# The password comes from MARIADB_ROOT_PASSWORD or MYSQL_ROOT_PASSWORD, or, when
+# neither is set, from the file MARIADB_ROOT_PASSWORD_FILE or
+# MYSQL_ROOT_PASSWORD_FILE names. The file is read like the image's file_env
+# reads it, so trailing newlines are dropped and both arrive at the same value.
 
 set -uo pipefail
 
 pw="${MARIADB_ROOT_PASSWORD:-${MYSQL_ROOT_PASSWORD:-}}"
+if [[ -z "$pw" ]]; then
+    pw_file="${MARIADB_ROOT_PASSWORD_FILE:-${MYSQL_ROOT_PASSWORD_FILE:-}}"
+    if [[ -n "$pw_file" ]]; then
+        [[ -r "$pw_file" ]] || { echo "The root password file $pw_file is not readable." >&2; exit 1; }
+        pw="$(< "$pw_file")"
+    fi
+fi
 [[ -n "$pw" ]] || { echo 'The service has no root password configured.' >&2; exit 1; }
 
 sock=/run/mysqld/reset.sock

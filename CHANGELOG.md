@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.86.8] - 2026-10-16
+
+### Changed
+
+- docs/dolibarr.md names the Password field of the Modify form for a password change and records the
+  switch to `MAIN_SECURITY_HASH_ALGO=password_hash`.
+
 ## [1.86.7] - 2026-10-16
 
 ### Fixed

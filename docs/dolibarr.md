@@ -29,7 +29,18 @@ Dolibarr keeps only its hash. Until 2026-10-16 `.env` held the live admin passwo
 `DOLI_ADMIN_PASSWORD` only to create the first admin of an empty database, and it falls back to
 `admin` when the variable is unset. `dolibarr_admin_init_password` is therefore a random value nobody
 knows. An accidental fresh init then creates an admin that nobody can log in as, instead of one with
-the default password. Changing the admin password happens in Dolibarr itself (user card of `admin`).
+the default password.
+
+A password is changed in Dolibarr itself, in the Password field of the user's Modify form
+(`user/card.php?id=<id>&action=edit`). The **Reinit password** button sets a random password instead.
+Saving ends the user's open sessions, so the next request asks for a new login. TODO #29 adds the same
+change through the API.
+
+Since 2026-10-16 `MAIN_SECURITY_HASH_ALGO` is `password_hash` (Setup > Other setup, entity 1), so a
+new password is stored as a `$2y$` bcrypt hash. Before that, every user had an unsalted md5 hash.
+Dolibarr still verifies a 32-character md5 hash under the new setting and does not rehash on login, so
+a user moves to bcrypt only by changing the password. The admin moved on 2026-10-16, and the other four
+users still have md5. Old hashes also stay in the database dumps and the restic snapshots.
 
 `dolibarr_cron` never reads an admin password, because `DOLI_CRON=1` skips the database init.
 

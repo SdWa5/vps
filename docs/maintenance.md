@@ -342,6 +342,19 @@ image, so it follows whatever production runs. The ERP-only Caddy guard may be s
 from [docs/dolibarr.md](dolibarr.md) migrated the full production dump from 23.0.4 to 24.0.1 on
 2026-10-16, and BankSync v1.2.0 rendered all its pages there without PHP errors.
 
+Executed on 2026-10-16 between 02:26 and 02:40. The ERP was down ca. 3 minutes. The isolated
+rehearsal passed every gate first. Production then reported image, environment and database version
+24.0.1, unchanged counts of users, third parties, invoices and bank entries, installation lock mode
+400 and only upstream-accepted duplicate-object results in the migration output. A fresh dump
+passed the restore check, the API explorer returned 404, the admin login and all nine BankSync pages
+rendered without PHP errors, and an SMTP test mail was accepted. `dolibarr_cron` started last and
+its first run authenticated and completed. The upgrade made module `ai` active. The preserved
+archive, documents, custom modules and the 23.0.4 image ID stay in a root-only
+`/var/tmp/dolibarr-24-preserve.*` directory for the rollback.
+
+The 24.0.1 image writes a full database dump to `documents/backup-before-upgrade.sql` with mode 644.
+Set it to 600 after every upgrade.
+
 ### Establish the host recovery checkpoint
 
 Install the validated whole-host guard on the four public sites. Drain accepted requests and

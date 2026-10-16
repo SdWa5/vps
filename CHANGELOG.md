@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.75.1] - 2026-10-16
+
+### Added
+
+- Execution evidence of the Dolibarr 24.0.1 production upgrade and the mode fix for the image's
+  pre-upgrade dump in `docs/maintenance.md`.
+
 ## [1.75.0] - 2026-10-16
 
 ### Added

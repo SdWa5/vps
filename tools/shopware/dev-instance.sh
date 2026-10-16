@@ -16,8 +16,9 @@
 #   - MAILER_DSN=null://null and core.mailerSettings.disableDelivery, so mail
 #     delivery stays off even with a network.
 #   - APP_URL and every sales channel domain point at the local URL.
-#   - FroshShopmon is deactivated, and no scheduled-task runner or queue
-#     consumer runs (the admin worker is off in the tracked config).
+#   - FroshShopmon and every Shopware service app are deactivated, and no
+#     scheduled-task runner or queue consumer runs (the admin worker is off in
+#     the tracked config).
 #   - A new APP_SECRET, so a token minted here is not valid in production.
 #
 # Usage:
@@ -27,6 +28,8 @@
 #   tools/shopware/dev-instance.sh down       stop and remove its containers, keep the data
 #   tools/shopware/dev-instance.sh status     containers, version, mail state and URL
 #   tools/shopware/dev-instance.sh purge      remove containers, volumes and fetched copies
+#   tools/shopware/dev-instance.sh composer ARGS   run Composer on the mirror's files, with network
+#   tools/shopware/dev-instance.sh console ARGS    run bin/console inside the mirror
 #   tools/shopware/dev-instance.sh --help
 #
 # Environment:
@@ -65,7 +68,7 @@ PROXY_IMAGE="alpine/socat:1.8.1.1"
 DATABASE_URL="mysql://root:root@127.0.0.1:3306"
 LOCAL_URL="http://localhost:$DEV_PORT"
 
-usage() { sed -n '3,41p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '3,44p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
 die() { printf 'dev-instance.sh: %s\n' "$*" >&2; exit 1; }
 
 # The image a service of docker-compose.yml pins, so the mirror follows every
@@ -135,16 +138,32 @@ start_proxy() {
 }
 
 # Asked by the local URL, because a host that matches no sales channel domain
-# such as 127.0.0.1 gets a 400.
-wait_for_application() {
+# such as 127.0.0.1 gets a 400. Prints the storefront's status code as soon as
+# there is one, and fails only when nothing answers at all.
+storefront_code() {
     local attempt code
     for (( attempt = 0; attempt < 120; attempt++ )); do
         code="$(curl --silent --output /dev/null --max-time 5 --write-out '%{http_code}' \
             "$LOCAL_URL/" || true)"
-        [[ "$code" =~ ^(200|301|302)$ ]] && return 0
+        [[ "$code" =~ ^[1-5][0-9][0-9]$ ]] && { printf '%s' "$code"; return 0; }
         sleep 1
     done
     die "the storefront did not answer on port $DEV_PORT within 120 s."
+}
+
+# restore demands a working storefront.
+wait_for_application() {
+    local code
+    code="$(storefront_code)"
+    [[ "$code" =~ ^(200|301|302)$ ]] || die "the storefront answered $code. docker exec $APP tail var/log shows why."
+}
+
+# up only reports it, because during an update the storefront answers 503 in
+# maintenance mode and 500 until system:update:finish has migrated the database.
+report_application() {
+    local code
+    code="$(storefront_code)"
+    [[ "$code" =~ ^(200|301|302)$ ]] || printf 'The storefront answers %s.\n' "$code"
 }
 
 # Rewrites .env.local inside the copy. The keys set here replace production's,
@@ -163,6 +182,36 @@ write_env_local() {
               cat; } > .env.local.mirror
             chmod 600 .env.local.mirror
             mv .env.local.mirror .env.local'
+}
+
+# Shopware's service apps such as ShopwarePayments cannot reach their servers
+# from here. Since 6.7.15 a checkout gateway whose host does not resolve fails
+# the cart with a 400 instead of being skipped, because AppSystemHttpMiddleware
+# throws an AppException that the gateway's GuzzleException catch misses. They
+# are deactivated through the services API, the way the admin does it, with a
+# local integration whose keys stay in the private directory. Consent-bound
+# services stay deactivated across system:update:finish. SwagGmvReportingService
+# carries only the shopware_account requirement, which Shopware declares
+# always-on, so an update reactivates it, and only its privileges follow whether
+# an admin user holds a store token. Without egress it reaches nobody.
+deactivate_services() {
+    if [[ ! -s "$DEV_DIR/integration.env" ]]; then
+        console integration:create --admin "$PREFIX" > "$DEV_DIR/integration.env"
+    fi
+    docker exec -i "$APP" sh -c '
+        set -e
+        . /dev/stdin
+        api=http://127.0.0.1/api
+        token="$(curl -sf -m 30 "$api/oauth/token" -H "Content-Type: application/json" \
+            -d "{\"grant_type\":\"client_credentials\",\"client_id\":\"$SHOPWARE_ACCESS_KEY_ID\",\"client_secret\":\"$SHOPWARE_SECRET_ACCESS_KEY\"}" \
+            | php -r "echo json_decode(stream_get_contents(STDIN), true)[\"access_token\"] ?? \"\";")"
+        [ -n "$token" ]
+        curl -sf -m 30 -H "Authorization: Bearer $token" "$api/service/list" \
+            | php -r "foreach (json_decode(stream_get_contents(STDIN), true) as \$s) { if (\$s[\"active\"]) { echo \$s[\"name\"], \"\n\"; } }" \
+            | while read -r name; do
+                curl -sf -m 60 -X POST -H "Authorization: Bearer $token" "$api/service/deactivate/$name" >/dev/null
+            done' < "$DEV_DIR/integration.env" \
+        || die "the service apps could not be deactivated through the admin API."
 }
 
 # Applied to the restored copy before the proxy ever starts, so not a single
@@ -191,6 +240,7 @@ SQL
         console app:shop-id:check 2>/dev/null | grep -q 'not suggested' \
             || die "Shopware still suggests a shop ID change. bin/console app:shop-id:check shows why."
     fi
+    deactivate_services
     console cache:clear >/dev/null
 }
 
@@ -227,6 +277,8 @@ cmd_restore() {
     [[ "$(database_name)" =~ ^[A-Za-z0-9_]+$ ]] || die "the archive manifest names no database."
     remove_containers
     docker volume rm --force "$HTML_VOLUME" "$MYSQL_VOLUME" >/dev/null
+    # The integration lived in the database that is replaced now.
+    rm -f -- "$DEV_DIR/integration.env"
     docker volume create "$HTML_VOLUME" >/dev/null
     docker volume create "$MYSQL_VOLUME" >/dev/null
     printf 'Unpacking the shop files.\n'
@@ -256,7 +308,7 @@ cmd_up() {
         || die "the mirror's .env.local is not neutralised. Run restore."
     neutralise
     start_proxy
-    wait_for_application
+    report_application
     cmd_status
 }
 
@@ -273,6 +325,29 @@ cmd_purge() {
     printf 'Removed the mirror of %s and %s.\n' "$SERVICE" "$DEV_DIR"
 }
 
+# Composer needs the package servers, which the mirror cannot reach, so it
+# runs in a container of its own on the proxy's network. That container runs
+# Composer only and none of Shopware's services, and Composer's scripts are
+# skipped for the commands that run them, because they boot Shopware. They run
+# inside the mirror afterwards, for example `console assets:install`.
+cmd_composer() {
+    docker volume inspect "$HTML_VOLUME" >/dev/null 2>&1 \
+        || die "no mirror for $SERVICE. Run fetch and restore first."
+    local -a extra=()
+    case "${1:-}" in install|update|require|remove) extra=(--no-scripts) ;; esac
+    ensure_networks
+    docker run --rm --network "$WEB_NETWORK" --user www-data --workdir /var/www/html \
+        --entrypoint composer \
+        --mount "type=volume,src=$HTML_VOLUME,dst=/var/www/html,volume-nocopy=true" \
+        "$(app_image)" --no-interaction "$@" "${extra[@]}"
+}
+
+cmd_console() {
+    [[ "$(docker inspect --format '{{.State.Running}}' "$APP" 2>/dev/null)" == true ]] \
+        || die "the mirror is not running. Run up first."
+    console "$@"
+}
+
 cmd_status() {
     local state
     state="$(docker inspect --format '{{.State.Status}}' "$APP" 2>/dev/null || printf 'absent')"
@@ -283,6 +358,8 @@ cmd_status() {
         printf 'version\t%s\n' "$(console --version 2>/dev/null || printf 'unknown')"
         printf 'mails\t%s\n' "$(console system:config:get core.mailerSettings.disableDelivery 2>/dev/null \
             | grep -q -E '=> (1|true)$' && printf 'disabled' || printf 'ENABLED')"
+        printf 'services\t%s active\n' "$(database --batch --skip-column-names --database="$(database_name)" \
+            --execute='SELECT COUNT(*) FROM app WHERE active = 1 AND self_managed = 1' 2>/dev/null || printf 'unknown')"
         printf 'url\t%s/\n' "$LOCAL_URL"
     fi
 }
@@ -295,6 +372,8 @@ main() {
         down) cmd_down ;;
         status) cmd_status ;;
         purge) cmd_purge ;;
+        composer) shift; cmd_composer "$@" ;;
+        console) shift; cmd_console "$@" ;;
         -h|--help) usage ;;
         "") usage; exit 2 ;;
         *) die "unknown command: $1. Try --help." ;;

@@ -33,6 +33,10 @@ case "$*" in
             printf '[OK] Shop ID change not suggested.\n'
         fi ;;
     *'app:shop-id:change'*) exit 1 ;;
+    *'integration:create'*)
+        printf 'SHOPWARE_ACCESS_KEY_ID=SWIATESTKEY\nSHOPWARE_SECRET_ACCESS_KEY=topsecretvalue\n' ;;
+    *'service/deactivate'*) exit "${SERVICES_API_FAIL:-0}" ;;
+    *'self_managed = 1'*) printf '1\n' ;;
     *"name = 'FroshShopmon'"*) printf '%s\n' "${SHOPMON_ACTIVE:-0}" ;;
     *'system:config:get'*) printf 'core.mailerSettings.disableDelivery => true\n' ;;
     *'--version'*) printf 'Shopware 6.7.11.1 (env: prod, debug: false)\n' ;;
@@ -267,6 +271,67 @@ line_of() { grep -n -F -m1 -- "$1" "$DOCKER_LOG" | cut -d: -f1; }
     ! grep -q 'app:shop-id:change' "$DOCKER_LOG"
 }
 
+@test "the service apps are deactivated through the API with keys that are never printed" {
+    fetched_copy
+    fake_docker
+    run bash -c 'source "$DEV_SCRIPT"; neutralise'
+    [ "$status" -eq 0 ]
+    [[ "$output" != *'topsecretvalue'* ]]
+    [ "$(stat -c %a "$SDWA5_SHOPWARE_DEV_DIR/integration.env")" = 600 ]
+    ! grep '^CALL' "$DOCKER_LOG" | grep -q 'topsecretvalue'
+    grep -q '^STDIN SHOPWARE_SECRET_ACCESS_KEY=topsecretvalue$' "$DOCKER_LOG"
+    [ "$(line_of 'service/deactivate')" -lt "$(line_of 'cache:clear')" ]
+}
+
+@test "an existing integration is reused" {
+    fetched_copy
+    fake_docker
+    printf 'SHOPWARE_ACCESS_KEY_ID=old\n' > "$SDWA5_SHOPWARE_DEV_DIR/integration.env"
+    run bash -c 'source "$DEV_SCRIPT"; deactivate_services'
+    [ "$status" -eq 0 ]
+    ! grep -q 'integration:create' "$DOCKER_LOG"
+}
+
+@test "a failing services API stops the neutralisation" {
+    fetched_copy
+    fake_docker
+    run env SERVICES_API_FAIL=1 bash -c 'source "$DEV_SCRIPT"; neutralise'
+    [ "$status" -ne 0 ]
+    [[ "$output" == *'could not be deactivated'* ]]
+    ! grep -q 'cache:clear' "$DOCKER_LOG"
+}
+
+@test "restore drops the integration of the replaced database" {
+    fetched_copy
+    fake_docker
+    stub curl "printf 200"
+    printf 'SHOPWARE_ACCESS_KEY_ID=stale\n' > "$SDWA5_SHOPWARE_DEV_DIR/integration.env"
+    run bash "$DEV_SCRIPT" restore
+    [ "$status" -eq 0 ]
+    grep -q 'integration:create' "$DOCKER_LOG"
+    ! grep -q 'STDIN SHOPWARE_ACCESS_KEY_ID=stale' "$DOCKER_LOG"
+    [[ "$output" == *'services	1 active'* ]]
+}
+
+@test "restore fails on a storefront that answers with an error" {
+    fetched_copy
+    fake_docker
+    stub curl "printf 500"
+    run bash "$DEV_SCRIPT" restore
+    [ "$status" -ne 0 ]
+    [[ "$output" == *'storefront answered 500'* ]]
+}
+
+@test "up only reports a storefront in maintenance mode" {
+    fetched_copy
+    fake_docker
+    stub curl "printf 503"
+    run bash "$DEV_SCRIPT" up
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'The storefront answers 503.'* ]]
+    [[ "$output" == *'application	running'* ]]
+}
+
 @test "up refuses a mirror whose env was never neutralised" {
     fetched_copy
     fake_docker
@@ -283,4 +348,35 @@ line_of() { grep -n -F -m1 -- "$1" "$DOCKER_LOG" | cut -d: -f1; }
     [ "$status" -eq 0 ]
     [ ! -e "$SDWA5_SHOPWARE_DEV_DIR" ]
     grep -q 'volume rm --force sdwa5-shopware-dev-html sdwa5-shopware-dev-mysql' "$DOCKER_LOG"
+}
+
+@test "composer runs beside the mirror on the proxy's network, without scripts" {
+    fake_docker
+    run bash "$DEV_SCRIPT" composer require shopware/core:v6.7.15.1
+    [ "$status" -eq 0 ]
+    call="$(grep '^CALL run --rm' "$DOCKER_LOG")"
+    [[ "$call" == *'--network sdwa5-shopware-dev-web '* ]]
+    [[ "$call" == *'--entrypoint composer '* ]]
+    [[ "$call" == *' --no-interaction require shopware/core:v6.7.15.1 --no-scripts' ]]
+}
+
+@test "composer adds no script flag to commands that run none" {
+    fake_docker
+    run bash "$DEV_SCRIPT" composer audit --locked
+    [ "$status" -eq 0 ]
+    grep -q -- ' --no-interaction audit --locked$' "$DOCKER_LOG"
+}
+
+@test "composer refuses to run without a mirror" {
+    stub docker "case \"\$*\" in 'volume inspect'*) exit 1 ;; esac; exit 97"
+    run bash "$DEV_SCRIPT" composer install
+    [ "$status" -ne 0 ]
+    [[ "$output" == *'Run fetch and restore first'* ]]
+}
+
+@test "console passes its arguments to bin/console in the mirror" {
+    fake_docker
+    run bash "$DEV_SCRIPT" console system:update:finish
+    [ "$status" -eq 0 ]
+    grep -q 'exec --user www-data --workdir /var/www/html sdwa5-shopware-dev php bin/console --no-interaction system:update:finish$' "$DOCKER_LOG"
 }

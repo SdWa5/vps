@@ -64,12 +64,12 @@ Domain → port mapping lives in the [Caddyfile](../Caddyfile); backup detail in
 
 | Service             | Image                        | Port (internal) | Public URL                 | Compose file                            |
 |---------------------|------------------------------|-----------------|----------------------------|-----------------------------------------|
-| Shopware            | dockware/shopware:latest     | 8001 / 8443     | https://sdwa5.org          | docker-compose.yml                      |
+| Shopware            | dockware/shopware:6.7.15.1   | 8001 / 8443     | https://sdwa5.org          | docker-compose.yml                      |
 | Vaultwarden         | vaultwarden/server:latest    | 8000            | https://vault.sdwa5.org    | docker-compose.yml                      |
-| Dolibarr SdWa5      | dolibarr/dolibarr:latest     | 8002            | https://erp.sdwa5.org      | docker-compose.yml                      |
-| Dolibarr SdWa5 cron | dolibarr/dolibarr:latest     | —               | —                          | docker-compose.yml                      |
-| Dolibarr Project 2  | dolibarr/dolibarr:latest     | 8003            | https://project2.sdwa5.org | docker-compose.projects.yml             |
-| Dolibarr Project 3  | dolibarr/dolibarr:latest     | 8004            | https://project3.sdwa5.org | docker-compose.projects.yml             |
+| Dolibarr SdWa5      | dolibarr/dolibarr:24.0.1     | 8002            | https://erp.sdwa5.org      | docker-compose.yml                      |
+| Dolibarr SdWa5 cron | dolibarr/dolibarr:24.0.1     | —               | —                          | docker-compose.yml                      |
+| Dolibarr Project 2  | dolibarr/dolibarr:24.0.1     | 8003            | https://project2.sdwa5.org | docker-compose.projects.yml             |
+| Dolibarr Project 3  | dolibarr/dolibarr:24.0.1     | 8004            | https://project3.sdwa5.org | docker-compose.projects.yml             |
 | Chimo Diazz         | dockware/shopware:6.7.11.1   | 8005 / 8444     | https://chimodiazz.sdwa5.org | docker-compose.projects.yml (profile: chimodiazz) |
 | Ollama              | ollama/ollama:latest         | 11434           | (no domain, firewalled)    | docker-compose.yml                      |
 | Restic backup       | creativeprojects/resticprofile | —               | —                          | docker-compose.yml                      |

@@ -92,6 +92,8 @@ and the newest hourly database archive.
 tools/shopware/dev-instance.sh fetch      # read the shop files and the archive over ssh
 tools/shopware/dev-instance.sh restore    # rebuild the mirror, http://localhost:8090/
 tools/shopware/dev-instance.sh up|down|status
+tools/shopware/dev-instance.sh composer ARGS   # Composer on the mirror's files, with network
+tools/shopware/dev-instance.sh console ARGS    # bin/console inside the mirror
 tools/shopware/dev-instance.sh purge      # remove volumes and fetched copies
 ```
 
@@ -128,3 +130,55 @@ answered 200, `curl` from inside the container to the service registry and to 1.
 
 The admin takes the production login, because the user table is copied. A browser login to the
 mirror is local, and nothing it changes reaches production.
+
+Every Shopware service app is deactivated through the admin API as well, with an integration whose keys
+stay in `integration.env` in the private directory. That is needed since 6.7.15, because a checkout
+gateway whose host does not resolve fails the cart with a 400. `AppSystemHttpMiddleware` throws an
+`AppException` that the gateway's `GuzzleException` catch misses, and `ShopwarePayments` holds such a
+gateway. `SwagGmvReportingService` is always-on in Shopware's own design, so `system:update:finish`
+reactivates it, and `status` then shows `services 1 active`. Without egress it reaches nobody.
+
+`composer` runs in a container of its own on the proxy's network, because the mirror has no egress. It
+adds `--no-scripts` to `install`, `update`, `require` and `remove`, since the scripts boot Shopware.
+`up` only reports a storefront that answers 503 or 500, because that is the state during an update.
+
+## Updating Shopware
+
+Rehearsed on the mirror on 2026-10-16 from 6.7.11.1 to 6.7.15.1. `composer audit` reported 22 advisories
+for the old lock and none for the new one. That needed 6.7.15.1, because 6.7.11.1 pins `dompdf/dompdf`
+3.1.4 exactly.
+
+1. **New lock on the mirror.** Start it with the old image, then make the lock with Composer. The
+   administration, storefront and elasticsearch packages pin core exactly, so `require
+   --update-with-all-dependencies` fails, and the order that works is:
+
+   ```bash
+   tools/shopware/dev-instance.sh restore
+   docker exec -u root sdwa5-shopware-dev chown 33:33 /var/www/html/composer.json /var/www/html/composer.lock
+   tools/shopware/dev-instance.sh composer require --no-update shopware/core:v6.7.15.1
+   tools/shopware/dev-instance.sh composer update shopware/core shopware/administration \
+       shopware/storefront shopware/elasticsearch --with-all-dependencies
+   docker exec sdwa5-shopware-dev php vendor/composer/composer/bin/composer audit --locked
+   ```
+
+   The dockware images ship Composer 2.2.9, which has no `audit`, so the vendored Composer runs it. Copy
+   `composer.json` and `composer.lock` into `shopware-html-data/` and give them back to `root:root`, as
+   the git pull leaves them in production.
+2. **Rehearse the live order.** Restore again, then replay the production steps with the new image:
+   `sales-channel:maintenance:enable --all`, `system:update:prepare`, the new composer files copied in,
+   `SDWA5_SHOPWARE_DEV_IMAGE=<new image> tools/shopware/dev-instance.sh up`, `composer install --no-dev`,
+   `system:update:finish`, `theme:compile --active-only`, `cache:clear` and
+   `sales-channel:maintenance:disable --all`. Measured on 2026-10-16 this took 1 min 22 s, with 15 s for
+   the install and 16 s for the migrations.
+3. **Accept on the mirror.** Storefront EN and DE, the cart, the admin and the health check answer 200.
+   `plugin:list --json` matches production's apart from the deactivated `FroshShopmon`. An invoice
+   preview renders as a PDF through `/api/_action/order/{id}/{deepLinkCode}/document/invoice/preview`,
+   which exercises dompdf. The colour scan in [theme.md](theme.md) is compared with the last list and
+   new rules are overridden in the theme.
+4. **Pin the image by tag and digest** in `docker-compose.yml`, because dockware rebuilds tags.
+5. **Live, after a Contabo snapshot.** `monitoring/database-backup.sh` and
+   `monitoring/database-restore-check.sh shopware`, the worker lock `/run/lock/shopware-worker.lock`
+   held throughout, maintenance on, `system:update:prepare`, `git pull --ff-only`, `docker compose up -d
+   shopware`, `composer install --no-dev` in the container, `system:update:finish`, `plugin:refresh`
+   and `plugin:update SdWa5Theme` for a bumped theme, `theme:compile --active-only`, `cache:clear`, the FPM reload and maintenance off.
+   The rollback is the previous image line and lock from git plus the SQL archive, or the snapshot.

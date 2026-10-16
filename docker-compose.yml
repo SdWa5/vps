@@ -27,9 +27,11 @@ services:
 
 
   shopware:
-    # Exact pin. Verified 2026-06-23 tag, digest 85e59fb6, and it is what runs
-    # today (Shopware 6.7.11.1, PHP 8.2.31). A Shopware update is therefore a
-    # deliberate bump of this line. That is the point: nothing ever ran
+    # Exact pin, by tag and digest. Shopware 6.7.15.1 with PHP 8.2.34, built by
+    # dockware on 2026-10-12 and rehearsed on the local mirror on 2026-10-16
+    # (tools/shopware/dev-instance.sh). The digest is part of the pin because
+    # dockware rebuilds existing tags. The image still ships Composer 2.2.9.
+    # A Shopware update is therefore a deliberate bump of this line. That is the point: nothing ever ran
     # `docker compose pull` for this service, so `:latest` gave neither updates
     # nor reproducibility.
     #
@@ -38,7 +40,7 @@ services:
     # exists, so that was wrong. The pin stays exact anyway, because that tag
     # rolls forward across minor versions and Shopware minors run forward-only
     # database migrations, which is the same reason Dolibarr is pinned exactly.
-    image: dockware/shopware:6.7.11.1
+    image: dockware/shopware:6.7.15.1@sha256:1a4018ced1e5b281fcbbe53c8cf56f77ca8d075036467b72b602d3d6e6de7ea2
     container_name: shopware
     ports:
       - "127.0.0.1:8001:80"

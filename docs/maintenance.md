@@ -172,7 +172,7 @@ its own.
 
 | Service | Tag | Why |
 |---|---|---|
-| `shopware` | `dockware/shopware:6.7.11.1` | Exact. dockware publishes no `6.7` series tag, so a pin here can only be exact. An update is a deliberate bump of the line |
+| `shopware` | `dockware/shopware:6.7.15.1@sha256:1a4018ce…` | Exact, by tag and digest, because dockware rebuilds existing tags (6.7.15.1 was built on 2026-10-12). The `6.7-latest` series tag exists but rolls across minors, whose migrations run forward only. An update is a deliberate bump of the line after a rehearsal, see [Updating Shopware](shopware/infrastructure.md#updating-shopware). Chimo Diazz stays on 6.7.11.1 in `docker-compose.projects.yml` |
 | `dolibarr`, `dolibarr_cron` | `dolibarr/dolibarr:24.0.1` | Exact. 24.0.1 is the newest published image on 2026-10-16, while 24.0.2 exists only as a source tag. The migration from 23.0.4 passed on the dev mirror and in the isolated rehearsal before deployment |
 | `dolibarr_db` and the project DBs | `mariadb:12.3` | Minor series. Patch updates inside 12.3 are safe and wanted; crossing a major version is the one-way door |
 | `vaultwarden` | `vaultwarden/server:latest` | Deliberately unpinned. [`monitoring/vaultwarden-autoupdate.sh`](../monitoring/vaultwarden-autoupdate.sh) pulls it daily and verifies the result, and a pin would silently freeze security updates for a password vault. See [vaultwarden.md](vaultwarden.md) |

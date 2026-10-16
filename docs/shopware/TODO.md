@@ -10,7 +10,16 @@
    app, then either deactivate the unwanted ones or cover them in the same privacy pass as item 12.
    The production backup of 2026-10-16 03:40 holds eight with seven active, because
    `SwagRecommendations`, `SwagPreviewGenerator` and `SwagGmvReportingService` installed themselves
-   since (`decision`)
+   since. Two facts from the 6.7.15.1 rehearsal on 2026-10-16 bear on the decision. `ShopwarePayments`
+   holds a checkout and a context gateway with the checkout permission granted, so every cart
+   calls Shopware's payment service, although the shop offers only prepayment. On the mirror without
+   DNS, 6.7.15.1 answered the cart with a 400 until it was deactivated, so a failing lookup of its host
+   would presumably break the production cart as well. `SwagGmvReportingService` requires only a
+   Shopware account and is always-on by design. `system:update:finish` reactivated it after a
+   manual deactivation, and its privileges are granted while an admin user holds a store token, which
+   one does in the backup. The consent-bound services stayed deactivated across the update. According
+   to the core code, `POST /api/services/disable` uninstalls all of them as a unit, which was not
+   tried (`decision`)
 2. Review the remaining default Shopware email templates. Confirmation and cancellation copy, sender names,
    cancellation subjects and local order times are corrected in EN/DE as documented in
    [content-cms.md](content-cms.md#order-mail-copy-and-verification). Other templates remain to be reviewed.
@@ -109,3 +118,10 @@
 14. **Text wordmark as the header logo** (ca. 20 minutes), if the small graffiti logo of the SdWa5Theme does not
     convince. Decided 2026-10-06 to try the graffiti logo first. The wordmark would be "SdWa5" in Space Grotesk in
     `layout_header_logo_image`, which needs no image and stays sharp at every size
+15. **Update the plugins as well** (ca. 3 hours). The 6.7.15.1 update of 2026-10-16 moved core and its dependencies
+    only and kept every plugin on its exact pin. `composer outdated --direct` on the mirror then showed
+    `frosh/tools` 3.9.0 -> 3.15.1, `swag/language-pack` 5.58.0 -> 5.75.0 and `tcinncopyrightcustom` 1.0.7 -> 1.1.1
+    as compatible updates, and `swag/swag-extension-store` 4.2.2 -> 7.0.0 as a major one that needs its changelog
+    read first. Rehearse them on the mirror with `tools/shopware/dev-instance.sh composer require` and the
+    procedure in [infrastructure.md](infrastructure.md#updating-shopware). The dockware image still ships
+    Composer 2.2.9 from 2022, so whether a newer Composer belongs in the image or in the procedure is part of it

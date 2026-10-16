@@ -337,7 +337,8 @@ in rehearsal. Never rely on the entrypoint's automatic-restore message or downgr
 
 24.0.1 is the first release with the core MCP server. It reuses the two sections above with these
 differences. Pull and gate on `dolibarr/dolibarr:24.0.1` instead of 23.0.4, and the rollback image is
-23.0.4. The ERP-only Caddy guard may be skipped, because the ERP has a single operator. The dev mirror
+23.0.4. The rehearsal requires the copied database to report the `DOLI_VERSION` of the running
+image, so it follows whatever production runs. The ERP-only Caddy guard may be skipped, because the ERP has a single operator. The dev mirror
 from [docs/dolibarr.md](dolibarr.md) migrated the full production dump from 23.0.4 to 24.0.1 on
 2026-10-16, and BankSync v1.2.0 rendered all its pages there without PHP errors.
 

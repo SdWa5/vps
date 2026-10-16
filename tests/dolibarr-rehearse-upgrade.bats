@@ -101,3 +101,12 @@ verify_fixture() {
     verify_fixture
     [ "$status" -ne 0 ]
 }
+
+@test "the source version is read from the image's DOLI_VERSION" {
+    mkdir "$BATS_TEST_TMPDIR/bin"
+    printf '#!/bin/sh\nprintf "PATH=/usr/bin\\nDOLI_VERSION=23.0.4\\nPHP_VERSION=8.4\\n"\n' > "$BATS_TEST_TMPDIR/bin/docker"
+    chmod +x "$BATS_TEST_TMPDIR/bin/docker"
+    run env PATH="$BATS_TEST_TMPDIR/bin:$PATH" bash -c 'source "$REHEARSAL_SCRIPT"; image_version sha256:x'
+    [ "$status" -eq 0 ]
+    [ "$output" = '23.0.4' ]
+}

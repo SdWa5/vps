@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.74.1] - 2026-10-16
+
+### Fixed
+
+- `rehearse-upgrade.sh` compares the copied database with the version of the running image instead
+  of a fixed 23.0.2, which refused every rehearsal since production moved to 23.0.4.
+
 ## [1.74.0] - 2026-10-16
 
 ### Changed

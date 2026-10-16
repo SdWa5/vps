@@ -20,6 +20,12 @@ EVIDENCE=""
 
 fail() { printf '%s\n' "$*" >&2; return 1; }
 
+# The Dolibarr release an image ships, read from its DOLI_VERSION environment entry.
+image_version() {
+    docker image inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "$1" \
+        | sed -n 's/^DOLI_VERSION=//p'
+}
+
 cleanup() {
     local result="$?"
     trap - EXIT
@@ -118,13 +124,15 @@ main() {
     fi
     [[ $# == 2 && -r "$2" ]] || return 2
     [[ $EUID == 0 ]] || { fail 'Run the applied rehearsal as root on the VPS.'; return 1; }
-    local archive="$2" source_image database_image wanted_image attempt before_version tables
+    local archive="$2" source_image source_version database_image wanted_image attempt before_version tables
     source_image="$(docker inspect --format '{{.Image}}' dolibarr)"
     database_image="$(docker inspect --format '{{.Image}}' dolibarr_db)"
     wanted_image="$(docker image inspect --format '{{.Id}}' "$TARGET_IMAGE")"
     [[ "$source_image" =~ ^sha256:[a-f0-9]{64}$ && "$database_image" =~ ^sha256:[a-f0-9]{64}$ \
         && "$wanted_image" =~ ^sha256:[a-f0-9]{64}$ ]] || return 1
     [[ "$source_image" != "$wanted_image" ]] || { fail 'The target is already deployed.'; return 1; }
+    source_version="$(image_version "$source_image")"
+    [[ "$source_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { fail 'The running image reports no version.'; return 1; }
 
     EVIDENCE="$(mktemp -d /var/tmp/sec05-evidence.XXXXXX)"
     WORK="$(mktemp -d /var/tmp/sec05-rehearsal.XXXXXX)"
@@ -169,7 +177,8 @@ main() {
     database < "$WORK/archive/dump.sql" > "$WORK/import.log" 2>&1
     counts > "$WORK/counts.before"
     before_version="$(version)"
-    [[ "$before_version" == 23.0.2 ]] || { fail 'The copied database is not version 23.0.2.'; return 1; }
+    [[ "$before_version" == "$source_version" ]] \
+        || { fail "The copied database is not version $source_version of the running image."; return 1; }
 
     PHASE="target migration"
     printf 'Testing the target image migration.\n'

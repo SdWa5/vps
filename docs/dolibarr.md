@@ -75,6 +75,22 @@ exist. It never activates anything. After a first install, or after an update th
 jobs, boxes or menus, the module is deactivated and activated again in Setup → Modules, because
 Dolibarr registers those only on activation.
 
+The REST API has no route for that, so `tools/dolibarr/module-setup.sh` drives Setup → Modules from a
+workstation the way an administrator does. It logs in, follows the switch link the page renders for
+the module and reads the page again to confirm the new state. Repeating a command changes nothing.
+It targets the dev mirror by default. Production needs its URL and the admin password from the vault,
+passed as a file so it never reaches the process list.
+
+```bash
+tools/dolibarr/module-setup.sh status PmTools
+DOLIBARR_URL=https://erp.sdwa5.org \
+DOLIBARR_ADMIN_PASSWORD_FILE=<(bw get password <ERP admin item id>) \
+    tools/dolibarr/module-setup.sh enable PmTools
+```
+
+A reactivation is `disable` followed by `enable`. `mcp-setup.sh` shares the login helpers in
+`tools/dolibarr/lib.sh`.
+
 | Module | Repository | Purpose |
 |---|---|---|
 | `banksync` | [SdWa5/banksync](https://github.com/SdWa5/banksync), a fork of `vanyolai/dolibarr-banksync` | PayPal sync into bank account 4, automatic posting of the clear cases, a queue with Belege for the rest. The fork's `docs/paypal.md` covers setup and behaviour |

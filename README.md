@@ -115,6 +115,9 @@ tools/dolibarr/sync-pm.sh
 # Install or update a Dolibarr custom module at a tag, on the VPS as root (see docs/dolibarr.md)
 tools/dolibarr/deploy-module.sh banksync https://github.com/SdWa5/banksync.git v1.0.0
 
+# Enable, disable or report a Dolibarr module through Setup -> Modules, dev mirror by default (see docs/dolibarr.md)
+tools/dolibarr/module-setup.sh status PmTools
+
 # Set up the Dolibarr MCP server and its service user, on the dev mirror by default (see docs/dolibarr.md)
 tools/dolibarr/mcp-setup.sh
 

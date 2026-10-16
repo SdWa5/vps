@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.78.0] - 2026-10-16
+
+### Added
+
+- `tools/dolibarr/module-setup.sh status|enable|disable MODULE` switches a Dolibarr module through
+  Setup -> Modules and confirms the new state, with its suite.
+- `tools/dolibarr/lib.sh` holds the admin login helpers for the setup-page scripts.
+
+### Changed
+
+- `mcp-setup.sh` uses `tools/dolibarr/lib.sh` instead of its own copy of the login helpers.
+
 ## [1.77.0] - 2026-10-16
 
 ### Added

@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.83.2] - 2026-10-16
+
+### Changed
+
+- The desktop header screenshots of the storefront suite are rebaselined. The shorter header row of
+  SdWa5Theme 1.2.5 moved the settings column to a whole pixel, so the capture is 32 px instead of
+  33 px high. The image content is unchanged.
+
 ## [1.83.1] - 2026-10-16
 
 ### Fixed

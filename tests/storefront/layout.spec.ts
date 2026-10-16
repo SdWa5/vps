@@ -79,6 +79,18 @@ test.describe('desktop header', () => {
     await expect(settings).toHaveScreenshot('header-settings.png');
   });
 
+  // The share bar pads the content between 992 and 1400 px, and the hero image
+  // stopped 36 px short of the right edge until SdWa5Theme 1.2.7.
+  for (const width of [1024, 1280]) {
+    test(`hero image spans the viewport at ${width} px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 800 });
+      await openHome(page);
+      const hero = await page.locator('.cms-section.sdwa5-hero img').first().boundingBox();
+      expect(hero!.x, 'hero left edge').toBeLessThanOrEqual(TOLERANCE);
+      expect(hero!.x + hero!.width, 'hero right edge').toBeGreaterThanOrEqual(width - TOLERANCE);
+    });
+  }
+
   test('homepage tiles end at their padding', async ({ page }) => {
     await openHome(page);
     const container = page.locator('.cms-section.sdwa5-tiles .cms-block-container').first();

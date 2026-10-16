@@ -41,6 +41,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The live Dolibarr admin password, the database passwords, the cron key, the Paperless keys and
   the restic password no longer appear in any container's configuration.
 
+## [1.85.1] - 2026-10-16
+
+### Fixed
+
+- SdWa5Theme 1.2.7 lets the homepage hero image run to the right edge between 992 and 1400 px. The
+  share bar's right padding of 36 px also applied to the hero, so the image stopped short of the edge
+  there while it spans the screen from 1400 px.
+
+### Added
+
+- A storefront test that the hero image spans the viewport at 1024 and 1280 px.
+
 ## [1.85.0] - 2026-10-16
 
 ### Added

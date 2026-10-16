@@ -39,10 +39,12 @@ minutes of maintenance mode with the worker lock held, as in the migration below
 composer require --no-interaction store.shopware.com/swagplatformsecurity:4.0.16
 php bin/console plugin:update SwagPlatformSecurity
 php bin/console cache:clear
-kill -USR2 "$(pgrep -f 'php-fpm: master')"     # as root in the container
+pkill -USR2 -f '^php-fpm: master'             # as root in the container
 ```
 
-The FPM reload is a precaution, because the path of an updated plugin stays the same.
+The FPM reload is a precaution, because the path of an updated plugin stays the same. The pattern is
+anchored, because an unanchored `pgrep -f 'php-fpm: master'` inside `sh -c` also matches that shell's own
+command line and hands `kill` two PIDs, which stopped the 6.7.15.1 update on 2026-10-16 before the reload.
 
 ## Where composer puts a plugin here
 

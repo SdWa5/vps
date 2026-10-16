@@ -12,9 +12,12 @@
 #
 # Environments: every container's docker inspect env holds only values the recheck must accept (a
 # *_FILE path, dockware's not-set, an argon2 hash, an empty token). STUB_CONFIG_ENV_LEAK adds
-# "container:NAME" entries as NAME=leaked. Process environments add MYSQL_PASSWORD to each *_db
-# container, the way MariaDB's file_env exports it. STUB_ENVIRON_UNREADABLE lists containers whose
-# /proc environ cannot be read. STUB_EXTRA_LISTEN adds "container:port" listeners.
+# "container:NAME" entries as NAME=leaked. "docker top" lists three PIDs per container and writes
+# their environ files under $RECHECK_PROC_ROOT: an init process, a worker, and a PID that has ended,
+# with no /proc entry. The Paperless workers carry PAPERLESS_DBPASS and PAPERLESS_SECRET_KEY, the way
+# s6 init-env-file exports them (measured 2026-10-16). STUB_ENVIRON_UNREADABLE lists containers whose
+# worker environ cannot be read (a directory, since the tests may run as root), STUB_TOP_FAIL those
+# whose "docker top" fails. STUB_EXTRA_LISTEN adds "container:port" listeners.
 #
 #   container            addresses                 gateways      listening ports
 fixture() {
@@ -40,6 +43,24 @@ fixture() {
 DEFAULT_OPEN="dolibarr>172.20.0.2:3306 paperless_sdwa5>172.25.0.2:3306 paperless_sdwa5>172.25.0.3:6379 paperless_home>172.27.0.2:3306 paperless_home>172.27.0.3:6379"
 
 case "${1:-}" in
+    top)
+        name="$2"
+        fixture "$name" >/dev/null || exit 1
+        [[ " ${STUB_TOP_FAIL-} " != *" $name "* ]] || exit 1
+        base=$(( $(printf '%s' "$name" | cksum | cut -d' ' -f1) % 100000 * 10 ))
+        init="$RECHECK_PROC_ROOT/$((base + 1))" worker="$RECHECK_PROC_ROOT/$((base + 2))"
+        rm -rf "$init" "$worker"
+        mkdir -p "$init" "$worker"
+        printf 'PATH=/usr/bin\0HOME=/root\0' > "$init/environ"
+        if [[ " ${STUB_ENVIRON_UNREADABLE-} " == *" $name "* ]]; then
+            mkdir "$worker/environ"
+        elif [[ "$name" == paperless_sdwa5 || "$name" == paperless_home ]]; then
+            printf 'PAPERLESS_DBPASS=residual\0PAPERLESS_DBPASS_FILE=/run/sdwa5-secrets/x\0PAPERLESS_SECRET_KEY=residual\0' > "$worker/environ"
+        else
+            printf 'PATH=/usr/bin\0DB_PASSWORD_FILE=/run/sdwa5-secrets/x\0' > "$worker/environ"
+        fi
+        printf '%s\n' PID "$((base + 1))" "$((base + 2))" "$((base + 3))"
+        ;;
     inspect)
         format="$3"
         name="$4"
@@ -66,15 +87,6 @@ case "${1:-}" in
         name="$1"
         shift
         row="$(fixture "$name")" || exit 1
-        if [[ "$1" == sh && "$3" == 'test -r /proc/1/environ' ]]; then
-            [[ " ${STUB_ENVIRON_UNREADABLE-} " != *" $name "* ]]
-            exit
-        fi
-        if [[ "$1" == sh && "$3" == *environ* ]]; then
-            printf 'PATH=/usr/bin\nHOME=/root\n\n'
-            [[ "$name" == *_db ]] && printf 'MYSQL_PASSWORD=residual\nMYSQL_PASSWORD_FILE=/run/sdwa5-secrets/x\n\n'
-            exit 0
-        fi
         if [[ "$1" == cat ]]; then
             IFS='|' read -r _ _ ports <<<"$row"
             for entry in ${STUB_EXTRA_LISTEN-}; do

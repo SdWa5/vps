@@ -257,16 +257,26 @@ setup() {
 
 @test "a value a process exported from its _FILE stays OK but is named as residual" {
     recheck --host
+    [ "$(recheck_status env:paperless_sdwa5)" = OK ]
+    [[ "$output" == *$'env:paperless_sdwa5\tOK\tno secret in docker inspect; process environment still carries PAPERLESS_DBPASS PAPERLESS_SECRET_KEY'* ]]
     [ "$(recheck_status env:dolibarr_db)" = OK ]
-    [[ "$output" == *$'env:dolibarr_db\tOK\tno secret in docker inspect; process environment still carries MYSQL_PASSWORD'* ]]
+    [[ "$output" == *$'env:dolibarr_db\tOK\tno secret in docker inspect or in any process environment'* ]]
     [[ "$output" != *residual* ]]
 }
 
-@test "unreadable process environments are WARN" {
+@test "process environments are read on the host, and an unreadable one is WARN" {
     export STUB_ENVIRON_UNREADABLE="vaultwarden"
     recheck --host
     [ "$(recheck_status env:vaultwarden)" = WARN ]
-    [[ "$output" == *'process environments not readable'* ]]
+    [[ "$output" == *'vaultwarden: 1 of 2 process environments not readable'* ]]
+    [ "$(recheck_status env:shopware)" = OK ]
+}
+
+@test "a container whose processes cannot be listed is WARN, not OK" {
+    export STUB_TOP_FAIL="restic"
+    recheck --host
+    [ "$(recheck_status env:restic)" = WARN ]
+    [[ "$output" == *'restic: no process environment found to read'* ]]
 }
 
 @test "a shop with dockware's sshd or the main shop's mailcatcher still listening is WARN" {

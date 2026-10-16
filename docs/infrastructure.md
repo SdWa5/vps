@@ -189,7 +189,7 @@ one without reading its entrypoint:
 | Service | Reads | Where the value still is |
 |---|---|---|
 | `dolibarr`, `dolibarr_cron` | `DOLI_*_FILE` through the entrypoint's `get_env_value`, into a shell variable | `conf.php` (database password, 400 `www-data`); `/etc/cron.d/dolibarr` (644) and the `cron_run_jobs.php` command line (cron key) |
-| `dolibarr_db`, `paperless_*_db` | `MYSQL_*_FILE` through MariaDB's `file_env`, which exports the value | the environment of `mariadbd` |
+| `dolibarr_db`, `paperless_*_db` | `MYSQL_*_FILE` through MariaDB's `file_env` | the file only; `mariadbd`'s environment carried none on 2026-10-16 |
 | `paperless_sdwa5`, `paperless_home` | `PAPERLESS_*_FILE` through the s6 `init-env-file`, which copies the value | `/run/s6/container_environment/` and the environment of every Paperless process |
 | `restic` | `RESTIC_PASSWORD_FILE`, read by restic itself | the file only |
 

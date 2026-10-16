@@ -467,6 +467,8 @@ recheck_setup() {
     : > "$STUB_SSH_LOG"
     : > "$STUB_GIT_LOG"
     export PORT_TIMEOUT=1 PROBE_TIMEOUT=1 HTTP_TIMEOUT=1
+    export RECHECK_PROC_ROOT="$BATS_TEST_TMPDIR/proc"
+    mkdir -p "$RECHECK_PROC_ROOT"
 
     export GIT_CHECKOUT_DIR="$BATS_TEST_TMPDIR/checkout"
     mkdir -p "$GIT_CHECKOUT_DIR/etc" "$BATS_TEST_TMPDIR/deployed"

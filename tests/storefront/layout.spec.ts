@@ -35,6 +35,18 @@ async function openOffcanvas(page: Page): Promise<Locator> {
   return offcanvas;
 }
 
+test('header logo has as much visible space above as below', async ({ page }) => {
+  await openHome(page);
+  const row = await page.locator('.header-row').boundingBox();
+  const logo = await page.locator('.header-logo-main-img').boundingBox();
+  // The fixed accent stripe covers the top of the header.
+  const stripe = await page.evaluate(() => parseFloat(getComputedStyle(document.body, '::before').height));
+
+  const above = logo!.y - row!.y - stripe;
+  const below = row!.y + row!.height - (logo!.y + logo!.height);
+  expect(Math.abs(above - below), `${above} px above against ${below} px below`).toBeLessThanOrEqual(TOLERANCE);
+});
+
 test.describe('desktop header', () => {
   test.beforeEach(({}, testInfo) => {
     test.skip(!testInfo.project.name.startsWith('desktop'), 'the settings column shows from 992 px');

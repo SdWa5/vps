@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.76.0] - 2026-10-16
+
+### Added
+
+- `tools/dolibarr/mcp-setup.sh` sets up the core MCP server of Dolibarr 24 with a service user,
+  its rights and a private key file through Dolibarr's own setup pages, with its suite.
+
 ## [1.75.1] - 2026-10-16
 
 ### Added

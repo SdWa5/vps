@@ -116,8 +116,8 @@ dependency recreation with `--no-deps`. Image upgrades follow the
 
 ## API access
 
-The REST API is used read-only from a workstation, through `tools/dolibarr/doli.sh`. It is the
-only programmatic way in; the container is bound to `127.0.0.1:8002` and reachable from outside
+The REST API is used read-only from a workstation, through `tools/dolibarr/doli.sh`. It and the
+[MCP server](#mcp-server) are the programmatic ways in; the container is bound to `127.0.0.1:8002` and reachable from outside
 the host only through Caddy on `https://erp.sdwa5.org`.
 
 Dolibarr ships the API module **off**. A request against a disabled module answers **HTTP 200**
@@ -272,6 +272,32 @@ Dates are written as `YYYY-MM-DD` in the spec and stored as epoch seconds.
 
 Measured on 2026-09-15 after the first apply: seven projects, all open with `usage_task` 1, and 23
 tasks. A run against that state reports `0 to create, 0 to update, 28 already current`.
+
+## MCP server
+
+Dolibarr 24 ships an MCP server in its module `ai` at `/ai/server/mcp_server.php`. It accepts one
+API key, sent as `X-API-Key` or `Authorization: Bearer`, and runs every tool as one service user,
+so that user's rights are the limit of what a client can do. A tool the user has no right for
+fails, and the protocol reports it as `Internal server error` while `dolibarr.log` says
+`Permission Denied`. The 24.0.1 core tools cover third parties, products, invoices, orders,
+categories and reports, but no tickets, projects or dictionaries, which is what our own module
+adds through the `addMcpTools` hook.
+
+[`tools/dolibarr/mcp-setup.sh`](../tools/dolibarr/mcp-setup.sh) sets it up through the same setup
+pages an administrator uses. It creates the service user `mcp` when it is missing, grants it ticket
+read, write and manage plus project read for all projects, selects it as `AI_MCP_USER_ID`, enables
+`AI_MCP_ENABLED`, generates the key when none exists and finishes with `tools/list`. A rerun keeps
+the existing key unless `--rotate-key` is given. The key goes into a mode-600 file and is never
+printed.
+
+```bash
+tools/dolibarr/mcp-setup.sh                         # dev mirror, key in ~/.local/share/sdwa5-dolibarr-dev/mcp-api-key
+tools/dolibarr/mcp-setup.sh --rights 56001,41       # another set of right ids
+```
+
+Production needs `DOLIBARR_URL=https://erp.sdwa5.org`, `DOLIBARR_ADMIN_PASSWORD_FILE` pointing at
+the admin password, for example `<(bw get password ID)`, and `DOLIBARR_MCP_KEY_FILE` outside the
+mirror directory. It ran on the mirror on 2026-10-16 and not yet on production.
 
 ## Local dev mirror
 

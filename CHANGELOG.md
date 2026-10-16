@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.79.4] - 2026-10-16
+
+### Added
+
+- The ticket type `EVENT` in `docs/dolibarr.md`, for events that have no project yet.
+
 ## [1.79.3] - 2026-10-16
 
 ### Changed

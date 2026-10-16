@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.86.6] - 2026-10-16
+
+### Fixed
+
+- docs/paperless.md runs `manage.py` through `/command/with-contenv`, since a plain `docker exec` lacks the
+  secret key after the move to `*_FILE` secrets
+
+### Changed
+
+- docs/paperless.md names Vaultwarden as the home of the Paperless logins, TOTP seeds and recovery codes
+
 ## [1.86.5] - 2026-10-16
 
 ### Changed

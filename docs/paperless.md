@@ -49,7 +49,9 @@ therefore absent from `docker inspect`, but not from the running processes. The 
 Paperless process carries the value. The MariaDB containers carry none in `mariadbd`'s environment
 (measured on prod on 2026-10-16). The database
 passwords take effect only when a database is first initialized, so a file must keep the value the
-database was created with. The admin passwords are not on the host at all.
+database was created with. The admin passwords are not on the host at all. A `docker exec` starts
+outside s6 and gets none of the values, so a `manage.py` command runs through `/command/with-contenv`,
+which the image's own wrappers such as `document_exporter` already do.
 
 Measured on the dev mirror on 2026-10-16:
 
@@ -68,7 +70,8 @@ username/password", and basic auth has no throttle. That makes it a password ora
 TOTP on. The web login and `/api/token/` stay open. `/api/token/` allows 5 attempts per minute and
 asks for a TOTP code once one is enrolled, and it is what the mobile apps use.
 
-Every account turns TOTP on in its profile.
+Every account turns TOTP on in its profile. The logins live in Vaultwarden with their TOTP seeds and
+recovery codes.
 
 ## Users, groups and sharing
 
@@ -108,7 +111,7 @@ deleted and purged from the trash afterwards. It needs the users' passwords befo
 or tokens made on the host:
 
 ```bash
-docker exec -u paperless paperless_sdwa5 python3 manage.py drf_create_token USER \
+docker exec -u paperless paperless_sdwa5 /command/with-contenv python3 manage.py drf_create_token USER \
     | awk '{ printf "%s", $3 }' > PASSWORD_DIR/USER.token    # never printed
 ```
 
@@ -124,7 +127,7 @@ copy with `url` and `password_dir` pointed there runs `setup.sh` and `visibility
 - `monitoring/database-backup.sh` dumps both `*_db` nightly, and the health check watches their age.
 - Restic backs up `/opt/docker`, which holds the media directories with the originals and archive
   files.
-- After a restore, `docker exec -u paperless paperless_sdwa5 python3 manage.py document_sanity_checker`
+- After a restore, `docker exec -u paperless paperless_sdwa5 /command/with-contenv python3 manage.py document_sanity_checker`
   compares the files with the database.
 - The Verein's archive is handed over with `docker exec -u paperless paperless_sdwa5 document_exporter
   ../export`, which writes into the data volume.

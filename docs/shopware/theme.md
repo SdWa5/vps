@@ -86,8 +86,10 @@ Three rules keep this working, and the tests enforce the first two.
 The core also uses `$primary` and `$secondary` as plain text colours, for example for the current
 breadcrumb and the offcanvas headline, and those compile to the literal green and red. `_base-elements.scss`
 repeats each of those selectors with a readable token. The list was collected on 2026-10-06 from the
-compiled CSS of Shopware 6.7.11.1. **After a Shopware update, collect it again and compare it with that
-list**, because a new core rule with green text would be back at 1.5:1 on the light background. The scan
+compiled CSS of Shopware 6.7.11.1. The scan of 6.7.15.1 on the mirror on 2026-10-16 found two new rules,
+`.account-guest-conversion__subtitle` and `.product-detail-garan-label-show-link`, which SdWa5Theme 1.2.1
+overrides, and `.header-minimal-contact a` was gone from the core's list. **After a Shopware update,
+collect it again and compare it with that list**, because a new core rule with green text would be back at 1.5:1 on the light background. The scan
 still shows the overridden rules, since the core's own rules stay in the bundle:
 
 ```bash

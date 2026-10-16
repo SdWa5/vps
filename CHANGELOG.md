@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.80.0] - 2026-10-16
+
+### Added
+
+- `tools/shopware/dev-instance.sh composer ARGS` runs Composer on the mirror's files beside the mirror, and
+  `console ARGS` runs `bin/console` inside it.
+- `tools/shopware/dev-instance.sh` deactivates every Shopware service app through the admin API, and
+  `status` shows how many are active.
+- An "Updating Shopware" procedure in `docs/shopware/infrastructure.md`.
+
+### Changed
+
+- Shopware 6.7.15.1, pinned as `dockware/shopware:6.7.15.1` by digest, with PHP 8.2.34 and a lock in which
+  `composer audit` finds none of the 22 advisories of the old one.
+- SdWa5Theme 1.2.1 overrides the green text of `.account-guest-conversion__subtitle` and
+  `.product-detail-garan-label-show-link`, which 6.7.15.1 adds.
+- `tools/shopware/dev-instance.sh up` reports a storefront in maintenance mode or before its migrations
+  instead of waiting for a 200.
+- The Shopware TODO records how `ShopwarePayments` and `SwagGmvReportingService` behave on 6.7.15.1.
+- The Shopware TODO files the plugin updates the core update left out.
+
+### Fixed
+
+- The image table in `docs/infrastructure.md` named `:latest` for Shopware and Dolibarr.
+- `docs/shopware/plugins.md` listed SdWa5Theme 1.1.2.
+
 ## [1.79.0] - 2026-10-16
 
 ### Added

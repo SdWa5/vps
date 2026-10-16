@@ -91,11 +91,13 @@ a {
 // the SdWa5 green, which as text on the light background measured 1.5:1. Each
 // selector repeats the core's exactly, so the same specificity and the later
 // position in the bundle decide. Collected on 2026-10-06 from the compiled CSS
-// of Shopware 6.7.11.1, every rule whose color is #1fe51f. After a Shopware
-// update the list needs the same scan again, see docs/shopware/theme.md. The
+// of Shopware 6.7.11.1, every rule whose color is #1fe51f, and extended on
+// 2026-10-16 by the two that 6.7.15.1 adds. After a Shopware update the list
+// needs the same scan again, see docs/shopware/theme.md. The
 // footer headline, the hotline link and the cart total are styled in their own
 // partials.
 .account-aside-item.is-active,
+.account-guest-conversion__subtitle,
 .alert-primary .icon,
 a.line-item-label:hover,
 .base-slider-controls-prev:hover,
@@ -122,6 +124,7 @@ a.line-item-label:hover,
 .navigation-offcanvas-link.is-home-link,
 .navigation-offcanvas-link.is-home-link .icon,
 .order-item-product-name:hover,
+.product-detail-garan-label-show-link,
 .product-detail-tab-preview-more,
 .search-suggest-product-link:focus,
 .search-suggest-product-link:focus-visible,

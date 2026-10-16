@@ -47,7 +47,7 @@ token_file() { printf '%s/%s.token' "$PASSWORD_DIR" "$1"; }
 # Caddy rejects it (docs/paperless.md). /api/token/ is throttled to 5 per
 # minute and refuses a user with TOTP unless a code is given, so a user who
 # enrolled TOTP before the first run needs a token made on the host:
-#   docker exec -u paperless paperless_sdwa5 python3 manage.py drf_create_token USER
+#   docker exec -u paperless paperless_sdwa5 /command/with-contenv python3 manage.py drf_create_token USER
 # with the third word of its output piped straight into the token file.
 ensure_token() {
     local user="$1" password_file token

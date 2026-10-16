@@ -168,8 +168,8 @@ getty and PAM rather than sshd. See [docs/ssh-hardening.md](docs/ssh-hardening.m
 
 ## Tests
 
-Production runs Dolibarr 23.0.4 on Debian 13 since 2026-10-15, deployed through the
-[SEC-05/SEC-25 maintenance runbook](docs/maintenance.md#sec-05-and-sec-25-maintenance-window).
+Production runs Debian 13 since 2026-10-15. The compose files pin Dolibarr 24.0.1, rolled out through
+the [Dolibarr 24.0.1 upgrade](docs/maintenance.md#dolibarr-2401-upgrade) steps.
 The inactive project definitions are updated without starting those services.
 
 ```bash

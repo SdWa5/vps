@@ -4,7 +4,7 @@ setup() {
     export REHEARSAL_SCRIPT="$BATS_TEST_DIRNAME/../tools/dolibarr/rehearse-upgrade.sh"
     export REHEARSAL_FIXTURE="$BATS_TEST_TMPDIR/evidence"
     mkdir "$REHEARSAL_FIXTURE"
-    printf '23.0.4\n' > "$REHEARSAL_FIXTURE/version.after"
+    printf '24.0.1\n' > "$REHEARSAL_FIXTURE/version.after"
     printf 'users\t2\ninvoices\t17\n' > "$REHEARSAL_FIXTURE/counts.before"
     cp "$REHEARSAL_FIXTURE/counts.before" "$REHEARSAL_FIXTURE/counts.after"
     printf 'Migration successful ... Enjoy !\n' > "$REHEARSAL_FIXTURE/application.log"

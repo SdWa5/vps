@@ -278,8 +278,7 @@ tasks. A run against that state reports `0 to create, 0 to update, 28 already cu
 Module and API work happens on a local copy of this instance, and production receives only a tagged
 module release through [`deploy-module.sh`](../tools/dolibarr/deploy-module.sh).
 [`tools/dolibarr/dev-instance.sh`](../tools/dolibarr/dev-instance.sh) builds that copy from the
-newest archive of `monitoring/database-backup.sh`, with the images `docker-compose.yml` pins and the
-same entrypoint wrapper.
+newest archive of `monitoring/database-backup.sh`, with the images `docker-compose.yml` pins.
 
 ```bash
 tools/dolibarr/dev-instance.sh fetch      # copy the newest production archive over ssh
@@ -298,8 +297,7 @@ mounted, so module credentials such as BankSync's `paypal.json` are absent. The 
 Module checkouts are bind-mounted into `custom/` as working trees, `banksync` from
 `../sdwa5-banksync` by default. `SDWA5_DOLIBARR_DEV_MODULES="banksync=… pmtools=…"` sets the list,
 and `SDWA5_DOLIBARR_DEV_IMAGE` runs a different application image, for example the next Dolibarr
-release before it is rehearsed. That image starts without the production entrypoint wrapper, and
-every start removes `install.lock`, so a newer image migrates the copy. 23.0.4 to 24.0.1 migrated
+release before it is rehearsed. Every start removes `install.lock`, so a newer image migrates the copy. 23.0.4 to 24.0.1 migrated
 cleanly on 2026-10-16. Logins are the production ones. An API key for the mirror is
 generated on the user card and kept in a file of its own, never the production token file.
 

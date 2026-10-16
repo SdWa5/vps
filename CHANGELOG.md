@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.81.1] - 2026-10-16
+
+### Fixed
+
+- `tools/shopware/dev-instance.sh status` prints `absent` on the line of a missing container or network,
+  where `docker inspect` used to put an empty line before it.
+
 ## [1.81.0] - 2026-10-16
 
 ### Added

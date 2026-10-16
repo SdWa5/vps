@@ -138,3 +138,33 @@ start_with_image() {
     start_with_image dolibarr/dolibarr:99.0.0
     [ ! -e "$SDWA5_DOLIBARR_DEV_DIR/documents/install.lock" ]
 }
+
+@test "api-key refuses a login that could break out of the SQL" {
+    run "$DEV_SCRIPT" api-key "admin' OR 1=1"
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"not a login"* ]]
+}
+
+@test "api-key needs a running mirror" {
+    stub docker "exit 1"
+    run "$DEV_SCRIPT" api-key
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"not running"* ]]
+}
+
+@test "api-key keeps its key private, sends it on stdin and never prints it" {
+    mkdir -p "$SDWA5_DOLIBARR_DEV_DIR"
+    stub docker "case \"\$1\" in inspect) echo running ;; exec) printf '%s\n' \"\$@\" > '$BATS_TEST_TMPDIR/exec-args'; cat > '$BATS_TEST_TMPDIR/exec-stdin' ;; esac"
+    run "$DEV_SCRIPT" api-key ada
+    [ "$status" -eq 0 ]
+    key="$(cat "$SDWA5_DOLIBARR_DEV_DIR/api-key")"
+    [[ "$key" =~ ^[0-9a-f]{32}$ ]]
+    [ "$(stat -c %a "$SDWA5_DOLIBARR_DEV_DIR/api-key")" = 600 ]
+    [ "$(cat "$BATS_TEST_TMPDIR/exec-stdin")" = "$key" ]
+    ! grep -q "$key" "$BATS_TEST_TMPDIR/exec-args"
+    [[ "$output" != *"$key"* ]]
+    grep -qx 'DEV_LOGIN=ada' "$BATS_TEST_TMPDIR/exec-args"
+    # A second run reuses the key.
+    run "$DEV_SCRIPT" api-key ada
+    [ "$(cat "$SDWA5_DOLIBARR_DEV_DIR/api-key")" = "$key" ]
+}

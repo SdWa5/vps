@@ -22,6 +22,9 @@
 #   tools/dolibarr/dev-instance.sh up         start the mirror again
 #   tools/dolibarr/dev-instance.sh down       stop and remove its containers
 #   tools/dolibarr/dev-instance.sh status     containers, version and URL
+#   tools/dolibarr/dev-instance.sh api-key [LOGIN]
+#                                             give LOGIN (default admin) a local API key,
+#                                             kept in <data directory>/api-key
 #   tools/dolibarr/dev-instance.sh --help
 #
 # Environment:
@@ -30,6 +33,7 @@
 #   SDWA5_DOLIBARR_DEV_IMAGE     application image, default the one docker-compose.yml pins
 #   SDWA5_DOLIBARR_DEV_MODULES   space-separated name=path pairs mounted into custom/,
 #                                default banksync=<this repo>/../sdwa5-banksync
+#                                pmtools=<this repo>/../sdwa5-pmtools
 #   SDWA5_DOLIBARR_SSH           production host, default root@sdwa5.org
 #   SDWA5_DOLIBARR_ARCHIVE       archive path on the host,
 #                                default /opt/docker/database-backup/dolibarr_db.tar.gz
@@ -42,14 +46,14 @@ DEV_DIR="${SDWA5_DOLIBARR_DEV_DIR:-$HOME/.local/share/sdwa5-dolibarr-dev}"
 DEV_PORT="${SDWA5_DOLIBARR_DEV_PORT:-8089}"
 DEV_SSH="${SDWA5_DOLIBARR_SSH:-root@sdwa5.org}"
 DEV_ARCHIVE_REMOTE="${SDWA5_DOLIBARR_ARCHIVE:-/opt/docker/database-backup/dolibarr_db.tar.gz}"
-DEV_MODULES="${SDWA5_DOLIBARR_DEV_MODULES:-banksync=$REPO_ROOT/../sdwa5-banksync}"
+DEV_MODULES="${SDWA5_DOLIBARR_DEV_MODULES:-banksync=$REPO_ROOT/../sdwa5-banksync pmtools=$REPO_ROOT/../sdwa5-pmtools}"
 PREFIX="sdwa5-dolibarr-dev"
 APP="$PREFIX"
 DB="$PREFIX-db"
 NETWORK="$PREFIX"
 WEB_NETWORK="$PREFIX-web"
 
-usage() { sed -n '3,36p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '3,40p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
 die() { printf 'dev-instance.sh: %s\n' "$*" >&2; exit 1; }
 
 # The image a service of docker-compose.yml pins, so the mirror follows every
@@ -234,6 +238,33 @@ cmd_status() {
     fi
 }
 
+# Production API keys cannot be decrypted here, because the mirror has its own
+# instance key. This gives one user a key of the mirror's own, generated once
+# into a private file and handed to the container on stdin, so it never shows
+# up in the terminal or the process list. dolEncrypt() stores it the way the
+# user card does. Running PHP in the container is acceptable here because it
+# only ever touches the local copy.
+cmd_api_key() {
+    local login="${1:-admin}" key_file="$DEV_DIR/api-key"
+    [[ "$login" =~ ^[A-Za-z0-9._@-]+$ ]] || die "not a login: $login"
+    [[ "$(docker inspect --format '{{.State.Status}}' "$APP" 2>/dev/null)" == running ]] \
+        || die "the mirror is not running. Start it with up first."
+    [[ -s "$key_file" ]] || head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n' > "$key_file"
+    docker exec -i -u www-data -e "DEV_LOGIN=$login" "$APP" php -r '
+        define("NOSESSION", 1); define("NOREQUIREMENU", 1); define("NOREQUIREHTML", 1); define("NOREQUIREAJAX", 1);
+        require "/var/www/html/master.inc.php";
+        $key = trim(stream_get_contents(STDIN));
+        $login = getenv("DEV_LOGIN");
+        $where = " WHERE login = \x27".$db->escape($login)."\x27";
+        if (!$db->num_rows($db->query("SELECT rowid FROM ".MAIN_DB_PREFIX."user".$where))) {
+            exit(3);
+        }
+        $value = $db->escape(dolEncrypt($key, "", "", "dolibarr"));
+        exit($db->query("UPDATE ".MAIN_DB_PREFIX."user SET api_key = \x27".$value."\x27".$where) ? 0 : 4);
+    ' < "$key_file" || die "no user $login on the mirror, or the update failed."
+    printf 'API key for %s stored in %s\n' "$login" "$key_file"
+}
+
 main() {
     case "${1:-}" in
         fetch) cmd_fetch ;;
@@ -241,6 +272,7 @@ main() {
         up) cmd_up ;;
         down) cmd_down ;;
         status) cmd_status ;;
+        api-key) cmd_api_key "${2:-}" ;;
         -h|--help) usage ;;
         "") usage; exit 2 ;;
         *) die "unknown command: $1. Try --help." ;;

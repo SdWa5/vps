@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.80.3] - 2026-10-16
+
+### Fixed
+
+- The `sdwa5:theme` deploy marker and the plugin table in `docs/shopware/plugins.md` name SdWa5Theme 1.2.2,
+  which 1.80.2 left at 1.2.1.
+
 ## [1.80.2] - 2026-10-16
 
 ### Fixed

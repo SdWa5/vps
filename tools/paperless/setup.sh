@@ -16,7 +16,10 @@
 # assign it. Each entry of `shares` becomes one workflow that grants a group
 # view and edit rights on every document carrying the tag, triggered when a
 # document is added and when it is updated, from every upload source. Removing
-# the tag later does not take the rights back. See docs/paperless.md.
+# the tag later does not take the rights back. A share without a tag grants the
+# group those rights on every document of the instance when it is added,
+# whoever uploads it, which is how the Verein instance shares everything with
+# its board. See docs/paperless.md.
 #
 # It writes to the instance, so it is **dry-run by default** and a human starts
 # it, the same split tools/dolibarr/sync-pm.sh uses.
@@ -145,7 +148,8 @@ ensure_tags() {
 share_workflow() {
     jq -cn --arg name "$1" --argjson tag "$2" --argjson group "$3" '{
         name: $name, enabled: true,
-        triggers: ([2, 3] | map({type: ., sources: [1, 2, 3, 4], matching_algorithm: 0, filter_has_tags: [$tag]})),
+        triggers: (if $tag == null then [2] else [2, 3] end
+            | map({type: ., sources: [1, 2, 3, 4], matching_algorithm: 0, filter_has_tags: ([$tag] - [null])})),
         actions: [{type: 1, assign_view_groups: [$group], assign_change_groups: [$group]}]
     }'
 }
@@ -164,14 +168,19 @@ ensure_shares() {
     tags="$(api_all "$ADMIN" /api/tags/)"
     groups="$(api_all "$ADMIN" /api/groups/)"
     while IFS= read -r share; do
-        tag="$(jq -r '.tag' <<< "$share")"
+        tag="$(jq -r '.tag // empty' <<< "$share")"
         group="$(jq -r '.group' <<< "$share")"
-        name="Share tag $tag with group $group"
-        tag_id="$(id_of "$tags" "$tag" name)"
+        if [[ -n "$tag" ]]; then
+            name="Share tag $tag with group $group"
+            tag_id="$(id_of "$tags" "$tag" name)"
+        else
+            name="Share all documents with group $group"
+            tag_id=null
+        fi
         group_id="$(id_of "$groups" "$group" name)"
         id="$(id_of "$workflows" "$name" name)"
         if [[ -z "$tag_id" || -z "$group_id" ]]; then
-            (( APPLY )) && die "share $tag: tag or group $group does not exist."
+            (( APPLY )) && die "$name: tag or group does not exist."
             if [[ -n "$id" ]]; then report update "workflow \"$name\""; else report create "workflow \"$name\""; fi
             continue
         fi

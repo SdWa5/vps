@@ -9,6 +9,7 @@
 # this set:
 #   - the user's own documents
 #   - every document carrying a share's tag, when the user is in that share's group
+#   - every document at all, when the user is in the group of a share without a tag
 # A user who sees one document more is a leak, one less a broken share.
 #
 # The test documents are tiny generated PDFs titled "visibility-check <run id>
@@ -106,6 +107,17 @@ cleanup() {
     printf 'Removed %s test document(s).\n' "${#UPLOADED[@]}"
 }
 
+# True when a share without a tag puts every document in front of USER. Its
+# workflow has no owner filter, so it covers uploads of users outside the
+# group as well, measured on the mirror on 2026-10-16.
+shared_with_all() {
+    local group
+    while IFS= read -r group; do
+        in_group "$1" "$group" && return 0
+    done < <(jq -r '.shares[]? | select(.tag == null) | .group' "$SPEC")
+    return 1
+}
+
 in_group() { jq -e --arg u "$1" --arg g "$2" '.users[] | select(.username == $u) | .groups // [] | index($g)' "$SPEC" >/dev/null; }
 
 main() {
@@ -132,6 +144,8 @@ main() {
         UPLOADED+=("$id")
         documents+="$id"$'\t'"$title"$'\t'"$user"$'\t-\n'
         while IFS=$'\t' read -r tag group; do
+            # A share without a tag covers the private upload above already.
+            [[ -n "$tag" ]] || continue
             in_group "$user" "$group" || continue
             tag_id="$(jq -r --arg n "$tag" '.[] | select(.name == $n) | .id' <<< "$tags")"
             [[ -n "$tag_id" ]] || die "the tag $tag does not exist. Run setup.sh --apply first."
@@ -139,13 +153,14 @@ main() {
             id="$(upload "$user" "$title" "$tag_id")"
             UPLOADED+=("$id")
             documents+="$id"$'\t'"$title"$'\t'"$user"$'\t'"$group"$'\n'
-        done < <(jq -r '.shares[]? | [.tag, .group] | @tsv' "$SPEC")
+        done < <(jq -r '.shares[]? | [.tag // "", .group] | @tsv' "$SPEC")
     done
 
     for user in "${users[@]}"; do
         expected="$(while IFS=$'\t' read -r id title owner group; do
             [[ -n "$id" ]] || continue
-            if [[ "$owner" == "$user" ]] || { [[ "$group" != - ]] && in_group "$user" "$group"; }; then
+            if [[ "$owner" == "$user" ]] || { [[ "$group" != - ]] && in_group "$user" "$group"; } \
+                || shared_with_all "$user"; then
                 printf '%s\n' "$id"
             fi
         done <<< "$documents" | sort -n | paste -sd' ')"

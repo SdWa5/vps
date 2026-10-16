@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.85.0] - 2026-10-16
+
+### Added
+
+- `tools/paperless/setup.sh` takes a share without a tag. It grants the group view and edit rights on
+  every document of the instance when the document is added, which the Verein instance uses for its
+  board. `visibility-check.sh` expects every document for such a group's members.
+
 ## [1.84.0] - 2026-10-16
 
 ### Added

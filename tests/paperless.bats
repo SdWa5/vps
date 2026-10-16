@@ -128,3 +128,16 @@ if [ -e '$BATS_TEST_TMPDIR/once' ]; then printf '{\"token\":\"fresh\"}'; else to
     run bash -c 'source "$TOOLS/visibility-check.sh"; in_group alice members && ! in_group alice board'
     [ "$status" -eq 0 ]
 }
+
+@test "setup: a share without a tag triggers on every added document" {
+    run bash -c 'source "$TOOLS/setup.sh"; share_workflow "Share all documents with group board" null 2'
+    [ "$status" -eq 0 ]
+    [ "$(jq -c '[.triggers[] | {type, filter_has_tags}]' <<< "$output")" = '[{"type":2,"filter_has_tags":[]}]' ]
+}
+
+@test "visibility-check: a share without a tag shows every document to the group only" {
+    jq '.shares += [{"group": "members"}] | .users += [{"username": "carol", "groups": []}]' "$SPEC" > "$BATS_TEST_TMPDIR/all.json"
+    run bash -c 'SPEC="$BATS_TEST_TMPDIR/all.json"; source "$TOOLS/visibility-check.sh"; SPEC="$BATS_TEST_TMPDIR/all.json"
+        shared_with_all alice && shared_with_all bob && ! shared_with_all carol'
+    [ "$status" -eq 0 ]
+}

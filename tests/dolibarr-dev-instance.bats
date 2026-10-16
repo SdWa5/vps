@@ -127,13 +127,7 @@ start_with_image() {
         bash -c 'source "$DEV_SCRIPT"; start_application'
 }
 
-@test "the production image starts through the production entrypoint wrapper" {
-    start_with_image "$(awk '/^  dolibarr:$/{f=1} f&&/image:/{print $2; exit}' "$BATS_TEST_DIRNAME/../docker-compose.yml")"
-    [ "$status" -eq 0 ]
-    grep -qx '/opt/sdwa5-dolibarr-entrypoint.sh' "$BATS_TEST_TMPDIR/docker-args"
-}
-
-@test "another image starts with its own entrypoint" {
+@test "the application starts with the image's own entrypoint" {
     start_with_image dolibarr/dolibarr:99.0.0
     [ "$status" -eq 0 ]
     ! grep -q 'sdwa5-dolibarr-entrypoint' "$BATS_TEST_TMPDIR/docker-args"

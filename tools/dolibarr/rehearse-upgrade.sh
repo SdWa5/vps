@@ -9,8 +9,8 @@ set -euo pipefail
 umask 077
 
 REPO_ROOT="${COMPOSE_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
-TARGET_IMAGE="dolibarr/dolibarr:23.0.4"
-TARGET_VERSION="23.0.4"
+TARGET_IMAGE="dolibarr/dolibarr:24.0.1"
+TARGET_VERSION="24.0.1"
 WORK=""
 APP=""
 DB=""
@@ -63,12 +63,6 @@ version() {
 
 start_application() {
     local image="$1"
-    local -a startup=()
-    local -a app_command=(apache2-foreground)
-    if [[ "$image" == "$TARGET_IMAGE_ID" ]]; then
-        startup=(--entrypoint /bin/bash --mount "type=bind,src=${REHEARSAL_ENTRYPOINT:-$REPO_ROOT/tools/dolibarr/entrypoint.sh},dst=/opt/sdwa5-dolibarr-entrypoint.sh,readonly")
-        app_command=(/opt/sdwa5-dolibarr-entrypoint.sh apache2-foreground)
-    fi
     docker run --detach --pull never --name "$APP" --network "$NETWORK" \
         --memory 512m --cpus 1 --pids-limit 256 \
         --env-file "$WORK/application.env" \
@@ -77,7 +71,7 @@ start_application() {
         --env DOLI_URL_ROOT=http://localhost \
         --mount "type=bind,src=$WORK/documents,dst=/var/www/documents" \
         --mount "type=bind,src=$WORK/custom,dst=/var/www/html/custom" \
-        "${startup[@]}" "$image" "${app_command[@]}" \
+        "$image" apache2-foreground \
         > "$WORK/application-id.log" 2>> "$WORK/docker.log"
 }
 
@@ -128,7 +122,6 @@ main() {
     source_image="$(docker inspect --format '{{.Image}}' dolibarr)"
     database_image="$(docker inspect --format '{{.Image}}' dolibarr_db)"
     wanted_image="$(docker image inspect --format '{{.Id}}' "$TARGET_IMAGE")"
-    TARGET_IMAGE_ID="$wanted_image"
     [[ "$source_image" =~ ^sha256:[a-f0-9]{64}$ && "$database_image" =~ ^sha256:[a-f0-9]{64}$ \
         && "$wanted_image" =~ ^sha256:[a-f0-9]{64}$ ]] || return 1
     [[ "$source_image" != "$wanted_image" ]] || { fail 'The target is already deployed.'; return 1; }

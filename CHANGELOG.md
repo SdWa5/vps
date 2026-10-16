@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.74.0] - 2026-10-16
+
+### Changed
+
+- Dolibarr and its cron service run `dolibarr/dolibarr:24.0.1`, the first release with the core MCP
+  server. The project instances follow the same pin.
+- `rehearse-upgrade.sh` rehearses 24.0.1 and starts every image with its own entrypoint.
+
+### Removed
+
+- `tools/dolibarr/entrypoint.sh` and its suite. 24.0.1 ships the SQL comments it normalized already fixed.
+
 ## [1.73.2] - 2026-10-16
 
 ### Fixed

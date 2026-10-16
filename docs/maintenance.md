@@ -173,7 +173,7 @@ its own.
 | Service | Tag | Why |
 |---|---|---|
 | `shopware` | `dockware/shopware:6.7.11.1` | Exact. dockware publishes no `6.7` series tag, so a pin here can only be exact. An update is a deliberate bump of the line |
-| `dolibarr`, `dolibarr_cron` | `dolibarr/dolibarr:23.0.4` proposed; production 23.0.2 before maintenance | Exact. SQL restore drills passed on 2026-10-15. Application migration and rollback still require their own rehearsal before deployment |
+| `dolibarr`, `dolibarr_cron` | `dolibarr/dolibarr:24.0.1` | Exact. 24.0.1 is the newest published image on 2026-10-16, while 24.0.2 exists only as a source tag. The migration from 23.0.4 passed on the dev mirror and in the isolated rehearsal before deployment |
 | `dolibarr_db` and the project DBs | `mariadb:12.3` | Minor series. Patch updates inside 12.3 are safe and wanted; crossing a major version is the one-way door |
 | `vaultwarden` | `vaultwarden/server:latest` | Deliberately unpinned. [`monitoring/vaultwarden-autoupdate.sh`](../monitoring/vaultwarden-autoupdate.sh) pulls it daily and verifies the result, and a pin would silently freeze security updates for a password vault. See [vaultwarden.md](vaultwarden.md) |
 | `restic` | `creativeprojects/resticprofile:0.33.1-amd64` | Exact. Used only for the restic, rclone, crond and flock it ships; the schedule and the run are [`restic/`](../restic/). `latest` is rebuilt weekly and would move restic and rclone on its own. Until 2026-10-15 this was `lobaro/restic-backup-docker:latest`, frozen since 2021-05-05 at restic 0.12.0. A bump is followed by the [restore drill](backup.md#restore-drill) |
@@ -274,12 +274,11 @@ database events and the application cron stay off. Docker CE 29 discarded the pu
 mapping on an internal network during the first rehearsal probe, so host-port readiness is not used.
 Scratch credentials travel through private files, not process arguments or terminal output.
 
-The stock 23.0.4 image reproduced three SQL syntax errors near `--ip used to create record`.
-The SQL parser removes inline comments only when whitespace follows `--`. The mounted
-`tools/dolibarr/entrypoint.sh` normalizes only those three comments, then executes the official
-entrypoint with its original command. It is idempotent and rejects changed definitions or another
-Dolibarr version. Review/remove it when upgrading the image again. The rehearsal uses the same
-wrapper as the proposed production definitions. Duplicate objects and already-completed DROP
+The stock 23.0.4 image reproduced three SQL syntax errors near `--ip used to create record`,
+because the SQL parser removes inline comments only when whitespace follows `--`. A mounted wrapper,
+`tools/dolibarr/entrypoint.sh`, normalized those three comments until 24.0.1. The 24.0.1 image ships
+all three with the whitespace, checked on 2026-10-16, so the wrapper and its mount were removed and
+both the production services and the rehearsal start the image's own entrypoint. Duplicate objects and already-completed DROP
 operations accepted by upstream are classified separately; syntax errors remain a failed gate.
 
 The gates require version 23.0.4 in the image and database, unchanged counts of users, third parties,
@@ -333,6 +332,14 @@ ERP rollback requires user authorization. Stop both application services, restor
 schema from the preserved archive into an empty schema, restore documents/custom modules and their
 ownership, and start both services with the preserved 23.0.2 image. Use the exact sequence proven
 in rehearsal. Never rely on the entrypoint's automatic-restore message or downgrade the image alone.
+
+## Dolibarr 24.0.1 upgrade
+
+24.0.1 is the first release with the core MCP server. It reuses the two sections above with these
+differences. Pull and gate on `dolibarr/dolibarr:24.0.1` instead of 23.0.4, and the rollback image is
+23.0.4. The ERP-only Caddy guard may be skipped, because the ERP has a single operator. The dev mirror
+from [docs/dolibarr.md](dolibarr.md) migrated the full production dump from 23.0.4 to 24.0.1 on
+2026-10-16, and BankSync v1.2.0 rendered all its pages there without PHP errors.
 
 ### Establish the host recovery checkpoint
 

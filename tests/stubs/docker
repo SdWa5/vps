@@ -21,6 +21,12 @@ fi
 
 case "${1:-}" in
     inspect)
+        if [[ "$*" == *'{{.State.StartedAt}}'* ]]; then
+            # Long ago unless a test says otherwise, so the worker's boot grace
+            # stays out of every test that is not about it.
+            echo "${STUB_STARTED_AT:-2020-01-01T00:00:00Z}"
+            exit 0
+        fi
         if [[ "$*" == *'{{.Image}}'* ]]; then
             printf 'sha256:%064d\n' 0
             exit 0
@@ -107,6 +113,9 @@ case "${1:-}" in
                 exit 1
             }
             printf '%s\n' "$STUB_SHOPWARE_TASKS"
+        elif [[ "$*" == *"mysqladmin"*"ping"* ]]; then
+            [[ -n "${STUB_DB_PING_FAILS:-}" ]] && exit 1
+            echo "mysqld is alive"
         elif [[ "$*" == *"scheduled-task:run"* ]]; then
             [[ -n "${STUB_TASK_RUN_FAILS:-}" ]] && { echo "task run blew up"; exit 1; }
             echo "Scheduled tasks executed"

@@ -6,12 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
-## [1.80.4] - 2026-10-16
+## [1.81.1] - 2026-10-16
 
 ### Fixed
 
 - `tools/shopware/dev-instance.sh status` prints `absent` on the line of a missing container or network,
   where `docker inspect` used to put an empty line before it.
+
+## [1.81.0] - 2026-10-16
+
+### Added
+
+- `monitoring/shopware-worker.sh` skips a run without mail when the container started less than
+  `SHOPWARE_WORKER_BOOT_GRACE` seconds ago (default 300) and its database does not answer
+  `mysqladmin -h 127.0.0.1 ping` yet, so a reboot no longer mails `Connection refused` for both shops.
 
 ## [1.80.3] - 2026-10-16
 

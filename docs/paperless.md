@@ -81,13 +81,20 @@ and when it is updated, from every source including Web UI uploads. Paperless' o
 `sources` leaves the Web UI out. Removing the tag later does **not** take the rights back. That has
 to be done in the document's permissions dialog.
 
-The Verein instance has a break-glass `admin` and personal accounts, and board members go into a
-group. The household instance has a break-glass `admin`, one account per person, and a group whose
+**Sharing everything.** A `shares` entry without a `tag` becomes "Share all documents with group G".
+It grants G view and edit rights on every document when it is added, whoever uploads it, because a
+workflow has no owner filter. The Verein instance uses it for its board under the Verein's policy of
+maximum transparency, so the board sees the whole archive. Private papers do not belong in that
+instance.
+
+The Verein instance has a break-glass `admin` and personal accounts in group `vorstand`, which
+everything is shared with. The household instance has a break-glass `admin`, one account per person, and a group whose
 shared tag is `Haushalt`. Everything else stays private to its uploader.
 
 **Proving it.** `tools/paperless/visibility-check.sh SPEC` uploads one private document per user and
-one tagged document per share member. Then it checks, as each user, that the document list and the
-full-text search show exactly the user's own documents plus the shared ones. The test documents are
+one tagged document per member of a tagged share. Then it checks, as each user, that the document
+list and the full-text search show exactly the user's own documents plus the shared ones, which is
+every document for a member of a share without a tag. The test documents are
 deleted and purged from the trash afterwards. It needs the users' passwords before TOTP is enrolled,
 or tokens made on the host:
 

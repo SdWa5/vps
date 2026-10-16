@@ -213,7 +213,7 @@ The theme styles two homepage sections by CSS class, and the classes live in the
 |---|---|---|---|
 | Hero image | 0 | `sizingMode: full_width`, class `sdwa5-hero` | the image spans the screen, cropped top and bottom to `clamp(14rem, 42vw, 34rem)` |
 | Hero text | 1 | class `sdwa5-hero-text` | caps headline, the paragraph after it as the green subtitle, monospaced stats line, slogan in red |
-| Link tiles | 2 | class `sdwa5-tiles` | the five tiles become cards, at most three per row with a centred last row (3 + 2), stacked below 768 px |
+| Link tiles | 2 | class `sdwa5-tiles` | the five tiles become cards, at most three per row with a centred last row (3 + 2), stacked below 768 px, and the last paragraph has no bottom margin so a card ends at its 1.75rem padding |
 
 [`tools/shopware/set-homepage-sections.sh`](../../tools/shopware/set-homepage-sections.sh) sets
 positions 0 and 2, dry run by default. The crop keeps the point `--sdwa5-hero-focus` (default

@@ -52,6 +52,10 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt "$CI_SHELLCHECK_IMAGE" -x \
     tools/dolibarr/doli.sh \
     tools/dolibarr/set-address.sh \
     tools/dolibarr/sync-pm.sh \
+    tools/paperless/lib.sh \
+    tools/paperless/dev-instance.sh \
+    tools/paperless/setup.sh \
+    tools/paperless/visibility-check.sh \
     tools/mariadb/recreate-foreign-keys.sh \
     tools/mariadb/reset-root-password.sh \
     tools/mariadb/reset-root-password.inner.sh \

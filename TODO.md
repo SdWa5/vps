@@ -238,15 +238,10 @@
        `/etc/cron.d/chimodiazz-deploy` rather than in `.env`, so the deploy mails reach him and the
        rest of the host's monitoring does not. It is the cheapest of the four and it closes the human
        half only, because a mailbox is not something his session reads (ca. 30 Minuten)
-10. **Host Paperless-ngx for SDWA5 and private use** (priority high; docker-compose.yml, behind Caddy)
-    for two tenants, myself privately and the Soundsystem Verein. One instance is the goal and two
-    instances are the fallback. Paperless-ngx has
-    had per-object owners and permissions since 1.14, and workflows can set the owner by consume path
-    or mail rule, so one instance with a private user and an org user or group should cover it. This
-    is from the project docs and not yet tried here. Check before deciding that tags, correspondents
-    and document types can be kept apart per owner as well, because a shared vocabulary would leak the
-    private side's structure to the org. Backups and the monitoring cron need the new volumes either
-    way (ca. 6 Stunden)
+10. **Paperless-ngx follow-ups** ([docs/paperless.md](docs/paperless.md)). Two instances, one for the
+    Verein and one for the household, built on 2026-10-16 (ca. 3 Stunden for what is left)
+    0. roll out on prod once `paper` and `paper.ripper` resolve. Secrets into `.env`, `setup.sh --apply`
+       and `visibility-check.sh` per instance, logins into Vaultwarden, TOTP on every account
     1. maybe fork paperless-ngx into the SdWa5 organization rather than running the upstream image
        unchanged. Nothing asks for a code change yet, so a fork is worth it only once one does,
        because every upstream release then has to be merged by hand (`decision`)
@@ -273,7 +268,25 @@
     so the aside probably shares the same wrong URL wherever Chimo Diazz has SEO URLs. SdWa5Theme 1.0.4 uses `sw-sales-channel-absolute-base-url` and
     `sw-original-request-uri` instead (ca. 30 Minuten)
 14. also host gitlab and email myself (priority medium to low)
-15. maybe even host dns myself (priority low)
+15. **host the sdwa5.org dns ourselves** (priority low, ca. 8 Stunden). today the domain and its dns sit
+    at squarespace, and squarespace has no dns api. checked on 2026-10-16: it offers commerce apis only,
+    its reseller apis are for approved partners, and its dns page drives an undocumented internal
+    endpoint. every record is therefore a hand step in the squarespace ui
+    1. the goal is an authoritative server with an api on the vps, e.g. powerdns with its http api in
+       a container, and the zone as code in this repo behind a dry-run-by-default sync script like
+       [tools/dolibarr/sync-pm.sh](tools/dolibarr/sync-pm.sh)
+    2. it needs a secondary nameserver off the vps, because otherwise a dead vps also takes down the mx
+       lookup for the google workspace mail. port 53 over udp and tcp opens on the firewall, and the
+       server answers authoritatively only and with response rate limiting
+    3. dnssec is off today (no ds, no dnskey), so the nameserver switch needs no key rollover
+    4. a zone cannot be listed over dns, so the squarespace page is the inventory. visible from outside
+       on 2026-10-16 were a records for the apex, `vault`, `erp`, `chimodiazz`, `paper` and
+       `paper.ripper`, mx `1 smtp.google.com`, the apex txt `sw-domain-hash` and spf, and the
+       `google._domainkey` dkim. there is no `www`
+    5. deSEC (deSEC e.V., Berlin, free, rest api, tokens scoped per rrset) was considered as an api
+       interim and set aside on 2026-10-16, because self-hosting is the goal
+    6. two side findings. no `_dmarc` record exists, and `project2` and `project3` have caddy blocks
+       but no record
 16. optimize memory and swap ([docs/infrastructure.md](docs/infrastructure.md#memory--swap)) (priority medium).
     zram and the swapfile overflow are already set up, and zswap is unavailable because the debian cloud
     kernel is built without it
@@ -314,3 +327,10 @@
     its image only from `docker-compose.yml`, so for this shop it needs `SDWA5_SHOPWARE_DEV_IMAGE`,
     `SDWA5_SHOPWARE_HTML` and `SDWA5_SHOPWARE_ARCHIVE` set as well, which is untested. The site comes from
     the private `chimodiazz/website`, so the new lock presumably has to land there and needs Chimo's side
+21. **Paperless AI features with a local model** ([docs/paperless.md](docs/paperless.md)) (ca. 4 Stunden).
+    Paperless-ngx 3.x offers AI suggestions and a document chat behind `PAPERLESS_AI_ENABLED`, with Ollama
+    as one of its backends, and both instances run with it off. `docker-compose.yml` already holds an
+    `ollama` service as the inactive profile `ollama`, loopback-only on a network of its own. Paperless
+    would need a network path to it, and document text would then never leave the VPS. RAM is the open
+    question, because a model next to two shops and two Paperless instances on 5.9 GB needs measuring
+    before it is switched on

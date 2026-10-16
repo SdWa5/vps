@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.84.0] - 2026-10-16
+
+### Added
+
+- Paperless-ngx 3.3.2 as two instances, `paper.sdwa5.org` for the Verein and `paper.ripper.sdwa5.org`
+  for the household, each with its own MariaDB 12.3 and valkey broker on an internal network. See
+  `docs/paperless.md`.
+- Caddy blocks for both. `/admin` answers 404, and HTTP basic auth answers 403, because Paperless
+  answers it as an unthrottled password oracle.
+- `tools/paperless/dev-instance.sh`, a local mirror from the production images and settings.
+- `tools/paperless/setup.sh`, which writes groups, users, ownerless shared tags and tag sharing
+  workflows from a gitignored spec. It is dry-run by default, and `paperless-spec.example.json` shows
+  the format.
+- `tools/paperless/visibility-check.sh`, which proves with test uploads that every user sees exactly
+  their own and the shared documents.
+- `tests/paperless.bats`.
+- `TODO.md` item 21, Paperless AI features with a local model.
+
+### Changed
+
+- The health check, database backup and security recheck default lists include the six Paperless
+  containers, both sites, their `/admin` paths, ports 8006 and 8007, and the app to database and broker
+  paths.
+- `TODO.md` item 15 now plans self-hosted DNS with an API, records the measured state of the
+  Squarespace zone and sets deSEC aside.
+- `TODO.md` item 10 keeps only the rollout and the fork decisions.
+
 ## [1.82.3] - 2026-10-16
 
 ### Fixed

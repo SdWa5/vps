@@ -22,6 +22,10 @@ flowchart LR
             P3["Dolibarr Project 3<br/>127.0.0.1:8004"]
             CDW["Chimo Diazz Shopware<br/>127.0.0.1:8005/8444 · profile"]
             P3DB[("MariaDB")]
+            PL["Paperless Verein<br/>127.0.0.1:8006"]
+            PLDB[("MariaDB + valkey<br/>paperless_sdwa5_*")]
+            PH["Paperless household<br/>127.0.0.1:8007"]
+            PHDB[("MariaDB + valkey<br/>paperless_home_*")]
             OL["Ollama<br/>127.0.0.1 via DOCKER-USER · inactive"]
             MC["Minecraft<br/>0.0.0.0:25565 · profile, inactive"]
             RS["Restic backup<br/>daily 04:00 · source /opt/docker (ro)"]
@@ -42,11 +46,15 @@ flowchart LR
     U -- " erp.sdwa5.org " --> C
     U -- " project2/project3.sdwa5.org " --> C
     U -- " chimodiazz.sdwa5.org " --> C
+    U -- " paper / paper.ripper.sdwa5.org " --> C
     U -- " ssh :22 (key-only) " --> SSHD
     U -. " :25565 " .-> MC
     C --> SW & VW & DL
     C --> P2 & P3
     C --> CDW
+    C --> PL & PH
+    PL --> PLDB
+    PH --> PHDB
     DL --> DLDB
     DLC --> DLDB
     P2 --> P2DB
@@ -71,6 +79,8 @@ Domain → port mapping lives in the [Caddyfile](../Caddyfile); backup detail in
 | Dolibarr Project 2  | dolibarr/dolibarr:24.0.1     | 8003            | https://project2.sdwa5.org | docker-compose.projects.yml             |
 | Dolibarr Project 3  | dolibarr/dolibarr:24.0.1     | 8004            | https://project3.sdwa5.org | docker-compose.projects.yml             |
 | Chimo Diazz         | dockware/shopware:6.7.11.1   | 8005 / 8444     | https://chimodiazz.sdwa5.org | docker-compose.projects.yml (profile: chimodiazz) |
+| Paperless Verein    | paperless-ngx:3.3.2 + mariadb:12.3 + valkey:9.0 | 8006 | https://paper.sdwa5.org | docker-compose.yml          |
+| Paperless household | paperless-ngx:3.3.2 + mariadb:12.3 + valkey:9.0 | 8007 | https://paper.ripper.sdwa5.org | docker-compose.yml   |
 | Ollama              | ollama/ollama:latest         | 11434           | (no domain, firewalled)    | docker-compose.yml                      |
 | Restic backup       | creativeprojects/resticprofile | —               | —                          | docker-compose.yml                      |
 | Minecraft           | itzg/minecraft-server:latest | 25565           | —                          | docker-compose.yml (profile: minecraft) |
@@ -111,6 +121,9 @@ database as dockware's `root`/`root`.
 | `shop` | shopware | |
 | `erp` | dolibarr, dolibarr_cron | Egress for mail and the PayPal API |
 | `erp_db` | dolibarr_db, dolibarr, dolibarr_cron | `internal`, so the database has no gateway |
+| `paper_sdwa5` | paperless_sdwa5 | Paperless-ngx Verein, see [paperless.md](paperless.md) |
+| `paper_sdwa5_db` | paperless_sdwa5_db, paperless_sdwa5_broker, paperless_sdwa5 | `internal` |
+| `paper_home`, `paper_home_db` | the household instance | Same shape as the Verein instance |
 | `backup` | restic | Egress to Google Drive |
 | `chimodiazz` | chimodiazz_shopware | Third-party theme code runs here |
 | `project2`, `project3` and their `_db` | the inactive Dolibarr instances | Same shape as the ERP |
@@ -193,6 +206,10 @@ again, as step 4 in [chimodiazz.md](chimodiazz.md#how-it-was-brought-up) does.
 ├── dolibarr-documents-data/        # gitignored — Dolibarr SdWa5 uploads
 ├── dolibarr-custom-data/           # gitignored — only GeoLite2-Country.mmdb (MaxMind, re-downloadable)
 ├── vaultwarden-data/               # gitignored — Vaultwarden data
+├── paperless-{sdwa5,home}-data/    # gitignored — Paperless index, classifier, logs
+├── paperless-{sdwa5,home}-media/   # gitignored — Paperless originals and archive files
+├── paperless-{sdwa5,home}-mariadb-data/  # gitignored — Paperless DBs
+├── tools/paperless/                # Paperless dev mirror, setup and visibility check
 ├── ollama-data/                    # gitignored — Ollama model cache
 ├── minecraft-data/                 # partially tracked — Minecraft world data
 │   ├── server.properties.example, eula.txt, ops.json, whitelist.json, banned-*.json, config/  # tracked

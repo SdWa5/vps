@@ -1,0 +1,32 @@
+{
+  "url": "https://paper.example.org",
+  "password_dir": "~/.config/sdwa5-paperless/example",
+  "groups": [
+    {
+      "name": "members",
+      "permissions": [
+        "add_document", "change_document", "delete_document", "view_document",
+        "add_tag", "change_tag", "delete_tag", "view_tag",
+        "add_correspondent", "change_correspondent", "delete_correspondent", "view_correspondent",
+        "add_documenttype", "change_documenttype", "delete_documenttype", "view_documenttype",
+        "add_storagepath", "change_storagepath", "delete_storagepath", "view_storagepath",
+        "add_savedview", "change_savedview", "delete_savedview", "view_savedview",
+        "add_note", "change_note", "delete_note", "view_note",
+        "add_sharelink", "change_sharelink", "delete_sharelink", "view_sharelink",
+        "add_customfield", "change_customfield", "delete_customfield", "view_customfield",
+        "add_uisettings", "change_uisettings", "view_uisettings",
+        "view_paperlesstask"
+      ]
+    }
+  ],
+  "users": [
+    { "username": "alice", "email": "alice@example.org", "first_name": "Alice", "groups": ["members"] },
+    { "username": "bob", "email": "bob@example.org", "first_name": "Bob", "groups": ["members"] }
+  ],
+  "tags": [
+    { "name": "Shared" }
+  ],
+  "shares": [
+    { "tag": "Shared", "group": "members" }
+  ]
+}

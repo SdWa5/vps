@@ -9,7 +9,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 load_env
 
 DATABASE_BACKUP_DIR="${DATABASE_BACKUP_DIR:-$COMPOSE_DIR/database-backup}"
-DATABASE_BACKUP_CONTAINERS="${DATABASE_BACKUP_CONTAINERS:-dolibarr_db shopware chimodiazz_shopware}"
+DATABASE_BACKUP_CONTAINERS="${DATABASE_BACKUP_CONTAINERS:-dolibarr_db shopware chimodiazz_shopware paperless_sdwa5_db paperless_home_db}"
 DATABASE_BACKUP_TIMEOUT="${DATABASE_BACKUP_TIMEOUT:-900}"
 CHIMODIAZZ_DEPLOY_LOCK="${CHIMODIAZZ_DEPLOY_LOCK:-/run/lock/chimodiazz-deploy.lock}"
 WORK_DIR=""

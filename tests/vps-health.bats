@@ -288,9 +288,9 @@ Container started." health
 # The built-in HEALTH_URLS default is the whole watch list, because an override
 # in .env has to repeat every existing entry and silently stops watching the
 # ones it forgets. These two assertions make a dropped entry fail here instead.
-@test "the built-in endpoint list covers all four public sites" {
+@test "the built-in endpoint list covers all six public sites" {
     health --dry-run
-    [[ "$output" == *"All 4 public endpoints return 200"* ]]
+    [[ "$output" == *"All 6 public endpoints return 200"* ]]
 }
 
 @test "a failing chimodiazz subdomain is named in the mail" {

@@ -55,6 +55,8 @@ apt-get install --allow-downgrades -o Dpkg::Options::=--force-confold ./caddy_2.
 | sdwa5.org                 | https://127.0.0.1:8443 | TLS skip verify, client `Host` passed through; de-browser 302→/de (see below) |
 | vault.sdwa5.org           | http://localhost:8000 | sets `X-Real-IP` for Vaultwarden; `/admin` 404, HSTS |
 | erp.sdwa5.org             | http://localhost:8002 | API explorer 404, HSTS           |
+| paper.sdwa5.org           | http://localhost:8006 | `paperless` snippet: `/admin` 404, basic auth 403, HSTS |
+| paper.ripper.sdwa5.org    | http://localhost:8007 | same snippet as paper.sdwa5.org |
 | project2.sdwa5.org     | http://localhost:8003 |                                  |
 | project3.sdwa5.org          | http://localhost:8004 |                                  |
 | chimodiazz.sdwa5.org      | https://127.0.0.1:8444 | TLS skip verify, same shape as sdwa5.org |
@@ -81,13 +83,14 @@ Each blocked path answers a flat `404` from Caddy and never reaches the containe
 |---|---|---|
 | sdwa5.org, chimodiazz.sdwa5.org | `/adminer`, `/mailcatcher`, `/logs` | dockware's development tools, public until 2026-09-15 |
 | vault.sdwa5.org | `/admin` | Admin panel, reached through an SSH tunnel instead, see [vaultwarden.md](vaultwarden.md) |
+| paper.sdwa5.org, paper.ripper.sdwa5.org | `/admin` | Django admin of Paperless-ngx, used by no client. Any request with HTTP basic auth answers `403`, because basic auth is an unthrottled password oracle there, see [paperless.md](paperless.md#access) |
 | erp.sdwa5.org | `/api/index.php/explorer` | Dolibarr's API explorer listed every endpoint. The REST API itself stays public |
 
 `hide_server_headers` strips `Server` and `X-Powered-By` from every live site. Before 2026-10-15
 each response carried Caddy's own `Server` header plus the upstream's, for example
 `Apache/2.4.58 (Ubuntu)` or `Rocket`.
 
-HSTS is set by Caddy for vault and erp with `max-age=31536000`. The two Shopware sites send
+HSTS is set by Caddy for vault, erp and both Paperless sites with `max-age=31536000`. The two Shopware sites send
 `max-age=31536000; includeSubDomains` from the upstream, so Caddy leaves them alone.
 
 project2 and project3 have no DNS record and no running service, and are left unchanged.

@@ -49,17 +49,17 @@ RECHECK_REMOTE_SCRIPT="${RECHECK_REMOTE_SCRIPT:-/opt/docker/monitoring/security-
 RECHECK_TARGET_V4="${RECHECK_TARGET_V4:-sdwa5.org}"
 # No AAAA record is published, so IPv6 is reached by its literal address (docs/ssh-hardening.md).
 RECHECK_TARGET_V6="${RECHECK_TARGET_V6-2a02:c206:3015:7801::1}"
-# The 44 ports of the 2026-10-14 audit's selection plus 33113: well-known services, databases,
+# The 44 ports of the 2026-10-14 audit's selection plus 33113 and the Paperless publishes 8006 and 8007: well-known services, databases,
 # Docker and Caddy admin ports, the loopback publishes of this host and the Minecraft and Ollama
 # profiles. A selection, not a full scan.
-EXTERNAL_TCP_PORTS="${EXTERNAL_TCP_PORTS:-21 22 23 25 53 80 110 111 135 139 143 443 445 465 587 993 995 1433 2019 2375 2376 3000 3306 3389 5000 5355 5432 5900 6379 8000 8001 8002 8003 8004 8005 8080 8443 8444 9000 9200 11211 11434 25565 27017 33113}"
+EXTERNAL_TCP_PORTS="${EXTERNAL_TCP_PORTS:-21 22 23 25 53 80 110 111 135 139 143 443 445 465 587 993 995 1433 2019 2375 2376 3000 3306 3389 5000 5355 5432 5900 6379 8000 8001 8002 8003 8004 8005 8080 8006 8007 8443 8444 9000 9200 11211 11434 25565 27017 33113}"
 EXPECTED_TCP_OPEN="${EXPECTED_TCP_OPEN:-22 80 443}"
 
-RECHECK_SITES="${RECHECK_SITES:-sdwa5.org chimodiazz.sdwa5.org vault.sdwa5.org erp.sdwa5.org}"
-HSTS_SITES="${HSTS_SITES:-vault.sdwa5.org erp.sdwa5.org}"
+RECHECK_SITES="${RECHECK_SITES:-sdwa5.org chimodiazz.sdwa5.org vault.sdwa5.org erp.sdwa5.org paper.sdwa5.org paper.ripper.sdwa5.org}"
+HSTS_SITES="${HSTS_SITES:-vault.sdwa5.org erp.sdwa5.org paper.sdwa5.org paper.ripper.sdwa5.org}"
 HSTS_MIN_AGE="${HSTS_MIN_AGE:-31536000}"
 HTTP3_SITE="${HTTP3_SITE:-sdwa5.org}"
-BLOCKED_PATHS="${BLOCKED_PATHS:-sdwa5.org=/adminer sdwa5.org=/mailcatcher sdwa5.org=/logs chimodiazz.sdwa5.org=/adminer chimodiazz.sdwa5.org=/mailcatcher chimodiazz.sdwa5.org=/logs vault.sdwa5.org=/admin erp.sdwa5.org=/api/index.php/explorer}"
+BLOCKED_PATHS="${BLOCKED_PATHS:-sdwa5.org=/adminer sdwa5.org=/mailcatcher sdwa5.org=/logs chimodiazz.sdwa5.org=/adminer chimodiazz.sdwa5.org=/mailcatcher chimodiazz.sdwa5.org=/logs vault.sdwa5.org=/admin erp.sdwa5.org=/api/index.php/explorer paper.sdwa5.org=/admin paper.ripper.sdwa5.org=/admin}"
 # Caddy's `respond "Not Found" 404`. An upstream 404 has a different body, which is how a variant
 # that slipped past the matcher shows up even when the upstream happens to refuse it as well.
 CADDY_404_BODY="${CADDY_404_BODY:-Not Found}"
@@ -69,20 +69,20 @@ FIREWALL_UDP_PORTS="${FIREWALL_UDP_PORTS:-443}"
 WAN_INTERFACE="${WAN_INTERFACE:-eth0}"
 
 # app=container,container. A container may reach its own application and nothing else.
-ISOLATION_APPS="${ISOLATION_APPS:-vault=vaultwarden shop=shopware chimodiazz=chimodiazz_shopware erp=dolibarr,dolibarr_cron,dolibarr_db backup=restic}"
+ISOLATION_APPS="${ISOLATION_APPS:-vault=vaultwarden shop=shopware chimodiazz=chimodiazz_shopware erp=dolibarr,dolibarr_cron,dolibarr_db paper=paperless_sdwa5,paperless_sdwa5_db,paperless_sdwa5_broker paperhome=paperless_home,paperless_home_db,paperless_home_broker backup=restic}"
 # The containers probed from. They run third-party or internet-facing code and have bash.
-ISOLATION_SOURCES="${ISOLATION_SOURCES:-chimodiazz_shopware shopware dolibarr}"
+ISOLATION_SOURCES="${ISOLATION_SOURCES:-chimodiazz_shopware shopware dolibarr paperless_sdwa5 paperless_home}"
 # The one path inside an application that must stay open, measured 2026-10-15.
-ISOLATION_EXPECT_OPEN="${ISOLATION_EXPECT_OPEN:-dolibarr>dolibarr_db:3306}"
+ISOLATION_EXPECT_OPEN="${ISOLATION_EXPECT_OPEN:-dolibarr>dolibarr_db:3306 paperless_sdwa5>paperless_sdwa5_db:3306 paperless_sdwa5>paperless_sdwa5_broker:6379 paperless_home>paperless_home_db:3306 paperless_home>paperless_home_broker:6379}"
 GATEWAY_OPEN="${GATEWAY_OPEN:-22 80 443}"
-GATEWAY_CLOSED="${GATEWAY_CLOSED:-25 2019 3306 8000 8002 8443 33113}"
-NO_EGRESS_CONTAINERS="${NO_EGRESS_CONTAINERS:-dolibarr_db}"
+GATEWAY_CLOSED="${GATEWAY_CLOSED:-25 2019 3306 8000 8002 8006 8007 8443 33113}"
+NO_EGRESS_CONTAINERS="${NO_EGRESS_CONTAINERS:-dolibarr_db paperless_sdwa5_db paperless_sdwa5_broker paperless_home_db paperless_home_broker}"
 EGRESS_PROBES="${EGRESS_PROBES:-1.1.1.1:443 9.9.9.9:53}"
 
 GIT_CHECKOUT_DIR="${GIT_CHECKOUT_DIR:-$COMPOSE_DIR}"
 GIT_BRANCH="${GIT_BRANCH:-main}"
 DEPLOYED_FILES="${DEPLOYED_FILES:-Caddyfile:/etc/caddy/Caddyfile hardening/fail2ban/jail.local:/etc/fail2ban/jail.local hardening/sshd_config.d/10-hardening.conf:/etc/ssh/sshd_config.d/10-hardening.conf hardening/firewall/sdwa5-firewall.sh:/usr/local/sbin/sdwa5-firewall.sh hardening/firewall/sdwa5-firewall.service:/etc/systemd/system/sdwa5-firewall.service hardening/netplan/60-ipv6.yaml:/etc/netplan/60-ipv6.yaml hardening/cloud-init/99-disable-network-config.cfg:/etc/cloud/cloud.cfg.d/99-disable-network-config.cfg}"
-DATABASE_BACKUP_CONTAINERS="${DATABASE_BACKUP_CONTAINERS:-dolibarr_db shopware chimodiazz_shopware}"
+DATABASE_BACKUP_CONTAINERS="${DATABASE_BACKUP_CONTAINERS:-dolibarr_db shopware chimodiazz_shopware paperless_sdwa5_db paperless_home_db}"
 RESTORE_CHECK="${RESTORE_CHECK:-$MONITORING_DIR/database-restore-check.sh}"
 
 PORT_TIMEOUT="${PORT_TIMEOUT:-3}"

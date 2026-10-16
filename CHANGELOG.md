@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.82.1] - 2026-10-16
+
+### Fixed
+
+- SdWa5Theme 1.2.3 centres the dark-mode toggle, the language flag, its text and the caret in the
+  header settings column on the header row. Before, they sat up to 2 px apart.
+- SdWa5Theme 1.2.3 levels the heart of the offcanvas donation link with its text. Before, it sat 3.2 px
+  low.
+
 ## [1.82.0] - 2026-10-16
 
 ### Added

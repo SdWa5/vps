@@ -106,7 +106,9 @@ with the `muted` token.
   menu, the settings column with the DNE toggle, language and currency, the cart and the donation
   button. The second row is the main navigation in monospaced caps. A 3 px gradient from green to
   red runs above the page. The Storefront top bar is emptied, because its contents moved into the
-  first row.
+  first row. Each settings button is a centred flex row there, and the core's baseline nudges (top bar
+  padding, the DNE icon's `top:.25em`, the flag margin, the caret's `vertical-align`) are reset, so
+  icon, flag, text and caret share the row's centre line.
 - **Below 992 px** the row holds the burger, the logo, the donation button and the cart, and search
   takes a line of its own on phones. The settings column is hidden, because DNE injects its toggle into
   the offcanvas menu there and language and currency are in the offcanvas as well. The navigation row
@@ -146,7 +148,8 @@ because every merch price is €0.
 
 Three links lead to `https://paypal.me/SdWa5`, which is the association's only channel because it has
 no bank account. One is an outline button with a heart in the header, one is an entry in the offcanvas
-menu, and one is a line above the footer bottom. All three open in a new tab with
+menu, and one is a line above the footer bottom. The button and the offcanvas entry reset the core's
+`.icon>svg{top:.25em}`, so the heart stays level with the text. All three open in a new tab with
 `rel="noopener noreferrer"`.
 
 The URL is the theme config field **`sdwa5-donation-url`**, editable under Admin → Themes → SdWa5Theme,

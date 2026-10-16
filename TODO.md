@@ -247,8 +247,9 @@
        `/etc/cron.d/chimodiazz-deploy` rather than in `.env`, so the deploy mails reach him and the
        rest of the host's monitoring does not. It is the cheapest of the four and it closes the human
        half only, because a mailbox is not something his session reads (ca. 30 Minuten)
-10. **add paperless-ngx** (docker-compose.yml, behind Caddy) for two tenants, myself privately and the
-    Soundsystem Verein. One instance is the goal and two instances are the fallback. Paperless-ngx has
+10. **Host Paperless-ngx for SDWA5 and private use** (priority high; docker-compose.yml, behind Caddy)
+    for two tenants, myself privately and the Soundsystem Verein. One instance is the goal and two
+    instances are the fallback. Paperless-ngx has
     had per-object owners and permissions since 1.14, and workflows can set the owner by consume path
     or mail rule, so one instance with a private user and an org user or group should cover it. This
     is from the project docs and not yet tried here. Check before deciding that tags, correspondents
@@ -280,7 +281,20 @@
     `sw-storefront-url` and `resolved-uri`, which on sdwa5.org gave the technical `/navigation/<id>` path,
     so the aside probably shares the same wrong URL wherever Chimo Diazz has SEO URLs. SdWa5Theme 1.0.4 uses `sw-sales-channel-absolute-base-url` and
     `sw-original-request-uri` instead (ca. 30 Minuten)
-14. **FOSS Dolibarr module for ticket dependencies and merges** (priority medium,
+14. also host gitlab and email myself (priority medium to low)
+15. maybe even host dns myself (priority low)
+16. optimize memory and swap ([docs/infrastructure.md](docs/infrastructure.md#memory--swap)) (priority medium).
+    zram and the swapfile overflow are already set up, and zswap is unavailable because the debian cloud
+    kernel is built without it
+    1. tune the sysctls for zram first. `vm.swappiness=60` and `vm.page-cluster=3` are still the debian
+       defaults, while a zram-first setup usually runs a swappiness of ca. 100 to 180 and
+       `page-cluster=0`, because readahead from compressed ram buys nothing. measure swap use and
+       latency before and after rather than taking the values on trust
+17. **Check the Contabo Auto Backup on 16.10.2026.** `vmd157801-BU-7696152d` from 15.10. 12:16 still
+    showed "Backing up" at 20:00; if it is stuck, ask Contabo support (ca. 15 Minuten)
+18. **`apt autoremove` from 20.10.2026,** after a few quiet days on Debian 13. Removes the old 6.1
+    kernels and the leftover Bookworm libraries (ca. 10 Minuten)
+19. **FOSS Dolibarr module for ticket dependencies and merges** (priority medium,
     [docs/dolibarr.md](docs/dolibarr.md#projects-tasks-and-tickets)). Dolibarr 23.0 has no
     ticket-to-ticket relation, so "blocks / blocked by" and merges are message lines today. The module
     adds a `blocks` relation with a block on the ticket card and in the list, a merge action that moves

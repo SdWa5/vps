@@ -27,6 +27,36 @@
   }
 }
 
+// Below 768 px the columns collapse into rows with a toggle. The core pads only
+// the Contact column with pb-4 (24px), which also applies while it is collapsed.
+// The headline is a flex row with the default stretch, so the title text sits
+// at its top, and the toggle icon sits on the baseline with a 0.25em nudge.
+@media (max-width: 767.98px) {
+  .footer-column.pb-4 {
+    padding-bottom: 0 !important;
+  }
+
+  .footer-column-headline {
+    align-items: center;
+
+    .icon-footer-plus > svg,
+    .icon-footer-minus > svg {
+      top: 0;
+    }
+  }
+
+  .footer-column-toggle {
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+// No payment or shipping logos are configured, but the empty strip keeps its
+// 2rem of padding above the donation line.
+.footer-logos:not(:has(img)) {
+  display: none;
+}
+
 .footer-contact-hotline a {
   color: var(--sdwa5-red-text-immutable);
 }

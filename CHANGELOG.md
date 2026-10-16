@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.86.2] - 2026-10-16
+
+### Fixed
+
+- SdWa5Theme 1.2.8 evens out the mobile footer. The collapsed Contact column was 24 px taller than
+  the others from the core's `pb-4`, the column titles sat 4 px above their row centre, and the
+  donation line had 56 px above against 24 px below, from an empty payment logo strip.
+
+### Added
+
+- Storefront tests for equal collapsed footer columns, centred titles and toggles, toggles hidden
+  from 768 px, and equal space around the donation line.
+
 ## [1.86.1] - 2026-10-16
 
 ### Fixed

@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.79.1] - 2026-10-16
+
+### Changed
+
+- `docs/dolibarr.md` records the MCP setup on production and the Claude Code registration that reads
+  the key from a file.
+- `TODO.md` item 2.3 and 19 reflect PmTools on production, item 20 lists the remaining workarounds.
+
 ## [1.79.0] - 2026-10-16
 
 ### Added

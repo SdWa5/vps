@@ -335,7 +335,14 @@ tools/dolibarr/mcp-setup.sh --rights 56001,41       # another set of right ids
 
 Production needs `DOLIBARR_URL=https://erp.sdwa5.org`, `DOLIBARR_ADMIN_PASSWORD_FILE` pointing at
 the admin password, for example `<(bw get password ID)`, and `DOLIBARR_MCP_KEY_FILE` outside the
-mirror directory. It ran on the mirror on 2026-10-16 and not yet on production.
+mirror directory. It ran on the mirror and on production on 2026-10-16. The production key lives in
+`~/.config/sdwa5-dolibarr-mcp-key` on the workstation, and Claude Code reaches the server as
+`dolibarr-sdwa5` in local scope, with a `headersHelper` that reads the key from that file on every
+connect, so the key is in no configuration file.
+
+```bash
+claude mcp add-json -s local dolibarr-sdwa5 '{"type":"http","url":"https://erp.sdwa5.org/ai/server/mcp_server.php","headersHelper":"jq -n --rawfile k \"$HOME/.config/sdwa5-dolibarr-mcp-key\" \"{\\\"X-API-Key\\\": (\\$k | rtrimstr(\\\"\\\\n\\\"))}\""}'
+```
 
 ## Local dev mirror
 

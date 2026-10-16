@@ -48,6 +48,13 @@ log() {
 # Read KEY=VALUE pairs from the compose .env without executing it. Only keys
 # that are not already set in the environment are taken, so tests and manual
 # runs can override anything.
+#
+# Secret-shaped keys (see env_key_is_secret) are skipped, because every key
+# taken here is exported into the script and each child it starts, and none of
+# the monitoring scripts needs the stack's passwords. MONITOR_* keys are this
+# suite's own configuration and always load, MONITOR_SMTP_PASSWORD included. A
+# caller that needs another secret names it in LOAD_ENV_SECRETS, separated by
+# spaces.
 load_env() {
     local env_file="${ENV_FILE:-$COMPOSE_DIR/.env}"
     [[ -r "$env_file" ]] || return 0
@@ -63,6 +70,10 @@ load_env() {
         key="${key%"${key##*[![:space:]]}"}"
         [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
         [[ -n "${!key:-}" ]] && continue
+        if [[ "$key" != MONITOR_* && " ${LOAD_ENV_SECRETS:-} " != *" $key "* ]] \
+            && env_key_is_secret "$key"; then
+            continue
+        fi
 
         value="${line#*=}"
         # Strip one layer of matching quotes, as docker-compose does.
@@ -72,6 +83,12 @@ load_env() {
         printf -v "$key" '%s' "$value"
         export "${key?}"
     done < "$env_file"
+}
+
+# True for a variable name that by convention holds a credential. The same
+# rule names the keys security-recheck.sh looks for in container environments.
+env_key_is_secret() {
+    [[ "$1" == *PASS* || "$1" == *TOKEN* || "$1" == *SECRET* || "$1" == *_KEY ]]
 }
 
 # Mail configuration. The default is the Workspace SMTP relay, which accepts

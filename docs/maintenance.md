@@ -356,11 +356,15 @@ rehearsal passed every gate first. Production then reported image, environment a
 passed the restore check, the API explorer returned 404, the admin login and all nine BankSync pages
 rendered without PHP errors, and an SMTP test mail was accepted. `dolibarr_cron` started last and
 its first run authenticated and completed. The upgrade made module `ai` active. The preserved
-archive, documents, custom modules and the 23.0.4 image ID stay in a root-only
-`/var/tmp/dolibarr-24-preserve.*` directory for the rollback.
+archive, documents, custom modules and the 23.0.4 image ID were kept in a root-only
+`/var/tmp/dolibarr-24-preserve.*` directory for the rollback. SEC-11 moves that directory into an
+archive snapshot tagged `sdwa5-archive` and deletes it from the host, see
+[backup.md](backup.md#archive-snapshots).
 
 The 24.0.1 image writes a full database dump to `documents/backup-before-upgrade.sql` with mode 644.
-Set it to 600 after every upgrade.
+Set it to 600 right after the upgrade. Once the upgrade has passed its gates, put it into an archive
+snapshot and delete it, because it sits in the live documents volume and the daily backups carry it
+along with every user's password hash.
 
 ### Establish the host recovery checkpoint
 

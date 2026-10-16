@@ -6,13 +6,20 @@ Docker Compose configuration for all services running on the SdWa5 Contabo VPS.
 
 - Docker + Docker Compose v2. The VPS runs docker-ce 29.9.1 with the `docker compose` plugin 5.6.0 from download.docker.com since 2026-10-15, so every command below uses the subcommand form. See [docs/maintenance.md](docs/maintenance.md#docker-packages).
 - Caddy (system service, not in Docker)
-- A `.env` file in this directory (see `.env.example`)
+- A `.env` file in this directory (see `.env.example`) and the compose file secrets in `secrets/`
 
 ## Setup
 
 ```bash
 cp .env.example .env
 # Fill in all values in .env
+# New random values for every file secret except the restic password, which has to be the
+# existing repository's (see docs/backup.md). Names and results only, never a value.
+tools/secrets/write-secret-files.sh \
+    dolibarr_db_root_password=random dolibarr_db_password=random \
+    dolibarr_admin_init_password=random dolibarr_cron_key=random \
+    paperless_sdwa5_db_root_password=random paperless_sdwa5_db_password=random paperless_sdwa5_secret_key=random \
+    paperless_home_db_root_password=random paperless_home_db_password=random paperless_home_secret_key=random
 docker compose up -d
 ```
 
@@ -34,7 +41,10 @@ docker compose up -d
 
 ## Credentials
 
-All secrets live in `.env` — never committed. See `.env.example` for required variable names.
+Nothing secret is committed. The passwords and keys of Dolibarr, Paperless and restic are compose
+file secrets in `secrets/` (700/400 root), which the containers read through `*_FILE` variables, see
+[docs/infrastructure.md](docs/infrastructure.md#secrets). Everything else, including Vaultwarden's
+argon2 `ADMIN_TOKEN` hash, is in `.env`, see `.env.example`.
 
 ## Outgoing email
 
@@ -105,7 +115,7 @@ monitoring/security-recheck.sh
 # Show the SQL that recreates a schema's foreign keys under MariaDB 12.x (--apply runs it, see docs/backup.md)
 /opt/docker/tools/mariadb/recreate-foreign-keys.sh dolibarr_db
 
-# Set a stopped MariaDB service's root password back to the .env value (see docs/backup.md)
+# Set a stopped MariaDB service's root password back to its configured value (see docs/backup.md)
 /opt/docker/tools/mariadb/reset-root-password.sh dolibarr_db
 
 # Read the Dolibarr ERP from a workstation (see docs/dolibarr.md)

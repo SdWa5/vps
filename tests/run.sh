@@ -43,6 +43,7 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt "$CI_SHELLCHECK_IMAGE" -x \
     restic/entrypoint.sh \
     restic/backup.sh \
     hardening/firewall/sdwa5-firewall.sh \
+    hardening/dockware-boot-end.sh \
     tools/dolibarr/deploy-module.sh \
     tools/dolibarr/dev-instance.sh \
     tools/dolibarr/lib.sh \
@@ -59,6 +60,7 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt "$CI_SHELLCHECK_IMAGE" -x \
     tools/mariadb/recreate-foreign-keys.sh \
     tools/mariadb/reset-root-password.sh \
     tools/mariadb/reset-root-password.inner.sh \
+    tools/secrets/write-secret-files.sh \
     tools/compose.sh \
     tools/shopware/lib.sh \
     tools/shopware/create-products.sh \

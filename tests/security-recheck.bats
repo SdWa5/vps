@@ -237,6 +237,49 @@ setup() {
     [ "$(recheck_status egress:dolibarr_db)" = CRIT ]
 }
 
+@test "a healthy host run accepts file paths, not-set, argon2 and empty values in container envs" {
+    recheck --host
+    [ "$(recheck_status env:vaultwarden)" = OK ]
+    [[ "$output" == *$'env:vaultwarden\tOK\tno secret in docker inspect or in any process environment'* ]]
+    [[ "$output" != *argon2* ]]
+}
+
+@test "a secret value in docker inspect is WARN and names the variable, never the value" {
+    export STUB_CONFIG_ENV_LEAK="dolibarr:DOLI_DB_PASSWORD restic:RESTIC_PASSWORD paperless_sdwa5:PAPERLESS_DBPASS dolibarr:DOLI_CRON_KEY"
+    recheck --host
+    [ "$(recheck_status env:dolibarr)" = WARN ]
+    [ "$(recheck_status env:restic)" = WARN ]
+    [ "$(recheck_status env:paperless_sdwa5)" = WARN ]
+    [[ "$output" == *'secret values for DOLI_CRON_KEY DOLI_DB_PASSWORD'* ]]
+    [[ "$output" != *leaked* ]]
+    [ "$(recheck_status env:dolibarr_cron)" = OK ]
+}
+
+@test "a value a process exported from its _FILE stays OK but is named as residual" {
+    recheck --host
+    [ "$(recheck_status env:dolibarr_db)" = OK ]
+    [[ "$output" == *$'env:dolibarr_db\tOK\tno secret in docker inspect; process environment still carries MYSQL_PASSWORD'* ]]
+    [[ "$output" != *residual* ]]
+}
+
+@test "unreadable process environments are WARN" {
+    export STUB_ENVIRON_UNREADABLE="vaultwarden"
+    recheck --host
+    [ "$(recheck_status env:vaultwarden)" = WARN ]
+    [[ "$output" == *'process environments not readable'* ]]
+}
+
+@test "a shop with dockware's sshd or the main shop's mailcatcher still listening is WARN" {
+    recheck --host
+    [ "$(recheck_status listeners:shopware)" = OK ]
+    [ "$(recheck_status listeners:chimodiazz_shopware)" = OK ]
+    export STUB_EXTRA_LISTEN="shopware:1080 chimodiazz_shopware:22"
+    recheck --host
+    [ "$(recheck_status listeners:shopware)" = WARN ]
+    [ "$(recheck_status listeners:chimodiazz_shopware)" = WARN ]
+    [[ "$output" == *'shopware listens on 1080'* ]]
+}
+
 @test "a deployed revision behind origin is WARN" {
     export STUB_GIT_REMOTE=2222222222222222222222222222222222222222
     recheck --host

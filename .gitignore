@@ -43,6 +43,10 @@ dolibarr-documents-data/
 dolibarr-custom-data/
 dolibarr-secrets/
 
+# Compose file secrets, see the secrets block in docker-compose.yml. Anchored,
+# so it ignores only the stack's directory.
+/secrets/
+
 # Dolibarr Project 2 data
 project2-dolibarr-mariadb-data/
 project2-dolibarr-documents-data/

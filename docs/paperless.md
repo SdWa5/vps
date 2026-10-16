@@ -10,7 +10,7 @@ application, broker and database.
 | loopback port | 8006 | 8007 |
 | networks | `paper_sdwa5`, internal `paper_sdwa5_db` | `paper_home`, internal `paper_home_db` |
 | data | `paperless-sdwa5-{data,media,mariadb-data}/` | `paperless-home-{data,media,mariadb-data}/` |
-| `.env` | `PAPERLESS_SDWA5_*` | `PAPERLESS_HOME_*` |
+| secrets | `secrets/paperless_sdwa5_{secret_key,db_password,db_root_password}` | `secrets/paperless_home_{secret_key,db_password,db_root_password}` |
 
 ## Why two instances
 
@@ -41,6 +41,14 @@ The shared settings sit in the `x-paperless-env` anchor of `docker-compose.yml`:
 - no mail, no Tika or Gotenberg, and AI features off (TODO #21)
 
 Documents arrive by web upload or through a mobile app. The uploader becomes the owner.
+
+The secret key and the database passwords are compose file secrets (row "secrets" above), read
+through `PAPERLESS_SECRET_KEY_FILE`, `PAPERLESS_DBPASS_FILE` and MariaDB's `MYSQL_*_FILE`. They are
+therefore absent from `docker inspect`, but not from the running processes. The image's s6
+`init-env-file` copies each `PAPERLESS_*_FILE` into `/run/s6/container_environment/`, so every
+Paperless process carries the value, and MariaDB's `file_env` exports it as well. The database
+passwords take effect only when a database is first initialized, so a file must keep the value the
+database was created with. The admin passwords are not on the host at all.
 
 Measured on the dev mirror on 2026-10-16:
 

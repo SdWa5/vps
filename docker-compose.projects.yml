@@ -11,6 +11,13 @@ x-logging: &default-logging
     max-file: "3"
 
 services:
+  # The project2 and project3 Dolibarr instances have never been started, and no
+  # data directory exists for them. They keep plain ${PROJECT*_…} interpolation
+  # rather than the file secrets docker-compose.yml uses, and .env carries no
+  # values for them since 2026-10-16. Started like that, MariaDB refuses to
+  # initialize without a root password, so an accidental start fails instead of
+  # creating an instance with empty credentials. Move them to ./secrets/ files
+  # the way docker-compose.yml does before first use.
   project2_dolibarr_db:
     # Same pin as docker-compose.yml. Minor series rather than exact, so
     # patches inside 12.3 still arrive and a major-version jump cannot.
@@ -142,6 +149,11 @@ services:
       # Shopware's storefront build writes into the plugin's own dist directory,
       # which a read-only mount would break.
       - ./chimodiazz-src/shopware/custom/plugins/ChimodiazzTheme:/var/www/html/custom/plugins/ChimodiazzTheme
+      # Same boot hook as the sdwa5.org shop, which stops dockware's sshd. Without
+      # SDWA5_STOP_MAILCATCHER, because this shop's mailer still falls back to
+      # .env's MAILER_DSN=smtp://127.0.0.1 and so hands its mail to mailcatcher.
+      # TODO.md tracks giving it a real mailer.
+      - ./hardening/dockware-boot-end.sh:/var/www/boot_end.sh:ro
 
 # One network per application, see the networks block in docker-compose.yml.
 # Both files share the compose project name, so these names must not repeat

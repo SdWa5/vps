@@ -21,7 +21,8 @@
 #   CROND          crond binary (default crond), replaceable for the tests
 #
 # Busybox crond hands its own environment to every job, so RESTIC_REPOSITORY,
-# RESTIC_PASSWORD and the rest reach backup.sh without being written anywhere.
+# RESTIC_PASSWORD_FILE and the rest reach backup.sh without being written
+# anywhere. The password itself is the compose secret that file names.
 
 set -eu
 

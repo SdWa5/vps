@@ -134,6 +134,15 @@ and would otherwise have repeated the exposure the hour it went up.
 reaches the loopback ports directly still has them. That is the host's firewall and SSH doing the
 work, not this rule.
 
+dockware's `sshd` is stopped on every boot since 2026-10-16 by
+[`hardening/dockware-boot-end.sh`](../hardening/dockware-boot-end.sh), see
+[infrastructure.md](infrastructure.md#no-sshd-in-the-shop-containers). MailCatcher keeps running in
+this instance, and that is a finding rather than a choice. Measured 2026-10-16: the shop's
+`core.mailerSettings.emailAgent` is empty, so Shopware falls back to `MAILER_DSN=smtp://127.0.0.1`
+from `.env`, which is MailCatcher. **Every mail this shop sends lands in MailCatcher and is never
+delivered.** Stopping MailCatcher would turn that into send errors. The fix is a real mailer in the
+shop's settings, tracked in [TODO.md](../TODO.md).
+
 The administrator credentials were a separate question and were checked separately. dockware ships a
 published default pair. Measured 2026-09-15: the `sdwa5.org` instance already rejected it, and this
 instance accepted it until the password was rotated, which was done before Caddy ever pointed at it.

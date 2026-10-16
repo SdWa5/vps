@@ -43,8 +43,8 @@ Automated backups via **Restic** + **rclone** to Google Drive.
 | Schedule          | Daily at **04:00 UTC**, which is 06:00 CEST / 05:00 CET — the restic container has no `TZ` set and runs UTC |
 | Source            | `/data` (= `/opt/docker/` read-only mount) |
 | Repository        | `rclone:sdwa5backup:restic-backups`, Shared Drive "SdWa5 Backup" |
-| Retention         | 6 daily, 3 weekly, 11 monthly, 2 yearly |
-| Restic password   | `RESTIC_PASSWORD` in `.env`        |
+| Retention         | 6 daily, 3 weekly, 11 monthly, 2 yearly, plus every snapshot tagged `sdwa5-archive` |
+| Restic password   | compose secret `secrets/restic_password`, read by restic through `RESTIC_PASSWORD_FILE` |
 | rclone remote     | `sdwa5backup`, defined by `RCLONE_CONFIG_SDWA5BACKUP_*` in `docker-compose.yml` |
 | Identity          | service account `restic-backup`, key `/opt/docker/rclone-config/restic-sa.json` (mode 600) |
 
@@ -144,7 +144,8 @@ under 12.3 and `mariadb-dump --routines` failed with `Column count of mysql.proc
 backs up the `mysql` schema to `system_mysql_backup_<old version>.sql.zst` in the datadir, runs the
 upgrade with grants off and then starts normally. No root login is needed for that.
 
-The root password in `.env` reaches the database only when an empty datadir is initialised. When the
+The root password (the compose secret `secrets/<service>_db_root_password`, or a variable in
+`docker-compose.projects.yml`) reaches the database only when an empty datadir is initialised. When the
 two have drifted apart, `tools/mariadb/reset-root-password.sh` sets every existing root account back
 to the configured value. It runs a throwaway container of the stopped service with grants and
 networking off, proves the new password with a root login and never prints it.
@@ -284,13 +285,51 @@ So the fix is only to stop creating new groups. If the old ones are ever to be m
 deliberate one-off `forget --group-by paths` with the snapshot list read first, not a change to the
 cron's arguments.
 
+## Archive snapshots
+
+Host files that are not part of the stack but may still be needed, such as an old dump, a pre-change
+copy of a config or the rollback material of an upgrade, go into an archive snapshot before they are
+deleted from the host. The daily snapshots would hold the ones under `/opt/docker` as well, but those
+age out within months once the files are gone, and nothing outside `/opt/docker` is backed up at all.
+
+An archive snapshot is tagged `sdwa5-archive` plus a tag naming its reason. `RESTIC_FORGET_ARGS`
+carries `--keep-tag sdwa5-archive`, so `forget` keeps every one of them. Its paths are under
+`/archive`, so it also forms a retention group of its own.
+
+It is taken through the restic service, so it uses the same repository, rclone identity and password
+file, and the sources are mounted read-only:
+
+```bash
+cd /opt/docker
+docker compose run --rm --no-deps --entrypoint restic \
+    -v /root/some-dump:/archive/root/some-dump:ro \
+    -v /opt/docker/.env.bak-example:/archive/opt/docker/.env.bak-example:ro \
+    restic backup /archive --tag sdwa5-archive --tag <reason>
+docker compose run --rm --no-deps --entrypoint restic restic snapshots --tag sdwa5-archive
+```
+
+Before a source is deleted, the snapshot is restored into a directory only root can read and
+compared with it:
+
+```bash
+verify="$(mktemp -d /var/tmp/archive-verify.XXXXXX)"   # mode 700
+docker compose run --rm --no-deps --entrypoint restic -v "$verify:/restore" \
+    restic restore <snapshot id> --target /restore
+diff -r /root/some-dump "$verify/archive/root/some-dump" && echo identical
+rm -rf -- "$verify"
+```
+
+One item comes back the same way with `--include /archive/<path>`. Deleting the source with `rm`
+is enough. `shred` guarantees nothing on a journaling filesystem on a virtual disk, and the Contabo
+Auto Backup keeps the old copy until it rotates either way.
+
 ## Restore drill
 
 **First run 2026-09-08, and it passed.** The repository had never been restored from, so it was
 unproven end to end. Re-run it after any change to the backup path, and otherwise once a quarter.
 
 Restoring through the existing container is deliberate: it already holds `RESTIC_REPOSITORY`,
-`RESTIC_PASSWORD` and the rclone config, so the drill never handles the repository password.
+`RESTIC_PASSWORD_FILE` and the rclone config, so the drill never handles the repository password.
 
 ```bash
 # 1. Restore just the vault database into a scratch directory inside the container.
@@ -362,7 +401,7 @@ account.
 ## Notes
 
 - The restic container mounts all of `/opt/docker/` as `/data` read-only.
-- `.gitignore` exclusions do NOT affect what restic backs up — restic backs up everything including data dirs and `.env`.
+- `.gitignore` exclusions do NOT affect what restic backs up — restic backs up everything including data dirs, `.env` and `secrets/`.
 - The restic container accumulates **zombie processes**. Measured 108 on 2026-09-08 after 51 days up.
   The old image's PID 1 was `tail -fn0 /var/log/cron.log` with no init, so nothing reaped the `rclone`
   children each run spawned. `init: true` on the service fixes it and stays with the new image. Harmless at this rate against a `kernel.pid_max`

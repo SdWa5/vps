@@ -9,7 +9,8 @@
 #
 # The script runs in two places. From a workstation it probes the public side itself and then runs
 # its own --host part on the VPS over ssh, merging both into one report. On the VPS, --host probes
-# the firewall, the container isolation, the deployed revision and the deployed config copies.
+# the firewall, the container isolation, the secrets in container environments, the listeners
+# dockware's boot hook must have closed, the deployed revision and the deployed config copies.
 #
 # Usage:
 #   security-recheck.sh                external probes here, host probes over ssh
@@ -23,7 +24,8 @@
 # Exit status: 0 without CRIT, 1 with a CRIT (or a WARN under --strict), 2 for a usage error.
 #
 # Nothing secret is printed. Responses are reduced to status codes, header names and the HSTS
-# max-age; bodies are compared, never shown; .env is never loaded.
+# max-age; bodies are compared, never shown; .env is never loaded. Container environments are reduced
+# to variable names inside the pipe that reads them, so no value reaches a variable.
 #
 # Environment overrides, set on the machine that runs the part they belong to:
 #   RECHECK_SSH_HOST, RECHECK_REMOTE_SCRIPT     where the --host part runs
@@ -34,7 +36,7 @@
 #   BLOCKED_PATHS, CADDY_404_BODY               "site=/path" pairs and Caddy's own 404 body
 #   FIREWALL_PORTS, FIREWALL_UDP_PORTS, WAN_INTERFACE
 #   ISOLATION_APPS, ISOLATION_SOURCES, ISOLATION_EXPECT_OPEN
-#   GATEWAY_OPEN, GATEWAY_CLOSED, NO_EGRESS_CONTAINERS, EGRESS_PROBES
+#   GATEWAY_OPEN, GATEWAY_CLOSED, NO_EGRESS_CONTAINERS, EGRESS_PROBES, CLOSED_LISTENERS
 #   GIT_CHECKOUT_DIR, GIT_BRANCH, DEPLOYED_FILES, DATABASE_BACKUP_CONTAINERS
 #   PORT_TIMEOUT, PROBE_TIMEOUT, HTTP_TIMEOUT, RESTORE_CHECK (test hook)
 
@@ -78,6 +80,10 @@ GATEWAY_OPEN="${GATEWAY_OPEN:-22 80 443}"
 GATEWAY_CLOSED="${GATEWAY_CLOSED:-25 2019 3306 8000 8002 8006 8007 8443 33113}"
 NO_EGRESS_CONTAINERS="${NO_EGRESS_CONTAINERS:-dolibarr_db paperless_sdwa5_db paperless_sdwa5_broker paperless_home_db paperless_home_broker}"
 EGRESS_PROBES="${EGRESS_PROBES:-1.1.1.1:443 9.9.9.9:53}"
+# "container:port,port" pairs that must not listen. dockware starts sshd (22) and mailcatcher (1025
+# SMTP, 1080 web) on every boot, and hardening/dockware-boot-end.sh stops them again. chimodiazz keeps
+# mailcatcher, because its mail still falls back to it, see that script.
+CLOSED_LISTENERS="${CLOSED_LISTENERS:-shopware:22,1025,1080 chimodiazz_shopware:22}"
 
 GIT_CHECKOUT_DIR="${GIT_CHECKOUT_DIR:-$COMPOSE_DIR}"
 GIT_BRANCH="${GIT_BRANCH:-main}"
@@ -113,7 +119,8 @@ security-recheck.sh - repeat the SdWa5 exposure, firewall and isolation checks
 External: open ports on IPv4 and IPv6, HTTP/3, sites answering 200, no Server or
 X-Powered-By header, HSTS, blocked paths including bypass variants.
 Host: INPUT and DOCKER-USER on both families, cross-application isolation, the
-container gateways, database egress, deployed revision and config copies.
+container gateways, database egress, secrets in container environments, the
+dockware listeners that must be closed, deployed revision and config copies.
 
 Read-only. See docs/monitoring.md for the variables and the pass conditions.
 USAGE
@@ -544,6 +551,81 @@ check_isolation() {
     fi
 }
 
+# secret_names
+#
+# Reads NAME=VALUE lines and prints the names that look like credentials, space separated, never a
+# value. The name rule is the one monitoring/lib.sh's env_key_is_secret applies. A value that is
+# empty, a *_FILE path, dockware's `not-set` placeholder or an argon2 PHC hash (Vaultwarden's
+# ADMIN_TOKEN) is not a secret.
+secret_names() {
+    awk -F= '{ k = $1; v = substr($0, length(k) + 2) }
+        k ~ /_FILE$/ || v == "" || v == "not-set" || v ~ /^\$argon2/ { next }
+        k ~ /(PASS|TOKEN|SECRET)/ || k ~ /_KEY$/ { print k }' | sort -u | paste -sd' ' -
+}
+
+# Every process environment in the container, one NAME=VALUE per line. A process that ends while the
+# loop runs is skipped rather than failing the read.
+# shellcheck disable=SC2016
+ENVIRON_SNIPPET='for f in /proc/[0-9]*/environ; do tr "\000" "\n" < "$f" 2>/dev/null; echo; done'
+
+# check_env_exposure CONTAINER
+#
+# Since SEC-11 the stack's secrets reach the containers as files under /run/sdwa5-secrets, so docker
+# inspect must show none of them. A value there is a WARN, because anyone who can inspect containers
+# reads it and it lands in every config dump. The processes inside can still carry values: MariaDB's
+# file_env and Paperless's s6 init-env-file export what they read from a *_FILE. Those names are
+# listed in the OK message, so that residual stays visible instead of passing silently.
+check_env_exposure() {
+    local container="$1" config process
+
+    if [[ "$(docker inspect -f '{{.State.Running}}' "$container" 2>/dev/null)" != true ]]; then
+        printf 'OK	%s is not running, no environment to read
+' "$container"
+        return
+    fi
+    config="$(docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$container" 2>/dev/null | secret_names)"
+    if ! docker exec --user 0 "$container" sh -c 'test -r /proc/1/environ' 2>/dev/null; then
+        printf 'WARN	%s: process environments not readable%s
+' "$container" "${config:+; docker inspect shows secret values for $config}"
+        return
+    fi
+    process="$(docker exec --user 0 "$container" sh -c "$ENVIRON_SNIPPET" 2>/dev/null | secret_names)"
+
+    if [[ -n "$config" ]]; then
+        printf 'WARN	docker inspect shows secret values for %s%s
+' "$config" "${process:+; process environment: $process}"
+    elif [[ -n "$process" ]]; then
+        printf 'OK	no secret in docker inspect; process environment still carries %s
+' "$process"
+    else
+        printf 'OK	no secret in docker inspect or in any process environment
+'
+    fi
+}
+
+# check_closed_listeners CONTAINER PORTS
+#
+# PORTS is comma separated. Read from /proc like the isolation check, so it needs nothing in the image.
+check_closed_listeners() {
+    local container="$1" ports="${2//,/ }" port open=()
+
+    if [[ "$(docker inspect -f '{{.State.Running}}' "$container" 2>/dev/null)" != true ]]; then
+        printf 'OK	%s is not running
+' "$container"
+        return
+    fi
+    for port in $(listening_ports "$container"); do
+        in_list "$port" "$ports" && open+=("$port")
+    done
+    if (( ${#open[@]} )); then
+        printf 'WARN	%s listens on %s, which its boot hook should have closed
+' "$container" "${open[*]}"
+    else
+        printf 'OK	none of %s listens
+' "$ports"
+    fi
+}
+
 # check_gateway SOURCE
 #
 # The host as a container sees it: only what the internet sees, nothing of the loopback publishes.
@@ -650,7 +732,7 @@ check_restore() {
 }
 
 run_host() {
-    local restore="$1" source container
+    local restore="$1" source container entry
 
     emit "firewall:v4" "$(check_firewall_family iptables)"
     emit "firewall:v6" "$(check_firewall_family ip6tables)"
@@ -661,6 +743,12 @@ run_host() {
     done
     for container in $NO_EGRESS_CONTAINERS; do
         emit "egress:$container" "$(check_egress "$container")"
+    done
+    while IFS= read -r container; do
+        [[ -n "$container" ]] && emit "env:$container" "$(check_env_exposure "$container")"
+    done < <(all_containers)
+    for entry in $CLOSED_LISTENERS; do
+        emit "listeners:${entry%%:*}" "$(check_closed_listeners "${entry%%:*}" "${entry#*:}")"
     done
     emit "revision:$GIT_BRANCH" "$(check_revision)"
     emit "deployed:files" "$(check_deployed_files)"

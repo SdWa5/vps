@@ -12,9 +12,39 @@ Three separate Dolibarr instances on the VPS, each with its own MariaDB containe
 
 ## Credentials
 
-All credentials stored in `/opt/docker/.env`. See `.env.example` for variable names.
+The SdWa5 instance gets its credentials as compose file secrets, see the `secrets:` block of
+[docker-compose.yml](../docker-compose.yml). Each is a file in `/opt/docker/secrets/` (directory 700,
+files 400, root) that the containers see under `/run/sdwa5-secrets/`:
 
-Admin login for all instances: `admin` (see `*_ADMIN_PASSWORD` in .env)
+| File | Read by | Variable |
+|---|---|---|
+| `dolibarr_db_root_password` | `dolibarr_db` | `MYSQL_ROOT_PASSWORD_FILE`, used only on an empty datadir |
+| `dolibarr_db_password` | `dolibarr_db`, `dolibarr`, `dolibarr_cron` | `MYSQL_PASSWORD_FILE`, `DOLI_DB_PASSWORD_FILE` |
+| `dolibarr_cron_key` | `dolibarr`, `dolibarr_cron` | `DOLI_CRON_KEY_FILE` |
+| `dolibarr_admin_init_password` | `dolibarr` | `DOLI_ADMIN_PASSWORD_FILE`, used only on an empty schema |
+
+**The admin password used to log in is in none of these files.** It lives in Vaultwarden, and
+Dolibarr keeps only its hash. Until 2026-10-16 `.env` held the live admin password, and it sat in
+`docker inspect` and in the environment of every Apache process. The image reads
+`DOLI_ADMIN_PASSWORD` only to create the first admin of an empty database, and it falls back to
+`admin` when the variable is unset. `dolibarr_admin_init_password` is therefore a random value nobody
+knows. An accidental fresh init then creates an admin that nobody can log in as, instead of one with
+the default password. Changing the admin password happens in Dolibarr itself (user card of `admin`).
+
+`dolibarr_cron` never reads an admin password, because `DOLI_CRON=1` skips the database init.
+
+The image's `get_env_value` reads a `*_FILE` into a shell variable of its entrypoint. Where values
+still end up afterwards:
+
+- `/var/www/html/conf/conf.php` (400 `www-data`) holds the database password, written when the
+  container is created.
+- `/etc/cron.d/dolibarr` (644) and the command line of `cron_run_jobs.php` hold the cron key.
+
+`monitoring/security-recheck.sh` reports per container whether `docker inspect` or a process
+environment still carries a secret, by name only, see [monitoring.md](monitoring.md).
+
+Project 2 and Project 3 still read plain variables from `.env`, which carries no values for them,
+see the comment at the top of [docker-compose.projects.yml](../docker-compose.projects.yml).
 
 ## SdWa5 instance
 

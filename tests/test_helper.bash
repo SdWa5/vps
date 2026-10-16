@@ -57,7 +57,10 @@ set_firewall_healthy() {
 -A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
 -A INPUT -p udp -m udp --dport 443 -j ACCEPT'
     export STUB_IPT_V6='-P INPUT DROP
+-A INPUT -p tcp -m multiport --dports 22 -j f2b-sshd
 -A INPUT -p ipv6-icmp -j ACCEPT'
+    # fail2ban creates its v6 chain at jail start (actionstart_on_demand=false).
+    export STUB_IP6T_HAVE='-C f2b-sshd -j RETURN'
     # DOCKER-USER as sdwa5-firewall.sh leaves it. The DROP is what the check
     # looks for, because a chain holding only `-j RETURN` is Docker's empty
     # default and filters nothing.

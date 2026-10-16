@@ -213,7 +213,7 @@ priority the UI shows on the card and in the list, from Optional, Low, Normal an
 Blocking. A task has a `priority` column too, but no page of Dolibarr 23.0 displays it, measured
 against the live source on 2026-10-15. The script still writes tasks for a spec that names them.
 
-**The ticket type says what kind of work a ticket is**, decided in the triage of 2026-10-16. Two types
+**The ticket type says what kind of work a ticket is**, decided in the triage of 2026-10-16. Three types
 were added through PmTools, and one built-in type got a meaning of its own.
 
 | Code | Label | Used for |
@@ -221,7 +221,8 @@ were added through PmTools, and one built-in type got a meaning of its own.
 | `RECURRING` | Dauerauftrag | Work that never finishes, such as the bookkeeping, buying gas and drinks, or the merch lines that keep getting reordered. It stays open and needs no done-criterion |
 | `PURCHASE` | Einkauf | Buying equipment or material, and ordering printed items such as mugs or business cards from a supplier. A ticket that may end up built instead of bought stays `OTHER` |
 | `COM` | Commercial question | Dolibarr's built-in type, used here for the Verein's own commercial side, meaning the merch range and selling it, not for questions from customers |
-| `OTHER` | Other | Everything else, including taking part in events |
+| `EVENT` | Veranstaltung | An event that has no project yet, such as deciding whether to take part. Once the Verein commits to it, the event becomes a project and its work goes there |
+| `OTHER` | Other | Everything else |
 
 A ticket has one type, so a recurring merch line is `RECURRING` and not `COM`. A blocking line about an
 event names the project and its date, for example `Blockiert Krampustek Vol. 2 (PJ2610-0008) am

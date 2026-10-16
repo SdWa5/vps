@@ -1,0 +1,286 @@
+#!/usr/bin/env bats
+
+setup() {
+    export DEV_SCRIPT="$BATS_TEST_DIRNAME/../tools/shopware/dev-instance.sh"
+    export SDWA5_SHOPWARE_DEV_DIR="$BATS_TEST_TMPDIR/dev"
+    export DOCKER_LOG="$BATS_TEST_TMPDIR/docker.log"
+    export SSH_LOG="$BATS_TEST_TMPDIR/ssh.log"
+    mkdir "$BATS_TEST_TMPDIR/bin"
+    export PATH="$BATS_TEST_TMPDIR/bin:$PATH"
+}
+
+stub() {
+    printf '#!/bin/sh\n%s\n' "$2" > "$BATS_TEST_TMPDIR/bin/$1"
+    chmod +x "$BATS_TEST_TMPDIR/bin/$1"
+}
+
+# A docker that logs every call with its stdin and answers like a healthy
+# mirror. SHOP_ID_SUGGESTED=1 makes the first shop ID check suggest a change,
+# SHOPMON_ACTIVE=1 reports FroshShopmon as active.
+fake_docker() {
+    cat > "$BATS_TEST_TMPDIR/bin/docker" <<'STUB'
+#!/bin/bash
+printf 'CALL %s\n' "$*" >> "$DOCKER_LOG"
+if [[ " $* " == *' -i '* ]]; then sed 's/^/STDIN /' >> "$DOCKER_LOG"; fi
+case "$*" in
+    *'app:shop-id:check'*)
+        count_file="$BATS_TEST_TMPDIR/shop-id-checks"
+        count="$(cat "$count_file" 2>/dev/null || printf 0)"
+        printf '%s' "$((count + 1))" > "$count_file"
+        if [[ "${SHOP_ID_SUGGESTED:-0}" == 1 && "$count" == 0 ]]; then
+            printf '[WARNING] Shop ID change suggested\n'
+        else
+            printf '[OK] Shop ID change not suggested.\n'
+        fi ;;
+    *'app:shop-id:change'*) exit 1 ;;
+    *"name = 'FroshShopmon'"*) printf '%s\n' "${SHOPMON_ACTIVE:-0}" ;;
+    *'system:config:get'*) printf 'core.mailerSettings.disableDelivery => true\n' ;;
+    *'--version'*) printf 'Shopware 6.7.11.1 (env: prod, debug: false)\n' ;;
+    'inspect --format {{.State.Running}}'*) printf 'true\n' ;;
+    'inspect --format {{.State.Status}}'*) printf 'running\n' ;;
+    *'.Internal'*) printf 'none\n' ;;
+    'network inspect '*) exit 1 ;;
+    *'grep -q ^# sdwa5 dev mirror'*) exit "${ENV_MARKER_MISSING:-0}" ;;
+esac
+exit 0
+STUB
+    chmod +x "$BATS_TEST_TMPDIR/bin/docker"
+}
+
+shop_files_with() {
+    mkdir -p "$BATS_TEST_TMPDIR/html"
+    for file in "$@"; do printf 'x\n' > "$BATS_TEST_TMPDIR/html/$file"; done
+    tar -czf "$BATS_TEST_TMPDIR/html.tar.gz" -C "$BATS_TEST_TMPDIR/html" .
+}
+
+archive_with_coverage() {
+    mkdir -p "$BATS_TEST_TMPDIR/archive"
+    printf 'CREATE DATABASE shopware;\n' > "$BATS_TEST_TMPDIR/archive/dump.sql"
+    printf 'database\tshopware\ncoverage\t%s\n' "$1" > "$BATS_TEST_TMPDIR/archive/manifest.tsv"
+    tar -czf "$BATS_TEST_TMPDIR/archive.tar.gz" -C "$BATS_TEST_TMPDIR/archive" dump.sql manifest.tsv
+}
+
+# An ssh that serves the shop files for the tar command and the archive for
+# cat, and logs each remote command.
+fake_ssh() {
+    stub ssh "printf '%s\n' \"\$2\" >> '$SSH_LOG'
+case \"\$2\" in
+    tar*) cat '$BATS_TEST_TMPDIR/html.tar.gz' ;;
+    cat*) cat '$BATS_TEST_TMPDIR/archive.tar.gz' ;;
+esac"
+}
+
+fetched_copy() {
+    mkdir -p "$SDWA5_SHOPWARE_DEV_DIR"
+    shop_files_with composer.lock
+    archive_with_coverage "${1:-full}"
+    cp "$BATS_TEST_TMPDIR/html.tar.gz" "$BATS_TEST_TMPDIR/archive.tar.gz" "$SDWA5_SHOPWARE_DEV_DIR/"
+}
+
+line_of() { grep -n -F -m1 -- "$1" "$DOCKER_LOG" | cut -d: -f1; }
+
+@test "without a command it prints the usage and does nothing" {
+    stub docker 'exit 97'
+    run bash "$DEV_SCRIPT"
+    [ "$status" -eq 2 ]
+    [[ "$output" == *'Shopware mirror of sdwa5.org'* ]]
+    [[ "$output" == *'SDWA5_SHOPWARE_ARCHIVE'* ]]
+    [[ "$output" != *'set -euo pipefail'* ]]
+}
+
+@test "an unknown command fails" {
+    stub docker 'exit 97'
+    run bash "$DEV_SCRIPT" deploy
+    [ "$status" -eq 1 ]
+    [[ "$output" == *'unknown command: deploy'* ]]
+}
+
+@test "a service name that is not lowercase alphanumeric is refused" {
+    run env SDWA5_SHOPWARE_DEV_SERVICE='../x' bash "$DEV_SCRIPT" status
+    [ "$status" -eq 2 ]
+}
+
+@test "the image follows the production compose file" {
+    run bash -c 'source "$DEV_SCRIPT"; app_image'
+    [ "$status" -eq 0 ]
+    [[ "$output" == dockware/shopware:* ]]
+    [ "$output" = "$(awk '/^  shopware:$/{f=1} f&&/image:/{print $2; exit}' "$BATS_TEST_DIRNAME/../docker-compose.yml")" ]
+}
+
+@test "an explicit image overrides the compose pin" {
+    run env SDWA5_SHOPWARE_DEV_IMAGE=dockware/shopware:6.7.15.1 bash -c 'source "$DEV_SCRIPT"; app_image'
+    [ "$output" = 'dockware/shopware:6.7.15.1' ]
+}
+
+@test "a service without an image in the compose file is refused" {
+    run env SDWA5_SHOPWARE_DEV_SERVICE=no_such_shop bash -c 'source "$DEV_SCRIPT"; app_image'
+    [ "$status" -ne 0 ]
+    [[ "$output" == *'no image for service no_such_shop'* ]]
+}
+
+@test "the service names the containers, volumes and data directory" {
+    unset SDWA5_SHOPWARE_DEV_DIR
+    run env SDWA5_SHOPWARE_DEV_SERVICE=other_shop bash -c 'source "$DEV_SCRIPT"; printf "%s %s %s" "$APP" "$HTML_VOLUME" "$DEV_DIR"'
+    [ "$output" = "sdwa5-other-shop-dev sdwa5-other-shop-dev-html $HOME/.local/share/sdwa5-other-shop-dev" ]
+}
+
+@test "fetch keeps both copies and only reads on the host" {
+    shop_files_with composer.lock .env
+    archive_with_coverage full
+    fake_ssh
+    run bash "$DEV_SCRIPT" fetch
+    [ "$status" -eq 0 ]
+    [ -s "$SDWA5_SHOPWARE_DEV_DIR/html.tar.gz" ]
+    [ -s "$SDWA5_SHOPWARE_DEV_DIR/archive.tar.gz" ]
+    [ ! -e "$SDWA5_SHOPWARE_DEV_DIR/html.tar.gz.part" ]
+    [ "$(stat -c %a "$SDWA5_SHOPWARE_DEV_DIR")" = 700 ]
+    [ "$(wc -l < "$SSH_LOG")" -eq 2 ]
+    grep -q '^tar -C /opt/docker/shopware-html-data .* -czf - \.$' "$SSH_LOG"
+    grep -qx 'cat /opt/docker/database-backup/shopware.tar.gz' "$SSH_LOG"
+}
+
+@test "fetch leaves caches, logs and dated env backups on the host" {
+    shop_files_with composer.lock
+    archive_with_coverage full
+    fake_ssh
+    run bash "$DEV_SCRIPT" fetch
+    grep -q -- '--exclude=./var/cache --exclude=./var/log' "$SSH_LOG"
+    grep -q -- "--exclude='./.env\*.before-\*'" "$SSH_LOG"
+}
+
+@test "fetch rejects shop files without a composer.lock" {
+    shop_files_with composer.json
+    archive_with_coverage full
+    fake_ssh
+    run bash "$DEV_SCRIPT" fetch
+    [ "$status" -ne 0 ]
+    [[ "$output" == *'no composer.lock'* ]]
+    [ ! -e "$SDWA5_SHOPWARE_DEV_DIR/html.tar.gz" ]
+}
+
+@test "fetch rejects a truncated download" {
+    stub ssh "printf 'not gzip'"
+    run bash "$DEV_SCRIPT" fetch
+    [ "$status" -ne 0 ]
+    [ ! -e "$SDWA5_SHOPWARE_DEV_DIR/html.tar.gz" ]
+}
+
+@test "restore refuses to run without a fetched copy" {
+    stub docker 'exit 97'
+    run bash "$DEV_SCRIPT" restore
+    [ "$status" -ne 0 ]
+    [[ "$output" == *'Run fetch first'* ]]
+}
+
+@test "restore refuses a tables-only archive" {
+    fetched_copy tables-only
+    stub docker 'exit 97'
+    run bash "$DEV_SCRIPT" restore
+    [ "$status" -ne 0 ]
+    [[ "$output" == *'not a full dump'* ]]
+}
+
+@test "restore neutralises the copy before the proxy publishes it" {
+    fetched_copy
+    fake_docker
+    stub curl "printf 200"
+    run bash "$DEV_SCRIPT" restore
+    [ "$status" -eq 0 ]
+    proxy="$(line_of 'run --detach --name sdwa5-shopware-dev-proxy')"
+    [ -n "$proxy" ]
+    for step in 'APP_URL=http://localhost:8090' 'MAILER_DSN=null://null' \
+        'system:config:set --json core.mailerSettings.disableDelivery true' \
+        'UPDATE sales_channel_domain' 'cache:clear'; do
+        [ "$(line_of "$step")" -lt "$proxy" ]
+    done
+    [ "$(line_of 'STDIN CREATE DATABASE shopware;')" -lt "$proxy" ]
+    [[ "$output" == *'mails	disabled'* ]]
+}
+
+@test "Shopware itself runs on an internal network and publishes nothing" {
+    fetched_copy
+    fake_docker
+    stub curl "printf 200"
+    run bash "$DEV_SCRIPT" restore
+    grep -q '^CALL network create --internal sdwa5-shopware-dev$' "$DOCKER_LOG"
+    app="$(grep '^CALL run --detach --name sdwa5-shopware-dev ' "$DOCKER_LOG")"
+    [[ "$app" == *'--network sdwa5-shopware-dev '* ]]
+    [[ "$app" != *'--publish'* ]]
+    grep -q -- '--publish 127.0.0.1:8090:8080 alpine/socat:' "$DOCKER_LOG"
+}
+
+@test "the files volume is not seeded with the image's demo shop" {
+    fetched_copy
+    fake_docker
+    stub curl "printf 200"
+    run bash "$DEV_SCRIPT" restore
+    ! grep 'dst=/var/www/html' "$DOCKER_LOG" | grep -v -q 'volume-nocopy=true'
+    grep -q -- '--network none --user root --entrypoint tar' "$DOCKER_LOG"
+}
+
+@test "the new APP_SECRET is random and never printed" {
+    fetched_copy
+    fake_docker
+    run bash -c 'source "$DEV_SCRIPT"; write_env_local'
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+    grep -q '^STDIN APP_SECRET=[0-9a-f]\{64\}$' "$DOCKER_LOG"
+    grep -q '^STDIN DATABASE_URL=mysql://root:root@127.0.0.1:3306/shopware$' "$DOCKER_LOG"
+}
+
+@test "only http domains move, so the headless placeholder stays" {
+    fetched_copy
+    fake_docker
+    run bash -c 'source "$DEV_SCRIPT"; neutralise'
+    [ "$status" -eq 0 ]
+    grep -q "^STDIN  WHERE url REGEXP '^https?://';$" "$DOCKER_LOG"
+}
+
+@test "an active Shopmon is deactivated" {
+    fetched_copy
+    fake_docker
+    run env SHOPMON_ACTIVE=1 bash -c 'source "$DEV_SCRIPT"; neutralise'
+    [ "$status" -eq 0 ]
+    grep -q 'plugin:deactivate FroshShopmon' "$DOCKER_LOG"
+}
+
+@test "an inactive Shopmon is left alone" {
+    fetched_copy
+    fake_docker
+    run bash -c 'source "$DEV_SCRIPT"; neutralise'
+    ! grep -q 'plugin:deactivate' "$DOCKER_LOG"
+}
+
+@test "a suggested shop ID change gets a shop ID of its own despite the failing registration" {
+    fetched_copy
+    fake_docker
+    run env SHOP_ID_SUGGESTED=1 bash -c 'source "$DEV_SCRIPT"; neutralise'
+    [ "$status" -eq 0 ]
+    grep -q 'app:shop-id:change reinstall-apps' "$DOCKER_LOG"
+    [ "$(cat "$BATS_TEST_TMPDIR/shop-id-checks")" = 2 ]
+}
+
+@test "without a suggested change the shop ID stays" {
+    fetched_copy
+    fake_docker
+    run bash -c 'source "$DEV_SCRIPT"; neutralise'
+    ! grep -q 'app:shop-id:change' "$DOCKER_LOG"
+}
+
+@test "up refuses a mirror whose env was never neutralised" {
+    fetched_copy
+    fake_docker
+    run env ENV_MARKER_MISSING=1 bash "$DEV_SCRIPT" up
+    [ "$status" -ne 0 ]
+    [[ "$output" == *'not neutralised'* ]]
+    ! grep -q 'sdwa5-shopware-dev-proxy alpine' "$DOCKER_LOG"
+}
+
+@test "purge removes the fetched copies" {
+    fetched_copy
+    fake_docker
+    run bash "$DEV_SCRIPT" purge
+    [ "$status" -eq 0 ]
+    [ ! -e "$SDWA5_SHOPWARE_DEV_DIR" ]
+    grep -q 'volume rm --force sdwa5-shopware-dev-html sdwa5-shopware-dev-mysql' "$DOCKER_LOG"
+}

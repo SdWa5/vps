@@ -77,4 +77,54 @@ with `ShopwareNexusIngestionService` present but inactive. They install and upda
 the `services.install` task and phone home to Shopware's registry. None of that is in
 the 2026-07-22 legal review, which now lives in Google Drive, so whether a non-profit wants an
 AI image editor, a Copilot and an event ingestion service active on its shop is an open question rather
-than a settled one. Filed in [TODO.md](TODO.md).
+than a settled one. Filed in [TODO.md](TODO.md). The production backup of 2026-10-16 03:40 holds
+eight apps with seven active, because `SwagRecommendations`, `SwagPreviewGenerator` and
+`SwagGmvReportingService` installed themselves since.
+
+## Local mirror
+
+[`tools/shopware/dev-instance.sh`](../../tools/shopware/dev-instance.sh) builds a copy of the live shop
+on a workstation, so an update or a plugin change is rehearsed there before production gets it. It runs
+the image `docker-compose.yml` pins, or the one in `SDWA5_SHOPWARE_DEV_IMAGE`, against the shop files
+and the newest hourly database archive.
+
+```bash
+tools/shopware/dev-instance.sh fetch      # read the shop files and the archive over ssh
+tools/shopware/dev-instance.sh restore    # rebuild the mirror, http://localhost:8090/
+tools/shopware/dev-instance.sh up|down|status
+tools/shopware/dev-instance.sh purge      # remove volumes and fetched copies
+```
+
+`fetch` only reads on the host. It streams `/opt/docker/shopware-html-data` without `var/cache`,
+`var/log` and the dated `.env` backups, and copies `database-backup/shopware.tar.gz`, both into
+`~/.local/share/sdwa5-shopware-dev` with mode 700. The files and the MySQL data then live in the Docker
+volumes `sdwa5-shopware-dev-html` and `sdwa5-shopware-dev-mysql`, with production's `www-data`
+ownership kept. The database is the one the dockware image ships, with its `root`/`root` login, and
+the archive replaces its `shopware` schema.
+
+The copy holds customer data, `auth.json` and every stored credential, so it is made harmless in two
+layers, and the proxy that publishes it starts last.
+
+- **No route out.** Shopware runs on an `--internal` Docker network. An `alpine/socat` container on a
+  second network publishes `127.0.0.1:8090` and forwards inbound connections only. Mail, app
+  webhooks, the service registry and Shopmon therefore cannot leave, which matters because mail is
+  configured in `system_config` as SMTP rather than in `MAILER_DSN`, and eight service apps exist.
+- **Neutralised settings.** `.env.local` gets the local `APP_URL`, a new `APP_SECRET`, the local
+  `DATABASE_URL` and `MAILER_DSN=null://null`. `core.mailerSettings.disableDelivery` is set to the
+  boolean `true`, every `http(s)` sales channel domain moves to `http://localhost:8090` with its path,
+  and `FroshShopmon` is deactivated. The shop has no `config/jwt`, so the new `APP_SECRET` also means
+  an admin token from the mirror is not valid in production.
+
+The new URL makes Shopware suspect a moved shop and answer the cart with
+`ShopIdChangeSuggestedException`, as it did in production on 2026-10-15. `restore` resolves that with
+`app:shop-id:change reinstall-apps`, which gives the mirror a shop ID of its own. The registration of
+the apps under it then fails with "App system target is not allowed" and exit code 1, because there
+is no egress, and `app:shop-id:check` decides instead. The apps stay installed but unregistered.
+
+Measured on 2026-10-16 with 6.7.11.1: `fetch` took 29 s for 146 MB of files and a 1.1 MB archive,
+`restore` 1 min 40 s, and `up` 43 s. Storefront EN and DE, the cart, the admin and the health check
+answered 200, `curl` from inside the container to the service registry and to 1.1.1.1 failed, and
+`status` reported `mails disabled`.
+
+The admin takes the production login, because the user table is copied. A browser login to the
+mirror is local, and nothing it changes reaches production.

@@ -127,6 +127,10 @@ tools/dolibarr/dev-instance.sh fetch && tools/dolibarr/dev-instance.sh restore
 # Give the mirror's admin a local API key for sync-pm.sh and the REST API
 tools/dolibarr/dev-instance.sh api-key
 
+# Rebuild the local Shopware mirror from the live shop files and the newest archive, without egress
+# (see docs/shopware/infrastructure.md)
+tools/shopware/dev-instance.sh fetch && tools/shopware/dev-instance.sh restore
+
 # Preview the isolated Dolibarr migration rehearsal without changing anything.
 bash tools/dolibarr/rehearse-upgrade.sh
 

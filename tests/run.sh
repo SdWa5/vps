@@ -60,6 +60,7 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt "$CI_SHELLCHECK_IMAGE" -x \
     tools/shopware/create-products.sh \
     tools/shopware/edit-slots.sh \
     tools/shopware/check-order-mail.sh \
+    tools/shopware/dev-instance.sh \
     tools/shopware/images/shop-images.sh \
     tools/shopware/print-cost/print-cost.sh \
     tools/shopware/print-cost/slice-inner.sh \

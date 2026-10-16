@@ -280,3 +280,12 @@
     `sw-storefront-url` and `resolved-uri`, which on sdwa5.org gave the technical `/navigation/<id>` path,
     so the aside probably shares the same wrong URL wherever Chimo Diazz has SEO URLs. SdWa5Theme 1.0.4 uses `sw-sales-channel-absolute-base-url` and
     `sw-original-request-uri` instead (ca. 30 Minuten)
+14. **FOSS Dolibarr module for ticket dependencies and merges** (priority medium,
+    [docs/dolibarr.md](docs/dolibarr.md#projects-tasks-and-tickets)). Dolibarr 23.0 has no
+    ticket-to-ticket relation, so "blocks / blocked by" and merges are message lines today. The module
+    adds a `blocks` relation with a block on the ticket card and in the list, a merge action that moves
+    the message and closes the merged ticket, and REST endpoints so `sync-pm.sh` can write both.
+    Publish it as an open-source module, deployed like BankSync via
+    [tools/dolibarr/deploy-module.sh](tools/dolibarr/deploy-module.sh)
+    1. check Dolistore and GitHub for an existing module first (ca. 30 Minuten)
+    2. build, test against the 23.0 image and publish (ca. 24 Stunden)

@@ -240,8 +240,10 @@
        half only, because a mailbox is not something his session reads (ca. 30 Minuten)
 10. **Paperless-ngx follow-ups** ([docs/paperless.md](docs/paperless.md)). Two instances, one for the
     Verein and one for the household, live on prod since 2026-10-16 (ca. 2 Stunden 15 Minuten for what is left)
-    0. the second household account gets its password from Vaultwarden, logs in once and enrolls TOTP. All other
-       logins are in Vaultwarden with TOTP enrolled since 2026-10-16
+    0. waiting for the second household account (priority low, ca. 10 Minuten). It was invited to the household
+       Vaultwarden organization on 2026-10-17, which holds the household logins. Once the invitation is accepted, an
+       owner confirms it in the web vault or with `bw confirm org-member` after an unlock. Then the account logs in
+       to paper.ripper.sdwa5.org once and enrolls TOTP. All other logins have TOTP since 2026-10-16
     1. maybe fork paperless-ngx into the SdWa5 organization rather than running the upstream image
        unchanged. Nothing asks for a code change yet, so a fork is worth it only once one does,
        because every upstream release then has to be merged by hand (`decision`)

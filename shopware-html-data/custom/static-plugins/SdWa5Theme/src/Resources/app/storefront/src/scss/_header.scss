@@ -180,27 +180,16 @@
 // The core places every piece by its own nudge on the text baseline: the top
 // bar's padding-top, the DNE icon's top:.25em, the flag's margin-top and the
 // caret's vertical-align. Each button is a centred flex row instead, so icon,
-// flag, text and caret share the centre line of the header row.
-.sdwa5-header__settings {
-  .top-bar {
-    padding-top: 0;
-  }
-
+// flag, text and caret share one centre line. The offcanvas menu renders the
+// same buttons a second time below 992 px and shares this alignment.
+.sdwa5-header__settings,
+.navigation-offcanvas-actions {
   .top-bar-nav-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
     min-height: 2rem;
-    color: var(--sdwa5-muted-immutable);
-    font-family: var(--sdwa5-font-mono);
-    font-size: 0.7rem;
     line-height: 1;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-
-    &:hover {
-      color: var(--sdwa5-green-text-immutable);
-    }
   }
 
   .icon > svg {
@@ -214,6 +203,26 @@
   .dropdown-toggle::after {
     margin-left: 0;
     vertical-align: 0;
+  }
+}
+
+// The desktop column drops the top bar's padding and sets the buttons in mono
+// caps. The offcanvas keeps the core typography.
+.sdwa5-header__settings {
+  .top-bar {
+    padding-top: 0;
+  }
+
+  .top-bar-nav-btn {
+    color: var(--sdwa5-muted-immutable);
+    font-family: var(--sdwa5-font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+
+    &:hover {
+      color: var(--sdwa5-green-text-immutable);
+    }
   }
 }
 

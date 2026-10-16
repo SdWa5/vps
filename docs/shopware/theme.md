@@ -108,7 +108,8 @@ with the `muted` token.
   red runs above the page. The Storefront top bar is emptied, because its contents moved into the
   first row. Each settings button is a centred flex row there, and the core's baseline nudges (top bar
   padding, the DNE icon's `top:.25em`, the flag margin, the caret's `vertical-align`) are reset, so
-  icon, flag, text and caret share the row's centre line.
+  icon, flag, text and caret share the row's centre line. The offcanvas copy of the toggle and the
+  language dropdown below 992 px shares that alignment and keeps the core typography.
 - **Below 992 px** the row holds the burger, the logo, the donation button and the cart, and search
   takes a line of its own on phones. The settings column is hidden, because DNE injects its toggle into
   the offcanvas menu there and language and currency are in the offcanvas as well. The navigation row

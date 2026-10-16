@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.82.3] - 2026-10-16
+
+### Fixed
+
+- SdWa5Theme 1.2.4 centres the dark-mode toggle, the language flag and its caret in the mobile offcanvas
+  menu as well. Before, the icon sat 0.8 px low and the flag 1 px high.
+
 ## [1.82.2] - 2026-10-16
 
 ### Changed

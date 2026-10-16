@@ -38,9 +38,8 @@
        [docs/dolibarr.md](docs/dolibarr.md#projects-tasks-and-tickets). the backlog is a gitignored
        json spec, because the real one names people and links private documents. the script creates
        and updates and never deletes. it closes, cancels and reopens tickets through the PmTools
-       module since 1.77.0, while closing a task stays a ui job. what is still
-       missing on this side is a read back out, meaning nothing tells anyone that a ticket got closed
-       in the ui (ca. 1 Stunde)
+       module since 1.77.0, while closing a task stays a ui job. every run ends with a read back of
+       tickets closed in the ui and tickets the spec does not name, since 1.82.0
 3. [docs/shopware/TODO.md](docs/shopware/TODO.md)
 4. maybe add nextcloud (docker-compose.yml)
 5. [docs/minecraft.md](docs/minecraft.md)

@@ -25,6 +25,14 @@
 # Silent when it works. One mail when it does not, because an all-green digest
 # every minute trains the recipient to ignore the mail.
 #
+# A container that has just started gets a grace period. Measured on 2026-10-15,
+# when the VPS rebooted at 02:26: both containers were up at 02:27, the worker
+# ran at 02:27:15, and mysqld inside the dockware images only started at 02:27:43
+# and 02:27:56, so both shops mailed `Connection refused` although nothing was
+# broken. Inside the grace period a run whose database does not answer yet exits
+# quietly. Outside it nothing changes, so a real outage right after a start stays
+# silent for at most SHOPWARE_WORKER_BOOT_GRACE seconds.
+#
 # Usage: shopware-worker.sh [--dry-run|--help]
 
 set -uo pipefail
@@ -44,6 +52,13 @@ MEMORY_LIMIT="${SHOPWARE_WORKER_MEMORY_LIMIT:-256M}"
 # `failed` is consumed too. Shopware's documentation warns that without it a
 # failed message is never retried and sits in that transport forever.
 TRANSPORTS="${SHOPWARE_WORKER_TRANSPORTS:-async low_priority failed}"
+# Matches the healthcheck's start_period in docker-compose.yml.
+BOOT_GRACE="${SHOPWARE_WORKER_BOOT_GRACE:-300}"
+# mysqladmin exits 0 whenever the server answers, even with "Access denied", so
+# the ping needs no credentials. Over TCP, because www-data cannot open the
+# socket. Measured on both containers on 2026-10-16: 0 against the server, 1
+# against a closed port.
+DB_PING="${SHOPWARE_WORKER_DB_PING:-mysqladmin -h 127.0.0.1 --connect-timeout=3 ping}"
 
 DRY_RUN=0
 
@@ -64,6 +79,9 @@ Environment overrides (also honoured from the compose .env):
   SHOPWARE_WORKER_TIME_LIMIT     seconds per step (default: 25)
   SHOPWARE_WORKER_MEMORY_LIMIT   consumer memory limit (default: 256M)
   SHOPWARE_WORKER_TRANSPORTS     transports to consume (default: async low_priority failed)
+  SHOPWARE_WORKER_BOOT_GRACE     seconds after a container start in which a
+                                 database that does not answer yet is no
+                                 failure (default: 300)
 USAGE
 }
 
@@ -98,6 +116,21 @@ Check: docker ps --filter name=$SERVICE; docker exec $SERVICE $CONSOLE $*"
     log "$label ok"
 }
 
+# Seconds since the container started, or nothing when that cannot be read. An
+# unreadable start time counts as old, so the doubt ends in a mail rather than
+# in silence.
+container_age() {
+    local started epoch
+    started="$(docker inspect -f '{{.State.StartedAt}}' "$SERVICE" 2>/dev/null)" || return 0
+    epoch="$(date -d "$started" +%s 2>/dev/null)" || return 0
+    echo $(( $(date +%s) - epoch ))
+}
+
+database_answers() {
+    # shellcheck disable=SC2086
+    docker exec "$SERVICE" $DB_PING >/dev/null 2>&1
+}
+
 main() {
     case "${1:-}" in
         --help|-h) usage; exit 0 ;;
@@ -113,6 +146,7 @@ main() {
         echo "Time limit:   ${TIME_LIMIT}s per step"
         echo "Memory limit: $MEMORY_LIMIT"
         echo "Transports:   $TRANSPORTS"
+        echo "Boot grace:   ${BOOT_GRACE}s after a container start"
         echo "Would run:    scheduled-task:run --time-limit=$TIME_LIMIT"
         echo "Would run:    messenger:consume $TRANSPORTS --time-limit=$TIME_LIMIT --memory-limit=$MEMORY_LIMIT"
         exit 0
@@ -124,6 +158,13 @@ main() {
 the container is down, so both stop silently until it is back.
 
 Check: docker ps -a --filter name=$SERVICE"
+    fi
+
+    local age
+    age="$(container_age)"
+    if [[ -n "$age" ]] && (( age < BOOT_GRACE )) && ! database_answers; then
+        log "database of $SERVICE not answering ${age}s after start, inside the ${BOOT_GRACE}s grace period; skipped"
+        exit 0
     fi
 
     run_console "scheduled tasks" scheduled-task:run --time-limit="$TIME_LIMIT"

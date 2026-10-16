@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.84.1] - 2026-10-16
+
+### Fixed
+
+- SdWa5Theme 1.2.6 stops the Gallery page from scrolling sideways on phones and tablets. Its CMS
+  section is sized full width, which removes the side padding but leaves the block row's -20 px gutter
+  margins, so the page was 410 px wide on a 390 px phone. The gallery's thumbnail arrows stuck out
+  25 px on tablets in the same way.
+
+### Added
+
+- A storefront test that `/`, `/Gallery/`, `/About-SdWa5` and `/Hardware/` do not scroll sideways.
+
 ## [1.84.0] - 2026-10-16
 
 ### Added

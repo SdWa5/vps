@@ -47,6 +47,20 @@ test('header logo has as much visible space above as below', async ({ page }) =>
   expect(Math.abs(above - below), `${above} px above against ${below} px below`).toBeLessThanOrEqual(TOLERANCE);
 });
 
+// One page per CMS layout in use. The Gallery is a full-width section, whose
+// block row stuck out 20 px on each side before SdWa5Theme 1.2.6.
+for (const path of ['/', '/Gallery/', '/About-SdWa5', '/Hardware/']) {
+  test(`${path} does not scroll sideways`, async ({ page }) => {
+    await page.goto(path);
+    await page.waitForLoadState('networkidle');
+    const { scroll, client } = await page.evaluate(() => ({
+      scroll: document.documentElement.scrollWidth,
+      client: document.documentElement.clientWidth,
+    }));
+    expect(scroll, `page is ${scroll} px wide in a ${client} px viewport`).toBeLessThanOrEqual(client);
+  });
+}
+
 test.describe('desktop header', () => {
   test.beforeEach(({}, testInfo) => {
     test.skip(!testInfo.project.name.startsWith('desktop'), 'the settings column shows from 992 px');

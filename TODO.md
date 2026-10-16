@@ -307,9 +307,7 @@
     3. editing a membership subscription, which today is a recipe around `Subscription::update()`
        because the ui refuses reconciled lines and rewrites bank line dates. a module endpoint would
        wrap that call with its checks (ca. 4 Stunden)
-20. **2FA for the old Contabo panel `my.contabo.com`** (priority high, ca. 15 Minuten). It has its own login,
-    separate from `new.contabo.com`, and that login can take snapshots and reset or reinstall the VPS
-21. **update the Chimo Diazz shop to Shopware 6.7.15.1** ([docs/chimodiazz.md](docs/chimodiazz.md))
+20. **update the Chimo Diazz shop to Shopware 6.7.15.1** ([docs/chimodiazz.md](docs/chimodiazz.md))
     (ca. 3 Stunden). It still runs 6.7.11.1, and `composer audit --locked` with the vendored Composer reported
     24 advisories in 9 packages on 2026-10-16. The procedure is the main shop's in
     [docs/shopware/infrastructure.md](docs/shopware/infrastructure.md#updating-shopware). The mirror reads

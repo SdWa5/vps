@@ -87,7 +87,7 @@ set_database_archives_fresh() {
     local container ref
     ref="${FAKE_NOW:-$(date +%s)}"
     export DATABASE_BACKUP_DIR="$BATS_TEST_TMPDIR/database-backup"
-    export DATABASE_BACKUP_CONTAINERS='dolibarr_db shopware chimodiazz_shopware'
+    export DATABASE_BACKUP_CONTAINERS='dolibarr_db shopware chimodiazz_shopware paperless_sdwa5_db paperless_home_db'
     mkdir -p "$DATABASE_BACKUP_DIR"
     for container in $DATABASE_BACKUP_CONTAINERS; do
         printf 'database archive fixture' | gzip > "$DATABASE_BACKUP_DIR/$container.tar.gz"

@@ -103,6 +103,41 @@ erp.sdwa5.org {
     }
 }
 
+# Paperless-ngx, one Verein instance and one household instance, see
+# docs/paperless.md. Both get the same rules:
+#   - /admin is Django's admin, which no client uses, so a flat 404.
+#   - HTTP basic auth is refused before it reaches the app. Paperless answers a
+#     right password with "MFA required" and a wrong one with "Invalid
+#     username/password", without any throttle, measured 2026-10-16 on 3.3.2.
+#     That makes it a password oracle even with TOTP on. The web login and
+#     /api/token/, which the mobile apps use, are throttled and stay open.
+(paperless) {
+    import hide_server_headers
+    header Strict-Transport-Security "max-age=31536000"
+
+    @admin path /admin /admin/*
+    handle @admin {
+        respond "Not Found" 404
+    }
+
+    @basic_auth header_regexp Authorization (?i)^basic\s
+    handle @basic_auth {
+        respond "Basic authentication is disabled, use a token" 403
+    }
+
+    handle {
+        reverse_proxy {args[0]}
+    }
+}
+
+paper.sdwa5.org {
+    import paperless localhost:8006
+}
+
+paper.ripper.sdwa5.org {
+    import paperless localhost:8007
+}
+
 project2.sdwa5.org {
     reverse_proxy localhost:8003
 }

@@ -6,6 +6,24 @@ x-logging: &default-logging
     max-size: "10m"
     max-file: "3"
 
+# Settings both Paperless-ngx instances share, merged into each app's
+# environment. One worker of each kind, so OCR cannot starve the two shops on
+# four cores. No directory consumer, because no scanner or phone reaches a
+# folder on this host; documents arrive by web or app upload, where the
+# uploader becomes the owner. AI stays off (TODO.md). See docs/paperless.md.
+x-paperless-env: &paperless-env
+  PAPERLESS_DBENGINE: mariadb
+  PAPERLESS_DBPORT: 3306
+  PAPERLESS_OCR_LANGUAGE: deu+eng
+  PAPERLESS_TIME_ZONE: Europe/Berlin
+  PAPERLESS_TASK_WORKERS: 1
+  PAPERLESS_THREADS_PER_WORKER: 1
+  PAPERLESS_WEBSERVER_WORKERS: 1
+  PAPERLESS_CONSUMER_DISABLE: "true"
+  PAPERLESS_ACCOUNT_ALLOW_SIGNUPS: "false"
+  USERMAP_UID: 1000
+  USERMAP_GID: 1000
+
 services:
   vaultwarden:
     # Deliberately NOT pinned. monitoring/vaultwarden-autoupdate.sh pulls this
@@ -218,6 +236,122 @@ services:
       # database and its dumps on purpose, see docs/dolibarr.md.
       - ./dolibarr-secrets:/run/secrets:ro
 
+  paperless_sdwa5_db:
+    # Same minor-series pin as dolibarr_db, for the same reason. The `_db`
+    # suffix is what makes monitoring/database-backup.sh dump it as MariaDB.
+    image: mariadb:12.3
+    container_name: paperless_sdwa5_db
+    restart: unless-stopped
+    command: ["--innodb-buffer-pool-size=64M"]
+    environment:
+      MYSQL_ROOT_PASSWORD: ${PAPERLESS_SDWA5_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: paperless
+      MYSQL_USER: paperless
+      MYSQL_PASSWORD: ${PAPERLESS_SDWA5_DB_PASSWORD}
+      MARIADB_AUTO_UPGRADE: "1"
+    logging: *default-logging
+    volumes:
+      - ./paperless-sdwa5-mariadb-data:/var/lib/mysql
+    networks: [paper_sdwa5_db]
+    cap_drop: [NET_RAW]
+
+  paperless_sdwa5_broker:
+    # Exact tag. Celery's queue only, kept in memory without a volume, so a
+    # restart loses at most the tasks still queued.
+    image: &valkey-image valkey/valkey:9.0-alpine
+    container_name: paperless_sdwa5_broker
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [paper_sdwa5_db]
+    cap_drop: [NET_RAW]
+
+  paperless_sdwa5:
+    # Exact tag plus digest. 3.3.2 of 2026-10-16 fixes GHSA-c8f3-pqr2-rr24, and
+    # a Paperless minor runs forward-only migrations, so an update is a
+    # deliberate bump of this one anchor, which paperless_home reuses.
+    image: &paperless-image ghcr.io/paperless-ngx/paperless-ngx:3.3.2@sha256:d232cba37cc0bab0d6c6581ecd320383b7a6f49f33e0fd16adda4d009eb600dd
+    container_name: paperless_sdwa5
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on: [paperless_sdwa5_db, paperless_sdwa5_broker]
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "--max-time", "5", "http://127.0.0.1:8000"]
+      start_period: 300s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    environment:
+      <<: *paperless-env
+      PAPERLESS_URL: https://paper.sdwa5.org
+      PAPERLESS_COOKIE_PREFIX: sdwa5
+      PAPERLESS_SECRET_KEY: ${PAPERLESS_SDWA5_SECRET_KEY}
+      PAPERLESS_DBHOST: paperless_sdwa5_db
+      PAPERLESS_DBPASS: ${PAPERLESS_SDWA5_DB_PASSWORD}
+      PAPERLESS_REDIS: redis://paperless_sdwa5_broker:6379
+    ports:
+      - "127.0.0.1:8006:8000"
+    volumes:
+      - ./paperless-sdwa5-data:/usr/src/paperless/data
+      - ./paperless-sdwa5-media:/usr/src/paperless/media
+    networks: [paper_sdwa5, paper_sdwa5_db]
+    cap_drop: [NET_RAW]
+
+  # The household instance. A second instance rather than more users in the
+  # first, because a Paperless superuser sees every object and the Verein's
+  # admins must never see private documents. See docs/paperless.md.
+  paperless_home_db:
+    image: mariadb:12.3
+    container_name: paperless_home_db
+    restart: unless-stopped
+    command: ["--innodb-buffer-pool-size=64M"]
+    environment:
+      MYSQL_ROOT_PASSWORD: ${PAPERLESS_HOME_DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: paperless
+      MYSQL_USER: paperless
+      MYSQL_PASSWORD: ${PAPERLESS_HOME_DB_PASSWORD}
+      MARIADB_AUTO_UPGRADE: "1"
+    logging: *default-logging
+    volumes:
+      - ./paperless-home-mariadb-data:/var/lib/mysql
+    networks: [paper_home_db]
+    cap_drop: [NET_RAW]
+
+  paperless_home_broker:
+    image: *valkey-image
+    container_name: paperless_home_broker
+    restart: unless-stopped
+    logging: *default-logging
+    networks: [paper_home_db]
+    cap_drop: [NET_RAW]
+
+  paperless_home:
+    image: *paperless-image
+    container_name: paperless_home
+    restart: unless-stopped
+    logging: *default-logging
+    depends_on: [paperless_home_db, paperless_home_broker]
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "--max-time", "5", "http://127.0.0.1:8000"]
+      start_period: 300s
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    environment:
+      <<: *paperless-env
+      PAPERLESS_URL: https://paper.ripper.sdwa5.org
+      PAPERLESS_COOKIE_PREFIX: home
+      PAPERLESS_SECRET_KEY: ${PAPERLESS_HOME_SECRET_KEY}
+      PAPERLESS_DBHOST: paperless_home_db
+      PAPERLESS_DBPASS: ${PAPERLESS_HOME_DB_PASSWORD}
+      PAPERLESS_REDIS: redis://paperless_home_broker:6379
+    ports:
+      - "127.0.0.1:8007:8000"
+    volumes:
+      - ./paperless-home-data:/usr/src/paperless/data
+      - ./paperless-home-media:/usr/src/paperless/media
+    networks: [paper_home, paper_home_db]
+    cap_drop: [NET_RAW]
+
   ollama:
     # Not pinned. Profile-gated and the image is not present on the host.
     image: ollama/ollama:latest
@@ -308,3 +442,9 @@ networks:
   backup:
   minecraft:
   ollama:
+  paper_sdwa5:
+  paper_sdwa5_db:
+    internal: true
+  paper_home:
+  paper_home_db:
+    internal: true

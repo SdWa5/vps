@@ -365,13 +365,13 @@ resuming mail. Revoked app passwords remain invalid even if an old backup restor
 
 ## SQL database backup monitoring
 
-`monitoring/database-backup.sh` writes private transactional archives for the ERP and both Shopware
-instances. The existing hourly health job checks them and uses its normal fault, backoff and recovery
+`monitoring/database-backup.sh` writes private transactional archives for the ERP, both Shopware
+instances and both Paperless-ngx instances. The existing hourly health job checks them and uses its normal fault, backoff and recovery
 notifications. A healthy backup sends no mail. Failure markers make a failed new dump visible even while
 the previous archive is still fresh. See [backup.md](backup.md#consistent-sql-database-archives).
 
 `DATABASE_BACKUP_CONTAINERS` selects the running database/application containers. It defaults to
-`dolibarr_db shopware chimodiazz_shopware`. `DATABASE_BACKUP_DIR` defaults to
+`dolibarr_db shopware chimodiazz_shopware paperless_sdwa5_db paperless_home_db`. `DATABASE_BACKUP_DIR` defaults to
 `/opt/docker/database-backup`, and `DATABASE_BACKUP_TIMEOUT` limits each database client operation to
 900 seconds. Keep the same container list and directory for the backup job and the health check.
 `CHIMODIAZZ_DEPLOY_LOCK` defaults to `/run/lock/chimodiazz-deploy.lock` and must match the deployment job.

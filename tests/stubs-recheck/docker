@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Fake docker for security-recheck.sh, modelled on the containers measured on 2026-10-15.
+# Fake docker for security-recheck.sh, modelled on the containers measured on 2026-10-15, plus the
+# Paperless-ngx containers of 2026-10-16 in the shape their compose networks give them.
 #
 # Listening ports, addresses and gateways come from the fixture table below. The probe snippet that
 # security-recheck.sh runs through "docker exec SRC bash -c ..." is not executed; the stub answers
@@ -19,9 +20,18 @@ fixture() {
         dolibarr_cron)       echo "172.19.0.3 172.20.0.4|172.19.0.1 |" ;;
         dolibarr_db)         echo "172.20.0.2| |3306" ;;
         restic)              echo "172.22.0.2|172.22.0.1|" ;;
+        paperless_sdwa5)        echo "172.24.0.2 172.25.0.4|172.24.0.1 |8000" ;;
+        paperless_sdwa5_db)     echo "172.25.0.2| |3306" ;;
+        paperless_sdwa5_broker) echo "172.25.0.3| |6379" ;;
+        paperless_home)         echo "172.26.0.2 172.27.0.4|172.26.0.1 |8000" ;;
+        paperless_home_db)      echo "172.27.0.2| |3306" ;;
+        paperless_home_broker)  echo "172.27.0.3| |6379" ;;
         *) return 1 ;;
     esac
 }
+
+# The paths every application needs, open unless a test sets STUB_PROBE_OPEN itself.
+DEFAULT_OPEN="dolibarr>172.20.0.2:3306 paperless_sdwa5>172.25.0.2:3306 paperless_sdwa5>172.25.0.3:6379 paperless_home>172.27.0.2:3306 paperless_home>172.27.0.3:6379"
 
 case "${1:-}" in
     inspect)
@@ -57,7 +67,7 @@ case "${1:-}" in
         shift 5
         for target in "$@"; do
             [[ -n "${STUB_PROBE_LOG:-}" ]] && printf '%s %s\n' "$name" "$target" >> "$STUB_PROBE_LOG"
-            if [[ " ${STUB_PROBE_OPEN-dolibarr>172.20.0.2:3306} " == *" $name>$target "* ]]; then
+            if [[ " ${STUB_PROBE_OPEN-$DEFAULT_OPEN} " == *" $name>$target "* ]]; then
                 echo "$target open"
             elif [[ "$target" =~ ^172\.[0-9]+\.[0-9]+\.1:(22|80|443)$ ]]; then
                 echo "$target open"

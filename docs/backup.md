@@ -83,8 +83,8 @@ change to either schedule has to be reasoned about in UTC.
 
 ## Consistent SQL database archives
 
-`monitoring/database-backup.sh` takes application-database dumps from `dolibarr_db`, `shopware` and
-`chimodiazz_shopware` at **03:40 Europe/Berlin**. Restic's 04:00 UTC run follows in both winter and summer.
+`monitoring/database-backup.sh` takes application-database dumps from `dolibarr_db`, `shopware`,
+`chimodiazz_shopware`, `paperless_sdwa5_db` and `paperless_home_db` at **03:40 Europe/Berlin**. Restic's 04:00 UTC run follows in both winter and summer.
 The job is silent on success. Failures are logged and recorded for the existing health alert.
 
 Each archive under the gitignored `database-backup/` contains `dump.sql` and `manifest.tsv`. The manifest

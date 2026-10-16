@@ -23,6 +23,8 @@ docker compose up -d
 | Shopware (SdWa5)   | https://sdwa5.org             | docker-compose.yml             |
 | Vaultwarden        | https://vault.sdwa5.org       | docker-compose.yml             |
 | Dolibarr SdWa5     | https://erp.sdwa5.org         | docker-compose.yml             |
+| Paperless-ngx Verein | https://paper.sdwa5.org     | docker-compose.yml             |
+| Paperless-ngx household | https://paper.ripper.sdwa5.org | docker-compose.yml        |
 | Ollama (inactive)  | :11434 (no public domain)     | docker-compose.yml (profile: ollama) |
 | Restic backup      | —                             | docker-compose.yml             |
 | Dolibarr Project 2 | https://project2.sdwa5.org | docker-compose.projects.yml |
@@ -56,6 +58,7 @@ See `docs/` for per-service documentation:
 - [Shopware plugins](docs/shopware/plugins.md)
 - [Dolibarr](docs/dolibarr.md)
 - [Vaultwarden](docs/vaultwarden.md)
+- [Paperless-ngx (two instances)](docs/paperless.md)
 - [Backup (Restic + rclone)](docs/backup.md)
 - [Caddy](docs/caddy.md)
 - [Ollama](docs/ollama.md)

@@ -75,6 +75,12 @@ vaultwarden-data.bak-*/
 vaultwarden-db-backup/
 database-backup/
 ollama-data/
+paperless-sdwa5-data/
+paperless-sdwa5-media/
+paperless-sdwa5-mariadb-data/
+paperless-home-data/
+paperless-home-media/
+paperless-home-mariadb-data/
 
 # Minecraft data (world/mods/logs stay ignored, server config tracked below)
 minecraft-data/*

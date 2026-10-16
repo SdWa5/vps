@@ -398,3 +398,17 @@
     3. no change to the Dolibarr core, so the UI survives its upgrades
     4. open are the scope of a first version (which tasks), the stack, the hosting, and how it logs in, by an
        API key per user or through the login API, which is off today
+30. **rename the PmTools module, since it becomes the general REST and MCP extension of Dolibarr**
+    ([SdWa5/dolibarr-pmtools](https://github.com/SdWa5/dolibarr-pmtools),
+    [docs/dolibarr.md](docs/dolibarr.md#custom-modules)) (ca. 6 Stunden). It started with the ticket
+    routes and the ten `pm_*` MCP tools, and #19 and #28 add
+    endpoints outside project management. The new name is open. A rename touches
+    1. the module class `modPmTools`, its `rights_class` `pmtools`, the `MAIN_MODULE_PMTOOLS` constant and the
+       `custom/pmtools` directory. The module number 500302 can stay, but Dolibarr keys the constant and the
+       rights by name, so on prod the rename is probably an uninstall of the old module and an install of the
+       new one, with the user rights granted again
+    2. the REST route prefix and the MCP tool names, together with their callers
+       [tools/dolibarr/sync-pm.sh](tools/dolibarr/sync-pm.sh) and the `mcp` user
+    3. the GitHub repository (GitHub redirects the old url), `docs/dolibarr.md`, the README and #18
+    4. decide first between the rename and a second module beside PmTools for the endpoints outside
+       project management

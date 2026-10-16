@@ -103,7 +103,8 @@ with the `muted` token.
 Below 768 px the footer columns collapse into rows. `_footer.scss` takes the core's `pb-4` off the
 Contact column, which made it 24 px taller than the others while collapsed. It also centres the
 title and the toggle icon in each row and hides the empty `.footer-logos` strip, so the donation line
-has the same space above and below.
+has the same space above and below. An expanded column has as much space below its last link as
+under its title.
 
 ## Header, logo and navigation
 

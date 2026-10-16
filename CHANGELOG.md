@@ -32,6 +32,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The image table in `docs/infrastructure.md` named `:latest` for Shopware and Dolibarr.
 - `docs/shopware/plugins.md` listed SdWa5Theme 1.1.2.
 
+## [1.79.4] - 2026-10-16
+
+### Added
+
+- The ticket type `EVENT` in `docs/dolibarr.md`, for events that have no project yet.
+
+## [1.79.3] - 2026-10-16
+
+### Changed
+
+- `docs/dolibarr.md` counts ordering printed merch as `PURCHASE` and keeps `COM` for the merch range
+  and its sale.
+
+## [1.79.2] - 2026-10-16
+
+### Added
+
+- `docs/dolibarr.md` explains the ticket types RECURRING, PURCHASE, COM and OTHER and the blocking
+  line for an event.
+
+## [1.79.1] - 2026-10-16
+
+### Changed
+
+- `docs/dolibarr.md` records the MCP setup on production and the Claude Code registration that reads
+  the key from a file.
+- `TODO.md` item 2.3 and 19 reflect PmTools on production, item 20 lists the remaining workarounds.
+
 ## [1.79.0] - 2026-10-16
 
 ### Added

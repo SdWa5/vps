@@ -213,6 +213,21 @@ priority the UI shows on the card and in the list, from Optional, Low, Normal an
 Blocking. A task has a `priority` column too, but no page of Dolibarr 23.0 displays it, measured
 against the live source on 2026-10-15. The script still writes tasks for a spec that names them.
 
+**The ticket type says what kind of work a ticket is**, decided in the triage of 2026-10-16. Three types
+were added through PmTools, and one built-in type got a meaning of its own.
+
+| Code | Label | Used for |
+|---|---|---|
+| `RECURRING` | Dauerauftrag | Work that never finishes, such as the bookkeeping, buying gas and drinks, or the merch lines that keep getting reordered. It stays open and needs no done-criterion |
+| `PURCHASE` | Einkauf | Buying equipment or material, and ordering printed items such as mugs or business cards from a supplier. A ticket that may end up built instead of bought stays `OTHER` |
+| `COM` | Commercial question | Dolibarr's built-in type, used here for the Verein's own commercial side, meaning the merch range and selling it, not for questions from customers |
+| `EVENT` | Veranstaltung | An event that has no project yet, such as deciding whether to take part. Once the Verein commits to it, the event becomes a project and its work goes there |
+| `OTHER` | Other | Everything else |
+
+A ticket has one type, so a recurring merch line is `RECURRING` and not `COM`. A blocking line about an
+event names the project and its date, for example `Blockiert Krampustek Vol. 2 (PJ2610-0008) am
+19.12.2026.`
+
 **A ticket cannot block another ticket in Dolibarr 23.0**, so a dependency is a line in the message.
 Tickets have no dependency field, and `ticket/card.php` excludes `ticket` from its own link-to block,
 read off the 23.0.2 image on 2026-10-15. The waiting ticket says `Blockiert durch TS… „<subject>“`
@@ -335,7 +350,14 @@ tools/dolibarr/mcp-setup.sh --rights 56001,41       # another set of right ids
 
 Production needs `DOLIBARR_URL=https://erp.sdwa5.org`, `DOLIBARR_ADMIN_PASSWORD_FILE` pointing at
 the admin password, for example `<(bw get password ID)`, and `DOLIBARR_MCP_KEY_FILE` outside the
-mirror directory. It ran on the mirror on 2026-10-16 and not yet on production.
+mirror directory. It ran on the mirror and on production on 2026-10-16. The production key lives in
+`~/.config/sdwa5-dolibarr-mcp-key` on the workstation, and Claude Code reaches the server as
+`dolibarr-sdwa5` in local scope, with a `headersHelper` that reads the key from that file on every
+connect, so the key is in no configuration file.
+
+```bash
+claude mcp add-json -s local dolibarr-sdwa5 '{"type":"http","url":"https://erp.sdwa5.org/ai/server/mcp_server.php","headersHelper":"jq -n --rawfile k \"$HOME/.config/sdwa5-dolibarr-mcp-key\" \"{\\\"X-API-Key\\\": (\\$k | rtrimstr(\\\"\\\\n\\\"))}\""}'
+```
 
 ## Local dev mirror
 

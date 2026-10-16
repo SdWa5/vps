@@ -131,7 +131,7 @@ afterwards. A missing `iptables` binary or an unreadable chain is reported as CR
 passing, since a check that cannot see its subject has not confirmed anything. All faults it finds
 are reported in one line rather than one per run, so a single mail carries the whole picture.
 
-IPv6 is a CRIT like IPv4 since 1.75.2. No AAAA record is published, but the host answers on its static
+IPv6 is a CRIT like IPv4 since 1.76.1. No AAAA record is published, but the host answers on its static
 v6 address, an `ssh -6` login succeeds, and a scanner needs no DNS, see the firewall section of
 [ssh-hardening.md](ssh-hardening.md). Until then a v6 fault was a WARN, and a missing v6 `f2b-sshd`
 chain counted as normal, because fail2ban made it on the first IPv6 ban only. Since 1.72.1 it exists

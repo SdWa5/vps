@@ -375,7 +375,7 @@ appeared, and the ban rule came and went. The script flushed v6 `INPUT` as well 
 IPv4 jump, so after any firewall restart an IPv6 ban would have landed in a chain that nothing jumps
 to. It now restores the jump for both families. No IPv6 address had been banned before that test,
 and no IPv6 login failure appears in the journal since July 2026, because no AAAA record is published.
-Since 1.72.1 the v6 chain exists from the jail's start, see above, and since 1.75.2 the health check
+Since 1.72.1 the v6 chain exists from the jail's start, see above, and since 1.76.1 the health check
 reports a missing v6 chain or jump as CRIT.
 
 **Dropping the fail2ban restart buys a second thing.** A fail2ban restart logs

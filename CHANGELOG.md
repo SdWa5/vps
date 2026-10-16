@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.79.3] - 2026-10-16
+
+### Changed
+
+- `docs/dolibarr.md` counts ordering printed merch as `PURCHASE` and keeps `COM` for the merch range
+  and its sale.
+
 ## [1.79.2] - 2026-10-16
 
 ### Added

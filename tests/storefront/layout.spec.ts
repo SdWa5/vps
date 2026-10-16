@@ -191,5 +191,44 @@ test.describe('footer', () => {
         expect.soft(Math.abs(icon), `${title} toggle off centre`).toBeLessThanOrEqual(TOLERANCE);
       }
     });
+
+    test('expanded columns have as much space below their links as under their title', async ({ page }) => {
+      for (const toggle of await page.locator('.footer-column-toggle').all()) {
+        await toggle.click();
+      }
+      await expect(page.locator('.footer-column-content.show')).toHaveCount(await page.locator('.footer-column').count());
+      await page.waitForFunction(() => document.querySelectorAll('.footer-column-content.collapsing').length === 0);
+
+      const gaps = await page.locator('.footer-column').evaluateAll((columns) => {
+        const context = document.createElement('canvas').getContext('2d')!;
+        // Range boxes include the font's line gap, so compare the glyphs: the
+        // baseline from the font box, the ink from the measured text.
+        const ink = (root: Element) => {
+          const lines: { top: number; bottom: number }[] = [];
+          const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: (n) => (n.textContent!.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP) });
+          for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            const style = getComputedStyle(node.parentElement!);
+            context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+            const text = node.textContent!.trim();
+            const metrics = context.measureText(style.textTransform === 'uppercase' ? text.toUpperCase() : text);
+            const range = document.createRange();
+            range.selectNodeContents(node);
+            const box = range.getClientRects()[0];
+            const baseline = box.top + box.height * metrics.fontBoundingBoxAscent / (metrics.fontBoundingBoxAscent + metrics.fontBoundingBoxDescent);
+            lines.push({ top: baseline - metrics.actualBoundingBoxAscent, bottom: baseline + metrics.actualBoundingBoxDescent });
+          }
+          return lines;
+        };
+        return columns.map((column) => {
+          const title = ink(column.querySelector('.footer-column-headline')!)[0];
+          const links = ink(column.querySelector('.footer-column-content')!);
+          const edge = column.getBoundingClientRect().bottom - parseFloat(getComputedStyle(column).borderBottomWidth);
+          return { title: column.querySelector('.footer-column-headline')!.textContent!.trim(), top: links[0].top - title.bottom, bottom: edge - links[links.length - 1].bottom };
+        });
+      });
+      for (const { title, top, bottom } of gaps) {
+        expect.soft(Math.abs(bottom - top), `${title}: ${top} px under the title against ${bottom} px below`).toBeLessThanOrEqual(1);
+      }
+    });
   });
 });

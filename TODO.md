@@ -349,12 +349,7 @@
 24. **remove the JetBrains remote-backend remnants in `/root`** (ca. 30 Minuten). `/root/.config/JetBrains`
     and `/root/.local/share/JetBrains` hold ca. 3 GB of an old PhpStorm remote backend. A name search
     found no secret in them. Check that no current workflow uses a remote backend, then delete them
-25. **confirm an off-host copy of the restic repository password** ([docs/backup.md](docs/backup.md))
-    (ca. 15 Minuten). Since 2026-10-16 it lives in `/opt/docker/secrets/restic_password`. A lost host
-    means a restore needs that password from somewhere else, and the repository cannot be opened without
-    it. Check that the vault holds the current value and that the vault itself can be reached without
-    this host
-26. **send the monitoring mails to one mailbox instead of two** ([docs/monitoring.md](docs/monitoring.md)).
+25. **send the monitoring mails to one mailbox instead of two** ([docs/monitoring.md](docs/monitoring.md)).
     `MONITOR_MAIL_TO` in the vps `.env` lists the private Gmail address and ripper@sdwa5.org, so every
     health, backup and vaultwarden mail lands twice in Stefan's two main inboxes
     1. quick fix for now. set `MONITOR_MAIL_TO` to the private address alone and send a test mail with
@@ -364,7 +359,7 @@
        `monitoring/lib.sh` and `.env.example` changed to it. whether the mailbox exists is unchecked, if not it gets
        created first, as a Workspace group or shared inbox. `/etc/cron.d/chimodiazz-deploy` is checked
        for an override of its own at the same time (priority medium, ca. 45 Minuten)
-27. **share a single image from the Shopware image slider** (SdWa5Theme). The share links in
+26. **share a single image from the Shopware image slider** (SdWa5Theme). The share links in
     `layout/share/share-links.html.twig` share the page only, and the image slider has no share action
     of its own, so one picture cannot be sent by its url or through the browser share sheet
     1. give each slide a url of its own, either the media url or the page url with a fragment that opens
@@ -372,7 +367,7 @@
     2. a share button per slide that calls `navigator.share` with that url, and the WhatsApp, Telegram
        and e-mail links as the fallback. the template notes that the deploy builds no storefront
        javascript, so this needs a storefront js build in the deploy first, or an inline script (ca. 6 Stunden)
-28. **redirect `d.sdwa5.org` and `donate.sdwa5.org` to the PayPal donation page** ([docs/caddy.md](docs/caddy.md))
+27. **redirect `d.sdwa5.org` and `donate.sdwa5.org` to the PayPal donation page** ([docs/caddy.md](docs/caddy.md))
     (priority high, ca. 1 Stunde). The donation links on sdwa5.org point to `https://paypal.me/SdWa5`
     (measured 2026-10-16). Neither name has a DNS record yet
     1. two A records `d` and `donate` to 158.220.127.232 at Squarespace, entered by hand, since Squarespace
@@ -381,7 +376,7 @@
        resolve, because Caddy retries ACME forever on a name without DNS
     3. the two names in `security-recheck.sh` (HSTS and TLS) and `docs/caddy.md`. `RECHECK_SITES` expects a
        200, so the check has to accept the redirect to PayPal there
-29. **change Dolibarr passwords through the API and the MCP server** ([docs/dolibarr.md](docs/dolibarr.md#mcp-server))
+28. **change Dolibarr passwords through the API and the MCP server** ([docs/dolibarr.md](docs/dolibarr.md#mcp-server))
     (ca. 4 Stunden). Dolibarr 24 already accepts `pass` in `PUT /users/{id}`, given the `user > password`
     right or admin (`user/class/api_users.class.php`, read on 2026-10-16). `GET /users/{id}/setPassword`
     only generates a random password and needs `API_ENABLE_LOGIN_API` and `API_ALLOW_PASSWORD_RESET`, so
@@ -391,7 +386,7 @@
     2. an MCP tool for the same call through the `addMcpTools` hook of PmTools. Decide first whether an MCP
        client may change passwords at all, because the `mcp` user would need the password right for it
        (ca. 2 Stunden 30 Minuten)
-30. **a new UI for Dolibarr that talks to it only over REST** (ca. 80 Stunden for a first version).
+29. **a new UI for Dolibarr that talks to it only over REST** (ca. 80 Stunden for a first version).
     Dolibarr's own UI hides common actions. The password change is the case found on 2026-10-16. Dolibarr 24
     has no button for it, the new password goes into the Password field of the Modify form
     (`user/card.php?id=<id>&action=edit`), and the **Reinit password** button generates a random one instead
@@ -399,7 +394,7 @@
        of how Dolibarr structures its pages and menus. Dolibarr is the backend behind the REST API and the
        PmTools routes and does not shape the UI
     2. a missing endpoint is added to Dolibarr as a module route, never worked around in the UI (TODO #19).
-       The password change uses the call of #29
+       The password change uses the call of #28
     3. no change to the Dolibarr core, so the UI survives its upgrades
     4. open are the scope of a first version (which tasks), the stack, the hosting, and how it logs in, by an
        API key per user or through the login API, which is off today

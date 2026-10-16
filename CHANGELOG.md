@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.86.9] - 2026-10-17
+
+### Added
+
+- docs/backup.md names the off-host copies of the restic password.
+
+### Removed
+
+- TODO #25, the off-host copy of the restic password is confirmed; later items renumbered.
+
 ## [1.86.8] - 2026-10-16
 
 ### Changed

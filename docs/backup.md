@@ -44,9 +44,17 @@ Automated backups via **Restic** + **rclone** to Google Drive.
 | Source            | `/data` (= `/opt/docker/` read-only mount) |
 | Repository        | `rclone:sdwa5backup:restic-backups`, Shared Drive "SdWa5 Backup" |
 | Retention         | 6 daily, 3 weekly, 11 monthly, 2 yearly, plus every snapshot tagged `sdwa5-archive` |
-| Restic password   | compose secret `secrets/restic_password`, read by restic through `RESTIC_PASSWORD_FILE` |
+| Restic password   | compose secret `secrets/restic_password`, read by restic through `RESTIC_PASSWORD_FILE`; off-host copies below |
 | rclone remote     | `sdwa5backup`, defined by `RCLONE_CONFIG_SDWA5BACKUP_*` in `docker-compose.yml` |
 | Identity          | service account `restic-backup`, key `/opt/docker/rclone-config/restic-sa.json` (mode 600) |
+
+**Without the restic password the repository cannot be decrypted**, so a copy that dies with the host is
+no copy. The Vaultwarden item `restic` holds the current value (checksum compare against the host file on
+2026-10-17). Vaultwarden runs on this host too, so the item is reachable after a host loss only through
+the clients that keep an encrypted offline copy of the vault. Two such copies were synced on 2026-10-17,
+the `bw` CLI on the desktop and the Bitwarden app on the phone, and each opens with the master password
+without the server. Rotating the restic password means updating the item and syncing both
+devices in the same step.
 
 ## The Vaultwarden database is copied consistently first
 

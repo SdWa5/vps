@@ -354,3 +354,21 @@
     means a restore needs that password from somewhere else, and the repository cannot be opened without
     it. Check that the vault holds the current value and that the vault itself can be reached without
     this host
+26. **send the monitoring mails to one mailbox instead of two** ([docs/monitoring.md](docs/monitoring.md)).
+    `MONITOR_MAIL_TO` in the vps `.env` lists the private Gmail address and ripper@sdwa5.org, so every
+    health, backup and vaultwarden mail lands twice in Stefan's two main inboxes
+    1. quick fix for now. set `MONITOR_MAIL_TO` to the private address alone and send a test mail with
+       `monitoring/vps-health.sh`. the default in `monitoring/lib.sh` stays ripper@sdwa5.org, so it
+       only applies when `.env` sets nothing (ca. 10 Minuten)
+    2. later, a shared org IT mailbox it@sdwa5.org as the only recipient, and the default in
+       `monitoring/lib.sh` and `.env.example` changed to it. whether the mailbox exists is unchecked, if not it gets
+       created first, as a Workspace group or shared inbox. `/etc/cron.d/chimodiazz-deploy` is checked
+       for an override of its own at the same time (ca. 45 Minuten)
+27. **share a single image from the Shopware image slider** (SdWa5Theme). The share links in
+    `layout/share/share-links.html.twig` share the page only, and the image slider has no share action
+    of its own, so one picture cannot be sent by its url or through the browser share sheet
+    1. give each slide a url of its own, either the media url or the page url with a fragment that opens
+       the slider on that slide. the fragment needs slider javascript to jump to the slide
+    2. a share button per slide that calls `navigator.share` with that url, and the WhatsApp, Telegram
+       and e-mail links as the fallback. the template notes that the deploy builds no storefront
+       javascript, so this needs a storefront js build in the deploy first, or an inline script (ca. 6 Stunden)

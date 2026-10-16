@@ -359,11 +359,11 @@
     health, backup and vaultwarden mail lands twice in Stefan's two main inboxes
     1. quick fix for now. set `MONITOR_MAIL_TO` to the private address alone and send a test mail with
        `monitoring/vps-health.sh`. the default in `monitoring/lib.sh` stays ripper@sdwa5.org, so it
-       only applies when `.env` sets nothing (ca. 10 Minuten)
+       only applies when `.env` sets nothing (priority high, ca. 10 Minuten)
     2. later, a shared org IT mailbox it@sdwa5.org as the only recipient, and the default in
        `monitoring/lib.sh` and `.env.example` changed to it. whether the mailbox exists is unchecked, if not it gets
        created first, as a Workspace group or shared inbox. `/etc/cron.d/chimodiazz-deploy` is checked
-       for an override of its own at the same time (ca. 45 Minuten)
+       for an override of its own at the same time (priority medium, ca. 45 Minuten)
 27. **share a single image from the Shopware image slider** (SdWa5Theme). The share links in
     `layout/share/share-links.html.twig` share the page only, and the image slider has no share action
     of its own, so one picture cannot be sent by its url or through the browser share sheet

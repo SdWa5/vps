@@ -1,0 +1,9 @@
+{
+  "name": "sdwa5-storefront-tests",
+  "private": true,
+  "description": "Rendered layout checks for the SdWa5 storefront, run by tests/storefront/run.sh",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  }
+}

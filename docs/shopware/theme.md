@@ -267,7 +267,9 @@ pull, `composer install`, `plugin:refresh`, `plugin:update SdWa5Theme`, `theme:c
 --sync` and `cache:clear` under the worker lock, and the FPM reload. `plugin:update` already recompiles
 the theme. The option is `--active-only`, and `--only-active` aborts the command. The deploy marker
 `<meta name="sdwa5:theme" content="…">` in every page head shows which version is live. Automating
-this is filed in the root [TODO.md](../../TODO.md).
+this is filed in the root [TODO.md](../../TODO.md). Afterwards `tests/storefront/run.sh` checks the
+rendered header, offcanvas and tile layout against the live shop, see the Tests section of the
+[README](../../README.md#tests).
 
 ## Rollback
 

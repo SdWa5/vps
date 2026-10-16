@@ -1,0 +1,96 @@
+import { test, expect, type Locator, type Page } from '@playwright/test';
+
+// Box centres may differ by sub-pixel rounding, not by a nudge. The fixes of
+// SdWa5Theme 1.2.2 to 1.2.4 removed offsets of 0.8 to 3.2 px.
+const TOLERANCE = 0.5;
+
+async function centreY(locator: Locator): Promise<number> {
+  const box = await locator.boundingBox();
+  expect(box, `${locator} is not rendered`).not.toBeNull();
+  return box!.y + box!.height / 2;
+}
+
+async function expectLevel(reference: Locator, pieces: Record<string, Locator>): Promise<void> {
+  const line = await centreY(reference);
+  for (const [name, piece] of Object.entries(pieces)) {
+    expect.soft(Math.abs((await centreY(piece)) - line), `${name} off the centre line`).toBeLessThanOrEqual(TOLERANCE);
+  }
+}
+
+async function openHome(page: Page): Promise<void> {
+  await page.goto('/');
+  await page.evaluate(() => document.fonts.ready);
+}
+
+async function openOffcanvas(page: Page): Promise<Locator> {
+  await openHome(page);
+  await page.locator('.nav-main-toggle-btn:visible').click();
+  const offcanvas = page.locator('.offcanvas');
+  await expect(offcanvas.locator('.sdwa5-donate-offcanvas')).toBeVisible();
+  // The panel slides in. Wait for its transition before measuring or shooting.
+  await page.waitForFunction(() => {
+    const panel = document.querySelector('.offcanvas.show');
+    return panel !== null && panel.getAnimations().every((a) => a.playState === 'finished');
+  });
+  return offcanvas;
+}
+
+test.describe('desktop header', () => {
+  test.beforeEach(({}, testInfo) => {
+    test.skip(!testInfo.project.name.startsWith('desktop'), 'the settings column shows from 992 px');
+  });
+
+  test('settings share the header row centre', async ({ page }) => {
+    await openHome(page);
+    const settings = page.locator('.sdwa5-header__settings');
+
+    await expectLevel(settings.locator('xpath=..'), {
+      'toggle icon': settings.locator('.dne-storefront-dark-mode-btn .icon:visible svg'),
+      'language flag': settings.locator('.top-bar-language .dropdown-toggle .language-flag'),
+      'language text': settings.locator('.top-bar-language .dropdown-toggle .top-bar-nav-text'),
+      'donate button': page.locator('.sdwa5-donate-btn'),
+    });
+    await expect(settings).toHaveScreenshot('header-settings.png');
+  });
+
+  test('homepage tiles end at their padding', async ({ page }) => {
+    await openHome(page);
+    const container = page.locator('.cms-section.sdwa5-tiles .cms-block-container').first();
+    const lastParagraph = container.locator('.cms-element-text p:last-child');
+
+    const [containerBox, paragraphBox] = [await container.boundingBox(), await lastParagraph.boundingBox()];
+    const padding = await container.evaluate((e) => parseFloat(getComputedStyle(e).paddingBottom));
+    const gap = containerBox!.y + containerBox!.height - (paragraphBox!.y + paragraphBox!.height);
+
+    expect(Math.abs(gap - padding), `gap ${gap} px against padding ${padding} px`).toBeLessThanOrEqual(TOLERANCE);
+  });
+});
+
+test.describe('offcanvas menu', () => {
+  test.beforeEach(({}, testInfo) => {
+    test.skip(testInfo.project.name.startsWith('desktop'), 'the burger menu shows below 992 px');
+  });
+
+  test('toggle and language share one centre line', async ({ page }, testInfo) => {
+    const actions = (await openOffcanvas(page)).locator('.navigation-offcanvas-actions');
+    const language = actions.locator('.top-bar-language .dropdown-toggle');
+
+    const pieces: Record<string, Locator> = {
+      'toggle icon': actions.locator('.dne-storefront-dark-mode-btn .icon:visible svg'),
+      'language flag': language.locator('.language-flag'),
+    };
+    // The language name shows from 768 px.
+    if (testInfo.project.name.startsWith('tablet')) {
+      pieces['language text'] = language.locator('.top-bar-nav-text');
+    }
+
+    await expectLevel(language, pieces);
+    await expect(actions).toHaveScreenshot('offcanvas-actions.png');
+  });
+
+  test('donate heart is level with its text', async ({ page }) => {
+    const donate = (await openOffcanvas(page)).locator('.sdwa5-donate-offcanvas');
+
+    await expectLevel(donate.locator('span:not(.icon)'), { heart: donate.locator('.icon svg') });
+  });
+});

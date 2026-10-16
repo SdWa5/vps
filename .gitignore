@@ -115,3 +115,8 @@ tools/dolibarr/address-records.json
 # from every commit message, so committing it would disclose exactly what that
 # removed. sdwa5-3d has ignored this path since it was created.
 /.claude/
+
+# Playwright storefront suite (tests/storefront/run.sh). Only the baselines are tracked.
+tests/storefront/node_modules/
+tests/storefront/test-results/
+tests/storefront/playwright-report/

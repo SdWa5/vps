@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.86.1] - 2026-10-16
+
+### Fixed
+
+- The `env` check of `monitoring/security-recheck.sh` reads process environments on the host through
+  the PIDs `docker top` reports. Inside a container it could not read processes that changed their
+  uid, and it reported them as clean. On prod this hid the Paperless workers' `PAPERLESS_DBPASS` and
+  `PAPERLESS_SECRET_KEY`.
+- An unreadable process environment, or a container whose processes cannot be listed, is now a WARN
+  with the count instead of an OK.
+- The docs no longer claim that `mariadbd` keeps the database passwords in its environment, since
+  the measurement on prod found none.
+
 ## [1.86.0] - 2026-10-16
 
 ### Added

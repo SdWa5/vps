@@ -46,7 +46,8 @@ The secret key and the database passwords are compose file secrets (row "secrets
 through `PAPERLESS_SECRET_KEY_FILE`, `PAPERLESS_DBPASS_FILE` and MariaDB's `MYSQL_*_FILE`. They are
 therefore absent from `docker inspect`, but not from the running processes. The image's s6
 `init-env-file` copies each `PAPERLESS_*_FILE` into `/run/s6/container_environment/`, so every
-Paperless process carries the value, and MariaDB's `file_env` exports it as well. The database
+Paperless process carries the value. The MariaDB containers carry none in `mariadbd`'s environment
+(measured on prod on 2026-10-16). The database
 passwords take effect only when a database is first initialized, so a file must keep the value the
 database was created with. The admin passwords are not on the host at all.
 

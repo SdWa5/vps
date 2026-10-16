@@ -429,8 +429,17 @@ value is ever printed or held in a variable. A name counts when it contains `PAS
 path, not dockware's `not-set` placeholder and not an argon2 hash such as Vaultwarden's `ADMIN_TOKEN`.
 A value in `docker inspect` is the regression it guards against, since SEC-11 moved those values into
 compose file secrets. A name that only a process environment carries is not a regression but the
-known residual. MariaDB's `file_env` and Paperless's s6 `init-env-file` export what they read from a
-`*_FILE`, so those processes still hold the value, and the OK message lists them so they stay visible.
+known residual. Paperless's s6 `init-env-file` exports what it reads from a `*_FILE`, so its processes
+still hold the value, and the OK message lists them so they stay visible. The MariaDB containers carried
+none on 2026-10-16.
+
+The process environments are read on the host, in `/proc/<pid>/environ` of each PID `docker top`
+reports, not inside the container. Inside, even root cannot read the environment of a process that
+changed its uid, such as an Apache child, a Paperless worker or `mariadbd`, because Docker drops
+`CAP_SYS_PTRACE`, and a `test -r` there passes anyway. Until 1.86.1 the check read inside the
+container, so it reported such containers as clean without having read them. A PID that has ended is
+skipped. An existing environment that cannot be read is a WARN with the count, and so is a container
+whose processes cannot be listed.
 The `listeners` check reads `/proc/net/tcp*` like the isolation check, see
 [`hardening/dockware-boot-end.sh`](../hardening/dockware-boot-end.sh).
 

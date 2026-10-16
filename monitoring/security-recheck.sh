@@ -38,7 +38,7 @@
 #   ISOLATION_APPS, ISOLATION_SOURCES, ISOLATION_EXPECT_OPEN
 #   GATEWAY_OPEN, GATEWAY_CLOSED, NO_EGRESS_CONTAINERS, EGRESS_PROBES, CLOSED_LISTENERS
 #   GIT_CHECKOUT_DIR, GIT_BRANCH, DEPLOYED_FILES, DATABASE_BACKUP_CONTAINERS
-#   PORT_TIMEOUT, PROBE_TIMEOUT, HTTP_TIMEOUT, RESTORE_CHECK (test hook)
+#   PORT_TIMEOUT, PROBE_TIMEOUT, HTTP_TIMEOUT, RESTORE_CHECK, RECHECK_PROC_ROOT (test hooks)
 
 set -uo pipefail
 
@@ -47,6 +47,8 @@ COMPOSE_DIR="${COMPOSE_DIR:-$(dirname "$MONITORING_DIR")}"
 
 RECHECK_SSH_HOST="${RECHECK_SSH_HOST:-sdwa5.org}"
 RECHECK_REMOTE_SCRIPT="${RECHECK_REMOTE_SCRIPT:-/opt/docker/monitoring/security-recheck.sh}"
+# The host's /proc, where the --host part reads container process environments (test hook).
+RECHECK_PROC_ROOT="${RECHECK_PROC_ROOT:-/proc}"
 
 RECHECK_TARGET_V4="${RECHECK_TARGET_V4:-sdwa5.org}"
 # No AAAA record is published, so IPv6 is reached by its literal address (docs/ssh-hardening.md).
@@ -563,43 +565,81 @@ secret_names() {
         k ~ /(PASS|TOKEN|SECRET)/ || k ~ /_KEY$/ { print k }' | sort -u | paste -sd' ' -
 }
 
-# Every process environment in the container, one NAME=VALUE per line. A process that ends while the
-# loop runs is skipped rather than failing the read.
-# shellcheck disable=SC2016
-ENVIRON_SNIPPET='for f in /proc/[0-9]*/environ; do tr "\000" "\n" < "$f" 2>/dev/null; echo; done'
+# container_pids CONTAINER
+#
+# The host PIDs of the container's processes. The --host part reads their environments in the host's
+# /proc, because inside the container even root cannot read the environment of a process that changed
+# its uid (Apache children, Paperless's workers, mariadbd): Docker drops CAP_SYS_PTRACE, and a
+# `test -r` there passes anyway (measured 2026-10-16).
+container_pids() {
+    docker top "$1" -eo pid 2>/dev/null | awk 'NR > 1 && $1 ~ /^[0-9]+$/ { print $1 }'
+}
+
+# environ_counts CONTAINER
+#
+# Prints "READ UNREADABLE": how many process environments could be read and how many existing ones
+# could not. A PID that ended meanwhile counts as neither. Nothing is kept, the content goes to
+# /dev/null.
+environ_counts() {
+    local pid readable=0 unreadable=0
+
+    for pid in $(container_pids "$1"); do
+        if tr '\000' '\n' < "$RECHECK_PROC_ROOT/$pid/environ" >/dev/null 2>&1; then
+            readable=$((readable + 1))
+        elif [[ -e "$RECHECK_PROC_ROOT/$pid" ]]; then
+            unreadable=$((unreadable + 1))
+        fi
+    done
+    printf '%d %d\n' "$readable" "$unreadable"
+}
+
+# process_environments CONTAINER
+#
+# Every process environment of the container, one NAME=VALUE per line, for a pipe into secret_names.
+process_environments() {
+    local pid
+
+    for pid in $(container_pids "$1"); do
+        tr '\000' '\n' < "$RECHECK_PROC_ROOT/$pid/environ" 2>/dev/null
+        echo
+    done
+}
 
 # check_env_exposure CONTAINER
 #
 # Since SEC-11 the stack's secrets reach the containers as files under /run/sdwa5-secrets, so docker
 # inspect must show none of them. A value there is a WARN, because anyone who can inspect containers
-# reads it and it lands in every config dump. The processes inside can still carry values: MariaDB's
-# file_env and Paperless's s6 init-env-file export what they read from a *_FILE. Those names are
-# listed in the OK message, so that residual stays visible instead of passing silently.
+# reads it and it lands in every config dump. The processes inside can still carry values: Paperless's
+# s6 init-env-file exports what it reads from a *_FILE into every service (measured 2026-10-16; the
+# MariaDB containers carried none). Those names are listed in the OK message, so that residual stays
+# visible instead of passing silently. An environment that cannot be read is a WARN, never an OK.
 check_env_exposure() {
-    local container="$1" config process
+    local container="$1" config readable unreadable process
 
     if [[ "$(docker inspect -f '{{.State.Running}}' "$container" 2>/dev/null)" != true ]]; then
-        printf 'OK	%s is not running, no environment to read
-' "$container"
+        printf 'OK\t%s is not running, no environment to read\n' "$container"
         return
     fi
     config="$(docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$container" 2>/dev/null | secret_names)"
-    if ! docker exec --user 0 "$container" sh -c 'test -r /proc/1/environ' 2>/dev/null; then
-        printf 'WARN	%s: process environments not readable%s
-' "$container" "${config:+; docker inspect shows secret values for $config}"
+    read -r readable unreadable < <(environ_counts "$container")
+    if (( readable == 0 && unreadable == 0 )); then
+        printf 'WARN\t%s: no process environment found to read%s\n' "$container" \
+            "${config:+; docker inspect shows secret values for $config}"
         return
     fi
-    process="$(docker exec --user 0 "$container" sh -c "$ENVIRON_SNIPPET" 2>/dev/null | secret_names)"
+    if (( unreadable > 0 )); then
+        printf 'WARN\t%s: %s of %s process environments not readable%s\n' "$container" "$unreadable" \
+            "$((readable + unreadable))" "${config:+; docker inspect shows secret values for $config}"
+        return
+    fi
+    process="$(process_environments "$container" | secret_names)"
 
     if [[ -n "$config" ]]; then
-        printf 'WARN	docker inspect shows secret values for %s%s
-' "$config" "${process:+; process environment: $process}"
+        printf 'WARN\tdocker inspect shows secret values for %s%s\n' "$config" "${process:+; process environment: $process}"
     elif [[ -n "$process" ]]; then
-        printf 'OK	no secret in docker inspect; process environment still carries %s
-' "$process"
+        printf 'OK\tno secret in docker inspect; process environment still carries %s\n' "$process"
     else
-        printf 'OK	no secret in docker inspect or in any process environment
-'
+        printf 'OK\tno secret in docker inspect or in any process environment\n'
     fi
 }
 
@@ -610,19 +650,16 @@ check_closed_listeners() {
     local container="$1" ports="${2//,/ }" port open=()
 
     if [[ "$(docker inspect -f '{{.State.Running}}' "$container" 2>/dev/null)" != true ]]; then
-        printf 'OK	%s is not running
-' "$container"
+        printf 'OK\t%s is not running\n' "$container"
         return
     fi
     for port in $(listening_ports "$container"); do
         in_list "$port" "$ports" && open+=("$port")
     done
     if (( ${#open[@]} )); then
-        printf 'WARN	%s listens on %s, which its boot hook should have closed
-' "$container" "${open[*]}"
+        printf 'WARN\t%s listens on %s, which its boot hook should have closed\n' "$container" "${open[*]}"
     else
-        printf 'OK	none of %s listens
-' "$ports"
+        printf 'OK\tnone of %s listens\n' "$ports"
     fi
 }
 

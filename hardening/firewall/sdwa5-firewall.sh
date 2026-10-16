@@ -32,6 +32,8 @@
 #
 # The same holds for IPv6. fail2ban creates the v6 f2b-sshd chain and its jump
 # on the first IPv6 ban only, measured 2026-10-15 with a ban of 2001:db8::1.
+# Since 1.72.1 jail.local sets actionstart_on_demand=false, so both chains exist
+# from the jail's start; the existence check stays for a fail2ban that is down.
 # Until then this script re-added the IPv4 jump alone, so after any firewall
 # restart an IPv6 ban would have landed in a chain that nothing jumps to.
 set -e

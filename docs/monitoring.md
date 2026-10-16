@@ -41,7 +41,7 @@ auto-update.
 | `database_backups` | a configured SQL dump failed, an archive is missing or corrupt, or it is older than `DB_BACKUP_MAX_AGE_HOURS` (26) |
 | `http` | `vault.sdwa5.org/alive`, `sdwa5.org`, `erp.sdwa5.org` or `chimodiazz.sdwa5.org` returns anything but 200 |
 | `caddy` | `systemctl is-active caddy` is not `active` |
-| `firewall` | the IPv4 `INPUT` policy is not `DROP`, fail2ban's jump is gone, a port in `FIREWALL_PORTS` (22 80 443) is no longer accepted, or **`DOCKER-USER` is missing or back to Docker's empty `-j RETURN`**, which leaves every published container port unfiltered. An open IPv6 policy, or an IPv6 `f2b-sshd` chain that IPv6 `INPUT` no longer jumps to, is a WARN rather than a CRIT |
+| `firewall` | the IPv4 `INPUT` policy is not `DROP`, fail2ban's jump is gone, a port in `FIREWALL_PORTS` (22 80 443) is no longer accepted, or **`DOCKER-USER` is missing or back to Docker's empty `-j RETURN`**, which leaves every published container port unfiltered. The same holds for IPv6: an open v6 policy, a missing v6 `f2b-sshd` chain or a v6 chain without its jump is a CRIT too |
 | `shopware_tasks` | the newest Shopware scheduled task ran longer than `SHOPWARE_TASK_MAX_AGE_HOURS` (2) ago, the task list cannot be read, or no task has ever run |
 | `vaultwarden_version` | the running version is behind the newest GitHub release **and that release is older than `VAULTWARDEN_DRIFT_GRACE_HOURS` (26)** |
 | `git_remote` | `git ls-remote` against the checkout's origin fails, so `/opt/docker` cannot pull |
@@ -131,11 +131,11 @@ afterwards. A missing `iptables` binary or an unreadable chain is reported as CR
 passing, since a check that cannot see its subject has not confirmed anything. All faults it finds
 are reported in one line rather than one per run, so a single mail carries the whole picture.
 
-IPv6 is a WARN rather than a CRIT because no AAAA record is published for either hostname, so nothing
-resolves to the host over IPv6 and an open v6 policy is a gap that matters once that changes. Inbound
-IPv6 does reach the host, including cold after 25 minutes idle, and an `ssh -6` login succeeds, see
-the firewall section of [ssh-hardening.md](ssh-hardening.md). Raise this to CRIT if an AAAA record is
-ever published, because at that point the v6 rules carry real traffic.
+IPv6 is a CRIT like IPv4 since 1.75.2. No AAAA record is published, but the host answers on its static
+v6 address, an `ssh -6` login succeeds, and a scanner needs no DNS, see the firewall section of
+[ssh-hardening.md](ssh-hardening.md). Until then a v6 fault was a WARN, and a missing v6 `f2b-sshd`
+chain counted as normal, because fail2ban made it on the first IPv6 ban only. Since 1.72.1 it exists
+from the jail's start.
 
 Note what this check does **not** cover. It reads the `INPUT` chain, and a published container port
 never traverses `INPUT`, so a container exposed on `0.0.0.0` passes this check while being public.

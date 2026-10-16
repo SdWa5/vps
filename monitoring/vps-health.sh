@@ -346,24 +346,22 @@ check_firewall() {
         problems+=("DOCKER-USER has no DROP rule, so it is back to Docker's empty default and published container ports are unfiltered")
     fi
 
+    # IPv6 counts the same as IPv4. No AAAA record is published, but the host
+    # answers on its static v6 address (restored in 1.73.2), and a scanner needs
+    # no DNS. fail2ban creates its v6 chain when the jail starts since 1.72.1
+    # (actionstart_on_demand=false), so a missing chain is a fault, not the state
+    # before a first IPv6 ban.
+    v6="$(ip6tables -S INPUT 2>/dev/null)"
+    grep -q '^-P INPUT DROP' <<<"$v6" \
+        || problems+=("IPv6 INPUT policy is not DROP, the host is unfiltered over IPv6")
+    if ! ip6tables -C f2b-sshd -j RETURN >/dev/null 2>&1; then
+        problems+=("fail2ban has no IPv6 chain, IPv6 ssh brute force is unfiltered")
+    elif ! grep -q 'j f2b-sshd' <<<"$v6"; then
+        problems+=("fail2ban has an IPv6 chain but no jump to it in IPv6 INPUT, so IPv6 bans are not applied")
+    fi
+
     if (( ${#problems[@]} )); then
         printf 'CRIT\t%s\n' "$(IFS='; '; echo "${problems[*]}")"
-        return
-    fi
-
-    # IPv6 is a warning rather than a critical. Nothing reaches this host over
-    # IPv6 today and no AAAA record is published, so a missing v6 policy is a
-    # gap that matters once that changes, not a live exposure.
-    v6="$(ip6tables -S INPUT 2>/dev/null)"
-    if ! grep -q '^-P INPUT DROP' <<<"$v6"; then
-        printf 'WARN\tIPv4 firewall is up, IPv6 INPUT policy is not DROP\n'
-        return
-    fi
-
-    # fail2ban makes its v6 chain on the first IPv6 ban only, so a missing chain
-    # is normal. A chain without the jump means its bans are not applied.
-    if ip6tables -C f2b-sshd -j RETURN >/dev/null 2>&1 && ! grep -q 'j f2b-sshd' <<<"$v6"; then
-        printf 'WARN\tfail2ban has an IPv6 chain but no jump to it in IPv6 INPUT, so IPv6 bans are not applied\n'
         return
     fi
 

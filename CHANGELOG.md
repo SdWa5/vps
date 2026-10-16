@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.75.2] - 2026-10-16
+
+### Fixed
+
+- `vps-health.sh` reports an open IPv6 `INPUT` policy, a missing IPv6 `f2b-sshd` chain or a missing
+  IPv6 jump as CRIT. fail2ban creates the chain at jail start since 1.72.1, and the host answers on its
+  static IPv6 address since 1.73.2, so neither a missing chain nor a v6 gap is harmless any more.
+
 ## [1.75.1] - 2026-10-16
 
 ### Added

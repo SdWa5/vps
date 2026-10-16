@@ -340,29 +340,28 @@ Container started." health
     [[ "$(mail_body)" == *"Could not read the INPUT chain"* ]]
 }
 
-@test "an open IPv6 policy warns while IPv4 is still filtered" {
+@test "an open IPv6 policy is critical" {
     STUB_IPT_V6='-P INPUT ACCEPT' health
     [ "$(mail_count)" -eq 1 ]
     [[ "$(mail_body)" == *"IPv6 INPUT policy is not DROP"* ]]
 }
 
-@test "an IPv6 fail2ban chain nothing jumps to warns" {
-    STUB_IP6T_HAVE='-C f2b-sshd -j RETURN' health
+@test "an IPv6 fail2ban chain nothing jumps to is critical" {
+    STUB_IPT_V6='-P INPUT DROP
+-A INPUT -p ipv6-icmp -j ACCEPT' health
     [ "$(mail_count)" -eq 1 ]
     [[ "$(mail_body)" == *"IPv6 bans are not applied"* ]]
 }
 
 @test "an IPv6 fail2ban chain with its jump is healthy" {
-    export STUB_IP6T_HAVE='-C f2b-sshd -j RETURN'
-    STUB_IPT_V6='-P INPUT DROP
--A INPUT -p tcp -m multiport --dports 22 -j f2b-sshd
--A INPUT -p ipv6-icmp -j ACCEPT' health
+    health
     [ "$(mail_count)" -eq 0 ]
 }
 
-@test "no IPv6 fail2ban chain yet is healthy, because fail2ban makes it on the first IPv6 ban" {
-    health
-    [ "$(mail_count)" -eq 0 ]
+@test "a missing IPv6 fail2ban chain is critical, because fail2ban makes it at jail start" {
+    STUB_IP6T_HAVE='' health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"fail2ban has no IPv6 chain"* ]]
 }
 
 @test "several firewall faults are reported together rather than one at a time" {

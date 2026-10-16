@@ -8,6 +8,9 @@ load test_helper
 
 setup() {
     common_setup
+    # The health fixtures model a running fail2ban with both chains. This suite
+    # starts from no chain at all and adds them per test.
+    export STUB_IP6T_HAVE=""
     export STUB_IPT_LOG="$BATS_TEST_TMPDIR/iptables.log"
     : > "$STUB_IPT_LOG"
 }

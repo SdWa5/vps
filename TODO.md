@@ -37,7 +37,8 @@
        [tools/dolibarr/sync-pm.sh](tools/dolibarr/sync-pm.sh) and
        [docs/dolibarr.md](docs/dolibarr.md#projects-tasks-and-tickets). the backlog is a gitignored
        json spec, because the real one names people and links private documents. the script creates
-       and updates and never deletes, so closing a task or a ticket stays a ui job. what is still
+       and updates and never deletes. it closes, cancels and reopens tickets through the PmTools
+       module since 1.77.0, while closing a task stays a ui job. what is still
        missing on this side is a read back out, meaning nothing tells anyone that a ticket got closed
        in the ui (ca. 1 Stunde)
 3. [docs/shopware/TODO.md](docs/shopware/TODO.md)
@@ -295,7 +296,9 @@
 18. **`apt autoremove` from 20.10.2026,** after a few quiet days on Debian 13. Removes the old 6.1
     kernels and the leftover Bookworm libraries (ca. 10 Minuten)
 19. **FOSS Dolibarr module for ticket dependencies and merges** (priority medium,
-    [docs/dolibarr.md](docs/dolibarr.md#projects-tasks-and-tickets)). Dolibarr 23.0 has no
+    [docs/dolibarr.md](docs/dolibarr.md#projects-tasks-and-tickets)). This becomes phase 3b of the
+    PmTools module ([SdWa5/dolibarr-pmtools](https://github.com/SdWa5/dolibarr-pmtools)), live on
+    production since 2026-10-16, and targets Dolibarr 24 rather than 23.0. Dolibarr has no
     ticket-to-ticket relation, so "blocks / blocked by" and merges are message lines today. The module
     adds a `blocks` relation with a block on the ticket card and in the list, a merge action that moves
     the message and closes the merged ticket, and REST endpoints so `sync-pm.sh` can write both.
@@ -303,3 +306,16 @@
     [tools/dolibarr/deploy-module.sh](tools/dolibarr/deploy-module.sh)
     1. check Dolistore and GitHub for an existing module first (ca. 30 Minuten)
     2. build, test against the 23.0 image and publish (ca. 24 Stunden)
+20. **migrate the remaining Dolibarr workarounds into module endpoints**
+    ([docs/dolibarr.md](docs/dolibarr.md#custom-modules)). The rule is to extend Dolibarr through its
+    own module mechanism, never around it, and to migrate each workaround when its area is touched.
+    Three remain
+    1. the company address. `/setup/company` is `GET` only, so the address of the Verein itself is a
+       ui job beside [tools/dolibarr/set-address.sh](tools/dolibarr/set-address.sh), which covers
+       person records only. a PmTools route or a small module of its own would write it (ca. 3 Stunden)
+    2. the `sdwa5-inventur` tools that pipe PHP through `docker exec`, namely the auslagen import, the
+       kassenbuch and subscription dumps and the PayPal history. each becomes a module endpoint or a
+       BankSync feature (ca. 16 Stunden)
+    3. editing a membership subscription, which today is a recipe around `Subscription::update()`
+       because the ui refuses reconciled lines and rewrites bank line dates. a module endpoint would
+       wrap that call with its checks (ca. 4 Stunden)

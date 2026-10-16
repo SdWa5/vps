@@ -37,6 +37,7 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt "$CI_SHELLCHECK_IMAGE" -x \
     monitoring/vaultwarden-db-backup.sh \
     monitoring/database-backup.sh \
     monitoring/database-restore-check.sh \
+    monitoring/security-recheck.sh \
     monitoring/shopware-worker.sh \
     monitoring/chimodiazz-deploy.sh \
     restic/entrypoint.sh \
@@ -65,7 +66,8 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt "$CI_SHELLCHECK_IMAGE" -x \
     tests/run.sh \
     .github/scripts/install-ci-tool.sh \
     tests/test_helper.bash \
-    tests/stubs/*
+    tests/stubs/* \
+    tests/stubs-recheck/*
 
 docker run --rm -v "$REPO_ROOT:/code:ro" -w /code "$CI_PHP_IMAGE" \
     php tests/shopware-database-client.php

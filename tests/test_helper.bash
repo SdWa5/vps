@@ -449,3 +449,46 @@ set_homepage_sections() {
 sw_patch_body() {
     grep "^PATCH /api/cms-section/$1 " "$STUB_SW_LOG" | sed "s|^PATCH /api/cms-section/$1 ||"
 }
+
+# monitoring/security-recheck.sh. Its own stubs come first, because the shared curl, docker and git
+# stubs model other scripts; iptables and ip6tables are the shared ones. The defaults are the state
+# measured on 2026-10-15, so every test breaks exactly one thing.
+recheck_setup() {
+    REPO_ROOT="$(cd "$BATS_TEST_DIRNAME/.." && pwd)"
+    export REPO_ROOT
+    export PATH="$BATS_TEST_DIRNAME/stubs-recheck:$BATS_TEST_DIRNAME/stubs:$PATH"
+    export STUB_PROBE_LOG="$BATS_TEST_TMPDIR/probe.log"
+    export STUB_SSH_LOG="$BATS_TEST_TMPDIR/ssh.log"
+    export STUB_GIT_LOG="$BATS_TEST_TMPDIR/git.log"
+    : > "$STUB_PROBE_LOG"
+    : > "$STUB_SSH_LOG"
+    : > "$STUB_GIT_LOG"
+    export PORT_TIMEOUT=1 PROBE_TIMEOUT=1 HTTP_TIMEOUT=1
+
+    export GIT_CHECKOUT_DIR="$BATS_TEST_TMPDIR/checkout"
+    mkdir -p "$GIT_CHECKOUT_DIR/etc" "$BATS_TEST_TMPDIR/deployed"
+    printf 'config a\n' > "$GIT_CHECKOUT_DIR/etc/a.conf"
+    printf 'config b\n' > "$GIT_CHECKOUT_DIR/etc/b.conf"
+    cp "$GIT_CHECKOUT_DIR/etc/a.conf" "$GIT_CHECKOUT_DIR/etc/b.conf" "$BATS_TEST_TMPDIR/deployed/"
+    export DEPLOYED_FILES="etc/a.conf:$BATS_TEST_TMPDIR/deployed/a.conf etc/b.conf:$BATS_TEST_TMPDIR/deployed/b.conf"
+
+    set_firewall_healthy
+    export STUB_IPT_V6='-P INPUT DROP
+-A INPUT -p tcp -m multiport --dports 22 -j f2b-sshd
+-A INPUT -i lo -j ACCEPT
+-A INPUT -p ipv6-icmp -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 22 -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 80 -j ACCEPT
+-A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
+-A INPUT -p udp -m udp --dport 443 -j ACCEPT'
+}
+
+recheck() {
+    run "$REPO_ROOT/monitoring/security-recheck.sh" "$@"
+}
+
+# The status of one report line, by its key, read from the output of the last `recheck`.
+# shellcheck disable=SC2154
+recheck_status() {
+    printf '%s\n' "$output" | awk -F '\t' -v key="$1" '$1 == key { print $2 }'
+}

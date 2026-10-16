@@ -366,6 +366,46 @@ the previous archive is still fresh. See [backup.md](backup.md#consistent-sql-da
 900 seconds. Keep the same container list and directory for the backup job and the health check.
 `CHIMODIAZZ_DEPLOY_LOCK` defaults to `/run/lock/chimodiazz-deploy.lock` and must match the deployment job.
 
+## Security recheck
+
+`monitoring/security-recheck.sh` repeats the measurements of the 2026-10-15 hardening on demand. Run it
+from a workstation after every change to Caddy, the firewall, the Docker networks or the OS, and as the
+acceptance step of a maintenance window. It only reads. Every probe is a TCP connect, an HTTP GET or a
+read of a chain, a file or a git ref, and `.env` is never loaded.
+
+```bash
+monitoring/security-recheck.sh               # external probes here, host probes over ssh
+monitoring/security-recheck.sh --restore     # also restore all three SQL archives on the host
+monitoring/security-recheck.sh --external    # public side only
+/opt/docker/monitoring/security-recheck.sh --host   # on the VPS as root, host side only
+```
+
+Each result is one `check:subject<TAB>STATUS<TAB>message` line, and a summary goes to stderr. The exit
+status is 1 with any CRIT, 1 with any WARN under `--strict`, 2 for a usage error and 0 otherwise.
+
+| Check | OK | WARN | CRIT |
+|---|---|---|---|
+| `ports:v4`, `ports:v6` | only 22, 80 and 443 of 45 probed TCP ports answer | a closed port refuses instead of timing out; no port answers at all, which is most likely the client's own path | another port answers, or 22, 80 or 443 does not |
+| `http3` | sdwa5.org answers over HTTP/3 | the local curl has no HTTP/3 | no HTTP/3 answer |
+| `site` | 200 on `/` without `Server` or `X-Powered-By` | | another status or a leaked header |
+| `hsts` | vault and erp send `max-age` of at least 31536000 | | missing or shorter |
+| `blocked` | every variant of each blocked path from [caddy.md](caddy.md#hardening) gets Caddy's own `Not Found` | a variant reached the upstream, which answered 404 | a variant got anything but a 404 |
+| `firewall` | INPUT DROP on both families, the fail2ban jump first, tcp 22/80/443 and udp 443 accepted; DOCKER-USER drops `eth0` | the fail2ban jump is not first | anything else missing |
+| `isolation` | from `chimodiazz_shopware`, `shopware` and `dolibarr`, no listener of another application answers, and `dolibarr` reaches `dolibarr_db:3306` | | a foreign listener answers, or the database path is closed |
+| `gateway` | the host answers on 22, 80 and 443 only | one of those does not answer | 25, 2019, 3306, 8000, 8002, 8443 or 33113 answers |
+| `egress` | `dolibarr_db` reaches neither 1.1.1.1:443 nor 9.9.9.9:53 | | it does |
+| `revision` | `/opt/docker` HEAD equals `origin/main`, no tracked file modified | it differs, a tracked file is modified, or origin is unreachable | not a checkout |
+| `deployed` | the Caddyfile, jail.local, sshd drop-in, firewall script and unit, netplan and cloud-init files under `/etc` equal the checkout | one differs or is missing | |
+| `restore` | `database-restore-check.sh` passes for each database | | it fails |
+| `host` | the ssh part ran to its end | | ssh failed, or the output ended early or was malformed |
+
+The isolation targets are read from each container's `/proc/net/tcp*`, so a new listener is probed
+without editing the script. The blocked-path variants are generated per path: trailing slash and
+suffix, query, doubled slash, upper case, a capitalised and a percent-encoded last segment, and dot
+segments, sent with `curl --path-as-is`. A revision lag is a WARN because the script never fetches
+and so cannot tell a missing security fix from a TODO commit. Every value is an environment variable
+with a default, listed in the script's header. The first live run on 2026-10-16 took ca. 40 seconds.
+
 ## Installation
 
 ```bash
@@ -407,6 +447,9 @@ clock through `FAKE_NOW`, so the whole backoff schedule is verified in under a s
 waiting days and without touching a real host. `tests/run.sh` installs GNU coreutils into the
 throwaway bats container, because the Alpine base ships busybox `date`, which cannot parse the
 timestamps the scripts read out of the restic log.
+
+`tests/security-recheck.bats` uses its own stubs in `tests/stubs-recheck/` (`curl`, `docker`, `git`,
+`nc`, `ssh`), modelled on the measured state of 2026-10-15, because the shared stubs model other scripts.
 
 ## Limitations
 

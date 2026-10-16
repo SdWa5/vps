@@ -96,6 +96,9 @@ systemctl reload caddy
 # Restore an SQL archive in an isolated temporary container
 /opt/docker/monitoring/database-restore-check.sh dolibarr_db
 
+# Security recheck from a workstation: exposure, firewall, isolation (see docs/monitoring.md)
+monitoring/security-recheck.sh
+
 # Show the SQL that recreates a schema's foreign keys under MariaDB 12.x (--apply runs it, see docs/backup.md)
 /opt/docker/tools/mariadb/recreate-foreign-keys.sh dolibarr_db
 

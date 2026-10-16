@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# Fake curl for security-recheck.sh, modelled on the measured 2026-10-15 behaviour of the four
+# sites behind Caddy. "/" answers 200 with HSTS, every other path is Caddy's own 404.
+#
+#   STUB_CURL_NO_HTTP3      non-empty: "curl -V" lists no HTTP3 feature
+#   STUB_HTTP3_VERSION      what --http3-only reports as %{http_version} (default 3)
+#   STUB_SITE_STATUS        "host=code ..." status of / per site
+#   STUB_SERVER_HEADER      "host ..." sites that leak a Server header
+#   STUB_HSTS_AGE           HSTS max-age (default 63072000); empty sends no HSTS header
+#   STUB_UPSTREAM_PATHS     "host/path ..." answered by the upstream with its own 404 page
+#   STUB_OPEN_PATHS         "host/path ..." answered by the upstream with 200
+# Every response carries a cookie and the upstream pages a marker, so a test can assert that
+# neither ever reaches the report.
+args=("$@")
+if [[ "${args[0]:-}" == "-V" ]]; then
+    if [[ -n "${STUB_CURL_NO_HTTP3:-}" ]]; then
+        echo "Features: alt-svc AsynchDNS HSTS HTTP2 IPv6 SSL"
+    else
+        echo "Features: alt-svc AsynchDNS HSTS HTTP2 HTTP3 IPv6 SSL"
+    fi
+    exit 0
+fi
+
+headers="" body="/dev/null" http3=0 url=""
+for (( i = 0; i < ${#args[@]}; i++ )); do
+    case "${args[i]}" in
+        -D) headers="${args[i+1]}" ;;
+        -o) body="${args[i+1]}" ;;
+        --http3-only) http3=1 ;;
+        https://*) url="${args[i]}" ;;
+    esac
+done
+if (( http3 )); then
+    printf '%s' "${STUB_HTTP3_VERSION-3}"
+    exit 0
+fi
+
+rest="${url#https://}"
+host="${rest%%/*}"
+path="/${rest#*/}"
+[[ "$rest" == */* ]] || path="/"
+
+status=404
+content="Not Found"
+if [[ "$path" == "/" ]]; then
+    status=200
+    content="<html>SECRET-PAGE-MARKER</html>"
+    for pair in ${STUB_SITE_STATUS-}; do
+        [[ "${pair%%=*}" == "$host" ]] && status="${pair#*=}"
+    done
+elif [[ " ${STUB_OPEN_PATHS-} " == *" $host$path "* ]]; then
+    status=200
+    content="<html>SECRET-PAGE-MARKER admin</html>"
+elif [[ " ${STUB_UPSTREAM_PATHS-} " == *" $host$path "* ]]; then
+    content="<html>SECRET-PAGE-MARKER 404</html>"
+fi
+
+if [[ -n "$headers" ]]; then
+    {
+        printf 'HTTP/2 %s\r\n' "$status"
+        printf 'content-type: text/plain\r\n'
+        printf 'set-cookie: session=SECRET-COOKIE-VALUE\r\n'
+        [[ " ${STUB_SERVER_HEADER-} " == *" $host "* ]] && printf 'server: Caddy\r\n'
+        [[ -n "${STUB_HSTS_AGE-63072000}" ]] \
+            && printf 'strict-transport-security: max-age=%s; includeSubDomains\r\n' "${STUB_HSTS_AGE-63072000}"
+        printf '\r\n'
+    } > "$headers"
+fi
+printf '%s' "$content" > "$body"
+printf '%s' "$status"
+exit 0

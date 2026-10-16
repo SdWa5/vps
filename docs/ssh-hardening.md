@@ -165,7 +165,7 @@ key.
 
 | Key | Purpose | Registered as | Passphrase |
 |---|---|---|---|
-| `/root/.ssh/id_ed25519_sdwa5vps_20260915` | pull `SdWa5/vps` into `/opt/docker` | deploy key on `SdWa5/vps`, id 163344886, `read_only: true` | no |
+| `/root/.ssh/id_ed25519_sdwa5vps_20260915` | pull `SdWa5/vps` into `/opt/docker` | deploy key on `SdWa5/vps`, id 166603542, `read_only: true` | no |
 | `/root/.ssh/id_ed25519_chimodiazz_20260915` | pull `chimodiazz/website` into `/opt/docker/chimodiazz-src` | deploy key on `chimodiazz/website`, `read_only: true` | no |
 
 Fingerprint `SHA256:cSSIrs739ebFZEOrHkSYQJwCmlgjVnRaApdhJieYHhw`. The private half was generated on

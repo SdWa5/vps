@@ -17,6 +17,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - docs/monitoring.md lists every isolation source.
 
+### Removed
+
+- TODO #31, the first scheduled restic run after SEC-11 succeeded on 2026-10-17 (snapshot 2bfe487f).
+
 ## [1.86.10] - 2026-10-17
 
 ### Added

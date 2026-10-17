@@ -418,10 +418,3 @@
     3. the GitHub repository (GitHub redirects the old url), `docs/dolibarr.md`, the README and #18
     4. decide first between the rename and a second module beside PmTools for the endpoints outside
        project management
-31. **check the first scheduled restic run after SEC-11** ([docs/backup.md](docs/backup.md)) (priority high,
-    ca. 10 Minuten). Since 2026-10-16 restic reads its password from `secrets/restic_password` through
-    `RESTIC_PASSWORD_FILE`. A manual `restic snapshots` worked that evening, but the cron run of
-    `restic/backup.sh` at 04:00 UTC (06:00 Berlin on 2026-10-17) is the first one on the new setup. Check that
-    `ssh root@sdwa5.org docker exec restic restic snapshots --latest 1` shows a snapshot of that morning and
-    that the vps-health mail reports the backup OK. If it failed, read `docker logs restic` first, since a
-    password file the repository refuses points at `docker-compose.yml`

@@ -55,6 +55,42 @@ https://sdwa5.org {
     import block_dockware_tools
     import hide_server_headers
 
+    # Content-Security-Policy for the storefront, report-only first, see
+    # docs/caddy.md. Shopware's storefront template sends none, while the admin
+    # sends Shopware's own policy, so /admin and the APIs are left alone. The
+    # policy allows only sdwa5.org itself, measured 2026-10-17 on four pages;
+    # 'unsafe-inline' stays because each page carries inline scripts without a
+    # nonce.
+    @storefront not path /admin /admin/* /api /api/* /store-api /store-api/* /csp-report
+    header @storefront Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; report-uri /csp-report"
+
+    # Browsers POST their violation reports here. Caddy answers them itself and
+    # logs only these requests, without the client address. The report body,
+    # which names the page and the blocked source, is not in the log.
+    @csp_report {
+        method POST
+        path /csp-report
+    }
+    handle @csp_report {
+        respond 204
+    }
+    @not_csp_report not path /csp-report
+    log_skip @not_csp_report
+    log {
+        output file /var/log/caddy/sdwa5-csp-report.log {
+            roll_size 1MiB
+            roll_keep 2
+        }
+        format filter {
+            wrap json
+            fields {
+                request>remote_ip delete
+                request>client_ip delete
+                request>headers>Cookie delete
+            }
+        }
+    }
+
     handle {
         reverse_proxy https://127.0.0.1:8443 {
             # Shopware picks the sales channel by Host. Caddy 2.11 sends the

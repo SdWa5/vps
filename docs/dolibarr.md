@@ -31,7 +31,7 @@ the default password.
 
 A password is changed in Dolibarr itself, in the Password field of the user's Modify form
 (`user/card.php?id=<id>&action=edit`). The **Reinit password** button sets a random password instead.
-Saving ends the user's open sessions, so the next request asks for a new login. TODO #28 adds the same
+Saving ends the user's open sessions, so the next request asks for a new login. TODO #27 adds the same
 change through the API.
 
 Since 2026-10-16 `MAIN_SECURITY_HASH_ALGO` is `password_hash` (Setup > Other setup, entity 1), so a

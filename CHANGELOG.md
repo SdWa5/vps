@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.90.0] - 2026-10-18
+
+### Added
+
+- Storefront `Content-Security-Policy-Report-Only` on sdwa5.org with a Caddy-answered `/csp-report` endpoint
+  and its own address-free log (SEC-D05).
+- `no-new-privileges` on the eleven services that do not need setuid; the two dockware shops stay without it.
+- `tests/caddyfile.bats` and a compose test for `no-new-privileges`.
+
+### Changed
+
+- TODO #31 is now the CSP enforcement from 2026-10-25; TODO 7.5 is decided; items 25 to 32 renumbered to 24 to 31.
+- `docs/maintenance.md` records the first manual reboot for a kernel fix (6.12.113, 2026-10-17).
+
+### Removed
+
+- TODO #24, the JetBrains remote-backend remnants, deleted from `/root` on 2026-10-17.
+
 ## [1.89.1] - 2026-10-17
 
 ### Changed

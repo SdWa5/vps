@@ -32,6 +32,8 @@ services:
     # no raw sockets. It used to share docker_default with every other service.
     networks: [chimodiazz]
     cap_drop: [NET_RAW]
+    # No no-new-privileges: dockware starts as www-data and reaches root through
+    # setuid sudo, see docs/infrastructure.md.
     environment:
       - SHOP_DOMAIN=chimodiazz.sdwa5.org
       - APP_URL=https://chimodiazz.sdwa5.org

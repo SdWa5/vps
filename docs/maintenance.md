@@ -81,6 +81,17 @@ unattended-upgrades never reboots (`Automatic-Reboot` stays at Debian's default 
 2026-10-17 (SEC-D02). A fix that needs a reboot runs only after a manual one, and the `reboot` check of
 [vps-health.sh](monitoring.md) warns while one is pending.
 
+The first such reboot ran on 2026-10-17 at 23:35 for linux 6.12.113 (DSA-6568-1), which unattended-upgrades
+had installed at 06:59. SSH answered again after ca. 40 seconds. All 13 containers came back, and the static
+IPv6 address and route from `hardening/netplan/60-ipv6.yaml` survived their first boot. `security-recheck.sh
+--restore` reported the same 67 OK before and after. A manual reboot is therefore a short window with a
+recheck on both sides:
+
+```bash
+monitoring/security-recheck.sh --restore   # from a client with IPv6, before and after
+ssh sdwa5.org systemctl reboot
+```
+
 unattended-upgrades covers only Debian origins, so Docker updates are manual. That is deliberate, because
 every daemon restart stops and restarts every container. Update in a quiet hour:
 

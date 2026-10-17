@@ -152,6 +152,22 @@ Note what this check does **not** cover. It reads the `INPUT` chain, and a publi
 never traverses `INPUT`, so a container exposed on `0.0.0.0` passes this check while being public.
 `DOCKER-USER` is an empty `RETURN` on this host.
 
+### Dead-man's switch
+
+Since 2026-10-17 (SEC-D06) every run pings the check `vps-health` on healthchecks.io, project
+`be961bf3`, after it has mailed or found nothing to mail. healthchecks.io mails the account's address
+when no ping arrives within the period of one hour plus 30 minutes of grace, so a dead VPS, a dead cron
+or a stopped script is reported from outside. A run whose own alert mail fails pings `/fail`, which
+alerts at once. A failed ping is logged and does not fail the run.
+
+The ping URL is a credential, because anyone holding it can ping. It sits in
+`/opt/docker/secrets/healthchecks-ping-url` (600 root), is handed to curl on stdin and is stored in
+Vaultwarden as "healthchecks.io (SdWa5 vps-health)" together with the read-write API key. Without the
+file nothing is pinged. `--dry-run` and `--test-mail` never ping.
+
+To rehearse it, comment out the line in `/etc/cron.d/vps-health` and wait for the alert mail, ca. 1 hour
+30 minutes after the last run.
+
 ### Reminder backoff
 
 An unchanged problem does not mail every day forever. The interval doubles from one day and caps at
@@ -496,6 +512,5 @@ timestamps the scripts read out of the restic log.
 
 ## Limitations
 
-Both jobs run on the monitored host. If the VPS is off, or cron is dead, or the network is gone, no
-mail arrives and the silence is indistinguishable from health. An external dead-man's switch would
-close that gap. It was deliberately not added, see [TODO.md](../TODO.md).
+Both jobs run on the monitored host. If the VPS is off, or cron is dead, or the network is gone, the
+host itself sends nothing. The dead-man's switch below covers `vps-health.sh` from outside.

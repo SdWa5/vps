@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.88.0] - 2026-10-17
+
+### Added
+
+- `vps-health.sh` pings healthchecks.io after every run and `/fail` when its alert mail fails, the URL
+  read from `secrets/healthchecks-ping-url` (SEC-D06).
+
+### Removed
+
+- TODO #6.2, the dead-man's switch is built.
+
 ## [1.87.1] - 2026-10-17
 
 ### Changed

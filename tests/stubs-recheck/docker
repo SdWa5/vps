@@ -9,6 +9,7 @@
 #   - a container gateway (172.x.y.1) on 22, 80 or 443 is open,
 #   - everything else is filtered.
 # STUB_PROBE_LOG records "SRC ADDRESS:PORT" per probed target. STUB_STOPPED lists stopped containers.
+# STUB_NO_BASH lists containers without bash, which the recheck probes through sh and nc instead.
 #
 # Environments: every container's docker inspect env holds only values the recheck must accept (a
 # *_FILE path, dockware's not-set, an argon2 hash, an empty token). STUB_CONFIG_ENV_LEAK adds
@@ -103,7 +104,14 @@ case "${1:-}" in
             done
             exit 0
         fi
-        # bash -c SNIPPET probe TIMEOUT TARGET...
+        # sh -c 'command -v bash': the probe's check for bash, which fails for STUB_NO_BASH containers.
+        if [[ "$1" == sh && "$3" == "command -v bash" ]]; then
+            [[ " ${STUB_NO_BASH-} " != *" $name "* ]] || exit 1
+            echo /bin/bash
+            exit 0
+        fi
+        # bash|sh -c SNIPPET probe TIMEOUT TARGET..., the shell recorded in STUB_SHELL_LOG.
+        [[ -n "${STUB_SHELL_LOG:-}" ]] && printf '%s %s\n' "$name" "$1" >> "$STUB_SHELL_LOG"
         shift 5
         for target in "$@"; do
             [[ -n "${STUB_PROBE_LOG:-}" ]] && printf '%s %s\n' "$name" "$target" >> "$STUB_PROBE_LOG"

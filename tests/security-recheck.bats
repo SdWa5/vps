@@ -203,6 +203,18 @@ setup() {
     [ -z "$(grep ':3306$' "$STUB_PROBE_LOG" | grep '0.0.0.0\|127.0.0.1')" ]
 }
 
+@test "the vault and the backup container are probed, restic through nc" {
+    export STUB_NO_BASH="restic" STUB_SHELL_LOG="$BATS_TEST_TMPDIR/shells"
+    recheck --host
+    grep -qx 'restic 172.21.0.2:80' "$STUB_PROBE_LOG"
+    grep -qx 'vaultwarden 172.20.0.2:3306' "$STUB_PROBE_LOG"
+    grep -qx 'restic sh' "$STUB_SHELL_LOG"
+    grep -qx 'vaultwarden bash' "$STUB_SHELL_LOG"
+    [ -z "$(grep '^restic bash' "$STUB_SHELL_LOG")" ]
+    [ "$(recheck_status isolation:restic)" = OK ]
+    [ "$(recheck_status isolation:vaultwarden)" = OK ]
+}
+
 @test "a reachable foreign listener is CRIT and names the container" {
     export STUB_PROBE_OPEN="dolibarr>172.20.0.2:3306 chimodiazz_shopware>172.18.0.2:3306"
     recheck --host

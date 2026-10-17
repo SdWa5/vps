@@ -76,8 +76,9 @@ WAN_INTERFACE="${WAN_INTERFACE:-eth0}"
 
 # app=container,container. A container may reach its own application and nothing else.
 ISOLATION_APPS="${ISOLATION_APPS:-vault=vaultwarden shop=shopware chimodiazz=chimodiazz_shopware erp=dolibarr,dolibarr_cron,dolibarr_db paper=paperless_sdwa5,paperless_sdwa5_db,paperless_sdwa5_broker paperhome=paperless_home,paperless_home_db,paperless_home_broker backup=restic}"
-# The containers probed from. They run third-party or internet-facing code and have bash.
-ISOLATION_SOURCES="${ISOLATION_SOURCES:-chimodiazz_shopware shopware dolibarr paperless_sdwa5 paperless_home}"
+# The containers probed from. They run third-party or internet-facing code, or hold the vault and the
+# backup credentials. A source without bash is probed with busybox nc.
+ISOLATION_SOURCES="${ISOLATION_SOURCES:-chimodiazz_shopware shopware dolibarr paperless_sdwa5 paperless_home vaultwarden restic}"
 # The one path inside an application that must stay open, measured 2026-10-15.
 ISOLATION_EXPECT_OPEN="${ISOLATION_EXPECT_OPEN:-dolibarr>dolibarr_db:3306 paperless_sdwa5>paperless_sdwa5_db:3306 paperless_sdwa5>paperless_sdwa5_broker:6379 paperless_home>paperless_home_db:3306 paperless_home>paperless_home_broker:6379}"
 GATEWAY_OPEN="${GATEWAY_OPEN:-22 80 443}"
@@ -487,11 +488,30 @@ for target in "$@"; do
 done
 wait'
 
+# The same probe for an image without bash, such as restic's alpine. busybox nc has no -z, so -e true
+# closes an open connection at once, and busybox timeout ends a silent drop with 143 instead of 124.
+# shellcheck disable=SC2016
+PROBE_SNIPPET_NC='t=$1; shift
+for target in "$@"; do
+    (
+        timeout "$t" nc -w 30 "${target%:*}" "${target##*:}" -e true </dev/null >/dev/null 2>&1
+        rc=$?
+        if [ "$rc" -eq 0 ]; then echo "$target open"
+        elif [ "$rc" -eq 124 ] || [ "$rc" -eq 143 ]; then echo "$target filtered"
+        else echo "$target refused"; fi
+    ) &
+done
+wait'
+
 # probe_from CONTAINER HOST:PORT...
 probe_from() {
     local source="$1"
     shift
-    docker exec "$source" bash -c "$PROBE_SNIPPET" probe "$PROBE_TIMEOUT" "$@" 2>/dev/null
+    if docker exec "$source" sh -c 'command -v bash' >/dev/null 2>&1; then
+        docker exec "$source" bash -c "$PROBE_SNIPPET" probe "$PROBE_TIMEOUT" "$@" 2>/dev/null
+    else
+        docker exec "$source" sh -c "$PROBE_SNIPPET_NC" probe "$PROBE_TIMEOUT" "$@" 2>/dev/null
+    fi
 }
 
 # check_isolation SOURCE

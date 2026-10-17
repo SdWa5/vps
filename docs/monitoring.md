@@ -407,7 +407,7 @@ status is 1 with any CRIT, 1 with any WARN under `--strict`, 2 for a usage error
 | `hsts` | vault and erp send `max-age` of at least 31536000 | | missing or shorter |
 | `blocked` | every variant of each blocked path from [caddy.md](caddy.md#hardening) gets Caddy's own `Not Found` | a variant reached the upstream, which answered 404 | a variant got anything but a 404 |
 | `firewall` | INPUT DROP on both families, the fail2ban jump first, tcp 22/80/443 and udp 443 accepted; DOCKER-USER drops `eth0` | the fail2ban jump is not first | anything else missing |
-| `isolation` | from `chimodiazz_shopware`, `shopware` and `dolibarr`, no listener of another application answers, and `dolibarr` reaches `dolibarr_db:3306` | | a foreign listener answers, or the database path is closed |
+| `isolation` | from `chimodiazz_shopware`, `shopware`, `dolibarr`, both Paperless instances, `vaultwarden` and `restic`, no listener of another application answers, and `dolibarr` and Paperless reach their own database and broker | | a foreign listener answers, or the database path is closed |
 | `gateway` | the host answers on 22, 80 and 443 only | one of those does not answer | 25, 2019, 3306, 8000, 8002, 8443 or 33113 answers |
 | `egress` | `dolibarr_db` reaches neither 1.1.1.1:443 nor 9.9.9.9:53 | | it does |
 | `revision` | `/opt/docker` HEAD equals `origin/main`, no tracked file modified | it differs, a tracked file is modified, or origin is unreachable | not a checkout |
@@ -418,7 +418,9 @@ status is 1 with any CRIT, 1 with any WARN under `--strict`, 2 for a usage error
 | `host` | the ssh part ran to its end | | ssh failed, or the output ended early or was malformed |
 
 The isolation targets are read from each container's `/proc/net/tcp*`, so a new listener is probed
-without editing the script. The blocked-path variants are generated per path: trailing slash and
+without editing the script. A source without bash, which is `restic` with its alpine image, is probed
+with busybox `nc -e true` instead of bash's `/dev/tcp`, and busybox `timeout`'s 143 counts as a
+silent drop like coreutils' 124. The blocked-path variants are generated per path: trailing slash and
 suffix, query, doubled slash, upper case, a capitalised and a percent-encoded last segment, and dot
 segments, sent with `curl --path-as-is`. A revision lag is a WARN because the script never fetches
 and so cannot tell a missing security fix from a TODO commit.

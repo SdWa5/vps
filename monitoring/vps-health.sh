@@ -23,6 +23,7 @@
 #   DB_BACKUP_MAX_AGE_HOURS        age at which the Vaultwarden db dump counts as stale
 #   VAULTWARDEN_DRIFT_GRACE_HOURS  how long an unapplied Vaultwarden release stays acceptable
 #   FIREWALL_PORTS                 tcp ports the INPUT chain must still accept
+#   REBOOT_REQUIRED_FILE, BOOT_DIR where apt flags a pending reboot, and the installed kernels
 #   STATE_DIR, FAKE_NOW            test hooks
 
 set -uo pipefail
@@ -55,6 +56,11 @@ VAULTWARDEN_RELEASE_API="${VAULTWARDEN_RELEASE_API:-https://api.github.com/repos
 # which is the only version of this alert anybody can act on.
 VAULTWARDEN_DRIFT_GRACE_HOURS="${VAULTWARDEN_DRIFT_GRACE_HOURS:-26}"
 FIREWALL_PORTS="${FIREWALL_PORTS:-22 80 443}"
+# unattended-upgrades installs kernel and library fixes but never reboots, by decision of 2026-10-17
+# (SEC-D02). A fix that needs a reboot therefore only takes effect after a manual one, and this is the
+# reminder that one is due.
+REBOOT_REQUIRED_FILE="${REBOOT_REQUIRED_FILE:-/var/run/reboot-required}"
+BOOT_DIR="${BOOT_DIR:-/boot}"
 
 # **HOW OFTEN THE REMOTE IS ASKED, AND WHY IT IS NOT EVERY RUN.** This check costs an authenticated
 # network round trip, and what it watches changes rarely. Hourly would be 24 calls a day for a fact
@@ -298,6 +304,21 @@ check_caddy() {
     else
         printf 'CRIT\tCaddy is %s, every public site is down\n' "${state:-unknown}"
     fi
+}
+
+# A WARN rather than a CRIT, because nothing is down. The installed fixes simply are not running yet.
+check_reboot() {
+    local running installed pkgs
+    if [[ ! -e "$REBOOT_REQUIRED_FILE" ]]; then
+        printf 'OK\tNo reboot pending\n'
+        return
+    fi
+    running="$(uname -r)"
+    # shellcheck disable=SC2012 # kernel image names carry no whitespace
+    installed="$(ls "$BOOT_DIR" 2>/dev/null | sed -n 's/^vmlinuz-//p' | sort -V | tail -n 1)"
+    pkgs="$(sort -u "$REBOOT_REQUIRED_FILE.pkgs" 2>/dev/null | paste -sd ' ' -)"
+    printf 'WARN\tA reboot is pending since unattended-upgrades installed %s. Running kernel %s, newest installed %s\n' \
+        "${pkgs:-updates}" "$running" "${installed:-unknown}"
 }
 
 # The check that would have caught the September 2026 outage: Bitwarden clients
@@ -597,6 +618,7 @@ run_checks() {
     emit firewall              "$(check_firewall)"
     emit vaultwarden_version   "$(check_vaultwarden_version)"
     emit git_remote            "$(check_git_remote)"
+    emit reboot                "$(check_reboot)"
 }
 
 main() {

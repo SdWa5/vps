@@ -11,105 +11,6 @@ x-logging: &default-logging
     max-file: "3"
 
 services:
-  # The project2 and project3 Dolibarr instances have never been started, and no
-  # data directory exists for them. They keep plain ${PROJECT*_…} interpolation
-  # rather than the file secrets docker-compose.yml uses, and .env carries no
-  # values for them since 2026-10-16. Started like that, MariaDB refuses to
-  # initialize without a root password, so an accidental start fails instead of
-  # creating an instance with empty credentials. Move them to ./secrets/ files
-  # the way docker-compose.yml does before first use.
-  project2_dolibarr_db:
-    # Same pin as docker-compose.yml. Minor series rather than exact, so
-    # patches inside 12.3 still arrive and a major-version jump cannot.
-    image: mariadb:12.3
-    container_name: project2_dolibarr_db
-    restart: unless-stopped
-    logging: *default-logging
-    environment:
-      MYSQL_ROOT_PASSWORD: ${PROJECT2_MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${PROJECT2_MYSQL_DATABASE:-dolidb}
-      MYSQL_USER: ${PROJECT2_MYSQL_USER:-dolidbuser}
-      MYSQL_PASSWORD: ${PROJECT2_MYSQL_PASSWORD}
-      # See dolibarr_db in docker-compose.yml.
-      MARIADB_AUTO_UPGRADE: "1"
-    volumes:
-      - ./project2-dolibarr-mariadb-data:/var/lib/mysql
-    networks: [project2_db]
-
-  project2_dolibarr:
-    # Same exact pin as docker-compose.yml, for the same reason: Dolibarr
-    # minor upgrades run forward-only database migrations.
-    image: dolibarr/dolibarr:24.0.1
-    container_name: project2_dolibarr
-    restart: unless-stopped
-    logging: *default-logging
-    environment:
-      DOLI_INIT_DEMO: ${PROJECT2_INIT_DEMO:-0}
-      DOLI_DB_HOST: project2_dolibarr_db
-      DOLI_DB_NAME: ${PROJECT2_MYSQL_DATABASE:-dolidb}
-      DOLI_DB_USER: ${PROJECT2_MYSQL_USER:-dolidbuser}
-      DOLI_DB_PASSWORD: ${PROJECT2_MYSQL_PASSWORD}
-      DOLI_URL_ROOT: "https://project2.sdwa5.org"
-      DOLI_ADMIN_LOGIN: "${PROJECT2_ADMIN_LOGIN:-admin}"
-      DOLI_ADMIN_PASSWORD: "${PROJECT2_ADMIN_PASSWORD}"
-      DOLI_CRON: ${PROJECT2_CRON:-0}
-      DOLI_CRON_KEY: ${PROJECT2_CRON_KEY}
-      DOLI_COMPANY_NAME: ${PROJECT2_COMPANY_NAME:-Project 2}
-      WWW_USER_ID: ${PROJECT2_WWW_USER_ID:-1000}
-      WWW_GROUP_ID: ${PROJECT2_WWW_GROUP_ID:-1000}
-    ports:
-      - "127.0.0.1:8003:80"
-    networks: [project2, project2_db]
-    volumes:
-      - ./project2-dolibarr-documents-data:/var/www/documents
-      - ./project2-dolibarr-custom-data:/var/www/html/custom
-
-  project3_dolibarr_db:
-    # Same pin as docker-compose.yml. Minor series rather than exact, so
-    # patches inside 12.3 still arrive and a major-version jump cannot.
-    image: mariadb:12.3
-    container_name: project3_dolibarr_db
-    restart: unless-stopped
-    logging: *default-logging
-    environment:
-      MYSQL_ROOT_PASSWORD: ${PROJECT3_MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${PROJECT3_MYSQL_DATABASE:-dolidb}
-      MYSQL_USER: ${PROJECT3_MYSQL_USER:-dolidbuser}
-      MYSQL_PASSWORD: ${PROJECT3_MYSQL_PASSWORD}
-      # See dolibarr_db in docker-compose.yml.
-      MARIADB_AUTO_UPGRADE: "1"
-    volumes:
-      - ./project3-dolibarr-mariadb-data:/var/lib/mysql
-    networks: [project3_db]
-
-  project3_dolibarr:
-    # Same exact pin as docker-compose.yml, for the same reason: Dolibarr
-    # minor upgrades run forward-only database migrations.
-    image: dolibarr/dolibarr:24.0.1
-    container_name: project3_dolibarr
-    restart: unless-stopped
-    logging: *default-logging
-    environment:
-      DOLI_INIT_DEMO: ${PROJECT3_INIT_DEMO:-0}
-      DOLI_DB_HOST: project3_dolibarr_db
-      DOLI_DB_NAME: ${PROJECT3_MYSQL_DATABASE:-dolidb}
-      DOLI_DB_USER: ${PROJECT3_MYSQL_USER:-dolidbuser}
-      DOLI_DB_PASSWORD: ${PROJECT3_MYSQL_PASSWORD}
-      DOLI_URL_ROOT: "https://project3.sdwa5.org"
-      DOLI_ADMIN_LOGIN: "${PROJECT3_ADMIN_LOGIN:-admin}"
-      DOLI_ADMIN_PASSWORD: "${PROJECT3_ADMIN_PASSWORD}"
-      DOLI_CRON: ${PROJECT3_CRON:-0}
-      DOLI_CRON_KEY: ${PROJECT3_CRON_KEY}
-      DOLI_COMPANY_NAME: ${PROJECT3_COMPANY_NAME:-Project 3}
-      WWW_USER_ID: ${PROJECT3_WWW_USER_ID:-1000}
-      WWW_GROUP_ID: ${PROJECT3_WWW_GROUP_ID:-1000}
-    ports:
-      - "127.0.0.1:8004:80"
-    networks: [project3, project3_db]
-    volumes:
-      - ./project3-dolibarr-documents-data:/var/www/documents
-      - ./project3-dolibarr-custom-data:/var/www/html/custom
-
   chimodiazz_shopware:
     # Same exact pin as the sdwa5.org instance in docker-compose.yml, and for the
     # same reason: the `6.7-latest` tag that does exist rolls across minor
@@ -159,10 +60,4 @@ services:
 # Both files share the compose project name, so these names must not repeat
 # the ones defined there.
 networks:
-  project2:
-  project2_db:
-    internal: true
-  project3:
-  project3_db:
-    internal: true
   chimodiazz:

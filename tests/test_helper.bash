@@ -26,6 +26,8 @@ common_setup() {
     set_firewall_healthy
     set_shopware_tasks_fresh
     set_git_remote_reachable
+    export REBOOT_REQUIRED_FILE="$BATS_TEST_TMPDIR/reboot-required"
+    export BOOT_DIR="$BATS_TEST_TMPDIR/boot"
 }
 
 # The checkout the git_remote check watches. It is a tmpdir rather than the real repository root, so

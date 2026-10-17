@@ -138,14 +138,6 @@ paper.ripper.sdwa5.org {
     import paperless localhost:8007
 }
 
-project2.sdwa5.org {
-    reverse_proxy localhost:8003
-}
-
-project3.sdwa5.org {
-    reverse_proxy localhost:8004
-}
-
 # chimodiazz.sdwa5.org — Shopware as a CMS, same shape as sdwa5.org above.
 # Served a static placeholder from chimodiazz-placeholder/ between 2026-09-15 and
 # the first start of the container; that directory is kept, because it is what

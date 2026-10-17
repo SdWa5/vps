@@ -45,6 +45,7 @@ auto-update.
 | `shopware_tasks` | the newest Shopware scheduled task ran longer than `SHOPWARE_TASK_MAX_AGE_HOURS` (2) ago, the task list cannot be read, or no task has ever run |
 | `vaultwarden_version` | the running version is behind the newest GitHub release **and that release is older than `VAULTWARDEN_DRIFT_GRACE_HOURS` (26)** |
 | `git_remote` | `git ls-remote` against the checkout's origin fails, so `/opt/docker` cannot pull |
+| `reboot` | `/var/run/reboot-required` exists, so installed kernel or library fixes are not running yet (WARN, with the running and newest installed kernel) |
 
 A container reporting `starting` is not an alert, that is a normal `start_period`. GitHub being
 unreachable is not an alert either, otherwise the recipient learns to ignore this mail.

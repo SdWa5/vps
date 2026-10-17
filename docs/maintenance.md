@@ -77,6 +77,10 @@ stored armored. It was installed with `--no-install-recommends`, which leaves ou
 rootless extras, because nothing here builds images. `nftables` came in as a hard dependency, and its
 service stays disabled, because `/etc/nftables.conf` would flush the firewall at boot.
 
+unattended-upgrades never reboots (`Automatic-Reboot` stays at Debian's default `false`), decided on
+2026-10-17 (SEC-D02). A fix that needs a reboot runs only after a manual one, and the `reboot` check of
+[vps-health.sh](monitoring.md) warns while one is pending.
+
 unattended-upgrades covers only Debian origins, so Docker updates are manual. That is deliberate, because
 every daemon restart stops and restarts every container. Update in a quiet hour:
 
@@ -263,7 +267,7 @@ Refresh the simulation and review any changed result immediately before the actu
 Pull only `dolibarr/dolibarr:23.0.4`. Record its digest and every running container's image ID.
 Retain the old ERP and database images. Do not prune images or pull other floating tags. Before a
 whole-stack recreation, compare cached image IDs to the running baseline. A database patch upgrade
-is a separate change. Do not start project2, project3, Minecraft or Ollama.
+is a separate change. Do not start Minecraft or Ollama.
 
 ```bash
 cd /opt/docker

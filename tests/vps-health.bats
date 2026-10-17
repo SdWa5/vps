@@ -687,3 +687,25 @@ Container started." health
     [[ "$(mail_body)" == *"is not a git checkout"* ]]
     [ "$(git_call_count)" -eq 0 ]
 }
+
+# --- reboot ---------------------------------------------------------------
+#
+# SEC-D02, decided 2026-10-17: no automatic reboots, a reminder instead.
+
+@test "no pending reboot stays quiet" {
+    health
+    [ "$(mail_count)" -eq 0 ]
+}
+
+@test "a pending reboot warns with the running and the newest installed kernel" {
+    mkdir -p "$BOOT_DIR"
+    touch "$BOOT_DIR/vmlinuz-6.12.9-amd64" "$BOOT_DIR/vmlinuz-6.12.10-amd64"
+    : > "$REBOOT_REQUIRED_FILE"
+    printf 'linux-image-6.12.10-amd64\nlibc6\nlibc6\n' > "$REBOOT_REQUIRED_FILE.pkgs"
+    health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"[WARN] reboot"* ]]
+    [[ "$(mail_body)" == *"Running kernel $(uname -r)"* ]]
+    [[ "$(mail_body)" == *"newest installed 6.12.10-amd64"* ]]
+    [[ "$(mail_body)" == *"installed libc6 linux-image-6.12.10-amd64"* ]]
+}

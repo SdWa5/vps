@@ -295,8 +295,7 @@
        `google._domainkey` dkim. there is no `www`
     5. deSEC (deSEC e.V., Berlin, free, rest api, tokens scoped per rrset) was considered as an api
        interim and set aside on 2026-10-16, because self-hosting is the goal
-    6. two side findings. no `_dmarc` record exists, and `project2` and `project3` have caddy blocks
-       but no record
+    6. side finding. no `_dmarc` record exists
 16. optimize memory and swap ([docs/infrastructure.md](docs/infrastructure.md#memory--swap)) (priority medium).
     zram and the swapfile overflow are already set up, and zswap is unavailable because the debian cloud
     kernel is built without it
@@ -422,21 +421,13 @@
     3. the GitHub repository (GitHub redirects the old url), `docs/dolibarr.md`, the README and #18
     4. decide first between the rename and a second module beside PmTools for the endpoints outside
        project management
-31. (proposal, `decision`) **remove or reactivate the `project2` and `project3` vhosts** ([docs/caddy.md](docs/caddy.md)).
-    both have caddy blocks but no dns record (15.6), so caddy keeps retrying their certificates and the log
-    carries the noise. the default is to keep them until their owner decides (ca. 15 Minuten)
-32. (proposal, `decision`) **automatic reboots after kernel and library updates** ([docs/maintenance.md](docs/maintenance.md)).
-    unattended upgrades install but never reboot (`Automatic-Reboot` is at debian's default `false`, measured 2026-10-17), so a fixed kernel only runs after the next manual
-    reboot. an automatic reboot needs every container and the firewall to come back on their own first,
-    and a maintenance window agreed with the members who use the shops. the default stays off until both
-    are settled (ca. 30 Minuten for the decision)
-33. (proposal) **move the Chimo Diazz shop off the host that runs Vaultwarden** ([docs/chimodiazz.md](docs/chimodiazz.md)).
+31. (proposal) **move the Chimo Diazz shop off the host that runs Vaultwarden** ([docs/chimodiazz.md](docs/chimodiazz.md)).
     the isolation of 2026-10-15 keeps the shop's containers from reaching the vault, which
     `monitoring/security-recheck.sh` measures, but a container escape in a third-party shop would still
     land on the host that holds the vault. the proposal is a separate small vps for the shop, done as its
     own migration. it overlaps with #20 and #23 and waits while the shop is not an active project
     (ca. 6 Stunden)
-34. (proposal) **assess a Content-Security-Policy for Shopware and `no-new-privileges` per container**
+32. (proposal) **assess a Content-Security-Policy for Shopware and `no-new-privileges` per container**
     ([docs/caddy.md](docs/caddy.md), `docker-compose.yml`). neither is set today, measured 2026-10-17: the
     caddyfile sends no csp and no container has a `SecurityOpt`. a csp needs the storefront and the admin
     checked for inline scripts and the external hosts they load. `no-new-privileges` breaks both

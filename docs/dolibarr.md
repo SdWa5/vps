@@ -7,8 +7,6 @@ Three separate Dolibarr instances on the VPS, each with its own MariaDB containe
 | Instance    | URL                          | Compose file                   | Status   | Company name |
 |-------------|------------------------------|--------------------------------|----------|--------------|
 | SdWa5       | https://erp.sdwa5.org        | docker-compose.yml             | running  | SdWa5        |
-| Project 2 | https://project2.sdwa5.org | docker-compose.projects.yml | inactive | Project 2  |
-| Project 3      | https://project3.sdwa5.org     | docker-compose.projects.yml | inactive | Project 3       |
 
 ## Credentials
 
@@ -53,9 +51,6 @@ still end up afterwards:
 
 `monitoring/security-recheck.sh` reports per container whether `docker inspect` or a process
 environment still carries a secret, by name only, see [monitoring.md](monitoring.md).
-
-Project 2 and Project 3 still read plain variables from `.env`, which carries no values for them,
-see the comment at the top of [docker-compose.projects.yml](../docker-compose.projects.yml).
 
 ## SdWa5 instance
 
@@ -164,13 +159,6 @@ start. The VPS uses Docker CE and the Compose plugin since 2026-10-15. The old s
 recreated the linked database too on 2026-10-05, causing ca. 1 minute of ERP downtime; avoid that
 dependency recreation with `--no-deps`. Image upgrades follow the
 [maintenance runbook](maintenance.md#sec-05-and-sec-25-maintenance-window).
-
-## Project 2 + Project 3 instances
-
-- Inactive (containers not running as of 2026-06-30)
-- Defined in `docker-compose.projects.yml`
-- No data dirs created yet on VPS
-- Start with: `docker compose -f docker-compose.projects.yml up -d`
 
 ## API access
 

@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.87.1] - 2026-10-17
+
+### Changed
+
+- Shopware runs with `ENABLE_SERVICES=false`, so `services.install` no longer installs or updates
+  Shopware AG service apps (SEC-29). docs/shopware/infrastructure.md records the disable of 2026-10-17.
+
+### Removed
+
+- docs/shopware/TODO.md #1, all eight Shopware AG service apps are uninstalled (SEC-29).
+
 ## [1.87.0] - 2026-10-17
 
 ### Added

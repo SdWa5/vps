@@ -71,6 +71,13 @@ services:
       # This shop sends through core.mailerSettings to smtp-relay.gmail.com, so
       # dockware's mailcatcher catches nothing here and the boot hook stops it.
       - SDWA5_STOP_MAILCATCHER=1
+      # Keeps Shopware AG's service apps out (SEC-29, 2026-10-17). The persisted
+      # core.services.disabled flag already blocks every consent-bound service,
+      # but SwagGmvReportingService requires only a Shopware account and the
+      # daily services.install task would reinstall it. With this, that task
+      # does nothing. POST /api/services/enable plus removing this line is the
+      # way back.
+      - ENABLE_SERVICES=false
     logging: *default-logging
     volumes:
       - ./shopware-mysql-data:/var/lib/mysql

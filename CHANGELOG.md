@@ -10,12 +10,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- TODO #31 to #34, the open SEC decisions as proposals: project2/project3 vhosts, automatic reboots,
+  the Chimo shop off the vault host, CSP and `no-new-privileges`.
 - `security-recheck.sh` probes isolation from `vaultwarden` and `restic` too; a source without bash is probed
   with busybox `nc`.
 
 ### Changed
 
 - docs/monitoring.md lists every isolation source.
+- TODO #7.3 records the IPv6 dropouts of 2026-10-16 and the reached ticket trigger.
 
 ### Removed
 

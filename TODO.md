@@ -425,10 +425,24 @@
     land on the host that holds the vault. the proposal is a separate small vps for the shop, done as its
     own migration. it overlaps with #20 and #23 and waits while the shop is not an active project
     (ca. 6 Stunden)
-32. (proposal) **assess a Content-Security-Policy for Shopware and `no-new-privileges` per container**
-    ([docs/caddy.md](docs/caddy.md), `docker-compose.yml`). neither is set today, measured 2026-10-17: the
-    caddyfile sends no csp and no container has a `SecurityOpt`. a csp needs the storefront and the admin
-    checked for inline scripts and the external hosts they load. `no-new-privileges` breaks both
-    dockware shops as they are, because their `/entrypoint.sh` calls `sudo`, so it fits the other
-    containers first. assess compatibility on a
-    rehearsal instance before changing either on prod (ca. 1 Stunde 30 Minuten for the assessment)
+32. (proposal) **a Content-Security-Policy for the storefront and `no-new-privileges` per container**
+    ([docs/caddy.md](docs/caddy.md), `docker-compose.yml`). assessed read-only on 2026-10-17 (SEC-D05):
+    1. **csp.** the admin already sends shopware's own policy (`shopware.security.csp_templates`, nonce
+       plus `'unsafe-inline' 'unsafe-eval'`); the storefront template is empty, so it sends none. four
+       storefront pages (home, merch, cart, login) load every script, style, font and image from
+       `sdwa5.org` itself; other hosts appear only as plain links, and there is no iframe or embed. each
+       page carries 7 inline `<script>` blocks and an inline importmap without a nonce, so a script
+       policy needs `'unsafe-inline'` unless the theme gets nonces. proposal: send this report-only from
+       the caddy block for a week, then enforce it (ca. 45 Minuten):
+       `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';
+       img-src 'self' data:; font-src 'self' data:; connect-src 'self'; object-src 'none';
+       base-uri 'self'; form-action 'self'; frame-ancestors 'none'`. its gain over today is
+       `object-src`, `base-uri`, `form-action` and blocking foreign script hosts, not inline xss
+    2. **`no-new-privileges`.** the process users per container show who gains privileges after start.
+       `shopware` and `chimodiazz_shopware` start as `www-data` and reach root through setuid `sudo`
+       (41 calls in `/entrypoint.sh`, root `cron` and `php-fpm` running), so the option breaks both.
+       every other container starts as root and only drops, or already runs as its database user
+       (`dolibarr`, `dolibarr_cron`, `vaultwarden`, `restic`, the three mariadb and two valkey
+       containers, both paperless), which the option allows. proposal: set it on those eleven, one
+       recreate at a time with a health run after each (ca. 1 Stunde). that they still start is inferred
+       from the process users and still unmeasured

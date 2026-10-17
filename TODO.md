@@ -85,8 +85,12 @@
        either. from outside, the home line and the company vpn exit both failed while their own ipv6
        controls worked. the host firewall is ruled out, because tcpdump reads ingress before netfilter
        and a firewall restart at 01:53 reproduced nothing over three minutes. no aaaa record is
-       published, so no site was affected. open a contabo ticket with these timestamps if it happens a
-       third time or before an aaaa record is published (ca. 30 Minuten)
+       published, so no site was affected. **it happened a third and a fourth time on 2026-10-16**, around
+       03:40 and 15:35 Berlin, each for ca. 25 s: inbound probes and the host's own outbound v6 failed while
+       `fe80::1` sat REACHABLE in neighbour discovery, and ipv4 was unaffected. dockerd's `disable_ipv6`
+       lines at container starts (02:21-02:46 and 15:14) are not a measured cause. so the trigger for the
+       contabo ticket is reached. proposal: log v6 reachability from the host every minute for a day first,
+       then open the ticket with these timestamps and that log (ca. 1 Stunde)
     4. **DONE on 2026-09-13.** `/opt/docker` had been unable to pull since the 2026-09-12 move: its
        `origin` still named the deleted personal repository and its `HEAD` was a pre-rewrite commit
        that existed nowhere. Nothing noticed, because deploys are manual. It now tracks
@@ -418,3 +422,24 @@
     3. the GitHub repository (GitHub redirects the old url), `docs/dolibarr.md`, the README and #18
     4. decide first between the rename and a second module beside PmTools for the endpoints outside
        project management
+31. (proposal, `decision`) **remove or reactivate the `project2` and `project3` vhosts** ([docs/caddy.md](docs/caddy.md)).
+    both have caddy blocks but no dns record (15.6), so caddy keeps retrying their certificates and the log
+    carries the noise. the default is to keep them until their owner decides (ca. 15 Minuten)
+32. (proposal, `decision`) **automatic reboots after kernel and library updates** ([docs/maintenance.md](docs/maintenance.md)).
+    unattended upgrades install but never reboot (`Automatic-Reboot` is at debian's default `false`, measured 2026-10-17), so a fixed kernel only runs after the next manual
+    reboot. an automatic reboot needs every container and the firewall to come back on their own first,
+    and a maintenance window agreed with the members who use the shops. the default stays off until both
+    are settled (ca. 30 Minuten for the decision)
+33. (proposal) **move the Chimo Diazz shop off the host that runs Vaultwarden** ([docs/chimodiazz.md](docs/chimodiazz.md)).
+    the isolation of 2026-10-15 keeps the shop's containers from reaching the vault, which
+    `monitoring/security-recheck.sh` measures, but a container escape in a third-party shop would still
+    land on the host that holds the vault. the proposal is a separate small vps for the shop, done as its
+    own migration. it overlaps with #20 and #23 and waits while the shop is not an active project
+    (ca. 6 Stunden)
+34. (proposal) **assess a Content-Security-Policy for Shopware and `no-new-privileges` per container**
+    ([docs/caddy.md](docs/caddy.md), `docker-compose.yml`). neither is set today, measured 2026-10-17: the
+    caddyfile sends no csp and no container has a `SecurityOpt`. a csp needs the storefront and the admin
+    checked for inline scripts and the external hosts they load. `no-new-privileges` breaks both
+    dockware shops as they are, because their `/entrypoint.sh` calls `sudo`, so it fits the other
+    containers first. assess compatibility on a
+    rehearsal instance before changing either on prod (ca. 1 Stunde 30 Minuten for the assessment)

@@ -465,6 +465,22 @@ The `listeners` check reads `/proc/net/tcp*` like the isolation check, see
 Every value is an environment variable
 with a default, listed in the script's header. The first live run on 2026-10-16 took ca. 40 seconds.
 
+## IPv6 reachability log
+
+[`ipv6-watch.sh`](../monitoring/ipv6-watch.sh) is temporary (SEC-28, TODO.md #7.3). It runs every
+minute from `/etc/cron.d/ipv6-watch` and appends one line to `/var/log/sdwa5-ipv6.log` with the round
+trip to two external v6 addresses, the neighbour state of `fe80::1` and an IPv4 control. A day of it
+goes into the Contabo ticket about the v6 dropouts, and afterwards the cron file and the log are
+removed again:
+
+```bash
+rm /etc/cron.d/ipv6-watch
+```
+
+The gateway is not pinged, because neither `fe80::1` nor the next hop answers echo requests even while
+v6 works. Each probe sends two requests, since a single one logged a false `fail` while neighbour
+discovery was in `PROBE`.
+
 ## Installation
 
 ```bash
@@ -472,6 +488,7 @@ cd /opt/docker
 git pull --ff-only
 apt install sqlite3
 install -m 644 -o root -g root monitoring/cron.d/vps-health              /etc/cron.d/vps-health
+install -m 644 -o root -g root monitoring/cron.d/ipv6-watch              /etc/cron.d/ipv6-watch    # temporary, see above
 install -m 644 -o root -g root monitoring/cron.d/vaultwarden-db-backup   /etc/cron.d/vaultwarden-db-backup
 install -m 644 -o root -g root monitoring/cron.d/database-backup         /etc/cron.d/database-backup
 install -m 644 -o root -g root monitoring/cron.d/vaultwarden-autoupdate  /etc/cron.d/vaultwarden-autoupdate

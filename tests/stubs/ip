@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
-# Fake ip. Only the two queries sdwa5-firewall.sh makes are answered.
+# Fake ip. Answers the two queries sdwa5-firewall.sh makes and the neighbour query of ipv6-watch.sh.
 #
-#   STUB_BRIDGES  space-separated bridge names (default: docker0)
-#   STUB_WAN      default-route interface (default: eth0)
+#   STUB_BRIDGES     space-separated bridge names (default: docker0)
+#   STUB_WAN         default-route interface (default: eth0)
+#   STUB_NEIGH_STATE state of the gateway's neighbour entry, empty for none (default: REACHABLE)
 case "$*" in
     *"link show type bridge"*)
         for b in ${STUB_BRIDGES-docker0}; do printf '%s: %s: <BROADCAST> mtu 1500\n' "1" "$b"; done
         ;;
     *"route show default"*)
         printf 'default via 10.0.0.1 dev %s proto static metric 100\n' "${STUB_WAN-eth0}"
+        ;;
+    *"neigh show"*)
+        [[ -z "${STUB_NEIGH_STATE-REACHABLE}" ]] || printf 'fe80::1 lladdr 00:c0:1d:c0:ff:ee router %s\n' "${STUB_NEIGH_STATE-REACHABLE}"
         ;;
 esac
 exit 0

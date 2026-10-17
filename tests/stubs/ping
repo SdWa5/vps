@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Fake ping. Answers every target with time=1.5 ms, except those listed in STUB_ICMP_DOWN.
+target="${!#}"
+for down in ${STUB_ICMP_DOWN:-}; do
+    [[ "$target" == "$down" ]] && exit 1
+done
+printf '64 bytes from %s: icmp_seq=1 ttl=57 time=1.5 ms\n' "$target"

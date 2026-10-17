@@ -49,3 +49,18 @@ setup() {
     grep -q 'SDWA5_STOP_MAILCATCHER=1' "$REPO_ROOT/docker-compose.yml"
     ! grep -v '^[[:space:]]*#' "$REPO_ROOT/docker-compose.projects.yml" | grep -q 'SDWA5_STOP_MAILCATCHER' || false
 }
+
+@test "every running service except the two dockware shops sets no-new-privileges" {
+    local missing extra
+    missing="$(awk '/^services:/ { s = 1; next } s && /^[^ #]/ { s = 0 }
+        function flush() { if (svc != "" && !profile && !nnp && svc != "shopware:" && svc != "chimodiazz_shopware:") print svc }
+        s && /^  [a-z0-9_]+:$/ { flush(); svc = $1; profile = 0; nnp = 0; next }
+        s && /^    profiles:/ { profile = 1 }
+        s && /^    security_opt: \["no-new-privileges:true"\]$/ { nnp = 1 }
+        END { flush() }' "$REPO_ROOT/docker-compose.yml" "$REPO_ROOT/docker-compose.projects.yml")"
+    [ -z "$missing" ] || { echo "without no-new-privileges: $missing"; return 1; }
+    extra="$(awk '/^  [a-z0-9_]+:$/ { svc = $1 } /^    security_opt:.*no-new-privileges/ && (svc == "shopware:" || svc == "chimodiazz_shopware:") { print svc }' \
+        "$REPO_ROOT/docker-compose.yml" "$REPO_ROOT/docker-compose.projects.yml")"
+    [ -z "$extra" ] || { echo "dockware needs setuid sudo: $extra"; return 1; }
+    [ "$(grep -c 'no-new-privileges:true' "$REPO_ROOT/docker-compose.yml")" -eq 11 ]
+}

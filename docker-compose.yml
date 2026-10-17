@@ -44,6 +44,7 @@ services:
       - "127.0.0.1:8000:80"
     networks: [vault]
     cap_drop: [NET_RAW]
+    security_opt: ["no-new-privileges:true"]
 
 
   shopware:
@@ -88,6 +89,8 @@ services:
     restart: unless-stopped
     networks: [shop]
     cap_drop: [NET_RAW]
+    # No no-new-privileges: dockware starts as www-data and reaches root through
+    # setuid sudo, see docs/infrastructure.md.
 
 
   minecraft:
@@ -177,6 +180,7 @@ services:
     # reached from nor reach anything outside the ERP.
     networks: [erp_db]
     cap_drop: [NET_RAW]
+    security_opt: ["no-new-privileges:true"]
 
   dolibarr:
     # Exact pin for the planned maintenance release. A Dolibarr minor
@@ -219,6 +223,7 @@ services:
       - "127.0.0.1:8002:80"
     networks: [erp, erp_db]
     cap_drop: [NET_RAW]
+    security_opt: ["no-new-privileges:true"]
     volumes:
       - ./dolibarr-documents-data:/var/www/documents
       - ./dolibarr-custom-data:/var/www/html/custom
@@ -266,6 +271,7 @@ services:
       WWW_GROUP_ID: ${DOLIBARR_WWW_GROUP_ID:-1000}
     networks: [erp, erp_db]
     cap_drop: [NET_RAW]
+    security_opt: ["no-new-privileges:true"]
     volumes:
       - ./dolibarr-documents-data:/var/www/documents
       - ./dolibarr-custom-data:/var/www/html/custom
@@ -302,6 +308,7 @@ services:
         target: /run/sdwa5-secrets/paperless_sdwa5_db_password
     networks: [paper_sdwa5_db]
     cap_drop: [NET_RAW]
+    security_opt: ["no-new-privileges:true"]
 
   paperless_sdwa5_broker:
     # Exact tag. Celery's queue only, kept in memory without a volume, so a
@@ -312,6 +319,7 @@ services:
     logging: *default-logging
     networks: [paper_sdwa5_db]
     cap_drop: [NET_RAW]
+    security_opt: ["no-new-privileges:true"]
 
   paperless_sdwa5:
     # Exact tag plus digest. 3.3.2 of 2026-10-16 fixes GHSA-c8f3-pqr2-rr24, and
@@ -351,6 +359,7 @@ services:
         target: /run/sdwa5-secrets/paperless_sdwa5_db_password
     networks: [paper_sdwa5, paper_sdwa5_db]
     cap_drop: [NET_RAW]
+    security_opt: ["no-new-privileges:true"]
 
   # The household instance. A second instance rather than more users in the
   # first, because a Paperless superuser sees every object and the Verein's
@@ -376,6 +385,7 @@ services:
         target: /run/sdwa5-secrets/paperless_home_db_password
     networks: [paper_home_db]
     cap_drop: [NET_RAW]
+    security_opt: ["no-new-privileges:true"]
 
   paperless_home_broker:
     image: *valkey-image
@@ -384,6 +394,7 @@ services:
     logging: *default-logging
     networks: [paper_home_db]
     cap_drop: [NET_RAW]
+    security_opt: ["no-new-privileges:true"]
 
   paperless_home:
     image: *paperless-image
@@ -420,6 +431,7 @@ services:
         target: /run/sdwa5-secrets/paperless_home_db_password
     networks: [paper_home, paper_home_db]
     cap_drop: [NET_RAW]
+    security_opt: ["no-new-privileges:true"]
 
   ollama:
     # Not pinned. Profile-gated and the image is not present on the host.
@@ -497,6 +509,7 @@ services:
       - RESTIC_FORGET_ARGS=--keep-daily 6 --keep-weekly 3 --keep-monthly 11 --keep-yearly 2 --keep-tag sdwa5-archive --prune
     networks: [backup]
     cap_drop: [NET_RAW]
+    security_opt: ["no-new-privileges:true"]
     secrets:
       - source: restic_password
         target: /run/sdwa5-secrets/restic_password

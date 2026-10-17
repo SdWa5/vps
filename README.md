@@ -194,6 +194,10 @@ setting that keeps cloud-init away from it.
 The Contabo console remains the fallback and is unaffected by any of it, because it goes through
 getty and PAM rather than sshd. See [docs/ssh-hardening.md](docs/ssh-hardening.md).
 
+Every container except the two dockware shops runs with `no-new-privileges` and without `NET_RAW`, see
+[docs/infrastructure.md](docs/infrastructure.md). The storefront of sdwa5.org sends a report-only
+Content-Security-Policy, see [docs/caddy.md](docs/caddy.md).
+
 ## Tests
 
 Production runs Debian 13 since 2026-10-15. The compose files pin Dolibarr 24.0.1, rolled out through

@@ -136,6 +136,11 @@ mailcatcher, and DNS is Docker's embedded resolver.
 Every running service also drops `NET_RAW`, which takes away raw sockets and with them ARP and ICMP
 tricks on its bridge.
 
+Every running service except the two dockware shops also sets `no-new-privileges`, so no process in it can
+gain privileges through a setuid binary or file capabilities after the start. The shops cannot have it,
+because dockware starts as `www-data` and reaches root through setuid `sudo` (41 calls in its
+`/entrypoint.sh`). A production image without dockware would lift that, see TODO #23.
+
 Measured after the cutover on 2026-10-15. From `chimodiazz_shopware`, `shopware` and `dolibarr`,
 every port of every other application was closed by IP. The one open path was `dolibarr` to
 `dolibarr_db:3306`. The gateway answered on 22, 80 and 443 and refused 25, 2019, 3306, 8000, 8002,

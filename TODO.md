@@ -143,11 +143,10 @@
        **It is not a publication blocker.** Restoring needs owner or organization-admin credentials, so
        there is no route to it from outside. What it does change is the honesty of the claim: for an
        exercise about other people's personal data, "GitHub retains a restorable copy until December"
-       is a different sentence from "it is gone". Options are to accept it, to let the window close and
-       verify after 2026-12-12, or to ask GitHub Support to purge the six permanently, which is free,
-       open-ended in time and releases the deploy key above in the same ticket. See
-       <https://github.com/settings/repositories> and the organization's equivalent for what is
-       actually being held (`decision`, ca. 20 Minuten)
+       is a different sentence from "it is gone". Decided on 2026-10-17: the window closes on its own,
+       and after 2026-12-12 a check confirms that the six are gone from
+       <https://github.com/settings/repositories> and the organization's equivalent, together with the
+       deploy key test in 7.4 (ca. 10 Minuten)
 
        **A history rewrite breaks this again**, because the host's `HEAD` stops existing. The repair is
        `fetch` plus `reset --hard` and never a re-clone, since `/opt/docker` carries the untracked
@@ -353,10 +352,7 @@
     their default passwords, and www-data has passwordless sudo. Shopware's own production template
     with a PHP-FPM image would remove that, and it also ends the root/root database login that
     `hardening/dockware-db-account.sh` has to keep for dockware's boot script
-24. **remove the JetBrains remote-backend remnants in `/root`** (ca. 30 Minuten). `/root/.config/JetBrains`
-    and `/root/.local/share/JetBrains` hold ca. 3 GB of an old PhpStorm remote backend. A name search
-    found no secret in them. Check that no current workflow uses a remote backend, then delete them
-25. **send the monitoring mails to one mailbox instead of two** ([docs/monitoring.md](docs/monitoring.md)).
+24. **send the monitoring mails to one mailbox instead of two** ([docs/monitoring.md](docs/monitoring.md)).
     `MONITOR_MAIL_TO` in the vps `.env` lists the private Gmail address and ripper@sdwa5.org, so every
     health, backup and vaultwarden mail lands twice in Stefan's two main inboxes
     1. quick fix for now. set `MONITOR_MAIL_TO` to the private address alone and send a test mail with
@@ -366,7 +362,7 @@
        `monitoring/lib.sh` and `.env.example` changed to it. whether the mailbox exists is unchecked, if not it gets
        created first, as a Workspace group or shared inbox. `/etc/cron.d/chimodiazz-deploy` is checked
        for an override of its own at the same time (priority medium, ca. 45 Minuten)
-26. **share a single image from the Shopware image slider** (SdWa5Theme). The share links in
+25. **share a single image from the Shopware image slider** (SdWa5Theme). The share links in
     `layout/share/share-links.html.twig` share the page only, and the image slider has no share action
     of its own, so one picture cannot be sent by its url or through the browser share sheet
     1. give each slide a url of its own, either the media url or the page url with a fragment that opens
@@ -374,7 +370,7 @@
     2. a share button per slide that calls `navigator.share` with that url, and the WhatsApp, Telegram
        and e-mail links as the fallback. the template notes that the deploy builds no storefront
        javascript, so this needs a storefront js build in the deploy first, or an inline script (ca. 6 Stunden)
-27. **redirect `d.sdwa5.org` and `donate.sdwa5.org` to the PayPal donation page** ([docs/caddy.md](docs/caddy.md))
+26. **redirect `d.sdwa5.org` and `donate.sdwa5.org` to the PayPal donation page** ([docs/caddy.md](docs/caddy.md))
     (priority high, ca. 1 Stunde). The donation links on sdwa5.org point to `https://paypal.me/SdWa5`
     (measured 2026-10-16). Neither name has a DNS record yet
     1. two A records `d` and `donate` to 158.220.127.232 at Squarespace, entered by hand, since Squarespace
@@ -383,7 +379,7 @@
        resolve, because Caddy retries ACME forever on a name without DNS
     3. the two names in `security-recheck.sh` (HSTS and TLS) and `docs/caddy.md`. `RECHECK_SITES` expects a
        200, so the check has to accept the redirect to PayPal there
-28. **change Dolibarr passwords through the API and the MCP server** ([docs/dolibarr.md](docs/dolibarr.md#mcp-server))
+27. **change Dolibarr passwords through the API and the MCP server** ([docs/dolibarr.md](docs/dolibarr.md#mcp-server))
     (ca. 4 Stunden). Dolibarr 24 already accepts `pass` in `PUT /users/{id}`, given the `user > password`
     right or admin (`user/class/api_users.class.php`, read on 2026-10-16). `GET /users/{id}/setPassword`
     only generates a random password and needs `API_ENABLE_LOGIN_API` and `API_ALLOW_PASSWORD_RESET`, so
@@ -393,7 +389,7 @@
     2. an MCP tool for the same call through the `addMcpTools` hook of PmTools. Decide first whether an MCP
        client may change passwords at all, because the `mcp` user would need the password right for it
        (ca. 2 Stunden 30 Minuten)
-29. **a new UI for Dolibarr that talks to it only over REST** (ca. 80 Stunden for a first version).
+28. **a new UI for Dolibarr that talks to it only over REST** (ca. 80 Stunden for a first version).
     Dolibarr's own UI hides common actions. The password change is the case found on 2026-10-16. Dolibarr 24
     has no button for it, the new password goes into the Password field of the Modify form
     (`user/card.php?id=<id>&action=edit`), and the **Reinit password** button generates a random one instead
@@ -401,14 +397,14 @@
        of how Dolibarr structures its pages and menus. Dolibarr is the backend behind the REST API and the
        PmTools routes and does not shape the UI
     2. a missing endpoint is added to Dolibarr as a module route, never worked around in the UI (TODO #19).
-       The password change uses the call of #28
+       The password change uses the call of #27
     3. no change to the Dolibarr core, so the UI survives its upgrades
     4. open are the scope of a first version (which tasks), the stack, the hosting, and how it logs in, by an
        API key per user or through the login API, which is off today
-30. **rename the PmTools module, since it becomes the general REST and MCP extension of Dolibarr**
+29. **rename the PmTools module, since it becomes the general REST and MCP extension of Dolibarr**
     ([SdWa5/dolibarr-pmtools](https://github.com/SdWa5/dolibarr-pmtools),
     [docs/dolibarr.md](docs/dolibarr.md#custom-modules)) (ca. 6 Stunden). It started with the ticket
-    routes and the ten `pm_*` MCP tools, and #19 and #28 add
+    routes and the ten `pm_*` MCP tools, and #19 and #27 add
     endpoints outside project management. The new name is open. A rename touches
     1. the module class `modPmTools`, its `rights_class` `pmtools`, the `MAIN_MODULE_PMTOOLS` constant and the
        `custom/pmtools` directory. The module number 500302 can stay, but Dolibarr keys the constant and the
@@ -419,30 +415,16 @@
     3. the GitHub repository (GitHub redirects the old url), `docs/dolibarr.md`, the README and #18
     4. decide first between the rename and a second module beside PmTools for the endpoints outside
        project management
-31. (proposal) **move the Chimo Diazz shop off the host that runs Vaultwarden** ([docs/chimodiazz.md](docs/chimodiazz.md)).
+30. (proposal) **move the Chimo Diazz shop off the host that runs Vaultwarden** ([docs/chimodiazz.md](docs/chimodiazz.md)).
     the isolation of 2026-10-15 keeps the shop's containers from reaching the vault, which
     `monitoring/security-recheck.sh` measures, but a container escape in a third-party shop would still
     land on the host that holds the vault. the proposal is a separate small vps for the shop, done as its
     own migration. it overlaps with #20 and #23 and waits while the shop is not an active project
     (ca. 6 Stunden)
-32. (proposal) **a Content-Security-Policy for the storefront and `no-new-privileges` per container**
-    ([docs/caddy.md](docs/caddy.md), `docker-compose.yml`). assessed read-only on 2026-10-17 (SEC-D05):
-    1. **csp.** the admin already sends shopware's own policy (`shopware.security.csp_templates`, nonce
-       plus `'unsafe-inline' 'unsafe-eval'`); the storefront template is empty, so it sends none. four
-       storefront pages (home, merch, cart, login) load every script, style, font and image from
-       `sdwa5.org` itself; other hosts appear only as plain links, and there is no iframe or embed. each
-       page carries 7 inline `<script>` blocks and an inline importmap without a nonce, so a script
-       policy needs `'unsafe-inline'` unless the theme gets nonces. proposal: send this report-only from
-       the caddy block for a week, then enforce it (ca. 45 Minuten):
-       `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';
-       img-src 'self' data:; font-src 'self' data:; connect-src 'self'; object-src 'none';
-       base-uri 'self'; form-action 'self'; frame-ancestors 'none'`. its gain over today is
-       `object-src`, `base-uri`, `form-action` and blocking foreign script hosts, not inline xss
-    2. **`no-new-privileges`.** the process users per container show who gains privileges after start.
-       `shopware` and `chimodiazz_shopware` start as `www-data` and reach root through setuid `sudo`
-       (41 calls in `/entrypoint.sh`, root `cron` and `php-fpm` running), so the option breaks both.
-       every other container starts as root and only drops, or already runs as its database user
-       (`dolibarr`, `dolibarr_cron`, `vaultwarden`, `restic`, the three mariadb and two valkey
-       containers, both paperless), which the option allows. proposal: set it on those eleven, one
-       recreate at a time with a health run after each (ca. 1 Stunde). that they still start is inferred
-       from the process users and still unmeasured
+31. **enforce the storefront Content-Security-Policy from 2026-10-25** ([docs/caddy.md](docs/caddy.md)).
+    sdwa5.org sends the policy as `Content-Security-Policy-Report-Only` since 2026-10-18 (SEC-D05). after a
+    week, count the reports in `/var/log/caddy/sdwa5-csp-report.log` on the host. with none, rename the
+    header in the `@storefront` line of the `Caddyfile` to `Content-Security-Policy`, deploy it and check
+    the home, category, product, cart, register, login and search pages in a browser console. a report
+    names no page, so with reports, find the page first with a headless browser that records
+    `securitypolicyviolation` events (ca. 45 Minuten)

@@ -88,6 +88,18 @@ Each blocked path answers a flat `404` from Caddy and never reaches the containe
 each response carried Caddy's own `Server` header plus the upstream's, for example
 `Apache/2.4.58 (Ubuntu)` or `Rocket`.
 
+sdwa5.org sends a `Content-Security-Policy-Report-Only` header on every storefront path, so outside
+`/admin`, `/api`, `/store-api` and `/csp-report`. Shopware's storefront template sends no policy of its own,
+while the admin sends Shopware's enforcing one, which Caddy leaves alone. The policy allows only the site
+itself, plus `data:` for images and fonts. `'unsafe-inline'` stays for scripts and styles, because each page
+carries inline scripts without a nonce, so its gain is `object-src`, `base-uri`, `form-action`,
+`frame-ancestors` and foreign script hosts, not inline XSS. Browsers report violations to `POST /csp-report`,
+which Caddy answers itself with `204` and logs to `/var/log/caddy/sdwa5-csp-report.log` without the client
+address and cookies. That log holds only these requests, and it does not contain the report body, so a report
+shows that a violation happened and in which browser, not which page or source. Count them with
+`wc -l /var/log/caddy/sdwa5-csp-report.log`. Report-only started on 2026-10-18, and switching to the
+enforcing `Content-Security-Policy` header is TODO #31.
+
 HSTS is set by Caddy for vault, erp and both Paperless sites with `max-age=31536000`. The two Shopware sites send
 `max-age=31536000; includeSubDomains` from the upstream, so Caddy leaves them alone.
 

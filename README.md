@@ -34,8 +34,6 @@ docker compose up -d
 | Paperless-ngx household | https://paper.ripper.sdwa5.org | docker-compose.yml        |
 | Ollama (inactive)  | :11434 (no public domain)     | docker-compose.yml (profile: ollama) |
 | Restic backup      | —                             | docker-compose.yml             |
-| Dolibarr Project 2 | https://project2.sdwa5.org | docker-compose.projects.yml |
-| Dolibarr Project 3    | https://project3.sdwa5.org      | docker-compose.projects.yml |
 | Chimo Diazz        | https://chimodiazz.sdwa5.org | docker-compose.projects.yml (profile: chimodiazz) |
 | Minecraft (inactive) | :25565                      | docker-compose.yml (profile: minecraft) |
 
@@ -83,9 +81,6 @@ See `docs/` for per-service documentation:
 ```bash
 # Start all main services
 docker compose up -d
-
-# Start Project 2/Project 3 services
-docker compose -f docker-compose.projects.yml up -d
 
 # Start a profile-gated service (excluded from default up)
 docker compose --profile minecraft up -d

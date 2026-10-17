@@ -47,16 +47,6 @@ dolibarr-secrets/
 # so it ignores only the stack's directory.
 /secrets/
 
-# Dolibarr Project 2 data
-project2-dolibarr-mariadb-data/
-project2-dolibarr-documents-data/
-project2-dolibarr-custom-data/
-
-# Dolibarr Project 3 data
-project3-dolibarr-mariadb-data/
-project3-dolibarr-documents-data/
-project3-dolibarr-custom-data/
-
 # Chimo Diazz Shopware data. The web root is fully ignored, unlike
 # shopware-html-data/ above, because nothing in it is repository-owned yet: the
 # site's own code lives in chimodiazz/website and reaches the container from

@@ -44,7 +44,6 @@ flowchart LR
     U -- " sdwa5.org " --> C
     U -- " vault.sdwa5.org " --> C
     U -- " erp.sdwa5.org " --> C
-    U -- " project2/project3.sdwa5.org " --> C
     U -- " chimodiazz.sdwa5.org " --> C
     U -- " paper / paper.ripper.sdwa5.org " --> C
     U -- " ssh :22 (key-only) " --> SSHD
@@ -76,8 +75,6 @@ Domain → port mapping lives in the [Caddyfile](../Caddyfile); backup detail in
 | Vaultwarden         | vaultwarden/server:latest    | 8000            | https://vault.sdwa5.org    | docker-compose.yml                      |
 | Dolibarr SdWa5      | dolibarr/dolibarr:24.0.1     | 8002            | https://erp.sdwa5.org      | docker-compose.yml                      |
 | Dolibarr SdWa5 cron | dolibarr/dolibarr:24.0.1     | —               | —                          | docker-compose.yml                      |
-| Dolibarr Project 2  | dolibarr/dolibarr:24.0.1     | 8003            | https://project2.sdwa5.org | docker-compose.projects.yml             |
-| Dolibarr Project 3  | dolibarr/dolibarr:24.0.1     | 8004            | https://project3.sdwa5.org | docker-compose.projects.yml             |
 | Chimo Diazz         | dockware/shopware:6.7.11.1   | 8005 / 8444     | https://chimodiazz.sdwa5.org | docker-compose.projects.yml (profile: chimodiazz) |
 | Paperless Verein    | paperless-ngx:3.3.2 + mariadb:12.3 + valkey:9.0 | 8006 | https://paper.sdwa5.org | docker-compose.yml          |
 | Paperless household | paperless-ngx:3.3.2 + mariadb:12.3 + valkey:9.0 | 8007 | https://paper.ripper.sdwa5.org | docker-compose.yml   |
@@ -126,7 +123,6 @@ database as dockware's `root`/`root`.
 | `paper_home`, `paper_home_db` | the household instance | Same shape as the Verein instance |
 | `backup` | restic | Egress to Google Drive |
 | `chimodiazz` | chimodiazz_shopware | Third-party theme code runs here |
-| `project2`, `project3` and their `_db` | the inactive Dolibarr instances | Same shape as the ERP |
 | `minecraft`, `ollama` | profile-gated services | |
 
 Docker keeps user-defined bridges apart, so a container reaches only its own application. Caddy is
@@ -219,7 +215,7 @@ where the flag was set. A production image instead of dockware would remove both
 ```
 /opt/docker/
 ├── docker-compose.yml              # main services
-├── docker-compose.projects.yml  # Project 2 + Project 3 Dolibarr
+├── docker-compose.projects.yml     # Chimo Diazz Shopware (profile-gated)
 ├── .env                            # settings, Vaultwarden's ADMIN_TOKEN hash — NEVER commit
 ├── secrets/                        # gitignored — compose file secrets, 700/400 root
 ├── .env.example                    # template for .env
@@ -305,9 +301,6 @@ docker compose restart shopware
 
 # view logs
 docker compose logs -f shopware
-
-# start project2/project3 services
-docker compose -f docker-compose.projects.yml up -d
 
 # reload Caddy config
 systemctl reload caddy

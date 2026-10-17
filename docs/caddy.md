@@ -57,8 +57,6 @@ apt-get install --allow-downgrades -o Dpkg::Options::=--force-confold ./caddy_2.
 | erp.sdwa5.org             | http://localhost:8002 | API explorer 404, HSTS           |
 | paper.sdwa5.org           | http://localhost:8006 | `paperless` snippet: `/admin` 404, basic auth 403, HSTS |
 | paper.ripper.sdwa5.org    | http://localhost:8007 | same snippet as paper.sdwa5.org |
-| project2.sdwa5.org     | http://localhost:8003 |                                  |
-| project3.sdwa5.org          | http://localhost:8004 |                                  |
 | chimodiazz.sdwa5.org      | https://127.0.0.1:8444 | TLS skip verify, same shape as sdwa5.org |
 
 ## Caddyfile
@@ -92,8 +90,6 @@ each response carried Caddy's own `Server` header plus the upstream's, for examp
 
 HSTS is set by Caddy for vault, erp and both Paperless sites with `max-age=31536000`. The two Shopware sites send
 `max-age=31536000; includeSubDomains` from the upstream, so Caddy leaves them alone.
-
-project2 and project3 have no DNS record and no running service, and are left unchanged.
 
 `monitoring/security-recheck.sh --external` checks the blocked paths with their bypass variants, the
 headers and HSTS, see [monitoring.md](monitoring.md#security-recheck).

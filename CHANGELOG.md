@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.87.0] - 2026-10-17
+
+### Added
+
+- `vps-health.sh` check `reboot` warns while `/var/run/reboot-required` exists, naming the packages, the running
+  and the newest installed kernel (SEC-D02, no automatic reboots).
+
+### Removed
+
+- The never-started project2 and project3 Dolibarr instances: Caddy blocks, compose services and networks,
+  `.env.example` and `.gitignore` entries, doc rows (SEC-D01).
+- TODO #31 and #32, both decided; #33 and #34 are now #31 and #32. TODO #15.6 drops the project2/project3 finding.
+
 ## [1.86.11] - 2026-10-17
 
 ### Added

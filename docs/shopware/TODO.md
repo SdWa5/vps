@@ -1,33 +1,13 @@
 # Shopware TODO
 
-1. **Five Shopware AG service apps are installed and four are active**, namely `ShopwarePayments`,
-   `Swag3DModelPipeline`, `SwagAIImageEditor` and `SwagCopilot`, with `ShopwareNexusIngestionService`
-   present but inactive. Found 2026-09-08 while draining the message queue. They install and update
-   themselves through the `services.install` scheduled task and phone home to
-   `registry.services.shopware.io`. None of them appears in
-   the 2026-07-22 legal review, which now lives in Google Drive, so whether a non-profit wants
-   an AI image editor, a Copilot and an event ingestion service active on its shop is open. Decide per
-   app, then either deactivate the unwanted ones or cover them in the same privacy pass as item 12.
-   The production backup of 2026-10-16 03:40 holds eight with seven active, because
-   `SwagRecommendations`, `SwagPreviewGenerator` and `SwagGmvReportingService` installed themselves
-   since. Two facts from the 6.7.15.1 rehearsal on 2026-10-16 bear on the decision. `ShopwarePayments`
-   holds a checkout and a context gateway with the checkout permission granted, so every cart
-   calls Shopware's payment service, although the shop offers only prepayment. On the mirror without
-   DNS, 6.7.15.1 answered the cart with a 400 until it was deactivated, so a failing lookup of its host
-   would presumably break the production cart as well. `SwagGmvReportingService` requires only a
-   Shopware account and is always-on by design. `system:update:finish` reactivated it after a
-   manual deactivation, and its privileges are granted while an admin user holds a store token, which
-   one does in the backup. The consent-bound services stayed deactivated across the update. According
-   to the core code, `POST /api/services/disable` uninstalls all of them as a unit, which was not
-   tried (`decision`)
-2. Review the remaining default Shopware email templates. Confirmation and cancellation copy, sender names,
+1. Review the remaining default Shopware email templates. Confirmation and cancellation copy, sender names,
    cancellation subjects and local order times are corrected in EN/DE as documented in
    [content-cms.md](content-cms.md#order-mail-copy-and-verification). Other templates remain to be reviewed.
     1. dont get too fancy (e.g. with corporate or blogging style expressions)
     2. en and de
-3. Layout for 404 pages Assign layout...
-4. Shop page layout for maintenance pages Select layout
-5. Search: include CMS pages — **measured 2026-09-08 and confirmed**. `?search=Hoodie` returns products,
+2. Layout for 404 pages Assign layout...
+3. Shop page layout for maintenance pages Select layout
+4. Search: include CMS pages — **measured 2026-09-08 and confirmed**. `?search=Hoodie` returns products,
    while `Membership`, `Hardware`, `Impressum`, `Datenschutz` and `Gallery` return nothing at all, even though all
    five exist as CMS pages and all five are in the sitemap. So the storefront search is product-only as suspected.
    Extend it to also surface CMS pages, ideally as primary results, since sdwa5.org is primarily a homepage and the
@@ -35,7 +15,7 @@
    the open question**. Since the SdWa5Theme the search box shows only on shop pages
    ([theme.md](theme.md#shop-context)), which is what the original note planned for the case that no plugin
    exists. A CMS-page search would bring it back on every page
-6. Merch / Products
+5. Merch / Products
     1. Make use of variants and other product related shopware features
     2. Add missing product images, remove background / opacity from existing images.
        `tools/shopware/images/shop-images.sh` does the background removal, see [merch.md](merch.md#tools)
@@ -83,18 +63,18 @@
           asking him went out through the jwsound.live contact form on 2026-10-15, with a request to
           forward it, and the answer is pending. The same question applies to the public `meshes/skram.stl` in
           `SdWa5/3d`.
-8. SEO — **the sitemap is fine and regenerating again.** Re-measured 2026-09-08: it exists at
+7. SEO — **the sitemap is fine and regenerating again.** Re-measured 2026-09-08: it exists at
    `https://sdwa5.org/sitemap.xml`, returns HTTP 200, is a valid `sitemapindex`, holds **32 URLs** covering the
    homepage, 13 CMS pages, 5 category listings and 13 products, and `robots.txt` advertises it **twice**, for the
    default and the `/de/` sales channel. Its `lastmod` was frozen at 2026-07-22 because
    `shopware.sitemap_generate` had stopped, and the worker now runs it again. **What is left is whether it has ever
    been submitted to Google Search Console**, which needs the account and cannot be answered from the host, plus the
    meta titles and descriptions, which were never measured
-9. update mysql and php
-10. frosh tools system-status
+8. update mysql and php
+9. frosh tools system-status
     1. System Health
     2. Performance recommendations
-11. Content
+10. Content
     1. add images
     2. add "useful links" page
         1. grouped overview
@@ -102,23 +82,23 @@
     3. Artists & Friends
         1. add links
         2. asked in SdWa5 Family Whatsapp group who wants to be featured -> wait for responses
-12. Apply the legal-page wording fixes from the 2026-07-22 review before editing the live
+11. Apply the legal-page wording fixes from the 2026-07-22 review before editing the live
     Datenschutz, AGB, Impressum and Widerrufsrecht CMS pages. **The review itself lives in Google
     Drive and deliberately not here**, decided 2026-09-13: it is a dated, itemised list of gaps on a
     live Austrian webshop written by its own operator, and in a public repository that is a ready-made
     checklist for anybody minded to send an Abmahnung. Its findings are therefore not restated in this
     file either. One of them is a characterization decision that needs the Obmann or the board rather
     than a wording patch, and that is the item this one waits on (`decision`)
-13. **A preview for theme changes** (medium priority, ca. 1 hour 45 minutes). The SdWa5Theme went live directly,
+12. **A preview for theme changes** (medium priority, ca. 1 hour 45 minutes). The SdWa5Theme went live directly,
     decided 2026-10-06, so every theme change is seen first on the live site. A second sales channel on a preview
     domain with the theme assigned, or a separate environment, would let a change be checked before it reaches the
     Storefront channel. Decide which of the two, then document it in [theme.md](theme.md#deploy). Once it exists, rehearse
     the rollback from [theme.md](theme.md) there. It was never run live, only the dry run of
     `set-homepage-sections.sh --revert`, and on 2026-10-06 it was decided not to switch the live site back for the test
-14. **Text wordmark as the header logo** (ca. 20 minutes), if the small graffiti logo of the SdWa5Theme does not
+13. **Text wordmark as the header logo** (ca. 20 minutes), if the small graffiti logo of the SdWa5Theme does not
     convince. Decided 2026-10-06 to try the graffiti logo first. The wordmark would be "SdWa5" in Space Grotesk in
     `layout_header_logo_image`, which needs no image and stays sharp at every size
-15. **Update the plugins as well** (ca. 3 hours). The 6.7.15.1 update of 2026-10-16 moved core and its dependencies
+14. **Update the plugins as well** (ca. 3 hours). The 6.7.15.1 update of 2026-10-16 moved core and its dependencies
     only and kept every plugin on its exact pin. `composer outdated --direct` on the mirror then showed
     `frosh/tools` 3.9.0 -> 3.15.1, `swag/language-pack` 5.58.0 -> 5.75.0 and `tcinncopyrightcustom` 1.0.7 -> 1.1.1
     as compatible updates, and `swag/swag-extension-store` 4.2.2 -> 7.0.0 as a major one that needs its changelog

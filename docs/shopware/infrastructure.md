@@ -92,6 +92,30 @@ than a settled one. Filed in [TODO.md](TODO.md). The production backup of 2026-1
 eight apps with seven active, because `SwagRecommendations`, `SwagPreviewGenerator` and
 `SwagGmvReportingService` installed themselves since.
 
+### Service apps disabled (SEC-29, 2026-10-17)
+
+`POST /api/services/disable` ran on production on 2026-10-17 after a database backup. It persists
+`core.services.disabled` and uninstalled seven of the eight apps, `ShopwarePayments` included, so a cart
+no longer calls Shopware's payment gateway. The shop offers only prepayment and pickup. The flag keeps
+every service with the `services_enabled` requirement from installing again, which
+`system:update:finish` and `services:install` confirmed on the mirror.
+
+`docker-compose.yml` sets `ENABLE_SERVICES=false` for the shop, which makes the daily `services.install`
+task and `bin/console services:install` do nothing. Without it the task would keep updating
+`SwagGmvReportingService` and reinstall it after a removal.
+
+`SwagGmvReportingService` requires only a Shopware account, so the disabled flag does not reach it, and
+its privileges (`order:read` among them) are granted while an admin user holds a store token. It is
+removed with `bin/console app:uninstall SwagGmvReportingService`, which works **only while
+`ENABLE_SERVICES` is off**. `UninstallAppCommandDecorator` then hands the name to
+`ServiceLifecycle::uninstall`. With services enabled the plain command looks up apps with
+`selfManaged = false` and answers "No app with name … installed", as do the extension store and
+`/api/service/uninstall`, which answers only to the service's own integration. Measured on the mirror
+on 2026-10-17 in both states.
+
+The way back is `POST /api/services/enable` plus removing the `ENABLE_SERVICES` line. That clears the
+flag and queues an install of every service from the registry.
+
 ## Local mirror
 
 [`tools/shopware/dev-instance.sh`](../../tools/shopware/dev-instance.sh) builds a copy of the live shop

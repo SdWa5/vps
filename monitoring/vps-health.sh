@@ -24,6 +24,7 @@
 #   VAULTWARDEN_DRIFT_GRACE_HOURS  how long an unapplied Vaultwarden release stays acceptable
 #   FIREWALL_PORTS                 tcp ports the INPUT chain must still accept
 #   REBOOT_REQUIRED_FILE, BOOT_DIR where apt flags a pending reboot, and the installed kernels
+#   HEALTHCHECKS_PING_FILE         file holding the healthchecks.io ping URL, pinged after every run
 #   STATE_DIR, FAKE_NOW            test hooks
 
 set -uo pipefail
@@ -61,6 +62,12 @@ FIREWALL_PORTS="${FIREWALL_PORTS:-22 80 443}"
 # reminder that one is due.
 REBOOT_REQUIRED_FILE="${REBOOT_REQUIRED_FILE:-/var/run/reboot-required}"
 BOOT_DIR="${BOOT_DIR:-/boot}"
+# The dead-man's switch (SEC-D06, 2026-10-17). Every alert above depends on this script running and on
+# its mail getting out. healthchecks.io mails when the hourly ping stops, and the /fail ping reports a
+# run whose own mail delivery failed. The URL is a credential, since anyone holding it can ping, so it
+# lives in secrets/ and travels to curl on stdin rather than in the argument list. Without the file
+# nothing is pinged.
+HEALTHCHECKS_PING_FILE="${HEALTHCHECKS_PING_FILE:-$COMPOSE_DIR/secrets/healthchecks-ping-url}"
 
 # **HOW OFTEN THE REMOTE IS ASKED, AND WHY IT IS NOT EVERY RUN.** This check costs an authenticated
 # network round trip, and what it watches changes rarely. Hourly would be 24 calls a day for a fact
@@ -520,6 +527,17 @@ state_put() {
 # Main
 # ---------------------------------------------------------------------------
 
+# $1 is an optional suffix such as /fail. A failed ping is logged and never fails the run.
+ping_deadman() {
+    local url
+    [[ -r "$HEALTHCHECKS_PING_FILE" ]] || return 0
+    url="$(head -n 1 "$HEALTHCHECKS_PING_FILE")"
+    [[ -n "$url" ]] || return 0
+    printf 'url = "%s%s"\n' "$url" "${1:-}" \
+        | curl -fsS -m 10 --retry 3 -A vps-health-ping -o /dev/null -K - \
+        || log "healthchecks.io ping${1:+ $1} failed"
+}
+
 usage() {
     cat <<'USAGE'
 vps-health.sh - SdWa5 VPS health check
@@ -701,7 +719,10 @@ main() {
 
     date -d "@$ts" '+%Y-%m-%d %H:%M:%S' > "$LAST_RUN_FILE"
 
-    (( ${#alerts[@]} + ${#recoveries[@]} == 0 )) && return 0
+    if (( ${#alerts[@]} + ${#recoveries[@]} == 0 )); then
+        ping_deadman
+        return 0
+    fi
 
     local subject body
     if (( ${#alerts[@]} > 0 )); then
@@ -718,7 +739,12 @@ main() {
     body+="Runbooks: docs/maintenance.md and docs/monitoring.md in /opt/docker."$'\n'
     body+="Reminders for an unchanged problem back off: 1, 2, 4, 8, 16, then every 30 days."$'\n'
 
-    send_mail "$subject" "$body" || log "$subject"$'\n'"$body"
+    if send_mail "$subject" "$body"; then
+        ping_deadman
+    else
+        log "$subject"$'\n'"$body"
+        ping_deadman /fail
+    fi
 }
 
 main "$@"

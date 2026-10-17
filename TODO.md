@@ -64,9 +64,6 @@
        checks for new tags and how often. renovate would open the PRs automatically but needs the
        repos public or a token, so it waits on the go-public work. until then it is a manual window,
        and nothing schedules one (`decision`, ca. 30 Minuten)
-    2. monitoring runs on the monitored host, so a dead vps sends nothing and the silence looks
-       healthy. an external dead-man's switch would close that gap, deliberately deferred
-       (ca. 45 Minuten)
 7. security follow-ups from the 2026-09-07 ssh hardening ([docs/ssh-hardening.md](docs/ssh-hardening.md))
     1. move the accounts still on pbkdf2 to argon2id. the kdf is per-account and only its holder can
        change it, so this is a message to those people rather than an action here. **which accounts

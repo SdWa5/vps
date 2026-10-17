@@ -709,3 +709,51 @@ Container started." health
     [[ "$(mail_body)" == *"newest installed 6.12.10-amd64"* ]]
     [[ "$(mail_body)" == *"installed libc6 linux-image-6.12.10-amd64"* ]]
 }
+
+# --- dead-man's switch ----------------------------------------------------
+#
+# SEC-D06, decided 2026-10-17. healthchecks.io mails when the hourly ping stops.
+
+set_ping_url() {
+    export HEALTHCHECKS_PING_FILE="$BATS_TEST_TMPDIR/ping-url"
+    printf 'https://hc-ping.com/test-uuid\n' > "$HEALTHCHECKS_PING_FILE"
+    export STUB_PING_LOG="$BATS_TEST_TMPDIR/ping.log" STUB_PING_ARGS="$BATS_TEST_TMPDIR/ping.args"
+}
+
+@test "a healthy run pings once, with the url on stdin rather than in the arguments" {
+    set_ping_url
+    health
+    [ "$(cat "$STUB_PING_LOG")" = "https://hc-ping.com/test-uuid" ]
+    ! grep -q hc-ping "$STUB_PING_ARGS"
+}
+
+@test "a run that mails an alert still pings" {
+    set_ping_url
+    STUB_DISK_PCT=92 health
+    [ "$(mail_count)" -eq 1 ]
+    [ "$(cat "$STUB_PING_LOG")" = "https://hc-ping.com/test-uuid" ]
+}
+
+@test "a run whose mail fails pings /fail" {
+    set_ping_url
+    STUB_DISK_PCT=92 STUB_MAIL_RC=55 health
+    [ "$(cat "$STUB_PING_LOG")" = "https://hc-ping.com/test-uuid/fail" ]
+}
+
+@test "a failed ping does not fail the run" {
+    set_ping_url
+    STUB_PING_RC=7 health
+    [ "$status" -eq 0 ]
+}
+
+@test "without the url file nothing is pinged" {
+    export HEALTHCHECKS_PING_FILE="$BATS_TEST_TMPDIR/absent" STUB_PING_LOG="$BATS_TEST_TMPDIR/ping.log"
+    health
+    [ ! -s "$STUB_PING_LOG" ]
+}
+
+@test "dry run does not ping" {
+    set_ping_url
+    health --dry-run
+    [ ! -s "$STUB_PING_LOG" ]
+}

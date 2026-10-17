@@ -2,6 +2,14 @@
 # Fake curl. Distinguishes the call shapes the scripts make.
 args="$*"
 
+# The healthchecks.io ping of vps-health.sh. The URL arrives as a curl config on stdin, and the log
+# records it so a test can tell /fail from a plain ping and prove it never sat in the arguments.
+if [[ "$args" == *"-A vps-health-ping"* ]]; then
+    sed -n 's/^url = "\(.*\)"$/\1/p' >> "${STUB_PING_LOG:-/dev/null}"
+    printf '%s\n' "$args" >> "${STUB_PING_ARGS:-/dev/null}"
+    exit "${STUB_PING_RC:-0}"
+fi
+
 # Dolibarr REST API. Must come before the mail and http_code branches, because
 # doli.sh also pipes a config file into stdin and also asks for %{http_code}.
 #

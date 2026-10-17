@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.86.11] - 2026-10-17
+
+### Added
+
+- `security-recheck.sh` probes isolation from `vaultwarden` and `restic` too; a source without bash is probed
+  with busybox `nc`.
+
+### Changed
+
+- docs/monitoring.md lists every isolation source.
+
+### Removed
+
+- TODO #31, the first scheduled restic run after SEC-11 succeeded on 2026-10-17 (snapshot 2bfe487f).
+
 ## [1.86.10] - 2026-10-17
 
 ### Added
@@ -21,6 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - docs/backup.md names the off-host copies of the restic password.
+- TODO #31, check the first scheduled restic run after SEC-11.
 
 ### Removed
 

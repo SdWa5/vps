@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.89.0] - 2026-10-17
+
+### Added
+
+- `monitoring/ipv6-watch.sh` and `cron.d/ipv6-watch`, a temporary per-minute IPv6 reachability log for
+  the Contabo ticket (SEC-28).
+
+### Changed
+
+- TODO #7.3 points at the log.
+
 ## [1.88.0] - 2026-10-17
 
 ### Added

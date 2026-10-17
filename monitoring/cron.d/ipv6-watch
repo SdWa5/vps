@@ -1,0 +1,9 @@
+# SdWa5 IPv6 reachability log (SEC-28). Deploy to /etc/cron.d/ipv6-watch (root:root, mode 644).
+#
+# Temporary. Runs every minute for about a day so the Contabo ticket carries a log, then goes again.
+
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=""
+
+* * * * * root /opt/docker/monitoring/ipv6-watch.sh 2>&1 | logger -t ipv6-watch

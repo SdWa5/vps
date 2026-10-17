@@ -98,7 +98,7 @@ which Caddy answers itself with `204` and logs to `/var/log/caddy/sdwa5-csp-repo
 address and cookies. That log holds only these requests, and it does not contain the report body, so a report
 shows that a violation happened and in which browser, not which page or source. Count them with
 `wc -l /var/log/caddy/sdwa5-csp-report.log`. Report-only started on 2026-10-18, and switching to the
-enforcing `Content-Security-Policy` header is TODO #31.
+enforcing `Content-Security-Policy` header is TODO #30.
 
 HSTS is set by Caddy for vault, erp and both Paperless sites with `max-age=31536000`. The two Shopware sites send
 `max-age=31536000; includeSubDomains` from the upstream, so Caddy leaves them alone.

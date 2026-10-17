@@ -3,7 +3,7 @@
 # SdWa5 IPv6 reachability log (SEC-28).
 #
 # IPv6 on this host drops out for seconds to minutes and recovers on its own, while IPv4 and the
-# gateway's neighbour entry look fine (TODO.md #7.3). Contabo needs timestamps and a log before a
+# gateway's neighbour entry look fine (TODO.md #6.3). Contabo needs timestamps and a log before a
 # ticket makes sense, so this runs every minute from /etc/cron.d/ipv6-watch for about a day and
 # appends one line per run. It is temporary and is removed once the ticket is filed.
 #

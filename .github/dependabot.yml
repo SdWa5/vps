@@ -1,0 +1,23 @@
+# Update proposals only, see docs/maintenance.md#update-proposals. Merging a pull request deploys
+# nothing, because production pulls by hand, and a Shopware, Dolibarr or database bump still goes
+# through its rehearsal before anybody merges it.
+version: 2
+updates:
+  # Both compose files in the root, with their tag and tag@sha256 pins. Services on :latest are
+  # skipped, since there is no version to compare.
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+    ignore:
+      # A MariaDB major version upgrades the data files in place and cannot be undone.
+      - dependency-name: mariadb
+        update-types: ["version-update:semver-major"]
+
+  # The workflow's actions, pinned to commits with the version as a comment.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 2

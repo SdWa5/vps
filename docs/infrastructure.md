@@ -139,7 +139,7 @@ tricks on its bridge.
 Every running service except the two dockware shops also sets `no-new-privileges`, so no process in it can
 gain privileges through a setuid binary or file capabilities after the start. The shops cannot have it,
 because dockware starts as `www-data` and reaches root through setuid `sudo` (41 calls in its
-`/entrypoint.sh`). A production image without dockware would lift that, see TODO #23.
+`/entrypoint.sh`). A production image without dockware would lift that, see TODO #22.
 
 Measured after the cutover on 2026-10-15. From `chimodiazz_shopware`, `shopware` and `dolibarr`,
 every port of every other application was closed by IP. The one open path was `dolibarr` to

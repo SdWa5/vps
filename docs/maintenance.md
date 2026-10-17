@@ -201,6 +201,21 @@ its own.
 | `restic` | `creativeprojects/resticprofile:0.33.1-amd64` | Exact. Used only for the restic, rclone, crond and flock it ships; the schedule and the run are [`restic/`](../restic/). `latest` is rebuilt weekly and would move restic and rclone on its own. Until 2026-10-15 this was `lobaro/restic-backup-docker:latest`, frozen since 2021-05-05 at restic 0.12.0. A bump is followed by the [restore drill](backup.md#restore-drill) |
 | `minecraft`, `ollama` | `:latest` | Profile-gated and not present on the host, so there is no running digest to pin to. For Minecraft the build is decided by the `VERSION` environment variable anyway |
 
+### Update proposals
+
+Dependabot checks the pins weekly, configured in
+[`.github/dependabot.yml`](../.github/dependabot.yml) since 2026-10-18. It covers the compose files'
+images and the workflow's actions, and it opens at most three image pull requests and two action pull
+requests at a time. A MariaDB major version is never proposed, because it upgrades the data files in
+place. The `:latest` services have no version to compare and are skipped. The test images in
+`tests/run.sh` are not covered and stay with [CI dependencies](#ci-dependencies).
+
+**A merged proposal deploys nothing**, because production pulls by hand. A Shopware or Dolibarr pull
+request is a signal that a version exists. It goes through
+[Updating Shopware](shopware/infrastructure.md#updating-shopware) or the Dolibarr rehearsal, never
+through a plain merge, and the rehearsal's commit replaces the proposal. Dependabot pushes its branches
+to this repository, so the workflow's `push` trigger runs the tests on them with a read-only token.
+
 **Pinning is not a no-op on the next `up -d`, and changing the image *reference* is enough to recreate
 a container even when the image content is identical.** That caught us on 2026-09-08: the host's
 images were tagged `:latest` locally, so `dockware/shopware:6.7.11.1` was not present under its

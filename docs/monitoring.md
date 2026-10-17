@@ -467,7 +467,7 @@ with a default, listed in the script's header. The first live run on 2026-10-16 
 
 ## IPv6 reachability log
 
-[`ipv6-watch.sh`](../monitoring/ipv6-watch.sh) is temporary (SEC-28, TODO.md #7.3). It runs every
+[`ipv6-watch.sh`](../monitoring/ipv6-watch.sh) is temporary (SEC-28, TODO.md #6.3). It runs every
 minute from `/etc/cron.d/ipv6-watch` and appends one line to `/var/log/sdwa5-ipv6.log` with the round
 trip to two external v6 addresses, the neighbour state of `fe80::1` and an IPv4 control. A day of it
 goes into the Contabo ticket about the v6 dropouts, and afterwards the cron file and the log are

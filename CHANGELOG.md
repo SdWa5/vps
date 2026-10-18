@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.94.2] - 2026-10-18
+
+### Changed
+
+- Record the successful external monitoring alert rehearsal and Dolibarr 24.0.2 production acceptance,
+  including the confirmed SMTP test delivery.
+- Record the SEC-28 IPv6 review: 1452 samples, a reboot gap, two both-target failures separated by probe
+  generation, eleven single-target failures and four IPv4-only failures; keep Contabo submission open.
+
+### Fixed
+
+- Archive snapshot examples redirect Compose stdin from `/dev/null` when run inside a script piped over
+  SSH; `-T` alone does not prevent Compose from consuming the remaining script.
+
+### Removed
+
+- Temporary SEC-28 IPv6 cron definition and its installation instruction; retain the probe script.
+
 ## [1.94.1] - 2026-10-18
 
 ### Security

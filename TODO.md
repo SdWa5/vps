@@ -80,9 +80,11 @@
        03:40 and 15:35 Berlin, each for ca. 25 s: inbound probes and the host's own outbound v6 failed while
        `fe80::1` sat REACHABLE in neighbour discovery, and ipv4 was unaffected. dockerd's `disable_ipv6`
        lines at container starts (02:21-02:46 and 15:14) are not a measured cause. so the trigger for the
-       contabo ticket is reached. `monitoring/ipv6-watch.sh` logs v6 reachability every minute since
-       2026-10-17 ([docs/monitoring.md](docs/monitoring.md#ipv6-reachability-log)). after a day, open the
-       ticket with these timestamps and that log, then remove the cron file (ca. 30 Minuten)
+       contabo ticket is reached. the 24-hour SEC-28 review on 2026-10-18 has 1452 samples and confirms
+       a further both-target failure at 14:03 with ipv4 working and neighbour REACHABLE. the raw evidence
+       and a German Contabo draft are retained privately; the temporary cron is retired. the remaining
+       action is for the operator to submit the request, then track Contabo's answer. see the
+       [measurement result](docs/monitoring.md#ipv6-reachability-log) (ca. 15 Minuten)
     4. **DONE on 2026-09-13.** `/opt/docker` had been unable to pull since the 2026-09-12 move: its
        `origin` still named the deleted personal repository and its `HEAD` was a pre-rewrite commit
        that existed nowhere. Nothing noticed, because deploys are manual. It now tracks

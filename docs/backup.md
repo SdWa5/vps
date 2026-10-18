@@ -305,16 +305,18 @@ carries `--keep-tag sdwa5-archive`, so `forget` keeps every one of them. Its pat
 `/archive`, so it also forms a retention group of its own.
 
 It is taken through the restic service, so it uses the same repository, rclone identity and password
-file, and the sources are mounted read-only. `-T` keeps `docker compose run` off stdin, which would
-otherwise swallow the rest of a script piped into `ssh host bash -s`:
+file, and the sources are mounted read-only. When a script is piped into `ssh host bash -s`, also
+redirect each `docker compose run -T` from `/dev/null`. `-T` disables the pseudo-terminal but does not
+close stdin; without the redirection, Compose swallowed the rest of the script twice during the
+2026-10-18 Dolibarr archive operation:
 
 ```bash
 cd /opt/docker
 docker compose run -T --rm --no-deps --entrypoint restic \
     -v /root/some-dump:/archive/root/some-dump:ro \
     -v /opt/docker/.env.bak-example:/archive/opt/docker/.env.bak-example:ro \
-    restic backup /archive --tag sdwa5-archive --tag <reason>
-docker compose run -T --rm --no-deps --entrypoint restic restic snapshots --tag sdwa5-archive
+    restic backup /archive --tag sdwa5-archive --tag <reason> < /dev/null
+docker compose run -T --rm --no-deps --entrypoint restic restic snapshots --tag sdwa5-archive < /dev/null
 ```
 
 Before a source is deleted, the snapshot is restored into a directory only root can read and
@@ -323,7 +325,7 @@ compared with it:
 ```bash
 verify="$(mktemp -d /var/tmp/archive-verify.XXXXXX)"   # mode 700
 docker compose run -T --rm --no-deps --entrypoint restic -v "$verify:/restore" \
-    restic restore <snapshot id> --target /restore
+    restic restore <snapshot id> --target /restore < /dev/null
 diff -r /root/some-dump "$verify/archive/root/some-dump" && echo identical
 rm -rf -- "$verify"
 ```

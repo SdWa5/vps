@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9f1936f56feff2d1e161f987e7c726e8",
+    "content-hash": "1633935e124d282e4810a96340b2e10e",
     "packages": [
         {
             "name": "async-aws/core",
@@ -2154,20 +2154,21 @@
         },
         {
             "name": "frosh/tools",
-            "version": "3.9.0",
+            "version": "3.15.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/FriendsOfShopware/FroshTools.git",
-                "reference": "a6fbc0f593f797fa09304e60c0e276bf9d4dc0c5"
+                "reference": "945b00a326981cae3db054aba9d07e5e973479c3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/FriendsOfShopware/FroshTools/zipball/a6fbc0f593f797fa09304e60c0e276bf9d4dc0c5",
-                "reference": "a6fbc0f593f797fa09304e60c0e276bf9d4dc0c5",
+                "url": "https://api.github.com/repos/FriendsOfShopware/FroshTools/zipball/945b00a326981cae3db054aba9d07e5e973479c3",
+                "reference": "945b00a326981cae3db054aba9d07e5e973479c3",
                 "shasum": ""
             },
             "require": {
-                "shopware/core": "~6.6.0 || ~6.7.0"
+                "shopware/core": "~6.6.0 || ~6.7.0",
+                "symfony/var-dumper": "^6.0 || ^7.0 || ^8.0"
             },
             "require-dev": {
                 "shopware/elasticsearch": "~6.6.0 || ~6.7.0"
@@ -2210,9 +2211,9 @@
             "description": "Provides some basic things for managing the Shopware Installation",
             "support": {
                 "issues": "https://github.com/FriendsOfShopware/FroshTools/issues",
-                "source": "https://github.com/FriendsOfShopware/FroshTools/tree/3.9.0"
+                "source": "https://github.com/FriendsOfShopware/FroshTools/tree/3.15.1"
             },
-            "time": "2026-06-25T07:34:21+00:00"
+            "time": "2026-10-14T11:55:15+00:00"
         },
         {
             "name": "goetas-webservices/xsd2php-runtime",
@@ -7487,13 +7488,14 @@
         },
         {
             "name": "store.shopware.com/tcinncopyrightcustom",
-            "version": "1.0.7",
+            "version": "1.1.1",
             "dist": {
                 "type": "zip",
-                "url": "https://packages.shopware.com/download?downloadUrl=%2Fpackages%2Fplugins%2FTcinnCopyrightCustom%2Fbinaries%2F1.0.7"
+                "url": "https://packages.shopware.com/download?downloadUrl=%2Fpackages%2Fplugins%2FTcinnCopyrightCustom%2Fbinaries%2F1.1.1"
             },
             "require": {
-                "shopware/core": "6.7.*"
+                "shopware/core": "~6.5.0 || ~6.6.0 || ~6.7.0",
+                "shopware/storefront": "~6.5.0 || ~6.6.0 || ~6.7.0"
             },
             "replace": {
                 "tcinn/copyright-custom": "self.version"
@@ -7506,17 +7508,17 @@
                 },
                 "copyright": "(c) by TC-Innovations GmbH",
                 "description": {
-                    "de-DE": "Shopware Copyright-Text im Standard Theme entfernen oder verändern.",
-                    "en-GB": "Remove or change Shopware copyright text in default theme."
+                    "de-DE": "Blende die Shopware-Copyright-Zeile im Footer aus oder ersetze sie durch eigenen Text und Links. Mit Platzhaltern für Jahr und Shopname, eigenem Footer-Logo, Favicon und Vorschaubild.",
+                    "en-GB": "Hide the Shopware copyright line in your footer or replace it with your own text and links. Includes placeholders for year and shop name, an own footer logo, favicon and share image."
                 },
                 "plugin-icon": "src/Resources/config/plugin-icon.png",
                 "supportLink": {
-                    "de-DE": "https://www.tc-innovations.de",
-                    "en-GB": "https://www.tc-innovations.de"
+                    "de-DE": "https://account.shopware.com/",
+                    "en-GB": "https://account.shopware.com/"
                 },
                 "manufacturerLink": {
-                    "de-DE": "https://www.tc-innovations.de",
-                    "en-GB": "https://www.tc-innovations.de"
+                    "de-DE": "https://tc-innovations.de/",
+                    "en-GB": "https://tc-innovations.de/"
                 },
                 "shopware-plugin-class": "TcinnCopyrightCustom\\TcinnCopyrightCustom"
             },
@@ -7529,23 +7531,23 @@
             "authors": [
                 {
                     "name": "TC-Innovations GmbH",
-                    "homepage": "https://www.tc-innovations.de"
+                    "homepage": "https://tc-innovations.de/"
                 }
             ],
-            "description": "Remove or change Shopware copyright text in default theme."
+            "description": "Hide the Shopware copyright line in your footer or replace it with your own text and links. Includes placeholders for year and shop name, an own footer logo, favicon and share image."
         },
         {
             "name": "swag/language-pack",
-            "version": "5.58.0",
+            "version": "5.75.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/shopware/SwagLanguagePack.git",
-                "reference": "51af5ca24c74410819f8fbbbd1b39151094dbefa"
+                "reference": "46d27803701103ccb752a521ff3739f54ab88d2f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/shopware/SwagLanguagePack/zipball/51af5ca24c74410819f8fbbbd1b39151094dbefa",
-                "reference": "51af5ca24c74410819f8fbbbd1b39151094dbefa",
+                "url": "https://api.github.com/repos/shopware/SwagLanguagePack/zipball/46d27803701103ccb752a521ff3739f54ab88d2f",
+                "reference": "46d27803701103ccb752a521ff3739f54ab88d2f",
                 "shasum": ""
             },
             "require": {
@@ -7609,22 +7611,22 @@
             ],
             "description": "Language pack for Shopware 6",
             "support": {
-                "source": "https://github.com/shopware/SwagLanguagePack/tree/5.58.0"
+                "source": "https://github.com/shopware/SwagLanguagePack/tree/5.75.0"
             },
-            "time": "2026-06-26T07:38:42+00:00"
+            "time": "2026-10-16T06:43:10+00:00"
         },
         {
             "name": "swag/swag-extension-store",
-            "version": "4.2.2",
+            "version": "7.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/shopware/SwagExtensionStore.git",
-                "reference": "1bf1e787c9ce8a7357c2975f4d7fdcd4608b49fa"
+                "reference": "cdd71b62766314f7ead3b7d5350e534dd93d32ee"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/shopware/SwagExtensionStore/zipball/1bf1e787c9ce8a7357c2975f4d7fdcd4608b49fa",
-                "reference": "1bf1e787c9ce8a7357c2975f4d7fdcd4608b49fa",
+                "url": "https://api.github.com/repos/shopware/SwagExtensionStore/zipball/cdd71b62766314f7ead3b7d5350e534dd93d32ee",
+                "reference": "cdd71b62766314f7ead3b7d5350e534dd93d32ee",
                 "shasum": ""
             },
             "require": {
@@ -7670,9 +7672,9 @@
             "description": "SWAG Extension Store",
             "support": {
                 "issues": "https://github.com/shopware/SwagExtensionStore/issues",
-                "source": "https://github.com/shopware/SwagExtensionStore/tree/4.2.2"
+                "source": "https://github.com/shopware/SwagExtensionStore/tree/7.0.0"
             },
-            "time": "2026-06-08T06:49:42+00:00"
+            "time": "2026-09-16T09:25:51+00:00"
         },
         {
             "name": "symfony/asset",

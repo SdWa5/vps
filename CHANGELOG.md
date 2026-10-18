@@ -6,6 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.92.0] - 2026-10-18
+
+### Changed
+
+- Shopware plugins: FroshTools 3.15.1, SwagLanguagePack 5.75.0, TcinnCopyrightCustom 1.1.1 and
+  SwagExtensionStore 7.0.0 (SEC-30).
+- `docs/shopware/infrastructure.md`: "Updating plugins" section and an audit command that works without egress.
+- TODO #22 notes dockware's Composer 2.2.9.
+
+### Fixed
+
+- `tools/shopware/dev-instance.sh restore` no longer stops at a service app whose state Shopware manages.
+
+### Removed
+
+- Shopware TODO #14, the plugin updates.
+
 ## [1.91.0] - 2026-10-18
 
 ### Added

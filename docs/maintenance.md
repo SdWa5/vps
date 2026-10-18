@@ -192,7 +192,7 @@ its own.
 | Service | Tag | Why |
 |---|---|---|
 | `shopware` | `dockware/shopware:6.7.15.1@sha256:1a4018ce…` | Exact, by tag and digest, because dockware rebuilds existing tags (6.7.15.1 was built on 2026-10-12). The `6.7-latest` series tag exists but rolls across minors, whose migrations run forward only. An update is a deliberate bump of the line after a rehearsal, see [Updating Shopware](shopware/infrastructure.md#updating-shopware). Chimo Diazz stays on 6.7.11.1 in `docker-compose.projects.yml` |
-| `dolibarr`, `dolibarr_cron` | `dolibarr/dolibarr:24.0.1` | Exact. 24.0.1 is the newest published image on 2026-10-16, while 24.0.2 exists only as a source tag. The migration from 23.0.4 passed on the dev mirror and in the isolated rehearsal before deployment |
+| `dolibarr`, `dolibarr_cron` | `dolibarr/dolibarr:24.0.1` | Exact. The 24.0.2 image exists since 2026-10-17 and waits for the Dolibarr rehearsal. The migration from 23.0.4 passed on the dev mirror and in the isolated rehearsal before deployment |
 | `dolibarr_db` and the project DBs | `mariadb:12.3` | Minor series. Patch updates inside 12.3 are safe and wanted; crossing a major version is the one-way door |
 | `paperless_sdwa5`, `paperless_home` | `ghcr.io/paperless-ngx/paperless-ngx:3.3.2@sha256:d232cba3…` | Exact, by tag and digest, the same pin on both services, which a test keeps equal. 3.3.2 of 2026-10-16 fixes GHSA-c8f3-pqr2-rr24. A minor runs forward-only migrations, so a bump goes through the dev mirror first, see [paperless.md](paperless.md#updates) |
 | `paperless_*_db` | `mariadb:12.3` | Same series as `dolibarr_db` |
@@ -215,6 +215,13 @@ place. The `:latest` services have no version to compare and are skipped. The te
 change!" and fails the whole run. That is what failed the first two runs on 2026-10-18, read in
 dependabot-core's `build_old_declaration_regex`, since a newer valkey tag existed. The Paperless and broker
 images are therefore written out on both services, and `tests/dependabot.bats` keeps each pair equal.
+
+**A new release is proposed three days after it was pushed.** dependabot-core applies a three-day
+cooldown when `dependabot.yml` configures none, since 2026-07-30 (`DEFAULT_COOLDOWN_DAYS` in
+`updater/lib/dependabot/job.rb`). Dolibarr 24.0.2, pushed on 2026-10-17, was therefore skipped on
+2026-10-18, measured with the Dependabot CLI v1.96.0 against this repository (`Skipping tag 24.0.2 due
+to cooldown period`). The default stays, because it keeps an image that turns out broken or compromised
+in its first days out of the proposals.
 
 **A merged proposal deploys nothing**, because production pulls by hand. A Shopware or Dolibarr pull
 request is a signal that a version exists. It goes through

@@ -32,3 +32,11 @@ site_block() {
     grep -q 'request>client_ip delete' <<<"$block"
     grep -q 'request>headers>Cookie delete' <<<"$block"
 }
+
+@test "erp.sdwa5.org answers the API explorer and the cron URL with a flat 404 before the proxy" {
+    local block
+    block="$(site_block erp.sdwa5.org)"
+    grep -q '@blocked path /api/index.php/explorer /api/index.php/explorer/\* /public/cron /public/cron/\*$' <<<"$block"
+    [ "$(grep -A1 'handle @blocked {' <<<"$block" | tail -n 1 | tr -s ' ')" = ' respond "Not Found" 404' ]
+    [ "$(grep -n 'handle @blocked' <<<"$block" | cut -d: -f1)" -lt "$(grep -n 'reverse_proxy' <<<"$block" | cut -d: -f1)" ]
+}

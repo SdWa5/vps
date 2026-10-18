@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.94.1] - 2026-10-18
+
+### Security
+
+- Caddy answers `/public/cron` on erp.sdwa5.org with `404`, so the cron key no longer runs the scheduled jobs
+  over HTTP; `dolibarr_cron` runs them from the command line.
+
 ## [1.94.0] - 2026-10-18
 
 ### Added

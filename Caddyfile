@@ -124,13 +124,15 @@ vault.sdwa5.org {
 }
 
 # Dolibarr. The REST API stays public for its clients, but the API explorer
-# listed every endpoint to anyone, see docs/dolibarr.md.
+# listed every endpoint to anyone, and /public/cron runs the scheduled jobs for
+# anyone holding the cron key, which dolibarr_cron passes on the command line
+# instead. See docs/dolibarr.md.
 erp.sdwa5.org {
     import hide_server_headers
     header Strict-Transport-Security "max-age=31536000"
 
-    @api_explorer path /api/index.php/explorer /api/index.php/explorer/*
-    handle @api_explorer {
+    @blocked path /api/index.php/explorer /api/index.php/explorer/* /public/cron /public/cron/*
+    handle @blocked {
         respond "Not Found" 404
     }
 

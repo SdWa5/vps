@@ -57,10 +57,10 @@ environment still carries a secret, by name only, see [monitoring.md](monitoring
 ### Rotating the cron key
 
 The cron key is also the password of `public/cron/cron_run_jobs_by_url.php`. That page lets an
-external HTTP scheduler run the scheduled jobs on hosting without a shell cron, and it answers on
-`erp.sdwa5.org` like every other public Dolibarr page. SdWa5 does not use it, because `dolibarr_cron`
-runs `cron_run_jobs.php` every five minutes. A leaked key therefore lets anyone trigger the jobs as
-the cron user, and it is rotated.
+external HTTP scheduler run the scheduled jobs on hosting without a shell cron. SdWa5 does not use
+it, because `dolibarr_cron` runs `cron_run_jobs.php` every five minutes, so Caddy has answered
+`/public/cron` with `404` since 2026-10-18. Before that, a leaked key let anyone trigger the jobs as
+the cron user. A leaked key is still rotated, because the 404 lives in front of the container only.
 
 The key lives in two places that must agree. `secrets/dolibarr_cron_key` reaches the cron line only
 when `dolibarr_cron` is created, and the `CRON_KEY` constant is written by the image only for an empty

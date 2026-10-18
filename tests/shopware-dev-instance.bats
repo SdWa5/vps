@@ -283,6 +283,13 @@ line_of() { grep -n -F -m1 -- "$1" "$DOCKER_LOG" | cut -d: -f1; }
     [ "$(line_of 'service/deactivate')" -lt "$(line_of 'cache:clear')" ]
 }
 
+@test "a service whose state Shopware manages is not deactivated" {
+    # Shopware answers 400 SERVICE__STATE_CHANGE_NOT_PERMITTED for it, which
+    # stopped every restore from 2026-10-18 on. The filter runs inside the
+    # container, so its condition is checked in the source.
+    grep -q 'active\\"\] && (\\$s\[\\"state_change_permitted\\"\] ?? true)' "$DEV_SCRIPT"
+}
+
 @test "an existing integration is reused" {
     fetched_copy
     fake_docker

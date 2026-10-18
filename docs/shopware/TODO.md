@@ -98,10 +98,3 @@
 13. **Text wordmark as the header logo** (ca. 20 minutes), if the small graffiti logo of the SdWa5Theme does not
     convince. Decided 2026-10-06 to try the graffiti logo first. The wordmark would be "SdWa5" in Space Grotesk in
     `layout_header_logo_image`, which needs no image and stays sharp at every size
-14. **Update the plugins as well** (ca. 3 hours). The 6.7.15.1 update of 2026-10-16 moved core and its dependencies
-    only and kept every plugin on its exact pin. `composer outdated --direct` on the mirror then showed
-    `frosh/tools` 3.9.0 -> 3.15.1, `swag/language-pack` 5.58.0 -> 5.75.0 and `tcinncopyrightcustom` 1.0.7 -> 1.1.1
-    as compatible updates, and `swag/swag-extension-store` 4.2.2 -> 7.0.0 as a major one that needs its changelog
-    read first. Rehearse them on the mirror with `tools/shopware/dev-instance.sh composer require` and the
-    procedure in [infrastructure.md](infrastructure.md#updating-shopware). The dockware image still ships
-    Composer 2.2.9 from 2022, so whether a newer Composer belongs in the image or in the procedure is part of it

@@ -193,7 +193,10 @@ write_env_local() {
 # services stay deactivated across system:update:finish. SwagGmvReportingService
 # carries only the shopware_account requirement, which Shopware declares
 # always-on, so an update reactivates it, and only its privileges follow whether
-# an admin user holds a store token. Without egress it reaches nobody.
+# an admin user holds a store token. Without egress it reaches nobody. Since
+# 2026-10-18 the services API refuses to deactivate it (400
+# SERVICE__STATE_CHANGE_NOT_PERMITTED), so a service whose state_change_permitted
+# is false is left alone.
 deactivate_services() {
     if [[ ! -s "$DEV_DIR/integration.env" ]]; then
         console integration:create --admin "$PREFIX" > "$DEV_DIR/integration.env"
@@ -207,7 +210,7 @@ deactivate_services() {
             | php -r "echo json_decode(stream_get_contents(STDIN), true)[\"access_token\"] ?? \"\";")"
         [ -n "$token" ]
         curl -sf -m 30 -H "Authorization: Bearer $token" "$api/service/list" \
-            | php -r "foreach (json_decode(stream_get_contents(STDIN), true) as \$s) { if (\$s[\"active\"]) { echo \$s[\"name\"], \"\n\"; } }" \
+            | php -r "foreach (json_decode(stream_get_contents(STDIN), true) as \$s) { if (\$s[\"active\"] && (\$s[\"state_change_permitted\"] ?? true)) { echo \$s[\"name\"], \"\n\"; } }" \
             | while read -r name; do
                 curl -sf -m 60 -X POST -H "Authorization: Bearer $token" "$api/service/deactivate/$name" >/dev/null
             done' < "$DEV_DIR/integration.env" \

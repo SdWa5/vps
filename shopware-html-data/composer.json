@@ -8,7 +8,7 @@
         "frosh/platform-filter-search": "3.1.0",
         "frosh/platform-thumbnail-processor": "5.4.0",
         "frosh/shopmon": "0.2.1",
-        "frosh/tools": "3.9.0",
+        "frosh/tools": "3.15.1",
         "sdwa5/sdwa5-theme": "1.2.10",
         "shopware/administration": "*",
         "shopware/core": "v6.7.15.1",
@@ -16,9 +16,9 @@
         "shopware/storefront": "*",
         "store.shopware.com/dnestorefrontdarkmode": "4.0.0",
         "store.shopware.com/swagplatformsecurity": "4.0.16",
-        "store.shopware.com/tcinncopyrightcustom": "1.0.7",
-        "swag/language-pack": "5.58.0",
-        "swag/swag-extension-store": "4.2.2",
+        "store.shopware.com/tcinncopyrightcustom": "1.1.1",
+        "swag/language-pack": "5.75.0",
+        "swag/swag-extension-store": "7.0.0",
         "symfony/flex": "~2"
     },
     "repositories": [

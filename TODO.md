@@ -345,7 +345,9 @@
     Caddy blocks Adminer and the log viewer, but all of it is still installed, root and `dockware` keep
     their default passwords, and www-data has passwordless sudo. Shopware's own production template
     with a PHP-FPM image would remove that, and it also ends the root/root database login that
-    `hardening/dockware-db-account.sh` has to keep for dockware's boot script
+    `hardening/dockware-db-account.sh` has to keep for dockware's boot script. the image would also replace
+    dockware's Composer 2.2.9 of 2022, which has no `audit` and misses the fixes for CVE-2024-24821 and
+    CVE-2024-35241; the vendored Composer in `vendor/composer/composer` covers the audit until then
 23. **send the monitoring mails to one mailbox instead of two** ([docs/monitoring.md](docs/monitoring.md)).
     `MONITOR_MAIL_TO` in the vps `.env` lists the private Gmail address and ripper@sdwa5.org, so every
     health, backup and vaultwarden mail lands twice in Stefan's two main inboxes

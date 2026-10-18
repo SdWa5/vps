@@ -193,10 +193,15 @@ for the old lock and none for the new one. That needed 6.7.15.1, because 6.7.11.
    tools/shopware/dev-instance.sh composer require --no-update shopware/core:v6.7.15.1
    tools/shopware/dev-instance.sh composer update shopware/core shopware/administration \
        shopware/storefront shopware/elasticsearch --with-all-dependencies
-   docker exec sdwa5-shopware-dev php vendor/composer/composer/bin/composer audit --locked
+   docker run --rm --network sdwa5-shopware-dev-web --user www-data --workdir /var/www/html \
+       --entrypoint php --mount type=volume,src=sdwa5-shopware-dev-html,dst=/var/www/html,volume-nocopy=true \
+       "$(docker inspect -f '{{.Config.Image}}' sdwa5-shopware-dev)" \
+       vendor/composer/composer/bin/composer audit --locked
    ```
 
-   The dockware images ship Composer 2.2.9, which has no `audit`, so the vendored Composer runs it. Copy
+   The dockware images ship Composer 2.2.9, which has no `audit`, so the vendored Composer runs it. The
+   application container has no route out, so the audit runs beside it on the web network, the way the
+   tool's own `composer` subcommand does. Copy
    `composer.json` and `composer.lock` into `shopware-html-data/` and give them back to `root:root`, as
    the git pull leaves them in production.
 2. **Rehearse the live order.** Restore again, then replay the production steps with the new image:
@@ -221,3 +226,17 @@ for the old lock and none for the new one. That needed 6.7.15.1, because 6.7.11.
    Live on 2026-10-16 from 15:13:51 to 15:16:18, so ca. 2.5 minutes of maintenance. The install took 24 s and
    the migrations 18 s. Afterwards the plugin list matched the previous one apart from SdWa5Theme 1.2.1, the
    colour scan matched the mirror's, `security-recheck.sh` reported 29 OK and Dependabot had no open alert.
+
+### Updating plugins
+
+A plugin update keeps the image and core, so steps 4 and the `docker compose up -d` drop out, and the
+rest of the procedure stays. On the mirror, `composer require --no-update` with the new exact pins and
+`composer update` with only those packages, so nothing else moves. Live, `plugin:update <Name>` runs once
+per plugin after `plugin:refresh`.
+
+Rehearsed on 2026-10-18 for FroshTools 3.9.0 to 3.15.1, SwagLanguagePack 5.58.0 to 5.75.0,
+TcinnCopyrightCustom 1.0.7 to 1.1.1 and SwagExtensionStore 4.2.2 to 7.0.0. The lock changed in those four
+packages alone and the audit found no advisory. The live order from maintenance on to maintenance off took
+23 s on the mirror, with 5 s for the language pack and 5 s for the theme compile. SwagExtensionStore 7.0.0
+brings one migration, which sets `SwagExtensionStore.config.iframeUrl` to
+`https://sky-bridge-store.production.shopware.in`, the page the admin's extension store loads in a frame.

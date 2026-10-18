@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.92.3] - 2026-10-18
+
+### Changed
+
+- `docs/maintenance.md`: Dependabot's default three-day cooldown, measured on Dolibarr 24.0.2; the Dolibarr row
+  notes the published 24.0.2 image.
+- `docs/caddy.md`: validate a config with a new `log` file as the caddy user.
+- `docs/shopware/infrastructure.md`: live result of the SEC-30 plugin updates.
+
+### Fixed
+
+- `TODO.md`: the Paperless household papers item no longer waits on the Contabo 2FA, which is enabled.
+
 ## [1.92.2] - 2026-10-18
 
 ### Changed

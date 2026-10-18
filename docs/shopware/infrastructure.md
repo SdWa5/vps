@@ -240,3 +240,8 @@ packages alone and the audit found no advisory. The live order from maintenance 
 23 s on the mirror, with 5 s for the language pack and 5 s for the theme compile. SwagExtensionStore 7.0.0
 brings one migration, which sets `SwagExtensionStore.config.iframeUrl` to
 `https://sky-bridge-store.production.shopware.in`, the page the admin's extension store loads in a frame.
+
+Live on 2026-10-18 the shop was in maintenance from 03:41:53 to 03:43:08. The extra minute came from an
+FPM reload typed with an unanchored `pgrep`, the pitfall [plugins.md](plugins.md) describes, so the
+reload line is copied from step 5 rather than retyped. Afterwards the plugin list showed the four new
+versions, the log had no ERROR and the vendored audit found no advisory.

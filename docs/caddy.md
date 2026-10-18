@@ -73,6 +73,13 @@ systemctl reload caddy
 `caddy validate` warns that the input is not formatted. That is the file's space indentation and
 is harmless.
 
+**A config with a new `log` file is validated as the caddy user.** Run as root, `caddy validate` opens
+that file and creates it as root:root 600, so the reload that follows cannot open it and fails while the
+old config keeps running. That happened on 2026-10-17 at 23:44 with `/var/log/caddy/sdwa5-csp-report.log`,
+and removing the empty file let the reload through. For such a change, use
+`runuser -u caddy -- caddy validate --adapter caddyfile --config /opt/docker/Caddyfile`, which passed on
+2026-10-18 without touching the existing log.
+
 ## Hardening
 
 Each blocked path answers a flat `404` from Caddy and never reaches the container.

@@ -313,7 +313,7 @@ services:
   paperless_sdwa5_broker:
     # Exact tag. Celery's queue only, kept in memory without a volume, so a
     # restart loses at most the tasks still queued.
-    image: valkey/valkey:9.0-alpine
+    image: valkey/valkey:9.1-alpine
     container_name: paperless_sdwa5_broker
     restart: unless-stopped
     logging: *default-logging
@@ -388,7 +388,7 @@ services:
     security_opt: ["no-new-privileges:true"]
 
   paperless_home_broker:
-    image: valkey/valkey:9.0-alpine
+    image: valkey/valkey:9.1-alpine
     container_name: paperless_home_broker
     restart: unless-stopped
     logging: *default-logging

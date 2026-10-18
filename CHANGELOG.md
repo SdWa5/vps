@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.92.1] - 2026-10-18
+
+### Fixed
+
+- Dependabot compose updates: the Paperless and valkey images are written out on each service instead of a
+  YAML anchor, which Dependabot's updater cannot edit; tests keep each pair equal.
+
 ## [1.92.0] - 2026-10-18
 
 ### Changed

@@ -4,7 +4,8 @@
 version: 2
 updates:
   # Both compose files in the root, with their tag and tag@sha256 pins. Services on :latest are
-  # skipped, since there is no version to compare.
+  # skipped, since there is no version to compare. The updater edits the raw text, so every image
+  # is written out on its service rather than shared through a YAML anchor.
   - package-ecosystem: docker-compose
     directory: /
     schedule:

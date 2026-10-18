@@ -196,7 +196,7 @@ its own.
 | `dolibarr_db` and the project DBs | `mariadb:12.3` | Minor series. Patch updates inside 12.3 are safe and wanted; crossing a major version is the one-way door |
 | `paperless_sdwa5`, `paperless_home` | `ghcr.io/paperless-ngx/paperless-ngx:3.3.2@sha256:d232cba3…` | Exact, by tag and digest, the same pin on both services, which a test keeps equal. 3.3.2 of 2026-10-16 fixes GHSA-c8f3-pqr2-rr24. A minor runs forward-only migrations, so a bump goes through the dev mirror first, see [paperless.md](paperless.md#updates) |
 | `paperless_*_db` | `mariadb:12.3` | Same series as `dolibarr_db` |
-| `paperless_*_broker` | `valkey/valkey:9.0-alpine` | Minor series. A queue without a volume, so nothing persists across an update |
+| `paperless_*_broker` | `valkey/valkey:9.1-alpine` | Minor series. A queue without a volume, so nothing persists across an update. 9.0 to 9.1 on 2026-10-18 through Dependabot; 9.2-alpine was only 9.2.0-rc1 then |
 | `vaultwarden` | `vaultwarden/server:latest` | Deliberately unpinned. [`monitoring/vaultwarden-autoupdate.sh`](../monitoring/vaultwarden-autoupdate.sh) pulls it daily and verifies the result, and a pin would silently freeze security updates for a password vault. See [vaultwarden.md](vaultwarden.md) |
 | `restic` | `creativeprojects/resticprofile:0.33.1-amd64` | Exact. Used only for the restic, rclone, crond and flock it ships; the schedule and the run are [`restic/`](../restic/). `latest` is rebuilt weekly and would move restic and rclone on its own. Until 2026-10-15 this was `lobaro/restic-backup-docker:latest`, frozen since 2021-05-05 at restic 0.12.0. A bump is followed by the [restore drill](backup.md#restore-drill) |
 | `minecraft`, `ollama` | `:latest` | Profile-gated and not present on the host, so there is no running digest to pin to. For Minecraft the build is decided by the `VERSION` environment variable anyway |
@@ -213,7 +213,7 @@ place. The `:latest` services have no version to compare and are skipped. The te
 **No image is shared through a YAML anchor.** Dependabot's compose updater finds the image right after
 `image:` in the raw text, so `image: &name valkey/valkey:9.0-alpine` makes it raise "Expected content to
 change!" and fails the whole run. That is what failed the first two runs on 2026-10-18, read in
-dependabot-core's `build_old_declaration_regex`, since valkey 9.2-alpine exists. The Paperless and broker
+dependabot-core's `build_old_declaration_regex`, since a newer valkey tag existed. The Paperless and broker
 images are therefore written out on both services, and `tests/dependabot.bats` keeps each pair equal.
 
 **A merged proposal deploys nothing**, because production pulls by hand. A Shopware or Dolibarr pull

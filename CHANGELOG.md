@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.91.0] - 2026-10-18
+
+### Added
+
+- `.github/dependabot.yml`: weekly update proposals for the compose images and the workflow actions, no MariaDB
+  major versions.
+- `tests/dependabot.bats`.
+- `docs/maintenance.md` section "Update proposals".
+
+### Removed
+
+- TODO 6.1, the image update cadence; items 7 to 31 renumbered to 6 to 30.
+
 ## [1.90.0] - 2026-10-18
 
 ### Added

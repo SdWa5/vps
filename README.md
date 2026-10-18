@@ -73,6 +73,7 @@ See `docs/` for per-service documentation:
 - [Minecraft](docs/minecraft.md)
 - [Chimo Diazz](docs/chimodiazz.md)
 - [Maintenance (disk cleanup, log caps)](docs/maintenance.md)
+- [Image update proposals (Dependabot, weekly)](docs/maintenance.md#update-proposals)
 - [Monitoring (health checks, alerts, Vaultwarden auto-update)](docs/monitoring.md)
 - [SSH hardening (key-only access, fail2ban)](docs/ssh-hardening.md)
 

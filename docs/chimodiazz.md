@@ -237,7 +237,7 @@ The checkout is never edited by hand, which is what makes `git reset --hard` saf
 
 **The deploy runs no `composer install`**, so it can only build what is already in the checkout. A
 plugin that `chimodiazz/website` requires through composer, and a plugin bought in the Shopware
-store, both have to be installed on this host by hand today. That is item 8 in
+store, both have to be installed on this host by hand today. That is item 7 in
 [TODO.md](../TODO.md).
 
 The storefront serves `de-DE` by default since 2026-09-16, with `en-GB` reachable at
@@ -264,7 +264,7 @@ run the query here rather than a reason to publish 3306 or hand out an SSH accou
 no log that anything off this host can read, and it mails only `MONITOR_MAIL_TO`, which is the
 monitoring address of the whole host rather than his. So a push into `chimodiazz/website` is
 handed over and goes quiet, and neither he nor an agent of his can see which commit is checked
-out, whether the last `theme:compile` succeeded or why a rollback happened. That is item 9 in
+out, whether the last `theme:compile` succeeded or why a rollback happened. That is item 8 in
 [TODO.md](../TODO.md), where three ways to close it are weighed.
 
 **The MCP integration exists since 2026-09-16** and is what keeps a machine's access off a human's

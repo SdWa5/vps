@@ -24,10 +24,12 @@ setup() {
     ! grep -nE '^[[:space:]]+image:[[:space:]]*[&*]' "$REPO_ROOT"/docker-compose*.yml
 }
 
-@test "both Paperless instances and both brokers pin the same image" {
+@test "both Paperless instances, both brokers and both Dolibarr services pin the same image" {
     local file="$REPO_ROOT/docker-compose.yml"
     [ "$(grep -c 'image: ghcr.io/paperless-ngx/paperless-ngx:' "$file")" = 2 ]
     [ "$(grep 'image: ghcr.io/paperless-ngx/paperless-ngx:' "$file" | sort -u | wc -l)" = 1 ]
     [ "$(grep -c 'image: valkey/valkey:' "$file")" = 2 ]
     [ "$(grep 'image: valkey/valkey:' "$file" | sort -u | wc -l)" = 1 ]
+    [ "$(grep -c 'image: dolibarr/dolibarr:' "$file")" = 2 ]
+    [ "$(grep 'image: dolibarr/dolibarr:' "$file" | sort -u | wc -l)" = 1 ]
 }

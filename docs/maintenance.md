@@ -192,7 +192,7 @@ its own.
 | Service | Tag | Why |
 |---|---|---|
 | `shopware` | `dockware/shopware:6.7.15.1@sha256:1a4018ce…` | Exact, by tag and digest, because dockware rebuilds existing tags (6.7.15.1 was built on 2026-10-12). The `6.7-latest` series tag exists but rolls across minors, whose migrations run forward only. An update is a deliberate bump of the line after a rehearsal, see [Updating Shopware](shopware/infrastructure.md#updating-shopware). Chimo Diazz stays on 6.7.11.1 in `docker-compose.projects.yml` |
-| `dolibarr`, `dolibarr_cron` | `dolibarr/dolibarr:24.0.1` | Exact. The 24.0.2 image exists since 2026-10-17 and waits for the Dolibarr rehearsal. The migration from 23.0.4 passed on the dev mirror and in the isolated rehearsal before deployment |
+| `dolibarr`, `dolibarr_cron` | `dolibarr/dolibarr:24.0.2` | Exact. The isolated rehearsal takes its target from this pin, so a Dolibarr update starts by bumping it, see [Dolibarr 24.0.1 upgrade](#dolibarr-2401-upgrade) |
 | `dolibarr_db` and the project DBs | `mariadb:12.3` | Minor series. Patch updates inside 12.3 are safe and wanted; crossing a major version is the one-way door |
 | `paperless_sdwa5`, `paperless_home` | `ghcr.io/paperless-ngx/paperless-ngx:3.3.2@sha256:d232cba3…` | Exact, by tag and digest, the same pin on both services, which a test keeps equal. 3.3.2 of 2026-10-16 fixes GHSA-c8f3-pqr2-rr24. A minor runs forward-only migrations, so a bump goes through the dev mirror first, see [paperless.md](paperless.md#updates) |
 | `paperless_*_db` | `mariadb:12.3` | Same series as `dolibarr_db` |
@@ -410,6 +410,18 @@ The 24.0.1 image writes a full database dump to `documents/backup-before-upgrade
 Set it to 600 right after the upgrade. Once the upgrade has passed its gates, put it into an archive
 snapshot and delete it, because it sits in the live documents volume and the daily backups carry it
 along with every user's password hash.
+
+24.0.2 repeats these steps. It fixes missing access checks in the REST API (upstream #40522 to #40526:
+category link and unlink, contract, supplier invoice, BOM and intervention lines, invoice from
+contract). Since 1.93.0 `rehearse-upgrade.sh` reads its target from the `dolibarr` service's pin in
+`docker-compose.yml`, so bumping both pins is the whole preparation, and `DOLIBARR_TARGET_IMAGE` names
+another image for a trial. The rollback image is 24.0.1, and the preserve directory is
+`/var/tmp/dolibarr-24.0.2-preserve.*`. Its migration alters `llx_quickmemo_memo`, the table of the
+disabled core module Quick memo, which this instance does not have, so the gate accepts
+`DB_ERROR_NOSUCHTABLE` after an `ALTER TABLE` and nowhere else. On the dev mirror on 2026-10-18 the copy
+of the 03:39 archive migrated in 75 s and passed that gate, all nine BankSync v1.2.0 pages rendered
+without PHP messages, the PmTools v1.0.0 dictionary route answered, and the MCP server listed 43 tools
+including the ten `pm_*` ones.
 
 ### Establish the host recovery checkpoint
 

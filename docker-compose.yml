@@ -186,9 +186,9 @@ services:
     # Exact pin for the planned maintenance release. A Dolibarr minor
     # upgrade runs forward-only database migrations. Restore drills passed on
     # 2026-10-15, but an update remains a deliberate bump rather than whatever a
-    # pull happens to fetch. The `23` tag exists and would allow 23.x to move
+    # pull happens to fetch. The `24` tag exists and would allow 24.x to move
     # on its own, which is why it is not used.
-    image: dolibarr/dolibarr:24.0.1
+    image: dolibarr/dolibarr:24.0.2
     container_name: dolibarr
     restart: unless-stopped
     logging: *default-logging
@@ -243,9 +243,9 @@ services:
     # Exact pin for the planned maintenance release. A Dolibarr minor
     # upgrade runs forward-only database migrations. Restore drills passed on
     # 2026-10-15, but an update remains a deliberate bump rather than whatever a
-    # pull happens to fetch. The `23` tag exists and would allow 23.x to move
+    # pull happens to fetch. The `24` tag exists and would allow 24.x to move
     # on its own, which is why it is not used.
-    image: dolibarr/dolibarr:24.0.1
+    image: dolibarr/dolibarr:24.0.2
     container_name: dolibarr_cron
     restart: unless-stopped
     logging: *default-logging

@@ -3,14 +3,26 @@
 # The caller first creates a fresh full archive with database-backup.sh.
 # This script never stops, changes, or connects to the production database.
 # Its root-only evidence directory retains the source archive and private logs.
+# The target is the image docker-compose.yml pins for the dolibarr service, so bumping
+# the pin is the whole preparation. DOLIBARR_TARGET_IMAGE names another image instead.
 # Usage: bash tools/dolibarr/rehearse-upgrade.sh [--apply ARCHIVE]
 
 set -euo pipefail
 umask 077
 
 REPO_ROOT="${COMPOSE_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
-TARGET_IMAGE="dolibarr/dolibarr:24.0.1"
-TARGET_VERSION="24.0.1"
+
+# The image: line inside the dolibarr service block, unless DOLIBARR_TARGET_IMAGE overrides it.
+target_image() {
+    if [[ -n "${DOLIBARR_TARGET_IMAGE:-}" ]]; then
+        printf '%s\n' "$DOLIBARR_TARGET_IMAGE"
+        return
+    fi
+    sed -n '/^  dolibarr:$/,/^  [^ #]/s/^    image: *//p' "$REPO_ROOT/docker-compose.yml"
+}
+
+TARGET_IMAGE="$(target_image)"
+TARGET_VERSION="${TARGET_IMAGE##*:}"
 WORK=""
 APP=""
 DB=""
@@ -96,7 +108,7 @@ wait_for_application() {
 # A web health check can pass even when the entrypoint's migration failed.
 # Keep each independent gate so the offline tests can exercise false successes.
 verify_upgrade_evidence() {
-    local unexpected missing_fields
+    local unexpected missing_fields missing_tables
     [[ "$(cat "$WORK/version.after")" == "$TARGET_VERSION" ]] || return 1
     cmp -s "$WORK/counts.before" "$WORK/counts.after" || return 1
     grep -q 'Migration successful' "$WORK/application.log" || return 1
@@ -106,8 +118,14 @@ verify_upgrade_evidence() {
     # run_sql explicitly accepts duplicate objects/records and repeated DROP
     # operations. Syntax errors and other SQL failures remain fatal here.
     unexpected="$(grep -Eo 'DB_ERROR[A-Z0-9_]*|SQL_ERROR[A-Z0-9_]*' "$WORK/migration.log" \
-        | grep -Ev '^DB_ERROR_(COLUMN_ALREADY_EXISTS|TABLE_ALREADY_EXISTS|PRIMARY_KEY_ALREADY_EXISTS|KEY_NAME_ALREADY_EXISTS|RECORD_ALREADY_EXISTS|NOSUCHFIELD)$' || true)"
+        | grep -Ev '^DB_ERROR_(COLUMN_ALREADY_EXISTS|TABLE_ALREADY_EXISTS|PRIMARY_KEY_ALREADY_EXISTS|KEY_NAME_ALREADY_EXISTS|RECORD_ALREADY_EXISTS|NOSUCHFIELD|NOSUCHTABLE)$' || true)"
     [[ -z "$unexpected" ]] || return 1
+    # An ALTER TABLE on a missing table is accepted, because upstream scripts also alter the
+    # tables of core modules that may be disabled (24.0.2: llx_quickmemo_memo). Any other
+    # request that misses its table remains fatal.
+    missing_tables="$(awk '/Request [0-9]+ sql=/ { alter = /sql=.ALTER TABLE / }
+        /<!-- Result = DB_ERROR_NOSUCHTABLE -->/ && !alter { print }' "$WORK/migration.log")"
+    [[ -z "$missing_tables" ]] || return 1
     missing_fields="$(grep 'DB_ERROR_NOSUCHFIELD' "$WORK/migration.log" \
         | grep -Ev '<!-- Result = DB_ERROR_NOSUCHFIELD -->|DB_ERROR_NOSUCHFIELD Can.t DROP (COLUMN|INDEX|FOREIGN KEY)' || true)"
     [[ -z "$missing_fields" ]] || return 1
@@ -115,6 +133,8 @@ verify_upgrade_evidence() {
 }
 
 main() {
+    [[ "$TARGET_IMAGE" =~ ^[^[:space:]@]+:[0-9]+\.[0-9]+\.[0-9]+$ ]] \
+        || { fail "No exact Dolibarr target image: '$TARGET_IMAGE'."; return 1; }
     if [[ "${1:-}" != --apply ]]; then
         (( $# == 0 )) || [[ "$1" == --help && $# == 1 ]] || return 2
         printf 'Would rehearse %s with copied documents and a full ERP archive.\n' "$TARGET_IMAGE"

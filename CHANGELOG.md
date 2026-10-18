@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.93.0] - 2026-10-18
+
+### Changed
+
+- Dolibarr 24.0.1 to 24.0.2 for `dolibarr` and `dolibarr_cron`, for upstream's REST API access-check fixes.
+- `tools/dolibarr/rehearse-upgrade.sh` takes its target from the `dolibarr` service's pin in
+  `docker-compose.yml` instead of a hard-coded 24.0.1; `DOLIBARR_TARGET_IMAGE` overrides it, and a floating
+  target is refused.
+- The rehearsal's migration gate accepts `DB_ERROR_NOSUCHTABLE` after an `ALTER TABLE`, which 24.0.2 runs
+  on the table of the disabled Quick memo module; any other missing table stays fatal.
+- `tests/dependabot.bats` also keeps both Dolibarr services on the same image.
+
 ## [1.92.3] - 2026-10-18
 
 ### Changed

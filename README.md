@@ -206,6 +206,8 @@ Content-Security-Policy, see [docs/caddy.md](docs/caddy.md).
 
 Production runs Debian 13 since 2026-10-15. The compose files pin Dolibarr 24.0.2, rolled out through
 the [Dolibarr 24.0.1 upgrade](docs/maintenance.md#dolibarr-2401-upgrade) steps, which 24.0.2 repeats.
+The 2026-10-18 production acceptance includes the admin login, all nine BankSync pages and confirmed
+SMTP test delivery; the live record is in the same maintenance section.
 The inactive project definitions are updated without starting those services.
 
 ```bash

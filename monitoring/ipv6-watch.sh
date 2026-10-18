@@ -3,9 +3,9 @@
 # SdWa5 IPv6 reachability log (SEC-28).
 #
 # IPv6 on this host drops out for seconds to minutes and recovers on its own, while IPv4 and the
-# gateway's neighbour entry look fine (TODO.md #6.3). Contabo needs timestamps and a log before a
-# ticket makes sense, so this runs every minute from /etc/cron.d/ipv6-watch for about a day and
-# appends one line per run. It is temporary and is removed once the ticket is filed.
+# gateway's neighbour entry look fine (TODO.md #6.3). The temporary per-minute cron collection
+# ended on 2026-10-18; its result is in docs/monitoring.md. Keep this script for manual measurements,
+# setting IPV6_WATCH_LOG to a new evidence file. Each invocation appends one line.
 #
 # Each line: time, every v6 target, the gateway's neighbour state, the v4 control. A probe is the
 # round trip in ms of the first reply, or "fail". The gateway itself is not pinged, because neither

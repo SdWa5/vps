@@ -168,6 +168,11 @@ file nothing is pinged. `--dry-run` and `--test-mail` never ping.
 To rehearse it, comment out the line in `/etc/cron.d/vps-health` and wait for the alert mail, ca. 1 hour
 30 minutes after the last run.
 
+The rehearsal passed on 2026-10-17 (Europe/Berlin). After the last scheduled run at 18:17, the cron
+line was paused. healthchecks.io marked the check DOWN at 19:47:31 and sent the alert, whose receipt
+the user confirmed. The cron was restored at 19:48, the check returned UP and the recovery mail
+arrived. This verifies the external alert when the host stops sending pings.
+
 ### Reminder backoff
 
 An unchanged problem does not mail every day forever. The interval doubles from one day and caps at
@@ -467,19 +472,35 @@ with a default, listed in the script's header. The first live run on 2026-10-16 
 
 ## IPv6 reachability log
 
-[`ipv6-watch.sh`](../monitoring/ipv6-watch.sh) is temporary (SEC-28, TODO.md #6.3). It runs every
-minute from `/etc/cron.d/ipv6-watch` and appends one line to `/var/log/sdwa5-ipv6.log` with the round
-trip to two external v6 addresses, the neighbour state of `fe80::1` and an IPv4 control. A day of it
-goes into the Contabo ticket about the v6 dropouts, and afterwards the cron file and the log are
-removed again:
+The reviewed SEC-28 observation window spans 2026-10-17 18:10:01 to 2026-10-18 18:22:01
+Europe/Berlin. The review contains 1452 valid, ordered samples over 24 hours 12 minutes, without
+duplicate minutes. The single missing sample, 23:36 on 2026-10-17, matches the planned reboot
+(boot time 23:36:25).
 
-```bash
-rm /etc/cron.d/ipv6-watch
-```
+| Observation | Samples | Interpretation |
+|---|---:|---|
+| Both external IPv6 targets failed, IPv4 replied | 2 | 18:11 on 2026-10-17 with neighbour `PROBE`, during the initial single-request collection; 14:03 on 2026-10-18 with neighbour `REACHABLE`, after the two-request probe was deployed |
+| Only one IPv6 target failed | 11 | Target-specific loss; not evidence that all IPv6 connectivity failed |
+| IPv4 failed while both IPv6 targets replied | 4 | Separate control-target loss; not an IPv6 outage |
 
-The gateway is not pinged, because neither `fe80::1` nor the next hop answers echo requests even while
-v6 works. Each probe sends two requests, since a single one logged a false `fail` while neighbour
-discovery was in `PROBE`.
+The targets were Google `2001:4860:4860::8888` and Cloudflare `2606:4700:4700::1111`. They failed
+in 3 and 12 samples respectively. At 14:03 both failed while the IPv4 control replied in 3.69 ms;
+the Google target replied in the preceding and following minutes. Both IPv6 targets last replied
+together at 13:59 and next at 14:05. These samples do not establish a six-minute outage: several
+intervening samples reached Google, and the probes run sequentially once a minute.
+
+Failures occurred with `REACHABLE`, `DELAY` and `PROBE` neighbour states; there is no exclusive
+correlation with `PROBE`. The 14:03 observation, together with the earlier inbound and outbound
+measurements recorded in TODO #6.3, supports a Contabo support request. A private German draft and
+the raw evidence have been retained; submission remains with the operator.
+
+The temporary cron definition and its installation instruction are retired. After preserving the
+final log, remove `/etc/cron.d/ipv6-watch` and `/var/log/sdwa5-ipv6.log` on the host. The script
+[`ipv6-watch.sh`](../monitoring/ipv6-watch.sh) remains available for manual measurements with
+`IPV6_WATCH_LOG` pointing to a new evidence file. It records external IPv6 probes, the neighbour
+state of `fe80::1` and an IPv4 control. The gateway is not pinged, because neither `fe80::1` nor the
+next hop answers echo requests even while IPv6 works. Each probe sends two requests; the initial
+single-request startup failure is kept separate from the later two-request evidence.
 
 ## Installation
 
@@ -488,7 +509,6 @@ cd /opt/docker
 git pull --ff-only
 apt install sqlite3
 install -m 644 -o root -g root monitoring/cron.d/vps-health              /etc/cron.d/vps-health
-install -m 644 -o root -g root monitoring/cron.d/ipv6-watch              /etc/cron.d/ipv6-watch    # temporary, see above
 install -m 644 -o root -g root monitoring/cron.d/vaultwarden-db-backup   /etc/cron.d/vaultwarden-db-backup
 install -m 644 -o root -g root monitoring/cron.d/database-backup         /etc/cron.d/database-backup
 install -m 644 -o root -g root monitoring/cron.d/vaultwarden-autoupdate  /etc/cron.d/vaultwarden-autoupdate

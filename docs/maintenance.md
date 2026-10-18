@@ -423,6 +423,14 @@ of the 03:39 archive migrated in 75 s and passed that gate, all nine BankSync v1
 without PHP messages, the PmTools v1.0.0 dictionary route answered, and the MCP server listed 43 tools
 including the ten `pm_*` ones.
 
+The production upgrade passed on 2026-10-18. The ERP was unavailable from 04:56:31 to 04:59:15
+Europe/Berlin. Both services run 24.0.2; the migration, business-count, install-lock, REST and backup
+restore gates passed. The admin login and all nine BankSync pages subsequently returned HTTP 200
+without PHP errors. The user confirmed receipt of the SMTP test sent at 14:03, completing the
+email acceptance check. The cron key was rotated in 1.94.0 after transcript exposure, and the
+13:15 cron run authenticated. Since 1.94.1 Caddy returns 404 for the public cron path; scheduled jobs
+continue through `dolibarr_cron` on the command line.
+
 ### Establish the host recovery checkpoint
 
 Install the validated whole-host guard on the four public sites. Drain accepted requests and

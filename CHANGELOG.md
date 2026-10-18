@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.92.2] - 2026-10-18
+
+### Changed
+
+- valkey 9.0-alpine to 9.1-alpine for both Paperless brokers (Dependabot PR #2).
+- actions/checkout 5.1.0 to 7.0.1 in the workflow (Dependabot PR #1).
+
 ## [1.92.1] - 2026-10-18
 
 ### Fixed

@@ -138,6 +138,7 @@ copy with `url` and `password_dir` pointed there runs `setup.sh` and `visibility
 
 ## Updates
 
-Both instances share one image pin, `&paperless-image` in `docker-compose.yml`, by tag and digest. A
+Both instances pin the same image in `docker-compose.yml`, by tag and digest, written out on each
+service because Dependabot cannot edit a YAML anchor. `tests/dependabot.bats` keeps the two equal. A
 Paperless minor runs forward-only migrations, so a bump means reading the release notes, running the
 mirror against the new image first and taking a fresh dump.

@@ -194,7 +194,7 @@ its own.
 | `shopware` | `dockware/shopware:6.7.15.1@sha256:1a4018ce…` | Exact, by tag and digest, because dockware rebuilds existing tags (6.7.15.1 was built on 2026-10-12). The `6.7-latest` series tag exists but rolls across minors, whose migrations run forward only. An update is a deliberate bump of the line after a rehearsal, see [Updating Shopware](shopware/infrastructure.md#updating-shopware). Chimo Diazz stays on 6.7.11.1 in `docker-compose.projects.yml` |
 | `dolibarr`, `dolibarr_cron` | `dolibarr/dolibarr:24.0.1` | Exact. 24.0.1 is the newest published image on 2026-10-16, while 24.0.2 exists only as a source tag. The migration from 23.0.4 passed on the dev mirror and in the isolated rehearsal before deployment |
 | `dolibarr_db` and the project DBs | `mariadb:12.3` | Minor series. Patch updates inside 12.3 are safe and wanted; crossing a major version is the one-way door |
-| `paperless_sdwa5`, `paperless_home` | `ghcr.io/paperless-ngx/paperless-ngx:3.3.2@sha256:d232cba3…` | Exact, by tag and digest, one anchor for both. 3.3.2 of 2026-10-16 fixes GHSA-c8f3-pqr2-rr24. A minor runs forward-only migrations, so a bump goes through the dev mirror first, see [paperless.md](paperless.md#updates) |
+| `paperless_sdwa5`, `paperless_home` | `ghcr.io/paperless-ngx/paperless-ngx:3.3.2@sha256:d232cba3…` | Exact, by tag and digest, the same pin on both services, which a test keeps equal. 3.3.2 of 2026-10-16 fixes GHSA-c8f3-pqr2-rr24. A minor runs forward-only migrations, so a bump goes through the dev mirror first, see [paperless.md](paperless.md#updates) |
 | `paperless_*_db` | `mariadb:12.3` | Same series as `dolibarr_db` |
 | `paperless_*_broker` | `valkey/valkey:9.0-alpine` | Minor series. A queue without a volume, so nothing persists across an update |
 | `vaultwarden` | `vaultwarden/server:latest` | Deliberately unpinned. [`monitoring/vaultwarden-autoupdate.sh`](../monitoring/vaultwarden-autoupdate.sh) pulls it daily and verifies the result, and a pin would silently freeze security updates for a password vault. See [vaultwarden.md](vaultwarden.md) |
@@ -209,6 +209,12 @@ images and the workflow's actions, and it opens at most three image pull request
 requests at a time. A MariaDB major version is never proposed, because it upgrades the data files in
 place. The `:latest` services have no version to compare and are skipped. The test images in
 `tests/run.sh` are not covered and stay with [CI dependencies](#ci-dependencies).
+
+**No image is shared through a YAML anchor.** Dependabot's compose updater finds the image right after
+`image:` in the raw text, so `image: &name valkey/valkey:9.0-alpine` makes it raise "Expected content to
+change!" and fails the whole run. That is what failed the first two runs on 2026-10-18, read in
+dependabot-core's `build_old_declaration_regex`, since valkey 9.2-alpine exists. The Paperless and broker
+images are therefore written out on both services, and `tests/dependabot.bats` keeps each pair equal.
 
 **A merged proposal deploys nothing**, because production pulls by hand. A Shopware or Dolibarr pull
 request is a signal that a version exists. It goes through

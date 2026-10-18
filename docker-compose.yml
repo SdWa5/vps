@@ -313,7 +313,7 @@ services:
   paperless_sdwa5_broker:
     # Exact tag. Celery's queue only, kept in memory without a volume, so a
     # restart loses at most the tasks still queued.
-    image: &valkey-image valkey/valkey:9.0-alpine
+    image: valkey/valkey:9.0-alpine
     container_name: paperless_sdwa5_broker
     restart: unless-stopped
     logging: *default-logging
@@ -325,7 +325,7 @@ services:
     # Exact tag plus digest. 3.3.2 of 2026-10-16 fixes GHSA-c8f3-pqr2-rr24, and
     # a Paperless minor runs forward-only migrations, so an update is a
     # deliberate bump of this one anchor, which paperless_home reuses.
-    image: &paperless-image ghcr.io/paperless-ngx/paperless-ngx:3.3.2@sha256:d232cba37cc0bab0d6c6581ecd320383b7a6f49f33e0fd16adda4d009eb600dd
+    image: ghcr.io/paperless-ngx/paperless-ngx:3.3.2@sha256:d232cba37cc0bab0d6c6581ecd320383b7a6f49f33e0fd16adda4d009eb600dd
     container_name: paperless_sdwa5
     restart: unless-stopped
     logging: *default-logging
@@ -388,7 +388,7 @@ services:
     security_opt: ["no-new-privileges:true"]
 
   paperless_home_broker:
-    image: *valkey-image
+    image: valkey/valkey:9.0-alpine
     container_name: paperless_home_broker
     restart: unless-stopped
     logging: *default-logging
@@ -397,7 +397,7 @@ services:
     security_opt: ["no-new-privileges:true"]
 
   paperless_home:
-    image: *paperless-image
+    image: ghcr.io/paperless-ngx/paperless-ngx:3.3.2@sha256:d232cba37cc0bab0d6c6581ecd320383b7a6f49f33e0fd16adda4d009eb600dd
     container_name: paperless_home
     restart: unless-stopped
     logging: *default-logging

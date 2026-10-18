@@ -420,7 +420,7 @@ Module checkouts are bind-mounted into `custom/` as working trees, `banksync` fr
 `../sdwa5-banksync` and `pmtools` from `../sdwa5-pmtools` by default. `SDWA5_DOLIBARR_DEV_MODULES="banksync=… pmtools=…"` sets the list,
 and `SDWA5_DOLIBARR_DEV_IMAGE` runs a different application image, for example the next Dolibarr
 release before it is rehearsed. Every start removes `install.lock`, so a newer image migrates the copy. 23.0.4 to 24.0.1 migrated
-cleanly on 2026-10-16. Logins are the production ones. `dev-instance.sh api-key [LOGIN]` gives a
+cleanly on 2026-10-16, and 24.0.1 to 24.0.2 in 75 s on 2026-10-18. Logins are the production ones. `dev-instance.sh api-key [LOGIN]` gives a
 user, `admin` by default, an API key of the mirror's own in `~/.local/share/sdwa5-dolibarr-dev/api-key`,
 which is never the production token file. The scripts take it through their environment:
 

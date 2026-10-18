@@ -201,8 +201,8 @@ Content-Security-Policy, see [docs/caddy.md](docs/caddy.md).
 
 ## Tests
 
-Production runs Debian 13 since 2026-10-15. The compose files pin Dolibarr 24.0.1, rolled out through
-the [Dolibarr 24.0.1 upgrade](docs/maintenance.md#dolibarr-2401-upgrade) steps.
+Production runs Debian 13 since 2026-10-15. The compose files pin Dolibarr 24.0.2, rolled out through
+the [Dolibarr 24.0.1 upgrade](docs/maintenance.md#dolibarr-2401-upgrade) steps, which 24.0.2 repeats.
 The inactive project definitions are updated without starting those services.
 
 ```bash

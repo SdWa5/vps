@@ -13,7 +13,8 @@ setup() {
 }
 
 verify_fixture() {
-    run bash -c 'source "$REHEARSAL_SCRIPT"; WORK="$REHEARSAL_FIXTURE"; verify_upgrade_evidence'
+    run env DOLIBARR_TARGET_IMAGE=dolibarr/dolibarr:24.0.1 \
+        bash -c 'source "$REHEARSAL_SCRIPT"; WORK="$REHEARSAL_FIXTURE"; verify_upgrade_evidence'
 }
 
 @test "default invocation performs no Docker operation" {
@@ -109,4 +110,47 @@ verify_fixture() {
     run env PATH="$BATS_TEST_TMPDIR/bin:$PATH" bash -c 'source "$REHEARSAL_SCRIPT"; image_version sha256:x'
     [ "$status" -eq 0 ]
     [ "$output" = '23.0.4' ]
+}
+
+@test "the target is the image the compose file pins for the dolibarr service" {
+    mkdir "$BATS_TEST_TMPDIR/stack"
+    printf 'services:\n  dolibarr:\n    # comment\n    image: dolibarr/dolibarr:24.0.2\n  dolibarr_db:\n    image: mariadb:12.3\n' \
+        > "$BATS_TEST_TMPDIR/stack/docker-compose.yml"
+    run env COMPOSE_DIR="$BATS_TEST_TMPDIR/stack" bash -c 'source "$REHEARSAL_SCRIPT"; printf "%s %s\n" "$TARGET_IMAGE" "$TARGET_VERSION"'
+    [ "$status" -eq 0 ]
+    [ "$output" = 'dolibarr/dolibarr:24.0.2 24.0.2' ]
+}
+
+@test "DOLIBARR_TARGET_IMAGE overrides the compose pin" {
+    run env DOLIBARR_TARGET_IMAGE=dolibarr/dolibarr:25.0.0 bash -c 'source "$REHEARSAL_SCRIPT"; printf "%s %s\n" "$TARGET_IMAGE" "$TARGET_VERSION"'
+    [ "$status" -eq 0 ]
+    [ "$output" = 'dolibarr/dolibarr:25.0.0 25.0.0' ]
+}
+
+@test "the preview names the target image of the repository's compose file" {
+    run bash "$REHEARSAL_SCRIPT"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"Would rehearse $(sed -n '/^  dolibarr:$/,/^  [^ #]/s/^    image: *//p' "$BATS_TEST_DIRNAME/../docker-compose.yml") "* ]]
+}
+
+@test "a floating or missing target is refused before anything runs" {
+    run env DOLIBARR_TARGET_IMAGE=dolibarr/dolibarr:latest bash "$REHEARSAL_SCRIPT"
+    [ "$status" -ne 0 ]
+    [[ "$output" == *'No exact Dolibarr target image'* ]]
+}
+
+@test "an ALTER TABLE on a table of a disabled module does not fail the migration" {
+    printf '%s\n' "<td>Request 368 sql='ALTER TABLE llx_quickmemo_memo MODIFY COLUMN date_archived datetime DEFAULT NULL;'</td>" \
+        '<!-- Result = DB_ERROR_NOSUCHTABLE -->' \
+        "ERR SQL Error message: DB_ERROR_NOSUCHTABLE Table 'dolidb.llx_quickmemo_memo' doesn't exist" \
+        >> "$REHEARSAL_FIXTURE/migration.log"
+    verify_fixture
+    [ "$status" -eq 0 ]
+}
+
+@test "any other request on a missing table remains fatal" {
+    printf '%s\n' "<td>Request 12 sql='INSERT INTO llx_c_missing (code) VALUES (1);'</td>" \
+        '<!-- Result = DB_ERROR_NOSUCHTABLE -->' >> "$REHEARSAL_FIXTURE/migration.log"
+    verify_fixture
+    [ "$status" -ne 0 ]
 }

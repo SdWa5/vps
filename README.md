@@ -127,6 +127,9 @@ tools/dolibarr/deploy-module.sh banksync https://github.com/SdWa5/banksync.git v
 # Enable, disable or report a Dolibarr module through Setup -> Modules, dev mirror by default (see docs/dolibarr.md)
 tools/dolibarr/module-setup.sh status PmTools
 
+# Compare or write the Dolibarr cron key against a key file, dev mirror by default (see docs/dolibarr.md#rotating-the-cron-key)
+DOLIBARR_CRON_KEY_FILE=cron-key.new tools/dolibarr/cron-key-setup.sh check
+
 # Set up the Dolibarr MCP server and its service user, on the dev mirror by default (see docs/dolibarr.md)
 tools/dolibarr/mcp-setup.sh
 

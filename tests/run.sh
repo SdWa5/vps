@@ -44,6 +44,7 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt "$CI_SHELLCHECK_IMAGE" -x \
     restic/backup.sh \
     hardening/firewall/sdwa5-firewall.sh \
     hardening/dockware-boot-end.sh \
+    tools/dolibarr/cron-key-setup.sh \
     tools/dolibarr/deploy-module.sh \
     tools/dolibarr/dev-instance.sh \
     tools/dolibarr/lib.sh \

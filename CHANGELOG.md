@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.94.0] - 2026-10-18
+
+### Added
+
+- `tools/dolibarr/cron-key-setup.sh`: compares or writes Dolibarr's `CRON_KEY` constant against a key file
+  through the scheduled jobs setup page, without printing a key.
+- `docs/dolibarr.md`: rotating the cron key, what `public/cron/cron_run_jobs_by_url.php` is, and the key's
+  DEBUG line in `dolibarr.log`.
+
 ## [1.93.0] - 2026-10-18
 
 ### Changed

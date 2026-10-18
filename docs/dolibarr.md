@@ -48,9 +48,45 @@ still end up afterwards:
 - `/var/www/html/conf/conf.php` (400 `www-data`) holds the database password, written when the
   container is created.
 - `/etc/cron.d/dolibarr` (644) and the command line of `cron_run_jobs.php` hold the cron key.
+- `dolibarr-documents-data/dolibarr.log` (660 `admin`) holds it in the DEBUG line of the SQL that
+  writes the `CRON_KEY` constant, at the database init and at every rotation.
 
 `monitoring/security-recheck.sh` reports per container whether `docker inspect` or a process
 environment still carries a secret, by name only, see [monitoring.md](monitoring.md).
+
+### Rotating the cron key
+
+The cron key is also the password of `public/cron/cron_run_jobs_by_url.php`. That page lets an
+external HTTP scheduler run the scheduled jobs on hosting without a shell cron, and it answers on
+`erp.sdwa5.org` like every other public Dolibarr page. SdWa5 does not use it, because `dolibarr_cron`
+runs `cron_run_jobs.php` every five minutes. A leaked key therefore lets anyone trigger the jobs as
+the cron user, and it is rotated.
+
+The key lives in two places that must agree. `secrets/dolibarr_cron_key` reaches the cron line only
+when `dolibarr_cron` is created, and the `CRON_KEY` constant is written by the image only for an empty
+database. A new file alone therefore makes every run fail with `securitykey provided ... does not
+match`, a line that prints the first five characters of the key. `tools/dolibarr/cron-key-setup.sh`
+writes the constant through Setup → Modules → Scheduled jobs and confirms it with a fresh read. Its
+`check` compares without writing. Neither prints a key.
+
+```bash
+# On the host: a new key next to the old one
+cd /opt/docker && tools/secrets/write-secret-files.sh --dir secrets/rotate-cron-key dolibarr_cron_key=random
+# On the workstation: copy it into a private file and write it into the database
+umask 077; ssh root@sdwa5.org 'cat /opt/docker/secrets/rotate-cron-key/dolibarr_cron_key' > cron-key.new
+DOLIBARR_URL=https://erp.sdwa5.org DOLIBARR_CRON_KEY_FILE=cron-key.new \
+DOLIBARR_ADMIN_PASSWORD_FILE=<(rbw get <ERP admin item id> | tr -d '\n') \
+    tools/dolibarr/cron-key-setup.sh set
+# On the host: replace the file and recreate the cron container
+mv secrets/rotate-cron-key/dolibarr_cron_key secrets/dolibarr_cron_key && rmdir secrets/rotate-cron-key
+docker compose up -d --force-recreate --no-deps dolibarr_cron
+```
+
+The entrypoint writes `/etc/cron.d/dolibarr` ca. 30 seconds after the start. The next run is clean when
+`docker logs dolibarr_cron` shows no `does not match`. `dolibarr` keeps the old file until it is next
+recreated, which does no harm because it reads the key only for an empty database. The workstation
+copy is deleted afterwards. The key was rotated on 2026-10-18, after a crontab print had shown it in a
+session transcript.
 
 ## SdWa5 instance
 

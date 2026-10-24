@@ -173,6 +173,8 @@
        is still wanted is a check that alerts when a plugin lands in `custom/plugins/` through the
        admin's plugin manager instead, because that one is locked as a path and not reproducible
        (ca. 4 Stunden)
+   With #22 this would be settled by the image build, which runs `composer install` once per release
+   instead of on the live shop.
 8. **Chimo cannot see what his own deploy did.** Deployment is a pull from this side, so a push into
     `chimodiazz/website` is handed over and then goes quiet. `monitoring/chimodiazz-deploy.sh` runs
     every five minutes, writes no state file and no log that anything off this host can read, and its
@@ -261,6 +263,8 @@
     library at the theme's first update and run them for sdwa5.org as well. the script is not generalized as a
     whole, because its rollback runs `git reset --hard` on the whole checkout, and at `/opt/docker` that is
     every service in this repository
+    Possibly settled by #22, if its rollout runs Shopware's deployment helper (plugin update and theme
+    compile per release); to be checked when #22 is planned.
 12. **the share links in the Chimo Diazz offcanvas menu share the site root on every page.** measured on
     2026-10-06 on a subpage of chimodiazz.sdwa5.org, where the share aside linked the subpage and the
     offcanvas linked `https://chimodiazz.sdwa5.org/`. the offcanvas is rendered inside the ESI header
@@ -296,6 +300,7 @@
        defaults, while a zram-first setup usually runs a swappiness of ca. 100 to 180 and
        `page-cluster=0`, because readahead from compressed ram buys nothing. measure swap use and
        latency before and after rather than taking the values on trust
+    Measure again after #22, which drops dockware's bundled Apache, MySQL and MailCatcher.
 16. **`apt autoremove` from 20.10.2026,** after a few quiet days on Debian 13. Removes the old 6.1
     kernels and the leftover Bookworm libraries (ca. 10 Minuten)
 17. **FOSS Dolibarr module for ticket dependencies and merges** (priority medium,
@@ -331,6 +336,8 @@
     its image only from `docker-compose.yml`, so for this shop it needs `SDWA5_SHOPWARE_DEV_IMAGE`,
     `SDWA5_SHOPWARE_HTML` and `SDWA5_SHOPWARE_ARCHIVE` set as well, which is untested. The site comes from
     the private `chimodiazz/website`, so the new lock presumably has to land there and needs Chimo's side
+    Superseded if #22 lands first, since the production image covers both shops; the dockware route
+    stays the fallback.
 20. **Paperless AI features with a local model** ([docs/paperless.md](docs/paperless.md)) (ca. 4 Stunden).
     Paperless-ngx 3.x offers AI suggestions and a document chat behind `PAPERLESS_AI_ENABLED`, with Ollama
     as one of its backends, and both instances run with it off. `docker-compose.yml` already holds an
@@ -344,6 +351,7 @@
     confirmations and password resets land there. Give it the main shop's relay settings, check that the
     Workspace relay accepts its sender address, send a test mail, then set `SDWA5_STOP_MAILCATCHER=1` for
     it in `docker-compose.projects.yml` and adjust `CLOSED_LISTENERS` in `monitoring/security-recheck.sh`
+    With #22 the relay settings become a step of Chimo's return, and the MailCatcher fallback disappears.
 22. **a production image instead of dockware for both shops** (ca. 24 Stunden). dockware is a
     development image. `hardening/dockware-boot-end.sh` stops its sshd and MailCatcher on every boot, and
     Caddy blocks Adminer and the log viewer, but all of it is still installed, root and `dockware` keep
@@ -352,6 +360,8 @@
     `hardening/dockware-db-account.sh` has to keep for dockware's boot script. the image would also replace
     dockware's Composer 2.2.9 of 2022, which has no `audit` and misses the fixes for CVE-2024-24821 and
     CVE-2024-35241; the vendored Composer in `vendor/composer/composer` covers the audit until then
+    Would also settle #7, #19 and #21, item 8 of [docs/shopware/TODO.md](docs/shopware/TODO.md), and a
+    clean database stop at host shutdown, which dockware cannot give because it ignores SIGTERM.
 23. **send the monitoring mails to one mailbox instead of two** ([docs/monitoring.md](docs/monitoring.md)).
     `MONITOR_MAIL_TO` in the vps `.env` lists the private Gmail address and ripper@sdwa5.org, so every
     health, backup and vaultwarden mail lands twice in Stefan's two main inboxes
@@ -431,3 +441,6 @@
 31. **delete the evidence of the 2026-10-24 compromise check after 2026-11-23** (ca. 10 Minuten).
     `/root/forensics-20261024`, the `forensic/*:20261024` images and the Dolibarr 24.0.2 upgrade leftover
     `/var/tmp/archive-verify.calVSV` (94 MB, a copy of Dolibarr documents) on the host
+32. (proposal) **state the server-log retention on the Datenschutz page** (ca. 15 Minuten). Its section
+    "Speicherdauer" names no period for the IP address, browser and access times it lists under server logs.
+    The Caddy access logs keep 14 days, so the page would say "14 Tage".

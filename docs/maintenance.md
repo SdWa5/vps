@@ -551,8 +551,9 @@ APT sources, network/route settings, SSH configuration, GRUB configuration and f
 in the root-only preparation directory. Record all command output privately without printing
 credentials or full container environments.
 
-1. Finish Bookworm point updates. Add `/etc/cloud/cloud-init.disabled` before the upgraded boot.
-   Preserve the existing static netplan configuration, route and SSH hardening.
+1. Finish Bookworm point updates. cloud-init is purged since 2026-10-24, so check that
+   `dpkg-query -W cloud-init` finds nothing rather than relying on `/etc/cloud/cloud-init.disabled`,
+   which did not stop it on 2026-10-15. Preserve the existing static netplan configuration, route and SSH hardening.
 2. Remove `bookworm-backports` from the upgrade sources. Switch the remaining Debian suites and
    Docker's source to Trixie. Leave Caddy's upstream source unchanged. Keep backports disabled.
 3. Review APT simulations. Reject unexpected removals, replacement of Docker CE with `docker.io`,
@@ -568,8 +569,7 @@ credentials or full container environments.
    Bookworm `/etc/init.d/cloud-init`, an unmodified obsolete conffile, became a generated LSB unit
    that hung for 5 minutes; move it out of `/etc/init.d` and `systemctl daemon-reload`. A third one went
    unnoticed until 2026-10-16: cloud-init still ran and rewrote the netplan file without the static IPv6
-   address. Deploy `hardening/netplan/60-ipv6.yaml` and `hardening/cloud-init/` before the reboot, and
-   check `ip -6 addr show dev eth0 scope global` after it.
+   address. Deploy `hardening/netplan/60-ipv6.yaml` before the reboot, and check `ip -6 addr show dev eth0 scope global` after it.
 7. fail2ban 1.1 defaults to the nftables banaction on Debian 13. Deploy `hardening/fail2ban/jail.local`,
    which pins `iptables-multiport`, before judging the firewall check.
 
@@ -588,8 +588,8 @@ Reapply `sdwa5-firewall` after the networks exist and verify the fail2ban jump a
 
 Before allowing new writes, verify both shops with their correct Host headers, shop administration
 and health endpoints, Vaultwarden `/api/config`, ERP login/API and all SEC-04 denial probes. Repeat
-the SEC-03 isolation matrix. Verify Caddy, certificates/HTTP3, INPUT/DOCKER-USER rules, cloud-init
-state, unit states and the independent SSH login. Compare results to the pre-window baseline.
+the SEC-03 isolation matrix. Verify Caddy, certificates/HTTP3, INPUT/DOCKER-USER rules, that cloud-init
+is still absent, unit states and the independent SSH login. Compare results to the pre-window baseline.
 `monitoring/security-recheck.sh --restore` from a workstation covers the denial probes, the isolation
 matrix, HTTP/3, the firewall chains and the restore checks in one run, see
 [monitoring.md](monitoring.md#security-recheck).

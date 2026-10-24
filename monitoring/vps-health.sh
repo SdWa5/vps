@@ -25,6 +25,7 @@
 #   FIREWALL_PORTS                 tcp ports the INPUT chain must still accept
 #   REBOOT_REQUIRED_FILE, BOOT_DIR where apt flags a pending reboot, and the installed kernels
 #   HEALTHCHECKS_PING_FILE         file holding the healthchecks.io ping URL, pinged after every run
+#   ACCOUNT_CHECK                  the account and root-key check (account-check.sh next to this script)
 #   STATE_DIR, FAKE_NOW            test hooks
 
 set -uo pipefail
@@ -68,6 +69,9 @@ BOOT_DIR="${BOOT_DIR:-/boot}"
 # lives in secrets/ and travels to curl on stdin rather than in the argument list. Without the file
 # nothing is pinged.
 HEALTHCHECKS_PING_FILE="${HEALTHCHECKS_PING_FILE:-$COMPOSE_DIR/secrets/healthchecks-ping-url}"
+# Login accounts, sudoers and root's SSH keys (SEC-34, 2026-10-24). An added account, rule or key is
+# how a break-in stays, and the image's cloud-init account went unnoticed for nine days.
+ACCOUNT_CHECK="${ACCOUNT_CHECK:-$MONITORING_DIR/account-check.sh}"
 
 # **HOW OFTEN THE REMOTE IS ASKED, AND WHY IT IS NOT EVERY RUN.** This check costs an authenticated
 # network round trip, and what it watches changes rarely. Hourly would be 24 calls a day for a fact
@@ -634,6 +638,7 @@ run_checks() {
     emit http                  "$(check_http)"
     emit caddy                 "$(check_caddy)"
     emit firewall              "$(check_firewall)"
+    emit accounts              "$("$ACCOUNT_CHECK" 2>/dev/null)"
     emit vaultwarden_version   "$(check_vaultwarden_version)"
     emit git_remote            "$(check_git_remote)"
     emit reboot                "$(check_reboot)"

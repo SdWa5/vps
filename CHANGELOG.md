@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.96.0] - 2026-10-24
+
+### Added
+
+- `monitoring/account-check.sh`, run hourly by `vps-health.sh` as `accounts` and by
+  `security-recheck.sh --host` as `accounts:host`: login accounts, root-equivalent groups, sudoers rules
+  and includes, and root's SSH keys against a host-local fingerprint allowlist.
+- `AuthorizedKeysFile .ssh/authorized_keys` in `hardening/sshd_config.d/10-hardening.conf`.
+- TODO item 32, the server-log retention on the Datenschutz page.
+
+### Changed
+
+- `TODO.md` and `docs/shopware/TODO.md` record which items the production image of item 22 would settle.
+- The comments in `10-hardening.conf` and `hardening/netplan/60-ipv6.yaml` describe the host without
+  cloud-init; `docs/ssh-hardening.md`, `docs/maintenance.md` and `docs/monitoring.md` follow.
+- `tests/run.sh` installs `openssh-keygen` into the bats container and shellchecks `account-check.sh`.
+
+### Removed
+
+- `hardening/cloud-init/99-disable-network-config.cfg` and its `DEPLOYED_FILES` entry, since cloud-init
+  is purged from the host.
+
 ## [1.95.1] - 2026-10-24
 
 ### Added

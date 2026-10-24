@@ -3,8 +3,9 @@
 # Contabo assigns the address statically and serves neither DHCPv6 nor router advertisements, so the
 # dhcp6 that cloud-init writes into 50-cloud-init.yaml leaves eth0 with link-local only. That happened
 # at the first Debian 13 boot on 2026-10-15, when cloud-init rewrote 50-cloud-init.yaml and dropped the
-# static address. This file sorts after it, netplan merges the two by the eth0 key, and a later rewrite
-# of 50-cloud-init.yaml no longer removes IPv6. Apply with `netplan apply`.
+# static address. This file sorts after it and netplan merges the two by the eth0 key. cloud-init was
+# purged on 2026-10-24, so 50-cloud-init.yaml is now a static file that nothing rewrites, and this
+# file stays the source of the IPv6 address. Apply with `netplan apply`.
 network:
   version: 2
   ethernets:

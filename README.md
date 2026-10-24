@@ -195,8 +195,9 @@ corrupt or stale. See [docs/backup.md](docs/backup.md) for the isolated restore 
 
 SSH is key-only. `PasswordAuthentication no` and `PermitRootLogin prohibit-password`, applied
 2026-09-07 after 13,672 failed root logins in 24 hours, with fail2ban behind it. The deployable
-config lives in [`hardening/`](hardening/), together with the static IPv6 netplan file and the cloud-init
-setting that keeps cloud-init away from it.
+config lives in [`hardening/`](hardening/), together with the static IPv6 netplan file. cloud-init is
+purged since 2026-10-24, and `monitoring/account-check.sh` alerts hourly on a new login account, sudoers
+rule or root key ([docs/ssh-hardening.md](docs/ssh-hardening.md#login-accounts-and-roots-keys)).
 
 The Contabo console remains the fallback and is unaffected by any of it, because it goes through
 getty and PAM rather than sshd. See [docs/ssh-hardening.md](docs/ssh-hardening.md).

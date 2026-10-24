@@ -548,8 +548,9 @@ written by hand. Validate both with `iptables-restore --test` before trusting th
 
 Settled 2026-10-24 (SEC-34). The first Debian 13 boot on 2026-10-15 ran cloud-init although
 `/etc/cloud/cloud-init.disabled` existed. It created the image's default account `debian` with
-passwordless sudo, rewrote root's `authorized_keys` from the provider's metadata (same key, new
-mtime) and kept `50-cloud-init.conf`. The account had no key and a locked password, and nothing
+passwordless sudo, rewrote root's `authorized_keys` from the provider's metadata and kept
+`50-cloud-init.conf`. `/var/log/cloud-init.log` records that write at 19:16 with 134 bytes, the size of
+the one key in use today. The account had no key and a locked password, and nothing
 used it.
 
 What changed:
@@ -628,9 +629,10 @@ were never the fallback.
 
 **The panel's password reset is untested since cloud-init was purged on 2026-10-24.** Contabo does
 not document how the reset reaches the VM, and it reboots the server, so it may rely on cloud-init.
-The root password itself is unchanged and still works on the console. If the reset fails, the
-Contabo rescue system is the way in: boot it from the panel, mount the root partition and append a
-key to `/root/.ssh/authorized_keys`, then add its fingerprint to the allowlist above.
+Root still has a password (`passwd -S` shows `P`), but a console login with it is untested, see
+TODO #38. If the reset fails, the Contabo rescue system is the way in. Boot it from the panel, mount
+the root partition and append a key to `/root/.ssh/authorized_keys`, then add its fingerprint to the
+allowlist above.
 
 ## Installation
 

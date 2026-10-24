@@ -788,8 +788,9 @@ check_deployed_files() {
 # check_access_log SITE
 #
 # The site's Caddy access log carries no credential header and no unredacted token value. It
-# prints counts only, never a line of the log. Caddy writes "&" as "&" in JSON, so a value
-# also ends at a backslash.
+# prints counts only, never a line of the log. A value ends at "&", a quote or a space. Caddy 2.11
+# writes "&" as is (measured 2026-10-24); the backslash also ends a value, in case an encoder writes
+# it as "\u0026".
 check_access_log() {
     local file="$ACCESS_LOG_DIR/access-$1.log" lines headers tokens
 

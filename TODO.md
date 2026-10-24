@@ -443,4 +443,5 @@
     `/var/tmp/archive-verify.calVSV` (94 MB, a copy of Dolibarr documents) on the host
 32. (proposal) **state the server-log retention on the Datenschutz page** (ca. 15 Minuten). Its section
     "Speicherdauer" names no period for the IP address, browser and access times it lists under server logs.
-    The Caddy access logs keep 14 days, so the page would say "14 Tage".
+    The Caddy access logs `/var/log/caddy/access-*.log` keep 14 days since 1.97.0, so the page would say
+    "14 Tage".

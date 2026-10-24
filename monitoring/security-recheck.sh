@@ -39,6 +39,7 @@
 #   ISOLATION_APPS, ISOLATION_SOURCES, ISOLATION_EXPECT_OPEN
 #   GATEWAY_OPEN, GATEWAY_CLOSED, NO_EGRESS_CONTAINERS, EGRESS_PROBES, CLOSED_LISTENERS
 #   GIT_CHECKOUT_DIR, GIT_BRANCH, DEPLOYED_FILES, DATABASE_BACKUP_CONTAINERS
+#   ACCESS_LOG_DIR, ACCESS_LOG_SITES            Caddy's access logs and the sites that write one
 #   PORT_TIMEOUT, PROBE_TIMEOUT, HTTP_TIMEOUT, RESTORE_CHECK, ACCOUNT_CHECK, RECHECK_PROC_ROOT (test hooks)
 
 set -uo pipefail
@@ -97,6 +98,8 @@ DEPLOYED_FILES="${DEPLOYED_FILES:-Caddyfile:/etc/caddy/Caddyfile hardening/fail2
 DATABASE_BACKUP_CONTAINERS="${DATABASE_BACKUP_CONTAINERS:-dolibarr_db shopware paperless_sdwa5_db paperless_home_db}"
 RESTORE_CHECK="${RESTORE_CHECK:-$MONITORING_DIR/database-restore-check.sh}"
 ACCOUNT_CHECK="${ACCOUNT_CHECK:-$MONITORING_DIR/account-check.sh}"
+ACCESS_LOG_DIR="${ACCESS_LOG_DIR:-/var/log/caddy}"
+ACCESS_LOG_SITES="${ACCESS_LOG_SITES:-sdwa5.org vault.sdwa5.org erp.sdwa5.org paper.sdwa5.org paper.ripper.sdwa5.org chimodiazz.sdwa5.org}"
 
 PORT_TIMEOUT="${PORT_TIMEOUT:-3}"
 PROBE_TIMEOUT="${PROBE_TIMEOUT:-2}"
@@ -782,6 +785,30 @@ check_deployed_files() {
     fi
 }
 
+# check_access_log SITE
+#
+# The site's Caddy access log carries no credential header and no unredacted token value. It
+# prints counts only, never a line of the log. Caddy writes "&" as "&" in JSON, so a value
+# also ends at a backslash.
+check_access_log() {
+    local file="$ACCESS_LOG_DIR/access-$1.log" lines headers tokens
+
+    if [[ ! -r "$file" ]]; then
+        printf 'WARN\tno access log at %s\n' "$file"
+        return
+    fi
+    lines="$(wc -l < "$file")"
+    headers="$(grep -cE '"(Cookie|Authorization|Proxy-Authorization|Referer|Set-Cookie)":' "$file")"
+    tokens="$(grep -oiE '(\?|&|\\u0026)(access_token|token|hash|securitykey|api_key|dolapikey|passworduidhash|em)=[^&\\" ]*' "$file" | grep -vc '=REDACTED$')"
+    if (( headers > 0 )); then
+        printf 'CRIT\t%s line(s) carry a credential header\n' "$headers"
+    elif (( tokens > 0 )); then
+        printf 'CRIT\t%s unredacted token value(s)\n' "$tokens"
+    else
+        printf 'OK\t%s line(s), no credential header or token value\n' "$lines"
+    fi
+}
+
 check_restore() {
     local container="$1" out
 
@@ -793,7 +820,7 @@ check_restore() {
 }
 
 run_host() {
-    local restore="$1" source container entry
+    local restore="$1" source container entry site
 
     emit "firewall:v4" "$(check_firewall_family iptables)"
     emit "firewall:v6" "$(check_firewall_family ip6tables)"
@@ -814,6 +841,9 @@ run_host() {
     emit "revision:$GIT_BRANCH" "$(check_revision)"
     emit "deployed:files" "$(check_deployed_files)"
     emit "accounts:host" "$("$ACCOUNT_CHECK" 2>/dev/null)"
+    for site in $ACCESS_LOG_SITES; do
+        emit "logs:$site" "$(check_access_log "$site")"
+    done
     if (( restore )); then
         for container in $DATABASE_BACKUP_CONTAINERS; do
             emit "restore:$container" "$(check_restore "$container")"

@@ -204,7 +204,8 @@ getty and PAM rather than sshd. See [docs/ssh-hardening.md](docs/ssh-hardening.m
 
 Every container except the two dockware shops runs with `no-new-privileges` and without `NET_RAW`, see
 [docs/infrastructure.md](docs/infrastructure.md). The storefront of sdwa5.org sends a report-only
-Content-Security-Policy, see [docs/caddy.md](docs/caddy.md).
+Content-Security-Policy, see [docs/caddy.md](docs/caddy.md). Every site writes a JSON access log without
+cookies, credentials or token values, kept 14 days, see [docs/caddy.md](docs/caddy.md#access-logs).
 
 ## Tests
 

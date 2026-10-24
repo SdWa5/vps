@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.97.0] - 2026-10-24
+
+### Added
+
+- A JSON access log per site, `/var/log/caddy/access-<site>.log`, rolled daily and kept 14 days, without
+  cookies, credentials, the referrer and token values.
+- The `logs:<site>` probe of `security-recheck.sh --host`, configured by `ACCESS_LOG_DIR` and
+  `ACCESS_LOG_SITES`.
+
+### Changed
+
+- CSP reports of sdwa5.org go through the named logger `csp_report` instead of `log_skip`.
+
 ## [1.96.0] - 2026-10-24
 
 ### Added

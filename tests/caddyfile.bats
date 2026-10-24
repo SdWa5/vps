@@ -27,7 +27,9 @@ site_block() {
     local block
     block="$(site_block https://sdwa5.org)"
     grep -q 'respond 204' <<<"$block"
-    grep -q 'log_skip @not_csp_report' <<<"$block"
+    grep -q 'log_name csp_report$' <<<"$block"
+    grep -q 'log csp_report {$' <<<"$block"
+    grep -q 'no_hostname$' <<<"$block"
     grep -q 'request>remote_ip delete' <<<"$block"
     grep -q 'request>client_ip delete' <<<"$block"
     grep -q 'request>headers>Cookie delete' <<<"$block"
@@ -39,4 +41,25 @@ site_block() {
     grep -q '@blocked path /api/index.php/explorer /api/index.php/explorer/\* /public/cron /public/cron/\*$' <<<"$block"
     [ "$(grep -A1 'handle @blocked {' <<<"$block" | tail -n 1 | tr -s ' ')" = ' respond "Not Found" 404' ]
     [ "$(grep -n 'handle @blocked' <<<"$block" | cut -d: -f1)" -lt "$(grep -n 'reverse_proxy' <<<"$block" | cut -d: -f1)" ]
+}
+
+@test "every site imports the access log under its own name" {
+    local pair block
+    for pair in https://sdwa5.org:sdwa5.org vault.sdwa5.org:vault.sdwa5.org erp.sdwa5.org:erp.sdwa5.org \
+        paper.sdwa5.org:paper.sdwa5.org paper.ripper.sdwa5.org:paper.ripper.sdwa5.org \
+        chimodiazz.sdwa5.org:chimodiazz.sdwa5.org; do
+        block="$(site_block "${pair%:*}")"
+        grep -q "import access_log ${pair##*:}\$" <<<"$block" || { echo "no access log in ${pair%:*}"; return 1; }
+    done
+}
+
+@test "the access log drops credentials and the referrer and redacts token values" {
+    local field
+    for field in 'request>headers>Cookie' 'request>headers>Authorization' 'request>headers>Proxy-Authorization' \
+        'request>headers>Referer' 'request>headers>Dolapikey' 'request>headers>Sw-Context-Token' 'resp_headers>Set-Cookie'; do
+        grep -qF "$field delete" "$REPO_ROOT/Caddyfile" || { echo "$field not deleted"; return 1; }
+    done
+    [ "$(grep -cF '"${1}${2}REDACTED"' "$REPO_ROOT/Caddyfile")" -eq 2 ]
+    grep -q 'request>uri regexp ' "$REPO_ROOT/Caddyfile"
+    grep -q 'resp_headers>Location regexp ' "$REPO_ROOT/Caddyfile"
 }

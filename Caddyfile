@@ -39,6 +39,36 @@
     }
 }
 
+# One JSON access log per site, /var/log/caddy/access-<site>.log, rolled daily
+# and kept 14 days (docs/caddy.md#access-logs). Client address, user agent and
+# times stay, because an incident check needs them; the Datenschutz page names
+# them as server-log data. Cookies, credentials, the referrer and token values
+# in the URI and in redirects are removed before a line is written. A new log
+# file means validating as the caddy user first, see docs/caddy.md.
+(access_log) {
+    log {
+        output file /var/log/caddy/access-{args[0]}.log {
+            roll_interval 24h
+            roll_keep 30
+            roll_keep_for 336h
+        }
+        format filter {
+            wrap json
+            fields {
+                request>headers>Cookie delete
+                request>headers>Authorization delete
+                request>headers>Proxy-Authorization delete
+                request>headers>Referer delete
+                request>headers>Dolapikey delete
+                request>headers>Sw-Context-Token delete
+                resp_headers>Set-Cookie delete
+                request>uri regexp "(?i)(/share/)[^/?]+|([?&](?:access_token|token|hash|securitykey|api_key|dolapikey|passworduidhash|em)=)[^&]*" "${1}${2}REDACTED"
+                resp_headers>Location regexp "(?i)(/share/)[^/?]+|([?&](?:access_token|token|hash|securitykey|api_key|dolapikey|passworduidhash|em)=)[^&]*" "${1}${2}REDACTED"
+            }
+        }
+    }
+}
+
 # Main domain - Shopware
 https://sdwa5.org {
     # First-visit browser-language redirect: German browsers land on /de.
@@ -56,6 +86,7 @@ https://sdwa5.org {
 
     import block_dockware_tools
     import hide_server_headers
+    import access_log sdwa5.org
 
     # Content-Security-Policy for the storefront, report-only first, see
     # docs/caddy.md. Shopware's storefront template sends none, while the admin
@@ -67,18 +98,18 @@ https://sdwa5.org {
     header @storefront Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; report-uri /csp-report"
 
     # Browsers POST their violation reports here. Caddy answers them itself and
-    # logs only these requests, without the client address. The report body,
-    # which names the page and the blocked source, is not in the log.
+    # writes them only to their own log, without the client address; they do not
+    # reach the site's access log. The report body, which names the page and the
+    # blocked source, is not logged.
     @csp_report {
         method POST
         path /csp-report
     }
     handle @csp_report {
+        log_name csp_report
         respond 204
     }
-    @not_csp_report not path /csp-report
-    log_skip @not_csp_report
-    log {
+    log csp_report {
         output file /var/log/caddy/sdwa5-csp-report.log {
             roll_size 1MiB
             roll_keep 2
@@ -91,6 +122,7 @@ https://sdwa5.org {
                 request>headers>Cookie delete
             }
         }
+        no_hostname
     }
 
     handle {
@@ -111,6 +143,7 @@ https://sdwa5.org {
 # 404 costs nothing. The upstream sends no HSTS of its own, unlike Shopware.
 vault.sdwa5.org {
     import hide_server_headers
+    import access_log vault.sdwa5.org
     header Strict-Transport-Security "max-age=31536000"
 
     @admin path /admin /admin/*
@@ -131,6 +164,7 @@ vault.sdwa5.org {
 # instead. See docs/dolibarr.md.
 erp.sdwa5.org {
     import hide_server_headers
+    import access_log erp.sdwa5.org
     header Strict-Transport-Security "max-age=31536000"
 
     @blocked path /api/index.php/explorer /api/index.php/explorer/* /public/cron /public/cron/*
@@ -171,10 +205,12 @@ erp.sdwa5.org {
 }
 
 paper.sdwa5.org {
+    import access_log paper.sdwa5.org
     import paperless localhost:8006
 }
 
 paper.ripper.sdwa5.org {
+    import access_log paper.ripper.sdwa5.org
     import paperless localhost:8007
 }
 
@@ -196,6 +232,7 @@ paper.ripper.sdwa5.org {
 chimodiazz.sdwa5.org {
     import block_dockware_tools
     import hide_server_headers
+    import access_log chimodiazz.sdwa5.org
 
     handle {
         root * /opt/docker/chimodiazz-placeholder

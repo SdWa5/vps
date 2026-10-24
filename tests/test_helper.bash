@@ -529,6 +529,12 @@ recheck_setup() {
     cp "$GIT_CHECKOUT_DIR/etc/a.conf" "$GIT_CHECKOUT_DIR/etc/b.conf" "$BATS_TEST_TMPDIR/deployed/"
     export DEPLOYED_FILES="etc/a.conf:$BATS_TEST_TMPDIR/deployed/a.conf etc/b.conf:$BATS_TEST_TMPDIR/deployed/b.conf"
     make_account_etc "$BATS_TEST_TMPDIR/etc"
+    export ACCESS_LOG_DIR="$BATS_TEST_TMPDIR/caddy"
+    mkdir -p "$ACCESS_LOG_DIR"
+    local site
+    for site in sdwa5.org vault.sdwa5.org erp.sdwa5.org paper.sdwa5.org paper.ripper.sdwa5.org chimodiazz.sdwa5.org; do
+        printf '%s\n' '{"request":{"uri":"/?page=2","headers":{"User-Agent":["t"]}},"status":200}' > "$ACCESS_LOG_DIR/access-$site.log"
+    done
 
     set_firewall_healthy
     export STUB_IPT_V6='-P INPUT DROP

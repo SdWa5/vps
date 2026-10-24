@@ -102,8 +102,9 @@ while the admin sends Shopware's enforcing one, which Caddy leaves alone. The po
 itself, plus `data:` for images and fonts. `'unsafe-inline'` stays for scripts and styles, because each page
 carries inline scripts without a nonce, so its gain is `object-src`, `base-uri`, `form-action`,
 `frame-ancestors` and foreign script hosts, not inline XSS. Browsers report violations to `POST /csp-report`,
-which Caddy answers itself with `204` and logs to `/var/log/caddy/sdwa5-csp-report.log` without the client
-address and cookies. That log holds only these requests, and it does not contain the report body, so a report
+which Caddy answers itself with `204` and logs through the named logger `csp_report` (`log_name`) to
+`/var/log/caddy/sdwa5-csp-report.log` without the client address and cookies. These requests do not reach the
+site's access log. The CSP log holds only them, and it does not contain the report body, so a report
 shows that a violation happened and in which browser, not which page or source. Count them with
 `wc -l /var/log/caddy/sdwa5-csp-report.log`. Report-only started on 2026-10-18, and switching to the
 enforcing `Content-Security-Policy` header is TODO #30.
@@ -113,6 +114,33 @@ HSTS is set by Caddy for vault, erp and both Paperless sites with `max-age=31536
 
 `monitoring/security-recheck.sh --external` checks the blocked paths with their bypass variants, the
 headers and HSTS, see [monitoring.md](monitoring.md#security-recheck).
+
+## Access logs
+
+Every site writes a JSON access log through the `access_log` snippet, to
+`/var/log/caddy/access-<site>.log` for `sdwa5.org`, `vault.sdwa5.org`, `erp.sdwa5.org`, `paper.sdwa5.org`,
+`paper.ripper.sdwa5.org` and `chimodiazz.sdwa5.org`. Caddy rolls each file daily and deletes rolled files
+after 14 days (`roll_keep_for 336h`). The files are mode 600 and owned by `caddy`.
+
+A line keeps the time, client address, method, host, URI, user agent, status, size and duration, because an
+incident check needs them to tie a request to a client. Before the line is written, Caddy removes the
+`Cookie`, `Authorization`, `Proxy-Authorization`, `Referer`, `Dolapikey` and `Sw-Context-Token` request
+headers and the `Set-Cookie` response header. It also replaces Paperless share slugs and the values of token
+parameters (`token`, `access_token`, `hash`, `securitykey`, `api_key`, `dolapikey`, `passworduidhash`, `em`)
+with `REDACTED`, in the URI and in a `Location` redirect. `security-recheck.sh --host` checks every file for
+a leftover credential header or token value as `logs:<site>`.
+
+CSP reports go only to their own log, see [Hardening](#hardening).
+
+The host has no `jq`, so read the files with grep or Python:
+
+```bash
+grep -c '"status":5' /var/log/caddy/access-sdwa5.org.log
+python3 -c 'import json,sys; [print(j["ts"], j["request"]["client_ip"], j["status"], j["request"]["uri"]) for j in map(json.loads, sys.stdin)]' < /var/log/caddy/access-sdwa5.org.log
+```
+
+A new site or a renamed log file is validated as the caddy user before the reload, see
+[Caddyfile](#caddyfile).
 
 ## Browser-language redirect (Shopware /de)
 

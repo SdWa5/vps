@@ -436,6 +436,7 @@ status is 1 with any CRIT, 1 with any WARN under `--strict`, 2 for a usage error
 | `revision` | `/opt/docker` HEAD equals `origin/main`, no tracked file modified | it differs, a tracked file is modified, or origin is unreachable | not a checkout |
 | `deployed` | the Caddyfile, jail.local, sshd drop-in, firewall script and unit and the netplan file under `/etc` equal the checkout | one differs or is missing | |
 | `accounts` | `account-check.sh` reports OK, as the health check's `accounts` row | no allowlist or an unreadable file | an unexpected account, group member, sudoers line or root key |
+| `logs` | per site, `/var/log/caddy/access-<site>.log` holds no credential header and no unredacted token value; only counts are printed | the file is missing | a `Cookie`, `Authorization`, `Proxy-Authorization`, `Referer` or `Set-Cookie` field, or a token value other than `REDACTED` |
 | `env` | per container of `ISOLATION_APPS`: no secret value in `docker inspect`; names a process environment still carries are listed in the message | a secret value in `docker inspect`, or the process environments cannot be read | |
 | `listeners` | neither `shopware` (22, 1025, 1080) nor `chimodiazz_shopware` (22) listens on a port its boot hook closes | one of them listens | |
 | `restore` | `database-restore-check.sh` passes for each database | | it fails |
@@ -551,7 +552,8 @@ timestamps the scripts read out of the restic log.
 `nc`, `ssh`), modelled on the measured state of 2026-10-15, because the shared stubs model other scripts.
 `tests/account-check.bats` and every suite that runs the account check read a fixture `/etc` and root
 key file from `make_account_etc` in `tests/test_helper.bash`, since the bats container's own `/etc`
-would not pass; `tests/run.sh` adds `openssh-keygen` for the fingerprints.
+would not pass; `tests/run.sh` adds `openssh-keygen` for the fingerprints. The recheck suite also seeds one
+clean access log per site under `ACCESS_LOG_DIR`.
 
 ## Limitations
 

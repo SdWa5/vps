@@ -302,7 +302,9 @@
        latency before and after rather than taking the values on trust
     Measure again after #22, which drops dockware's bundled Apache, MySQL and MailCatcher.
 16. **`apt autoremove` from 20.10.2026,** after a few quiet days on Debian 13. Removes the old 6.1
-    kernels and the leftover Bookworm libraries (ca. 10 Minuten)
+    kernels and the leftover Bookworm libraries. Measured 2026-10-24, the simulation removes 50 packages,
+    now also the Python libraries cloud-init left behind, and none of `python3`, `netplan.io`,
+    `openssh-server`, `sudo` or `cron` (ca. 10 Minuten)
 17. **FOSS Dolibarr module for ticket dependencies and merges** (priority medium,
     [docs/dolibarr.md](docs/dolibarr.md#projects-tasks-and-tickets)). This becomes phase 3b of the
     PmTools module ([SdWa5/dolibarr-pmtools](https://github.com/SdWa5/dolibarr-pmtools)), live on
@@ -445,3 +447,37 @@
     "Speicherdauer" names no period for the IP address, browser and access times it lists under server logs.
     The Caddy access logs `/var/log/caddy/access-*.log` keep 14 days since 1.97.0, so the page would say
     "14 Tage".
+33. (proposal) **sshd: `AllowUsers root` and an hourly check of the effective settings**
+    ([docs/ssh-hardening.md](docs/ssh-hardening.md#login-accounts-and-roots-keys)). sshd takes a key for any
+    account, and a `nologin` shell does not stop `ssh -N` port forwarding, which stays on for root's
+    Vaultwarden tunnel. Today only root has a key file, and the account check watches only root's (measured
+    2026-10-24). `AllowUsers root` in `10-hardening.conf` would close the other accounts. The recheck compares
+    only that drop-in with the checkout, so a second drop-in or an edit to `sshd_config` could still add a key
+    source such as `AuthorizedKeysCommand`, `TrustedUserCAKeys` or `AuthorizedPrincipalsFile`. The hourly part
+    would read `sshd -T` and be CRIT on any of those, on password or keyboard-interactive login, and on a file
+    in `sshd_config.d` other than `10-hardening.conf` (ca. 2 Stunden)
+34. (proposal) **count primary groups in the account check** ([monitoring/account-check.sh](monitoring/account-check.sh)).
+    The check reads only the member lists in `/etc/group`, while an account whose `/etc/passwd` group is
+    `sudo` or `docker` is just as much a member. The check would compare the group ids too. `admin` (uid
+    1000) has a private group of the same name, which is on the list of root-equivalent groups, so `admin`
+    would leave that list. Debian's sudoers grants nothing to `%admin`, and a rule for it is already CRIT
+    (ca. 45 Minuten)
+35. (proposal) **a package integrity check** ([docs/monitoring.md](docs/monitoring.md)). `dpkg --verify` finds no
+    changed file outside the config files today (measured 2026-10-24). A run in `vps-health.sh` that is CRIT on
+    a changed package file would catch a replaced `sshd`, `sudo` or library, which no check covers now. Root can
+    rewrite dpkg's checksums too, so it catches careless or partial tampering, not a full root compromise. Its
+    run time decides between a daily and an hourly run (ca. 1 Stunde 30 Minuten)
+36. (proposal) **review the access-log redaction from 2026-10-31** ([docs/caddy.md](docs/caddy.md#access-logs)).
+    In the first hour only scanner parameters appeared, so the redacted names come from the applications' known
+    links, not from traffic. The pattern matches exact names, so a name such as `_sw_payment_token` or
+    `securekey` would pass unredacted, and so would a token percent-encoded inside a `next=` target. After a
+    week, list the query parameter names per site, names and counts only, then add the secret ones to the
+    `access_log` snippet and to the `logs:` probe (ca. 1 Stunde)
+37. (proposal) **one site list for the access-log probe** ([tests/caddyfile.bats](tests/caddyfile.bats)). The
+    sites live in the Caddyfile's `import access_log` lines and again in `ACCESS_LOG_SITES` of
+    `security-recheck.sh`, so a new site without the second edit gets no `logs:` probe, and nothing says so. A
+    bats test that compares the two lists would fail CI instead (ca. 20 Minuten)
+38. (proposal) **test the console login with root's password once**
+    ([docs/ssh-hardening.md](docs/ssh-hardening.md#login-accounts-and-roots-keys)). Root has a password
+    (`passwd -S` shows `P`), but whether it logs in on the Contabo VNC console is untested, and that console is
+    the way back after a lost key. It needs the password from the vault and the Contabo panel (ca. 15 Minuten)

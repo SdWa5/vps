@@ -355,12 +355,12 @@ setup() {
 }
 
 @test "an unredacted token in an access log is CRIT, a redacted one is OK" {
-    printf '%s\n' '{"request":{"uri":"/x?token=REDACTED\u0026page=2"},"status":200}' \
+    printf '%s\n' '{"request":{"uri":"/x?token=REDACTED&page=2"},"status":200}' \
         >> "$ACCESS_LOG_DIR/access-paper.sdwa5.org.log"
     recheck --host
     [ "$(recheck_status logs:paper.sdwa5.org)" = OK ]
 
-    printf '%s\n' '{"request":{"uri":"/x?page=1\u0026token=abc"},"status":200}' \
+    printf '%s\n' '{"request":{"uri":"/x?page=1&token=abc"},"status":200}' \
         >> "$ACCESS_LOG_DIR/access-paper.sdwa5.org.log"
     recheck --host
     [ "$(recheck_status logs:paper.sdwa5.org)" = CRIT ]

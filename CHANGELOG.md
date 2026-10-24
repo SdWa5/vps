@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.97.1] - 2026-10-24
+
+### Added
+
+- TODO items 33 to 38 from the review of 1.96.0 and 1.97.0.
+
+### Changed
+
+- TODO item 16 records the measured autoremove candidates.
+
+### Fixed
+
+- The garbled `check_access_log` comment on how Caddy writes `&`; its tests use the measured form.
+- `docs/ssh-hardening.md` states the measured cloud-init key write instead of an unmeasured key match, and
+  no longer calls the console login tested.
+
 ## [1.97.0] - 2026-10-24
 
 ### Added

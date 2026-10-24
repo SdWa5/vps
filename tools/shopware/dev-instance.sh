@@ -36,6 +36,8 @@
 #   SDWA5_SHOPWARE_DEV_SERVICE   compose service whose image is mirrored, default shopware
 #   SDWA5_SHOPWARE_DEV_IMAGE     application image, default the one that service pins,
 #                                set it to rehearse an update
+#   SDWA5_SHOPWARE_DEV_PHP       PHP version dockware switches to at boot, such as 8.5,
+#                                default the service's PHP_VERSION, empty for the image's
 #   SDWA5_SHOPWARE_DEV_DIR       data directory, default ~/.local/share/sdwa5-<service>-dev
 #   SDWA5_SHOPWARE_DEV_PORT      local port, default 8090
 #   SDWA5_SHOPWARE_SSH           production host, default root@sdwa5.org
@@ -68,7 +70,7 @@ PROXY_IMAGE="alpine/socat:1.8.1.1"
 DATABASE_URL="mysql://root:root@127.0.0.1:3306"
 LOCAL_URL="http://localhost:$DEV_PORT"
 
-usage() { sed -n '3,44p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '3,46p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
 die() { printf 'dev-instance.sh: %s\n' "$*" >&2; exit 1; }
 
 # The image a service of docker-compose.yml pins, so the mirror follows every
@@ -78,6 +80,22 @@ compose_image() {
         $0 == service { found = 1; next }
         found && /^  [a-z_]+:$/ { exit }
         found && /^ +image:/ { print $2; exit }' "$REPO_ROOT/docker-compose.yml"
+}
+
+# The PHP_VERSION a service of docker-compose.yml sets, or nothing.
+compose_php_version() {
+    awk -v service="  $1:" '
+        $0 == service { found = 1; next }
+        found && /^  [a-z_]+:$/ { exit }
+        found && /^ +- PHP_VERSION=/ { sub(/^ +- PHP_VERSION=/, ""); print; exit }' "$REPO_ROOT/docker-compose.yml"
+}
+
+# dockware switches PHP at boot when PHP_VERSION is set. Empty keeps the image's
+# default version.
+php_version() {
+    local version="${SDWA5_SHOPWARE_DEV_PHP-$(compose_php_version "$SERVICE")}"
+    [[ -z "$version" || "$version" =~ ^[0-9]+\.[0-9]+$ ]] || die "PHP version \"$version\" is not MAJOR.MINOR."
+    printf '%s' "$version"
 }
 
 app_image() {
@@ -111,11 +129,17 @@ ensure_networks() {
 # the image ships. The MySQL volume is seeded on purpose, because that gives an
 # initialised server with the image's credentials.
 start_application() {
+    local version
+    local -a php=()
+    version="$(php_version)"
+    # The same PHP and mitigation ini as production, see docker-compose.yml.
+    [[ -z "$version" ]] || php=(--env "PHP_VERSION=$version"
+        --mount "type=bind,src=$REPO_ROOT/hardening/php/99-php-security-mitigation.ini,dst=/etc/php/$version/fpm/conf.d/99-php-security-mitigation.ini,readonly")
     ensure_networks
     docker run --detach --name "$APP" --hostname "$APP" --network "$NETWORK" --cap-drop NET_RAW \
         --mount "type=volume,src=$HTML_VOLUME,dst=/var/www/html,volume-nocopy=true" \
         --mount "type=volume,src=$MYSQL_VOLUME,dst=/var/lib/mysql" \
-        "$(app_image)" >/dev/null
+        "${php[@]}" "$(app_image)" >/dev/null
     local attempt
     for (( attempt = 0; attempt < 300; attempt++ )); do
         docker exec "$APP" test -f /var/www/container.launched 2>/dev/null \
@@ -237,10 +261,12 @@ SQL
     # the cart. Reinstalling the apps gives the copy a shop ID of its own, so it
     # never presents itself to an app server as production. Their registration
     # under it then fails without egress ("App system target is not allowed")
-    # and exits 1, which is expected, so Shopware's own check decides.
+    # and exits 1, which is expected, so Shopware's own check decides. Without
+    # any app (production since SEC-29) the change deletes the shop ID and
+    # generates none, and a copy without one presents nothing either.
     if ! console app:shop-id:check 2>/dev/null | grep -q 'not suggested'; then
         console app:shop-id:change reinstall-apps >/dev/null 2>&1 || true
-        console app:shop-id:check 2>/dev/null | grep -q 'not suggested' \
+        console app:shop-id:check 2>/dev/null | grep -qE 'not suggested|No shop ID has been generated' \
             || die "Shopware still suggests a shop ID change. bin/console app:shop-id:check shows why."
     fi
     deactivate_services
@@ -336,13 +362,18 @@ cmd_purge() {
 cmd_composer() {
     docker volume inspect "$HTML_VOLUME" >/dev/null 2>&1 \
         || die "no mirror for $SERVICE. Run fetch and restore first."
-    local -a extra=()
+    local version
+    local -a extra=() entrypoint=(--entrypoint composer) composer=()
     case "${1:-}" in install|update|require|remove) extra=(--no-scripts) ;; esac
+    # Without dockware's entrypoint nothing switches PHP, so the version is named
+    # directly, so Composer checks the platform production runs.
+    version="$(php_version)"
+    [[ -z "$version" ]] || { entrypoint=(--entrypoint "php$version"); composer=(/usr/local/bin/composer); }
     ensure_networks
     docker run --rm --network "$WEB_NETWORK" --user www-data --workdir /var/www/html \
-        --entrypoint composer \
+        "${entrypoint[@]}" \
         --mount "type=volume,src=$HTML_VOLUME,dst=/var/www/html,volume-nocopy=true" \
-        "$(app_image)" --no-interaction "$@" "${extra[@]}"
+        "$(app_image)" "${composer[@]}" --no-interaction "$@" "${extra[@]}"
 }
 
 cmd_console() {

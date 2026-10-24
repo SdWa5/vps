@@ -29,6 +29,8 @@ case "$*" in
         printf '%s' "$((count + 1))" > "$count_file"
         if [[ "${SHOP_ID_SUGGESTED:-0}" == 1 && "$count" == 0 ]]; then
             printf '[WARNING] Shop ID change suggested\n'
+        elif [[ "${SHOP_ID_DELETED:-0}" == 1 && "$count" != 0 ]]; then
+            printf '[OK] No shop ID has been generated yet.\n'
         else
             printf '[OK] Shop ID change not suggested.\n'
         fi ;;
@@ -114,6 +116,47 @@ line_of() { grep -n -F -m1 -- "$1" "$DOCKER_LOG" | cut -d: -f1; }
 @test "an explicit image overrides the compose pin" {
     run env SDWA5_SHOPWARE_DEV_IMAGE=dockware/shopware:6.7.15.1 bash -c 'source "$DEV_SCRIPT"; app_image'
     [ "$output" = 'dockware/shopware:6.7.15.1' ]
+}
+
+@test "the PHP version follows the production compose file" {
+    run bash -c 'source "$DEV_SCRIPT"; php_version'
+    [ "$status" -eq 0 ]
+    [ "$output" = 8.5 ]
+}
+
+@test "an explicit PHP version overrides the compose value, and an invalid one is refused" {
+    run env SDWA5_SHOPWARE_DEV_PHP=8.4 bash -c 'source "$DEV_SCRIPT"; php_version'
+    [ "$output" = 8.4 ]
+    run env SDWA5_SHOPWARE_DEV_PHP='8.5; id' bash -c 'source "$DEV_SCRIPT"; php_version'
+    [ "$status" -ne 0 ]
+    [[ "$output" == *'is not MAJOR.MINOR'* ]]
+}
+
+@test "the mirror switches to the compose PHP and mounts the mitigation ini read-only" {
+    fetched_copy
+    fake_docker
+    stub curl "printf 200"
+    run bash "$DEV_SCRIPT" restore
+    [ "$status" -eq 0 ]
+    app="$(grep '^CALL run --detach --name sdwa5-shopware-dev ' "$DOCKER_LOG")"
+    [[ "$app" == *'--env PHP_VERSION=8.5 '* ]]
+    [[ "$app" == *'/hardening/php/99-php-security-mitigation.ini,dst=/etc/php/8.5/fpm/conf.d/99-php-security-mitigation.ini,readonly '* ]]
+}
+
+@test "an empty PHP version keeps the image's own PHP" {
+    fetched_copy
+    fake_docker
+    stub curl "printf 200"
+    SDWA5_SHOPWARE_DEV_PHP='' run bash "$DEV_SCRIPT" restore
+    [ "$status" -eq 0 ]
+    ! grep '^CALL run --detach --name sdwa5-shopware-dev ' "$DOCKER_LOG" | grep -q -e PHP_VERSION -e mitigation || false
+}
+
+@test "composer runs on the mirror's PHP version" {
+    fake_docker
+    run bash "$DEV_SCRIPT" composer audit --locked
+    [ "$status" -eq 0 ]
+    grep -q -- '--entrypoint php8.5 .* /usr/local/bin/composer --no-interaction audit --locked$' "$DOCKER_LOG"
 }
 
 @test "a service without an image in the compose file is refused" {
@@ -264,6 +307,15 @@ line_of() { grep -n -F -m1 -- "$1" "$DOCKER_LOG" | cut -d: -f1; }
     [ "$(cat "$BATS_TEST_TMPDIR/shop-id-checks")" = 2 ]
 }
 
+@test "a shop without apps may end up without a shop ID" {
+    fetched_copy
+    fake_docker
+    stub curl "printf 200"
+    SHOP_ID_SUGGESTED=1 SHOP_ID_DELETED=1 run bash "$DEV_SCRIPT" restore
+    [ "$status" -eq 0 ]
+    grep -q 'app:shop-id:change reinstall-apps' "$DOCKER_LOG"
+}
+
 @test "without a suggested change the shop ID stays" {
     fetched_copy
     fake_docker
@@ -359,7 +411,7 @@ line_of() { grep -n -F -m1 -- "$1" "$DOCKER_LOG" | cut -d: -f1; }
 
 @test "composer runs beside the mirror on the proxy's network, without scripts" {
     fake_docker
-    run bash "$DEV_SCRIPT" composer require shopware/core:v6.7.15.1
+    SDWA5_SHOPWARE_DEV_PHP='' run bash "$DEV_SCRIPT" composer require shopware/core:v6.7.15.1
     [ "$status" -eq 0 ]
     call="$(grep '^CALL run --rm' "$DOCKER_LOG")"
     [[ "$call" == *'--network sdwa5-shopware-dev-web '* ]]

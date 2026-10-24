@@ -69,6 +69,26 @@ archive_with() {
     [[ "$output" == *'Run fetch first'* ]]
 }
 
+@test "a database directory the host user cannot remove goes through a throwaway container" {
+    mkdir -p "$SDWA5_DOLIBARR_DEV_DIR/db/mysql"
+    # An rm that fails on the data directory like a non-root host user, also
+    # when the tests run as root.
+    stub rm "case \"\$*\" in *'$SDWA5_DOLIBARR_DEV_DIR/db'*) exit 1 ;; esac; exec /bin/rm \"\$@\""
+    stub docker "printf '%s\n' \"\$*\" >> '$BATS_TEST_TMPDIR/docker.log'; /bin/rm -rf '$SDWA5_DOLIBARR_DEV_DIR/db'"
+    run bash -c 'source "$DEV_SCRIPT"; remove_database_dir'
+    [ "$status" -eq 0 ]
+    [ ! -e "$SDWA5_DOLIBARR_DEV_DIR/db" ]
+    grep -q -- "--network none --user root --entrypoint rm --mount type=bind,src=$SDWA5_DOLIBARR_DEV_DIR,dst=/dev-dir mariadb:.* -rf -- /dev-dir/db" "$BATS_TEST_TMPDIR/docker.log"
+}
+
+@test "a database directory the host user owns needs no container" {
+    mkdir -p "$SDWA5_DOLIBARR_DEV_DIR/db/mysql"
+    stub docker 'exit 97'
+    run bash -c 'source "$DEV_SCRIPT"; remove_database_dir'
+    [ "$status" -eq 0 ]
+    [ ! -e "$SDWA5_DOLIBARR_DEV_DIR/db" ]
+}
+
 @test "the generated secrets are private and never printed" {
     run bash -c 'source "$DEV_SCRIPT"; ensure_secrets'
     [ "$status" -eq 0 ]
@@ -132,6 +152,12 @@ start_with_image() {
     [ "$status" -eq 0 ]
     ! grep -q 'sdwa5-dolibarr-entrypoint' "$BATS_TEST_TMPDIR/docker-args"
     grep -qx 'dolibarr/dolibarr:99.0.0' "$BATS_TEST_TMPDIR/docker-args"
+}
+
+@test "the application gets production's PHP mitigation ini read-only" {
+    start_with_image dolibarr/dolibarr:99.0.0
+    [ "$status" -eq 0 ]
+    grep -q '/hardening/php/99-php-security-mitigation.ini,dst=/usr/local/etc/php/conf.d/99-php-security-mitigation.ini,readonly$' "$BATS_TEST_TMPDIR/docker-args"
 }
 
 @test "every start removes install.lock so the image can migrate" {

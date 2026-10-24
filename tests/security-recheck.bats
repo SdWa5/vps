@@ -216,6 +216,7 @@ setup() {
 }
 
 @test "a reachable foreign listener is CRIT and names the container" {
+    export ISOLATION_SOURCES="chimodiazz_shopware shopware dolibarr"
     export STUB_PROBE_OPEN="dolibarr>172.20.0.2:3306 chimodiazz_shopware>172.18.0.2:3306"
     recheck --host
     [ "$status" -eq 1 ]
@@ -346,7 +347,7 @@ setup() {
 }
 
 @test "a failed restore check is CRIT" {
-    export RESTORE_CHECK="$BATS_TEST_TMPDIR/restore"
+    export RESTORE_CHECK="$BATS_TEST_TMPDIR/restore" DATABASE_BACKUP_CONTAINERS="dolibarr_db chimodiazz_shopware"
     printf '#!/bin/sh\nexit 1\n' > "$RESTORE_CHECK"
     chmod +x "$RESTORE_CHECK"
     recheck --host --restore

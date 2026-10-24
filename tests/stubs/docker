@@ -42,6 +42,10 @@ case "${1:-}" in
         [[ -z "${STUB_IMAGE_ID:-}" ]] && exit 1
         echo "$STUB_IMAGE_ID"
         ;;
+    top)
+        # docker top <container> -eo pid,comm
+        printf 'PID COMMAND\n%s' "${STUB_DOCKER_TOP:-}"
+        ;;
     logs)
         if [[ "${!#}" == sdwa5-restore-* ]]; then
             [[ -n "${STUB_RESTORE_INIT_PENDING:-}" ]] \
@@ -51,7 +55,10 @@ case "${1:-}" in
         printf '%s\n' "${STUB_RESTIC_LOG:-}"
         ;;
     exec)
-        if [[ "${!#}" == probe ]]; then
+        if [[ "${!#}" == /var/log/mysql/error.log ]]; then
+            # tools/shopware/stop-dockware.sh reads the tail of dockware's MySQL log.
+            printf '%s\n' "${STUB_MYSQL_ERROR_LOG:-}"
+        elif [[ "${!#}" == probe ]]; then
             cat >/dev/null
             if [[ "${STUB_DATABASE_FAIL:-}" == probe ]]; then
                 echo 'sensitive database diagnostic' >&2

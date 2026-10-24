@@ -64,3 +64,14 @@ setup() {
     [ -z "$extra" ] || { echo "dockware needs setuid sudo: $extra"; return 1; }
     [ "$(grep -c 'no-new-privileges:true' "$REPO_ROOT/docker-compose.yml")" -eq 11 ]
 }
+
+@test "every PHP web service mounts the PHP security mitigation ini read-only" {
+    local ini=./hardening/php/99-php-security-mitigation.ini svc missing=
+    for svc in shopware dolibarr dolibarr_cron; do
+        awk -v svc="  $svc:" '$0 == svc { s = 1; next } s && /^  [a-z0-9_]+:$/ { s = 0 } s' \
+            "$REPO_ROOT/docker-compose.yml" | grep -qF -- "- $ini:" || missing+=" $svc"
+    done
+    [ -z "$missing" ] || { echo "without the mitigation ini:$missing"; return 1; }
+    ! grep -F -- "$ini:" "$REPO_ROOT/docker-compose.yml" | grep -vq ':ro$' || false
+    grep -qx 'session.upload_progress.enabled = 0' "$REPO_ROOT/hardening/php/99-php-security-mitigation.ini"
+}

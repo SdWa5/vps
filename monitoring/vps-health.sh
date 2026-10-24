@@ -37,12 +37,12 @@ load_env
 
 DISK_WARN="${DISK_WARN:-85}"
 DISK_CRIT="${DISK_CRIT:-92}"
-EXPECTED_CONTAINERS="${EXPECTED_CONTAINERS:-vaultwarden shopware chimodiazz_shopware dolibarr dolibarr_db dolibarr_cron restic paperless_sdwa5 paperless_sdwa5_db paperless_sdwa5_broker paperless_home paperless_home_db paperless_home_broker}"
+EXPECTED_CONTAINERS="${EXPECTED_CONTAINERS:-vaultwarden shopware dolibarr dolibarr_db dolibarr_cron restic paperless_sdwa5 paperless_sdwa5_db paperless_sdwa5_broker paperless_home paperless_home_db paperless_home_broker}"
 HEALTH_URLS="${HEALTH_URLS:-vaultwarden=https://vault.sdwa5.org/alive shopware=https://sdwa5.org/ dolibarr=https://erp.sdwa5.org/ chimodiazz=https://chimodiazz.sdwa5.org/ paperless=https://paper.sdwa5.org/accounts/login/ paperless-home=https://paper.ripper.sdwa5.org/accounts/login/}"
 BACKUP_MAX_AGE_HOURS="${BACKUP_MAX_AGE_HOURS:-26}"
 DB_BACKUP_MAX_AGE_HOURS="${DB_BACKUP_MAX_AGE_HOURS:-26}"
 DATABASE_BACKUP_DIR="${DATABASE_BACKUP_DIR:-$COMPOSE_DIR/database-backup}"
-DATABASE_BACKUP_CONTAINERS="${DATABASE_BACKUP_CONTAINERS:-dolibarr_db shopware chimodiazz_shopware paperless_sdwa5_db paperless_home_db}"
+DATABASE_BACKUP_CONTAINERS="${DATABASE_BACKUP_CONTAINERS:-dolibarr_db shopware paperless_sdwa5_db paperless_home_db}"
 # Shopware's shortest scheduled task interval is 60 seconds, so two hours is
 # generous and still catches an outage the same morning. The one this check
 # exists for ran unnoticed for 47 days.

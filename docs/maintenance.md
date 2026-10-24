@@ -552,8 +552,9 @@ in the root-only preparation directory. Record all command output privately with
 credentials or full container environments.
 
 1. Finish Bookworm point updates. cloud-init is purged since 2026-10-24, so check that
-   `dpkg-query -W cloud-init` finds nothing rather than relying on `/etc/cloud/cloud-init.disabled`,
-   which did not stop it on 2026-10-15. Preserve the existing static netplan configuration, route and SSH hardening.
+   `dpkg -s cloud-init` reports it as not installed rather than relying on
+   `/etc/cloud/cloud-init.disabled`, which did not stop it on 2026-10-15. `dpkg-query -W` still
+   lists a purged package and is no proof. Preserve the existing static netplan configuration, route and SSH hardening.
 2. Remove `bookworm-backports` from the upgrade sources. Switch the remaining Debian suites and
    Docker's source to Trixie. Leave Caddy's upstream source unchanged. Keep backports disabled.
 3. Review APT simulations. Reject unexpected removals, replacement of Docker CE with `docker.io`,

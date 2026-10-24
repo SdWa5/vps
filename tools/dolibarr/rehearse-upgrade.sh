@@ -5,6 +5,8 @@
 # Its root-only evidence directory retains the source archive and private logs.
 # The target is the image docker-compose.yml pins for the dolibarr service, so bumping
 # the pin is the whole preparation. DOLIBARR_TARGET_IMAGE names another image instead.
+# A pin may name a PHP variant and a digest, as in 24.0.2-php8.5@sha256:…; the
+# Dolibarr release is the tag without them.
 # Usage: bash tools/dolibarr/rehearse-upgrade.sh [--apply ARCHIVE]
 
 set -euo pipefail
@@ -22,7 +24,9 @@ target_image() {
 }
 
 TARGET_IMAGE="$(target_image)"
-TARGET_VERSION="${TARGET_IMAGE##*:}"
+TARGET_TAG="${TARGET_IMAGE%%@*}"
+TARGET_TAG="${TARGET_TAG##*:}"
+TARGET_VERSION="${TARGET_TAG%%-php*}"
 WORK=""
 APP=""
 DB=""
@@ -133,7 +137,7 @@ verify_upgrade_evidence() {
 }
 
 main() {
-    [[ "$TARGET_IMAGE" =~ ^[^[:space:]@]+:[0-9]+\.[0-9]+\.[0-9]+$ ]] \
+    [[ "$TARGET_IMAGE" =~ ^[^[:space:]@]+:[0-9]+\.[0-9]+\.[0-9]+(-php[0-9]+\.[0-9]+)?(@sha256:[a-f0-9]{64})?$ ]] \
         || { fail "No exact Dolibarr target image: '$TARGET_IMAGE'."; return 1; }
     if [[ "${1:-}" != --apply ]]; then
         (( $# == 0 )) || [[ "$1" == --help && $# == 1 ]] || return 2

@@ -139,6 +139,7 @@ start_application() {
         --env "DOLI_URL_ROOT=http://localhost:$DEV_PORT" \
         --env WWW_USER_ID="$(id -u)" --env WWW_GROUP_ID="$(id -g)" \
         --mount "type=bind,src=$DEV_DIR/documents,dst=/var/www/documents" \
+        --mount "type=bind,src=$REPO_ROOT/hardening/php/99-php-security-mitigation.ini,dst=/usr/local/etc/php/conf.d/99-php-security-mitigation.ini,readonly" \
         "${mounts[@]}" \
         "$(app_image)" apache2-foreground >/dev/null
     # A port cannot be published from an --internal network, so the application
@@ -187,11 +188,22 @@ cmd_fetch() {
     printf 'Archive of %s bytes stored in %s\n' "$(stat -c %s "$DEV_DIR/archive.tar.gz")" "$DEV_DIR"
 }
 
+# MariaDB takes its data directory over as its own uid with mode 700, so the
+# host user cannot remove it after the first restore. A throwaway container of
+# the same image, without a network, can.
+remove_database_dir() {
+    [[ -e "$DEV_DIR/db" ]] || return 0
+    rm -rf -- "$DEV_DIR/db" 2>/dev/null && return 0
+    docker run --rm --network none --user root --entrypoint rm \
+        --mount "type=bind,src=$DEV_DIR,dst=/dev-dir" "$(db_image)" -rf -- /dev-dir/db
+}
+
 cmd_restore() {
     [[ -r "$DEV_DIR/archive.tar.gz" ]] || die "no archive in $DEV_DIR. Run fetch first."
     ensure_secrets
     remove_containers
-    rm -rf -- "$DEV_DIR/archive" "$DEV_DIR/db" "$DEV_DIR/documents"
+    remove_database_dir
+    rm -rf -- "$DEV_DIR/archive" "$DEV_DIR/documents"
     mkdir -p "$DEV_DIR/archive" "$DEV_DIR/db" "$DEV_DIR/documents"
     tar -xzf "$DEV_DIR/archive.tar.gz" -C "$DEV_DIR/archive" -- dump.sql manifest.tsv
     [[ "$(awk -F '\t' '$1 == "coverage" { print $2 }' "$DEV_DIR/archive/manifest.tsv")" == full ]] \

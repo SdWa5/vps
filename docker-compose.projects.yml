@@ -12,6 +12,10 @@ x-logging: &default-logging
 
 services:
   chimodiazz_shopware:
+    # Switched off since 2026-10-24 (PHP security release of 2026-10-21): the
+    # container is stopped with restart policy `no`, Caddy serves the
+    # placeholder, and the cron files and monitoring defaults leave it out. The
+    # way back is in docs/chimodiazz.md.
     # Same exact pin as the sdwa5.org instance in docker-compose.yml, and for the
     # same reason: the `6.7-latest` tag that does exist rolls across minor
     # versions, and a Shopware minor runs forward-only database migrations.

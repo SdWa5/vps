@@ -134,9 +134,24 @@ verify_fixture() {
 }
 
 @test "a floating or missing target is refused before anything runs" {
-    run env DOLIBARR_TARGET_IMAGE=dolibarr/dolibarr:latest bash "$REHEARSAL_SCRIPT"
-    [ "$status" -ne 0 ]
-    [[ "$output" == *'No exact Dolibarr target image'* ]]
+    local image
+    for image in dolibarr/dolibarr:latest dolibarr/dolibarr:24.0.2-php8.5-foo dolibarr/dolibarr:24.0.2@sha256:x; do
+        run env DOLIBARR_TARGET_IMAGE="$image" bash "$REHEARSAL_SCRIPT"
+        [ "$status" -ne 0 ]
+        [[ "$output" == *'No exact Dolibarr target image'* ]]
+    done
+}
+
+@test "a pin with PHP variant and digest targets the bare Dolibarr release" {
+    local digest=sha256:46c066a954179e31b1d139d8e315162cf8ab72a6f6ae14add89622fd0457eff0
+    run env DOLIBARR_TARGET_IMAGE="dolibarr/dolibarr:24.0.2-php8.5@$digest" bash -c 'source "$REHEARSAL_SCRIPT"; printf "%s\n" "$TARGET_VERSION"'
+    [ "$output" = 24.0.2 ]
+    run env DOLIBARR_TARGET_IMAGE="dolibarr/dolibarr:24.0.2-php8.5@$digest" bash "$REHEARSAL_SCRIPT"
+    [ "$status" -eq 0 ]
+    run env DOLIBARR_TARGET_IMAGE=dolibarr/dolibarr:25.0.0-php8.5 bash -c 'source "$REHEARSAL_SCRIPT"; printf "%s\n" "$TARGET_VERSION"'
+    [ "$output" = 25.0.0 ]
+    run env DOLIBARR_TARGET_IMAGE=dolibarr/dolibarr:25.0.0-php8.5 bash "$REHEARSAL_SCRIPT"
+    [ "$status" -eq 0 ]
 }
 
 @test "an ALTER TABLE on a table of a disabled module does not fail the migration" {

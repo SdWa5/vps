@@ -71,11 +71,11 @@ Domain → port mapping lives in the [Caddyfile](../Caddyfile); backup detail in
 
 | Service             | Image                        | Port (internal) | Public URL                 | Compose file                            |
 |---------------------|------------------------------|-----------------|----------------------------|-----------------------------------------|
-| Shopware            | dockware/shopware:6.7.15.1   | 8001 / 8443     | https://sdwa5.org          | docker-compose.yml                      |
+| Shopware            | dockware/shopware:6.7.15.1 (PHP 8.5) | 8001 / 8443     | https://sdwa5.org          | docker-compose.yml                      |
 | Vaultwarden         | vaultwarden/server:latest    | 8000            | https://vault.sdwa5.org    | docker-compose.yml                      |
-| Dolibarr SdWa5      | dolibarr/dolibarr:24.0.2     | 8002            | https://erp.sdwa5.org      | docker-compose.yml                      |
-| Dolibarr SdWa5 cron | dolibarr/dolibarr:24.0.2     | —               | —                          | docker-compose.yml                      |
-| Chimo Diazz         | dockware/shopware:6.7.11.1   | 8005 / 8444     | https://chimodiazz.sdwa5.org | docker-compose.projects.yml (profile: chimodiazz) |
+| Dolibarr SdWa5      | dolibarr/dolibarr:24.0.2-php8.5 | 8002            | https://erp.sdwa5.org      | docker-compose.yml                      |
+| Dolibarr SdWa5 cron | dolibarr/dolibarr:24.0.2-php8.5 | —               | —                          | docker-compose.yml                      |
+| Chimo Diazz (switched off) | dockware/shopware:6.7.11.1 | 8005 / 8444 | https://chimodiazz.sdwa5.org (placeholder) | docker-compose.projects.yml (profile: chimodiazz) |
 | Paperless Verein    | paperless-ngx:3.3.2 + mariadb:12.3 + valkey:9.0 | 8006 | https://paper.sdwa5.org | docker-compose.yml          |
 | Paperless household | paperless-ngx:3.3.2 + mariadb:12.3 + valkey:9.0 | 8007 | https://paper.ripper.sdwa5.org | docker-compose.yml   |
 | Ollama              | ollama/ollama:latest         | 11434           | (no domain, firewalled)    | docker-compose.yml                      |
@@ -243,7 +243,7 @@ where the flag was set. A production image instead of dockware would remove both
 ├── shopware-mysql-data/            # gitignored
 ├── shopware-data/                  # gitignored (legacy mount)
 ├── dolibarr-mariadb-data/          # gitignored — Dolibarr SdWa5 DB
-├── chimodiazz-placeholder/         # tracked — maintenance page, not currently routed
+├── chimodiazz-placeholder/         # tracked — maintenance page, routed while Chimo Diazz is off
 ├── chimodiazz-src/                 # gitignored — checkout of chimodiazz/website (own deploy key)
 ├── chimodiazz-html-data/           # gitignored — Chimo Diazz Shopware web root
 ├── chimodiazz-mysql-data/          # gitignored — Chimo Diazz Shopware DB

@@ -21,7 +21,7 @@ cd "$REPO_ROOT"
 # Exact tags and index digests preserve the measured test runtimes on every host.
 CI_BATS_IMAGE='bats/bats:1.14.0@sha256:5322b877351fda0cc435de8c6116de7d0a2ec79d7c680132a0ef329a633bc66f'
 CI_SHELLCHECK_IMAGE='koalaman/shellcheck:v0.11.0@sha256:bb596a0d169b85ddd81d8b6d3a2ff6d5baf5fca10b97f575ebc647c3dff62b3d'
-CI_PHP_IMAGE='php:8.2.33-cli@sha256:0ca296c0ae905940c0a333a15de437f3acaa81743333a9437221f6a44e3f0981'
+CI_PHP_IMAGE='php:8.5.12-cli@sha256:635a4b998025ab269194639a5549c6fdcd9b4f88ec8cd761b092de8653d40663'
 CI_PYTHON_IMAGE='python:3.12.15-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1'
 
 echo "== bats =="
@@ -68,6 +68,7 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt "$CI_SHELLCHECK_IMAGE" -x \
     tools/shopware/edit-slots.sh \
     tools/shopware/check-order-mail.sh \
     tools/shopware/dev-instance.sh \
+    tools/shopware/stop-dockware.sh \
     tools/shopware/images/shop-images.sh \
     tools/shopware/print-cost/print-cost.sh \
     tools/shopware/print-cost/slice-inner.sh \

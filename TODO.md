@@ -322,9 +322,11 @@
     3. editing a membership subscription, which today is a recipe around `Subscription::update()`
        because the ui refuses reconciled lines and rewrites bank line dates. a module endpoint would
        wrap that call with its checks (ca. 4 Stunden)
-19. **update the Chimo Diazz shop to Shopware 6.7.15.1** ([docs/chimodiazz.md](docs/chimodiazz.md))
-    (ca. 3 Stunden). It still runs 6.7.11.1, and `composer audit --locked` with the vendored Composer reported
-    24 advisories in 9 packages on 2026-10-16. The procedure is the main shop's in
+19. **bring the Chimo Diazz shop back on Shopware 6.7.15.1 and PHP 8.5** ([docs/chimodiazz.md](docs/chimodiazz.md))
+    (ca. 3 Stunden). It is switched off since 2026-10-24 and still runs 6.7.11.1 on PHP 8.2.31. The way
+    back (`PHP_VERSION=8.5`, the mitigation ini mount, the cron files, the monitoring defaults and the
+    Caddy proxy) is listed at the top of docs/chimodiazz.md. `composer audit --locked` with the vendored
+    Composer reported 24 advisories in 9 packages on 2026-10-16. The procedure is the main shop's in
     [docs/shopware/infrastructure.md](docs/shopware/infrastructure.md#updating-shopware). The mirror reads
     its image only from `docker-compose.yml`, so for this shop it needs `SDWA5_SHOPWARE_DEV_IMAGE`,
     `SDWA5_SHOPWARE_HTML` and `SDWA5_SHOPWARE_ARCHIVE` set as well, which is untested. The site comes from
@@ -426,3 +428,6 @@
     the home, category, product, cart, register, login and search pages in a browser console. a report
     names no page, so with reports, find the page first with a headless browser that records
     `securitypolicyviolation` events (ca. 45 Minuten)
+31. **delete the evidence of the 2026-10-24 compromise check after 2026-11-23** (ca. 10 Minuten).
+    `/root/forensics-20261024`, the `forensic/*:20261024` images and the Dolibarr 24.0.2 upgrade leftover
+    `/var/tmp/archive-verify.calVSV` (94 MB, a copy of Dolibarr documents) on the host

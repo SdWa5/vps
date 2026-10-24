@@ -65,7 +65,7 @@ RECHECK_SITES="${RECHECK_SITES:-sdwa5.org chimodiazz.sdwa5.org vault.sdwa5.org e
 HSTS_SITES="${HSTS_SITES:-vault.sdwa5.org erp.sdwa5.org paper.sdwa5.org paper.ripper.sdwa5.org}"
 HSTS_MIN_AGE="${HSTS_MIN_AGE:-31536000}"
 HTTP3_SITE="${HTTP3_SITE:-sdwa5.org}"
-BLOCKED_PATHS="${BLOCKED_PATHS:-sdwa5.org=/adminer sdwa5.org=/mailcatcher sdwa5.org=/logs chimodiazz.sdwa5.org=/adminer chimodiazz.sdwa5.org=/mailcatcher chimodiazz.sdwa5.org=/logs vault.sdwa5.org=/admin erp.sdwa5.org=/api/index.php/explorer paper.sdwa5.org=/admin paper.ripper.sdwa5.org=/admin}"
+BLOCKED_PATHS="${BLOCKED_PATHS:-sdwa5.org=/adminer sdwa5.org=/mailcatcher sdwa5.org=/logs sdwa5.org=/messages chimodiazz.sdwa5.org=/adminer chimodiazz.sdwa5.org=/mailcatcher chimodiazz.sdwa5.org=/logs chimodiazz.sdwa5.org=/messages vault.sdwa5.org=/admin erp.sdwa5.org=/api/index.php/explorer paper.sdwa5.org=/admin paper.ripper.sdwa5.org=/admin}"
 # Caddy's `respond "Not Found" 404`. An upstream 404 has a different body, which is how a variant
 # that slipped past the matcher shows up even when the upstream happens to refuse it as well.
 CADDY_404_BODY="${CADDY_404_BODY:-Not Found}"
@@ -78,7 +78,7 @@ WAN_INTERFACE="${WAN_INTERFACE:-eth0}"
 ISOLATION_APPS="${ISOLATION_APPS:-vault=vaultwarden shop=shopware chimodiazz=chimodiazz_shopware erp=dolibarr,dolibarr_cron,dolibarr_db paper=paperless_sdwa5,paperless_sdwa5_db,paperless_sdwa5_broker paperhome=paperless_home,paperless_home_db,paperless_home_broker backup=restic}"
 # The containers probed from. They run third-party or internet-facing code, or hold the vault and the
 # backup credentials. A source without bash is probed with busybox nc.
-ISOLATION_SOURCES="${ISOLATION_SOURCES:-chimodiazz_shopware shopware dolibarr paperless_sdwa5 paperless_home vaultwarden restic}"
+ISOLATION_SOURCES="${ISOLATION_SOURCES:-shopware dolibarr paperless_sdwa5 paperless_home vaultwarden restic}"
 # The one path inside an application that must stay open, measured 2026-10-15.
 ISOLATION_EXPECT_OPEN="${ISOLATION_EXPECT_OPEN:-dolibarr>dolibarr_db:3306 paperless_sdwa5>paperless_sdwa5_db:3306 paperless_sdwa5>paperless_sdwa5_broker:6379 paperless_home>paperless_home_db:3306 paperless_home>paperless_home_broker:6379}"
 GATEWAY_OPEN="${GATEWAY_OPEN:-22 80 443}"
@@ -93,7 +93,7 @@ CLOSED_LISTENERS="${CLOSED_LISTENERS:-shopware:22,1025,1080 chimodiazz_shopware:
 GIT_CHECKOUT_DIR="${GIT_CHECKOUT_DIR:-$COMPOSE_DIR}"
 GIT_BRANCH="${GIT_BRANCH:-main}"
 DEPLOYED_FILES="${DEPLOYED_FILES:-Caddyfile:/etc/caddy/Caddyfile hardening/fail2ban/jail.local:/etc/fail2ban/jail.local hardening/sshd_config.d/10-hardening.conf:/etc/ssh/sshd_config.d/10-hardening.conf hardening/firewall/sdwa5-firewall.sh:/usr/local/sbin/sdwa5-firewall.sh hardening/firewall/sdwa5-firewall.service:/etc/systemd/system/sdwa5-firewall.service hardening/netplan/60-ipv6.yaml:/etc/netplan/60-ipv6.yaml hardening/cloud-init/99-disable-network-config.cfg:/etc/cloud/cloud.cfg.d/99-disable-network-config.cfg}"
-DATABASE_BACKUP_CONTAINERS="${DATABASE_BACKUP_CONTAINERS:-dolibarr_db shopware chimodiazz_shopware paperless_sdwa5_db paperless_home_db}"
+DATABASE_BACKUP_CONTAINERS="${DATABASE_BACKUP_CONTAINERS:-dolibarr_db shopware paperless_sdwa5_db paperless_home_db}"
 RESTORE_CHECK="${RESTORE_CHECK:-$MONITORING_DIR/database-restore-check.sh}"
 
 PORT_TIMEOUT="${PORT_TIMEOUT:-3}"

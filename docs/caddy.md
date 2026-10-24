@@ -87,6 +87,7 @@ Each blocked path answers a flat `404` from Caddy and never reaches the containe
 | Site | Blocked | Why |
 |---|---|---|
 | sdwa5.org, chimodiazz.sdwa5.org | `/adminer`, `/mailcatcher`, `/logs` | dockware's development tools, public until 2026-09-15 |
+| sdwa5.org, chimodiazz.sdwa5.org | `/messages`, `/assets` | dockware's proxy to mailcatcher, whose `/messages` lists every caught mail as JSON; blocked since 2026-10-24 |
 | vault.sdwa5.org | `/admin` | Admin panel, reached through an SSH tunnel instead, see [vaultwarden.md](vaultwarden.md) |
 | paper.sdwa5.org, paper.ripper.sdwa5.org | `/admin` | Django admin of Paperless-ngx, used by no client. Any request with HTTP basic auth answers `403`, because basic auth is an unthrottled password oracle there, see [paperless.md](paperless.md#access) |
 | erp.sdwa5.org | `/api/index.php/explorer`, `/public/cron` | Dolibarr's API explorer listed every endpoint. `/public/cron` runs the scheduled jobs for anyone holding the cron key, which `dolibarr_cron` uses from the command line instead, see [dolibarr.md](dolibarr.md#rotating-the-cron-key). The REST API itself stays public |

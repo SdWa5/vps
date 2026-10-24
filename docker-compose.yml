@@ -48,9 +48,9 @@ services:
 
 
   shopware:
-    # Exact pin, by tag and digest. Shopware 6.7.15.1 with PHP 8.2.34, built by
-    # dockware on 2026-10-12 and rehearsed on the local mirror on 2026-10-16
-    # (tools/shopware/dev-instance.sh). The digest is part of the pin because
+    # Exact pin, by tag and digest. Shopware 6.7.15.1, rebuilt by dockware on
+    # 2026-10-22 with PHP 8.5.12, and run on PHP 8.5 through PHP_VERSION below
+    # (tools/shopware/dev-instance.sh rehearses it). The digest is part of the pin because
     # dockware rebuilds existing tags. The image still ships Composer 2.2.9.
     # A Shopware update is therefore a deliberate bump of this line. That is the point: nothing ever ran
     # `docker compose pull` for this service, so `:latest` gave neither updates
@@ -61,7 +61,7 @@ services:
     # exists, so that was wrong. The pin stays exact anyway, because that tag
     # rolls forward across minor versions and Shopware minors run forward-only
     # database migrations, which is the same reason Dolibarr is pinned exactly.
-    image: dockware/shopware:6.7.15.1@sha256:1a4018ced1e5b281fcbbe53c8cf56f77ca8d075036467b72b602d3d6e6de7ea2
+    image: dockware/shopware:6.7.15.1@sha256:0472eef46236ce5885364bdaca6a6f5d7d5705bd003f7aae48f94b5f538ee011
     container_name: shopware
     ports:
       - "127.0.0.1:8001:80"
@@ -69,6 +69,10 @@ services:
     environment:
       - SHOP_DOMAIN=sdwa5.org
       - APP_URL=https://sdwa5.org
+      # dockware ships PHP 8.2 to 8.5 and switches at boot. 8.5 since the PHP
+      # security release of 2026-10-21, and 8.2 security support ends on
+      # 2026-12-31, see docs/maintenance.md#php-85.
+      - PHP_VERSION=8.5
       # This shop sends through core.mailerSettings to smtp-relay.gmail.com, so
       # dockware's mailcatcher catches nothing here and the boot hook stops it.
       - SDWA5_STOP_MAILCATCHER=1
@@ -86,6 +90,7 @@ services:
       # dockware's own end-of-boot hook. It stops the sshd and mailcatcher the
       # development image starts, see the script's header.
       - ./hardening/dockware-boot-end.sh:/var/www/boot_end.sh:ro
+      - ./hardening/php/99-php-security-mitigation.ini:/etc/php/8.5/fpm/conf.d/99-php-security-mitigation.ini:ro
     restart: unless-stopped
     networks: [shop]
     cap_drop: [NET_RAW]
@@ -187,8 +192,10 @@ services:
     # upgrade runs forward-only database migrations. Restore drills passed on
     # 2026-10-15, but an update remains a deliberate bump rather than whatever a
     # pull happens to fetch. The `24` tag exists and would allow 24.x to move
-    # on its own, which is why it is not used.
-    image: dolibarr/dolibarr:24.0.2
+    # on its own, which is why it is not used. The PHP variant and the digest
+    # are part of the pin, because upstream rebuilds tags and moved the plain
+    # `24.0.2` from PHP 8.2 to 8.5 on 2026-10-24. This build ships PHP 8.5.12.
+    image: dolibarr/dolibarr:24.0.2-php8.5@sha256:46c066a954179e31b1d139d8e315162cf8ab72a6f6ae14add89622fd0457eff0
     container_name: dolibarr
     restart: unless-stopped
     logging: *default-logging
@@ -231,6 +238,7 @@ services:
       # file, because Docker creates a missing file mount as an empty directory. Kept out of the
       # database and its dumps on purpose, see docs/dolibarr.md.
       - ./dolibarr-secrets:/run/secrets:ro
+      - ./hardening/php/99-php-security-mitigation.ini:/usr/local/etc/php/conf.d/99-php-security-mitigation.ini:ro
     secrets:
       - source: dolibarr_db_password
         target: /run/sdwa5-secrets/dolibarr_db_password
@@ -244,8 +252,10 @@ services:
     # upgrade runs forward-only database migrations. Restore drills passed on
     # 2026-10-15, but an update remains a deliberate bump rather than whatever a
     # pull happens to fetch. The `24` tag exists and would allow 24.x to move
-    # on its own, which is why it is not used.
-    image: dolibarr/dolibarr:24.0.2
+    # on its own, which is why it is not used. The PHP variant and the digest
+    # are part of the pin, because upstream rebuilds tags and moved the plain
+    # `24.0.2` from PHP 8.2 to 8.5 on 2026-10-24. This build ships PHP 8.5.12.
+    image: dolibarr/dolibarr:24.0.2-php8.5@sha256:46c066a954179e31b1d139d8e315162cf8ab72a6f6ae14add89622fd0457eff0
     container_name: dolibarr_cron
     restart: unless-stopped
     logging: *default-logging
@@ -279,6 +289,7 @@ services:
       # file, because Docker creates a missing file mount as an empty directory. Kept out of the
       # database and its dumps on purpose, see docs/dolibarr.md.
       - ./dolibarr-secrets:/run/secrets:ro
+      - ./hardening/php/99-php-security-mitigation.ini:/usr/local/etc/php/conf.d/99-php-security-mitigation.ini:ro
     secrets:
       - source: dolibarr_db_password
         target: /run/sdwa5-secrets/dolibarr_db_password

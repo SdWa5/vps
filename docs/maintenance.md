@@ -163,7 +163,7 @@ measured runtime versions. Docker selects the immutable digest when a tag points
 |---|---|
 | `bats/bats:1.14.0` | Bats 1.14.0 |
 | `koalaman/shellcheck:v0.11.0` | ShellCheck 0.11.0 |
-| `php:8.2.33-cli` | PHP 8.2.33 |
+| `php:8.5.12-cli` | PHP 8.5.12 |
 | `python:3.12.15-slim` | Python 3.12.15 |
 | `mcr.microsoft.com/playwright:v1.63.0-noble` | Playwright 1.63.0, in `tests/storefront/run.sh` |
 
@@ -191,8 +191,8 @@ its own.
 
 | Service | Tag | Why |
 |---|---|---|
-| `shopware` | `dockware/shopware:6.7.15.1@sha256:1a4018ce…` | Exact, by tag and digest, because dockware rebuilds existing tags (6.7.15.1 was built on 2026-10-12). The `6.7-latest` series tag exists but rolls across minors, whose migrations run forward only. An update is a deliberate bump of the line after a rehearsal, see [Updating Shopware](shopware/infrastructure.md#updating-shopware). Chimo Diazz stays on 6.7.11.1 in `docker-compose.projects.yml` |
-| `dolibarr`, `dolibarr_cron` | `dolibarr/dolibarr:24.0.2` | Exact. The isolated rehearsal takes its target from this pin, so a Dolibarr update starts by bumping it, see [Dolibarr 24.0.1 upgrade](#dolibarr-2401-upgrade) |
+| `shopware` | `dockware/shopware:6.7.15.1@sha256:0472eef4…` | Exact, by tag and digest, because dockware rebuilds existing tags (6.7.15.1 was rebuilt on 2026-10-22 with PHP 8.5.12, which `PHP_VERSION=8.5` selects, see [PHP 8.5](#php-85)). The `6.7-latest` series tag exists but rolls across minors, whose migrations run forward only. An update is a deliberate bump of the line after a rehearsal, see [Updating Shopware](shopware/infrastructure.md#updating-shopware). Chimo Diazz stays on 6.7.11.1 in `docker-compose.projects.yml` and is switched off |
+| `dolibarr`, `dolibarr_cron` | `dolibarr/dolibarr:24.0.2-php8.5@sha256:46c066a9…` | Exact, by tag, PHP variant and digest, because upstream rebuilds tags. The isolated rehearsal takes its target from this pin, so a Dolibarr update starts by bumping it, see [Dolibarr 24.0.1 upgrade](#dolibarr-2401-upgrade) |
 | `dolibarr_db` and the project DBs | `mariadb:12.3` | Minor series. Patch updates inside 12.3 are safe and wanted; crossing a major version is the one-way door |
 | `paperless_sdwa5`, `paperless_home` | `ghcr.io/paperless-ngx/paperless-ngx:3.3.2@sha256:d232cba3…` | Exact, by tag and digest, the same pin on both services, which a test keeps equal. 3.3.2 of 2026-10-16 fixes GHSA-c8f3-pqr2-rr24. A minor runs forward-only migrations, so a bump goes through the dev mirror first, see [paperless.md](paperless.md#updates) |
 | `paperless_*_db` | `mariadb:12.3` | Same series as `dolibarr_db` |
@@ -270,6 +270,55 @@ docker compose pull dolibarr dolibarr_cron
 # For Dolibarr, follow the maintenance procedure below before starting either service.
 docker compose logs --tail=50 dolibarr
 ```
+
+## PHP 8.5
+
+The PHP security release of 2026-10-21 fixed CVE-2026-109618 (GHSA-w8hw-w9fx-j79w, memory corruption
+while parsing multipart bodies, exploitable before application code runs under Apache mod_php) and
+CVE-2026-109619 (GHSA-6wmf-4rv5-p3rp, stale state reachable through the session upload progress under
+FPM). The fixed versions are 8.2.35, 8.3.36, 8.4.27 and 8.5.12. Every PHP runtime here ran an affected
+build: 8.2.34 in Dolibarr and sdwa5.org, 8.2.31 in Chimo Diazz.
+
+The host was checked for a compromise on 2026-10-24 before anything changed, and no indicator was
+found. The evidence is kept root-only on the host.
+
+| Service | Change |
+|---|---|
+| `shopware` | `dockware/shopware:6.7.15.1@sha256:0472eef4…`, rebuilt by dockware on 2026-10-22 with PHP 8.5.12, and `PHP_VERSION=8.5`, which dockware's entrypoint applies at boot through `make switch-php` |
+| `dolibarr`, `dolibarr_cron` | `dolibarr/dolibarr:24.0.2-php8.5@sha256:46c066a9…`. Upstream moved the plain `24.0.2` tag from PHP 8.2 to 8.5 on 2026-10-24, so the variant and the digest are part of the pin. `tools/dolibarr/rehearse-upgrade.sh` takes the Dolibarr release from the tag without them |
+| `chimodiazz_shopware` | Switched off: stopped with restart policy `no`, cron files removed, Caddy serves the placeholder, and the monitoring defaults leave it out. The way back is in [chimodiazz.md](chimodiazz.md) |
+| CI | `php:8.5.12-cli` in `tests/run.sh` |
+
+[`hardening/php/99-php-security-mitigation.ini`](../hardening/php/99-php-security-mitigation.ini) sets
+`session.upload_progress.enabled = 0` and `fatal_error_backtraces = 0` and is mounted read-only into
+all three PHP services and both dev mirrors. It stays after patching, because nothing here uses the
+upload progress. The 8.2 builds ignore the 8.5-only key.
+
+The mirrors were rehearsed on 2026-10-24. Shopware on PHP 8.5.12 showed the following results.
+- Storefront EN and DE, cart, admin and health check answered 200.
+- The plugin list matched production's apart from the deactivated FroshShopmon.
+- The invoice preview rendered a PDF, and the storefront suite passed with 64 tests.
+- No error was logged.
+- `composer install --no-dev --dry-run` exited 0 with 184 deprecation notices from the image's Composer
+  2.2.9.
+
+Dolibarr on PHP 8.5.12 loaded imap, all 61 PHP files of BankSync and PmTools passed `php -l`, the login
+and all nine BankSync pages worked, and no PHP error was logged.
+
+The live order puts Dolibarr first, because mod_php parses the request body before Dolibarr runs.
+1. Baseline in `/root/php85-baseline/` (`plugin:list --json`, `php -v`, running image IDs), then `git
+   pull --ff-only` and `docker compose pull dolibarr dolibarr_cron shopware`.
+2. Dolibarr: rotate the cron key, then `docker compose up -d dolibarr dolibarr_cron`. Check `php -v`,
+   the upload progress setting, the login, the BankSync pages, the SMTP test mail and the next cron run.
+3. Caddy: `caddy validate`, then `systemctl reload caddy` for the Chimo Diazz placeholder and the
+   mailcatcher paths.
+4. Shopware: hold `/run/lock/shopware-worker.lock`, maintenance on,
+   `tools/shopware/stop-dockware.sh shopware`, `docker compose up -d shopware`, wait for
+   `/var/www/container.launched`, then `cache:clear`, the FPM reload and maintenance off. Accept as in
+   [Updating Shopware](shopware/infrastructure.md#updating-shopware).
+
+The rollback for each service is the previous image line from git plus `docker compose up -d`, with
+`stop-dockware.sh` first for Shopware. The old images stay on the host for that reason.
 
 ## SEC-05 and SEC-25 maintenance window
 
@@ -465,9 +514,11 @@ stack's containers and networks; the data survives because every database is a b
 
 The dockware images ignore SIGTERM, so `docker stop` kills their internal MySQL after the timeout
 (exit 137) and leaves an unclean InnoDB. `service mysql stop` inside the container failed as well.
-What worked: find `mysqld` with `docker top <container> -eo pid,comm`, wait for a "ready for
-connections" line from the current start, send `kill -TERM <pid>` from the host, wait until the PID is
-gone and confirm "Shutdown complete" in `/var/log/mysql/error.log`, then stop the container. The user creates a Contabo
+What works is `/opt/docker/tools/shopware/stop-dockware.sh <container>` on the host, after a "ready
+for connections" line from the current start. It sends `kill -TERM` to `mysqld` from the host, waits
+until the PID is gone (`STOP_TIMEOUT`, default 120 s), requires "Shutdown complete" in
+`/var/log/mysql/error.log` and only then stops the container. On a timeout or a missing marker it exits
+1 and leaves the container running. The user creates a Contabo
 snapshot and verifies that it is ready and can be restored. Do not proceed without this gate.
 This checkpoint includes Dolibarr 23.0.4 and the maintenance restrictions.
 

@@ -399,7 +399,7 @@ notifications. A healthy backup sends no mail. Failure markers make a failed new
 the previous archive is still fresh. See [backup.md](backup.md#consistent-sql-database-archives).
 
 `DATABASE_BACKUP_CONTAINERS` selects the running database/application containers. It defaults to
-`dolibarr_db shopware chimodiazz_shopware paperless_sdwa5_db paperless_home_db`. `DATABASE_BACKUP_DIR` defaults to
+`dolibarr_db shopware paperless_sdwa5_db paperless_home_db`. `DATABASE_BACKUP_DIR` defaults to
 `/opt/docker/database-backup`, and `DATABASE_BACKUP_TIMEOUT` limits each database client operation to
 900 seconds. Keep the same container list and directory for the backup job and the health check.
 `CHIMODIAZZ_DEPLOY_LOCK` defaults to `/run/lock/chimodiazz-deploy.lock` and must match the deployment job.
@@ -429,7 +429,7 @@ status is 1 with any CRIT, 1 with any WARN under `--strict`, 2 for a usage error
 | `hsts` | vault and erp send `max-age` of at least 31536000 | | missing or shorter |
 | `blocked` | every variant of each blocked path from [caddy.md](caddy.md#hardening) gets Caddy's own `Not Found` | a variant reached the upstream, which answered 404 | a variant got anything but a 404 |
 | `firewall` | INPUT DROP on both families, the fail2ban jump first, tcp 22/80/443 and udp 443 accepted; DOCKER-USER drops `eth0` | the fail2ban jump is not first | anything else missing |
-| `isolation` | from `chimodiazz_shopware`, `shopware`, `dolibarr`, both Paperless instances, `vaultwarden` and `restic`, no listener of another application answers, and `dolibarr` and Paperless reach their own database and broker | | a foreign listener answers, or the database path is closed |
+| `isolation` | from `shopware`, `dolibarr`, both Paperless instances, `vaultwarden` and `restic`, no listener of another application answers, and `dolibarr` and Paperless reach their own database and broker | | a foreign listener answers, or the database path is closed |
 | `gateway` | the host answers on 22, 80 and 443 only | one of those does not answer | 25, 2019, 3306, 8000, 8002, 8443 or 33113 answers |
 | `egress` | `dolibarr_db` reaches neither 1.1.1.1:443 nor 9.9.9.9:53 | | it does |
 | `revision` | `/opt/docker` HEAD equals `origin/main`, no tracked file modified | it differs, a tracked file is modified, or origin is unreachable | not a checkout |
@@ -513,8 +513,9 @@ install -m 644 -o root -g root monitoring/cron.d/vaultwarden-db-backup   /etc/cr
 install -m 644 -o root -g root monitoring/cron.d/database-backup         /etc/cron.d/database-backup
 install -m 644 -o root -g root monitoring/cron.d/vaultwarden-autoupdate  /etc/cron.d/vaultwarden-autoupdate
 install -m 644 -o root -g root monitoring/cron.d/shopware-worker         /etc/cron.d/shopware-worker
-install -m 644 -o root -g root monitoring/cron.d/chimodiazz-worker       /etc/cron.d/chimodiazz-worker
-install -m 644 -o root -g root monitoring/cron.d/chimodiazz-deploy       /etc/cron.d/chimodiazz-deploy
+# Not installed while Chimo Diazz is switched off (since 2026-10-24), see docs/chimodiazz.md.
+# install -m 644 -o root -g root monitoring/cron.d/chimodiazz-worker     /etc/cron.d/chimodiazz-worker
+# install -m 644 -o root -g root monitoring/cron.d/chimodiazz-deploy     /etc/cron.d/chimodiazz-deploy
 mkdir -p /var/lib/vps-health
 /opt/docker/monitoring/vaultwarden-db-backup.sh
 /opt/docker/monitoring/database-backup.sh

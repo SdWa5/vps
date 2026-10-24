@@ -6,6 +6,39 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.95.0] - 2026-10-24
+
+### Added
+
+- `tools/shopware/stop-dockware.sh`, which stops a dockware container only after a clean MySQL shutdown.
+- `hardening/php/99-php-security-mitigation.ini` for the PHP security release of 2026-10-21, mounted
+  read-only into `shopware`, `dolibarr`, `dolibarr_cron` and both dev mirrors.
+- `SDWA5_SHOPWARE_DEV_PHP` and the compose `PHP_VERSION` in the Shopware dev mirror, for the container
+  and for `composer`.
+- `docs/maintenance.md#php-85`.
+
+### Changed
+
+- Shopware runs PHP 8.5 through `PHP_VERSION=8.5` on the rebuilt `dockware/shopware:6.7.15.1` digest.
+- Dolibarr is pinned to `dolibarr/dolibarr:24.0.2-php8.5` by digest, and `rehearse-upgrade.sh` accepts
+  a PHP variant and a digest in the pin.
+- CI PHP image is `php:8.5.12-cli`.
+- Chimo Diazz is switched off, and Caddy serves its placeholder.
+- Caddy answers 404 for dockware's `/messages` and `/assets` mailcatcher proxy paths, and
+  `security-recheck.sh` checks `/messages`.
+
+### Fixed
+
+- The Dolibarr dev mirror removes its MariaDB-owned data directory through a throwaway container, so
+  `restore` runs more than once.
+- The Shopware dev mirror accepts a copy without a shop ID after `app:shop-id:change` on a shop with no
+  apps.
+
+### Removed
+
+- `chimodiazz_shopware` from the default expected containers, database backups and isolation sources
+  of the monitoring scripts.
+
 ## [1.94.2] - 2026-10-18
 
 ### Changed

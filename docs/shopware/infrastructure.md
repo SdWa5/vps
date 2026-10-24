@@ -194,12 +194,16 @@ for the old lock and none for the new one. That needed 6.7.15.1, because 6.7.11.
    tools/shopware/dev-instance.sh composer update shopware/core shopware/administration \
        shopware/storefront shopware/elasticsearch --with-all-dependencies
    docker run --rm --network sdwa5-shopware-dev-web --user www-data --workdir /var/www/html \
-       --entrypoint php --mount type=volume,src=sdwa5-shopware-dev-html,dst=/var/www/html,volume-nocopy=true \
+       --entrypoint php8.5 --mount type=volume,src=sdwa5-shopware-dev-html,dst=/var/www/html,volume-nocopy=true \
        "$(docker inspect -f '{{.Config.Image}}' sdwa5-shopware-dev)" \
        vendor/composer/composer/bin/composer audit --locked
    ```
 
-   The dockware images ship Composer 2.2.9, which has no `audit`, so the vendored Composer runs it. The
+   The dockware images ship Composer 2.2.9, which has no `audit`, so the vendored Composer runs it. A
+   container without dockware's entrypoint does not switch PHP, so the entrypoint names `php8.5`, the
+   version production runs since 2026-10-24 ([PHP 8.5](../maintenance.md#php-85)).
+   `dev-instance.sh composer` does the same from the service's `PHP_VERSION`, and Composer 2.2.9
+   prints deprecation notices on 8.5, which are harmless. The
    application container has no route out, so the audit runs beside it on the web network, the way the
    tool's own `composer` subcommand does. Copy
    `composer.json` and `composer.lock` into `shopware-html-data/` and give them back to `root:root`, as
@@ -218,8 +222,8 @@ for the old lock and none for the new one. That needed 6.7.15.1, because 6.7.11.
 4. **Pin the image by tag and digest** in `docker-compose.yml`, because dockware rebuilds tags.
 5. **Live, after a Contabo snapshot.** `monitoring/database-backup.sh` and
    `monitoring/database-restore-check.sh shopware`, the worker lock `/run/lock/shopware-worker.lock`
-   held throughout, maintenance on, `system:update:prepare`, `git pull --ff-only`, `docker compose up -d
-   shopware`, `composer install --no-dev` in the container, `system:update:finish`, `plugin:refresh`
+   held throughout, maintenance on, `system:update:prepare`, `git pull --ff-only`,
+   `tools/shopware/stop-dockware.sh shopware` for a clean MySQL shutdown, `docker compose up -d shopware`, `composer install --no-dev` in the container, `system:update:finish`, `plugin:refresh`
    and `plugin:update SdWa5Theme` for a bumped theme, `theme:compile --active-only`, `cache:clear`, the FPM reload with `pkill -USR2 -f '^php-fpm: master'` and maintenance off.
    The rollback is the previous image line and lock from git plus the SQL archive, or the snapshot.
 

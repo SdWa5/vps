@@ -34,7 +34,7 @@ docker compose up -d
 | Paperless-ngx household | https://paper.ripper.sdwa5.org | docker-compose.yml        |
 | Ollama (inactive)  | :11434 (no public domain)     | docker-compose.yml (profile: ollama) |
 | Restic backup      | —                             | docker-compose.yml             |
-| Chimo Diazz        | https://chimodiazz.sdwa5.org | docker-compose.projects.yml (profile: chimodiazz) |
+| Chimo Diazz (switched off) | https://chimodiazz.sdwa5.org (placeholder) | docker-compose.projects.yml (profile: chimodiazz) |
 | Minecraft (inactive) | :25565                      | docker-compose.yml (profile: minecraft) |
 
 ## Credentials
@@ -95,6 +95,9 @@ docker compose logs -f
 
 # Reload Caddy config
 systemctl reload caddy
+
+# Stop a dockware container with a clean MySQL shutdown (dockware ignores SIGTERM)
+/opt/docker/tools/shopware/stop-dockware.sh shopware
 
 # Health check on demand (see docs/monitoring.md)
 /opt/docker/monitoring/vps-health.sh --dry-run
@@ -206,6 +209,8 @@ Content-Security-Policy, see [docs/caddy.md](docs/caddy.md).
 
 Production runs Debian 13 since 2026-10-15. The compose files pin Dolibarr 24.0.2, rolled out through
 the [Dolibarr 24.0.1 upgrade](docs/maintenance.md#dolibarr-2401-upgrade) steps, which 24.0.2 repeats.
+Shopware and Dolibarr run PHP 8.5 since 2026-10-24, rehearsed on both dev mirrors, see
+[PHP 8.5](docs/maintenance.md#php-85).
 The 2026-10-18 production acceptance includes the admin login, all nine BankSync pages and confirmed
 SMTP test delivery; the live record is in the same maintenance section.
 The inactive project definitions are updated without starting those services.

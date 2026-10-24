@@ -19,7 +19,9 @@
 # floating free: it makes the precedence explicit instead of leaving it to
 # Caddy's default directive order.
 (block_dockware_tools) {
-    @dockware_tools path /adminer /adminer/* /mailcatcher /mailcatcher/* /logs /logs/*
+    # dockware's Apache also proxies /messages (the JSON of every caught mail)
+    # and /assets to mailcatcher. Shopware serves nothing under either path.
+    @dockware_tools path /adminer /adminer/* /mailcatcher /mailcatcher/* /logs /logs/* /messages /messages/* /assets /assets/*
     handle @dockware_tools {
         respond "Not Found" 404
     }
@@ -177,22 +179,26 @@ paper.ripper.sdwa5.org {
 }
 
 # chimodiazz.sdwa5.org — Shopware as a CMS, same shape as sdwa5.org above.
-# Served a static placeholder from chimodiazz-placeholder/ between 2026-09-15 and
-# the first start of the container; that directory is kept, because it is what
-# this block falls back to while the instance is down for maintenance.
+# Switched off since 2026-10-24 (PHP security release of 2026-10-21), so the
+# static placeholder from chimodiazz-placeholder/ is served again, as it was
+# between 2026-09-15 and the first start of the container. The way back is
+# this handle body, see docs/chimodiazz.md:
+#
+#     reverse_proxy https://127.0.0.1:8444 {
+#         # Shopware picks the sales channel by Host. Caddy 2.11 sends the
+#         # upstream address as Host to an HTTPS upstream, measured 2026-10-15,
+#         # which answers "Sales Channel Not Found"; 2.6.2 passed it through.
+#         header_up Host {host}
+#         transport http {
+#             tls_insecure_skip_verify
+#         }
+#     }
 chimodiazz.sdwa5.org {
     import block_dockware_tools
     import hide_server_headers
 
     handle {
-        reverse_proxy https://127.0.0.1:8444 {
-            # Shopware picks the sales channel by Host. Caddy 2.11 sends the
-            # upstream address as Host to an HTTPS upstream, measured 2026-10-15,
-            # which answers "Sales Channel Not Found"; 2.6.2 passed it through.
-            header_up Host {host}
-            transport http {
-                tls_insecure_skip_verify
-            }
-        }
+        root * /opt/docker/chimodiazz-placeholder
+        file_server
     }
 }

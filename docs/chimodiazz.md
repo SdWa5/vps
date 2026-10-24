@@ -4,16 +4,29 @@ Artist website at <https://chimodiazz.sdwa5.org>, hosted here as a favour rather
 service. The site itself is developed in the private repository `chimodiazz/website`, which this host
 pulls with its own read-only deploy key.
 
-**Live since 2026-09-15.** It served a static placeholder for a few hours that afternoon, between
-the Caddy block being added and the container's first start.
+**Switched off since 2026-10-24.** The PHP security release of 2026-10-21 affected its PHP 8.2.31, and
+the shop is not an active project, so it was stopped instead of patched. Caddy serves the placeholder,
+the container is stopped with restart policy `no`, its cron files are removed, and the monitoring
+defaults leave it out. It was live from 2026-09-15.
+
+The way back, as one change, is the following.
+1. Update it to 6.7.15.1 with `PHP_VERSION=8.5` and the mitigation ini mount, like `shopware` in
+   `docker-compose.yml` (TODO #19).
+2. Put `chimodiazz_shopware` back into `EXPECTED_CONTAINERS` and `DATABASE_BACKUP_CONTAINERS` in
+   `monitoring/vps-health.sh`, `DATABASE_BACKUP_CONTAINERS` in `monitoring/database-backup.sh` and
+   `monitoring/security-recheck.sh`, and `ISOLATION_SOURCES` in the latter.
+3. Install `monitoring/cron.d/chimodiazz-worker` and `chimodiazz-deploy` again, see
+   [monitoring.md](monitoring.md#installation).
+4. `docker update --restart unless-stopped chimodiazz_shopware`, start it, and put the commented
+   `reverse_proxy` back into its `Caddyfile` block.
 
 ## Routing
 
 | Domain                 | Upstream                 | Notes                                         |
 |------------------------|--------------------------|-----------------------------------------------|
-| `chimodiazz.sdwa5.org` | `https://127.0.0.1:8444` | TLS skip verify, same shape as `sdwa5.org`     |
+| `chimodiazz.sdwa5.org` | `https://127.0.0.1:8444` | TLS skip verify, same shape as `sdwa5.org`; the placeholder while switched off |
 
-`/adminer`, `/mailcatcher` and `/logs` are answered with 404 by Caddy before anything reaches the
+`/adminer`, `/mailcatcher`, `/messages`, `/assets` and `/logs` are answered with 404 by Caddy before anything reaches the
 container. See the section on dockware's bundled tools below.
 
 The A record already pointed at this host before any of this existed. Measured 2026-09-15:
@@ -24,9 +37,9 @@ the block is therefore all that was needed for the certificate.
 ## The placeholder, now a maintenance page
 
 `chimodiazz-placeholder/index.html` is a single self-contained file with no external resources,
-tracked in this repository. It is no longer routed: the site block proxies to the container instead.
-It is kept because it is what this block falls back to while the instance is down, and swapping the
-`handle` body for `root` plus `file_server` is a two-line edit and a reload.
+tracked in this repository. It is routed again since 2026-10-24, while the shop is switched off. The
+`reverse_proxy` it replaced stays as a comment in the `Caddyfile` block, so switching back is an edit
+of the `handle` body and a reload.
 
 It lives under `/opt/docker/`, so the daily restic backup takes it along. `/opt/docker` is `755
 root:root`, which is why the `caddy` user can read it without any permission change.
@@ -289,9 +302,9 @@ Verified on creation with a `client_credentials` grant, which answered 200, and 
 
 ## Monitoring
 
-`chimodiazz=https://chimodiazz.sdwa5.org/` is in the built-in `HEALTH_URLS` default, and
-`chimodiazz_shopware` is in `EXPECTED_CONTAINERS`. The container is profile-gated but permanently
-running, so a missing one is a real fault rather than an expected absence.
+`chimodiazz=https://chimodiazz.sdwa5.org/` is in the built-in `HEALTH_URLS` default and checks the
+placeholder while the shop is off. Since 2026-10-24 `chimodiazz_shopware` is out of the
+`EXPECTED_CONTAINERS`, database backup and isolation defaults, and the way back above restores them.
 
 ## Backup
 

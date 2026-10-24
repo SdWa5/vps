@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.95.1] - 2026-10-24
+
+### Added
+
+- Live acceptance record of the PHP 8.5 rollout in `docs/maintenance.md#php-85`.
+
+### Changed
+
+- `docs/dolibarr.md` records the cron key rotation of 2026-10-24.
+
 ## [1.95.0] - 2026-10-24
 
 ### Added

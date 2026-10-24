@@ -320,6 +320,23 @@ The live order puts Dolibarr first, because mod_php parses the request body befo
 The rollback for each service is the previous image line from git plus `docker compose up -d`, with
 `stop-dockware.sh` first for Shopware. The old images stay on the host for that reason.
 
+The live rollout ran on 2026-10-24 and was accepted with the following results.
+- Dolibarr and `dolibarr_cron` run PHP 8.5.12 with the upload progress off. The cron key was rotated
+  first, and the next cron run logged `Result of run_jobs OK` twice and no key mismatch. The admin login,
+  all nine BankSync pages and the SMTP test mail through Setup, Emails worked, and no PHP error was
+  logged.
+- Caddy serves the Chimo Diazz placeholder with 200 and answers 404 for `/messages` and `/assets` on
+  both shop hosts.
+- Shopware was in maintenance from 15:26:53 to 15:28:54 UTC. `stop-dockware.sh` saw mysqld stop after
+  4 s, and the container launched 86 s after `up -d`. It runs PHP 8.5.12 without xdebug and tideways,
+  with `Europe/Berlin` and the upload progress off. Storefront EN and DE, admin and health check answer
+  200, the plugin list equals the baseline, the storefront suite passed with 64 tests, the scheduled
+  tasks ran again from 15:29 UTC, and no error was logged in the first ten minutes. The boot logged one
+  `Another FPM instance seems to already listen` from dockware starting FPM twice, while the first
+  instance kept serving.
+- `security-recheck.sh --restore` reported 65 OK, 1 WARN and 0 CRIT. The WARN is the IPv6 port probe,
+  which cannot answer because no AAAA record is published. `vps-health.sh --dry-run` was all OK.
+
 ## SEC-05 and SEC-25 maintenance window
 
 Executed on 2026-10-15 between 17:24 and 19:30. Production now runs Debian 13.7 with kernel

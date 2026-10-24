@@ -85,8 +85,8 @@ docker compose up -d --force-recreate --no-deps dolibarr_cron
 The entrypoint writes `/etc/cron.d/dolibarr` ca. 30 seconds after the start. The next run is clean when
 `docker logs dolibarr_cron` shows no `does not match`. `dolibarr` keeps the old file until it is next
 recreated, which does no harm because it reads the key only for an empty database. The workstation
-copy is deleted afterwards. The key was rotated on 2026-10-18, after a crontab print had shown it in a
-session transcript.
+copy is deleted afterwards. The key was rotated on 2026-10-18 and again on 2026-10-24, each time after
+it had shown up in a session transcript.
 
 ## SdWa5 instance
 

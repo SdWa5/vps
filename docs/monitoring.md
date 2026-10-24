@@ -41,6 +41,7 @@ auto-update.
 | `database_backups` | a configured SQL dump failed, an archive is missing or corrupt, or it is older than `DB_BACKUP_MAX_AGE_HOURS` (26) |
 | `http` | `vault.sdwa5.org/alive`, `sdwa5.org`, `erp.sdwa5.org` or `chimodiazz.sdwa5.org` returns anything but 200 |
 | `caddy` | `systemctl is-active caddy` is not `active` |
+| `accounts` | `monitoring/account-check.sh`: a login account other than root, a second uid 0, a member of a root-equivalent group, a sudoers rule or include beyond Debian's defaults, an `authorized_keys2`, or a root key outside `/etc/vps-health/root-authorized-keys` (CRIT); an unreadable file or no allowlist (WARN) |
 | `firewall` | the IPv4 `INPUT` policy is not `DROP`, fail2ban's jump is gone, a port in `FIREWALL_PORTS` (22 80 443) is no longer accepted, or **`DOCKER-USER` is missing or back to Docker's empty `-j RETURN`**, which leaves every published container port unfiltered. The same holds for IPv6: an open v6 policy, a missing v6 `f2b-sshd` chain or a v6 chain without its jump is a CRIT too |
 | `shopware_tasks` | the newest Shopware scheduled task ran longer than `SHOPWARE_TASK_MAX_AGE_HOURS` (2) ago, the task list cannot be read, or no task has ever run |
 | `vaultwarden_version` | the running version is behind the newest GitHub release **and that release is older than `VAULTWARDEN_DRIFT_GRACE_HOURS` (26)** |
@@ -433,7 +434,8 @@ status is 1 with any CRIT, 1 with any WARN under `--strict`, 2 for a usage error
 | `gateway` | the host answers on 22, 80 and 443 only | one of those does not answer | 25, 2019, 3306, 8000, 8002, 8443 or 33113 answers |
 | `egress` | `dolibarr_db` reaches neither 1.1.1.1:443 nor 9.9.9.9:53 | | it does |
 | `revision` | `/opt/docker` HEAD equals `origin/main`, no tracked file modified | it differs, a tracked file is modified, or origin is unreachable | not a checkout |
-| `deployed` | the Caddyfile, jail.local, sshd drop-in, firewall script and unit, netplan and cloud-init files under `/etc` equal the checkout | one differs or is missing | |
+| `deployed` | the Caddyfile, jail.local, sshd drop-in, firewall script and unit and the netplan file under `/etc` equal the checkout | one differs or is missing | |
+| `accounts` | `account-check.sh` reports OK, as the health check's `accounts` row | no allowlist or an unreadable file | an unexpected account, group member, sudoers line or root key |
 | `env` | per container of `ISOLATION_APPS`: no secret value in `docker inspect`; names a process environment still carries are listed in the message | a secret value in `docker inspect`, or the process environments cannot be read | |
 | `listeners` | neither `shopware` (22, 1025, 1080) nor `chimodiazz_shopware` (22) listens on a port its boot hook closes | one of them listens | |
 | `restore` | `database-restore-check.sh` passes for each database | | it fails |
@@ -547,6 +549,9 @@ timestamps the scripts read out of the restic log.
 
 `tests/security-recheck.bats` uses its own stubs in `tests/stubs-recheck/` (`curl`, `docker`, `git`,
 `nc`, `ssh`), modelled on the measured state of 2026-10-15, because the shared stubs model other scripts.
+`tests/account-check.bats` and every suite that runs the account check read a fixture `/etc` and root
+key file from `make_account_etc` in `tests/test_helper.bash`, since the bats container's own `/etc`
+would not pass; `tests/run.sh` adds `openssh-keygen` for the fingerprints.
 
 ## Limitations
 

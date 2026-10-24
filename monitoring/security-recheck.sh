@@ -10,7 +10,8 @@
 # The script runs in two places. From a workstation it probes the public side itself and then runs
 # its own --host part on the VPS over ssh, merging both into one report. On the VPS, --host probes
 # the firewall, the container isolation, the secrets in container environments, the listeners
-# dockware's boot hook must have closed, the deployed revision and the deployed config copies.
+# dockware's boot hook must have closed, the deployed revision, the deployed config copies and the
+# login accounts, sudoers rules and root keys (account-check.sh).
 #
 # Usage:
 #   security-recheck.sh                external probes here, host probes over ssh
@@ -38,7 +39,7 @@
 #   ISOLATION_APPS, ISOLATION_SOURCES, ISOLATION_EXPECT_OPEN
 #   GATEWAY_OPEN, GATEWAY_CLOSED, NO_EGRESS_CONTAINERS, EGRESS_PROBES, CLOSED_LISTENERS
 #   GIT_CHECKOUT_DIR, GIT_BRANCH, DEPLOYED_FILES, DATABASE_BACKUP_CONTAINERS
-#   PORT_TIMEOUT, PROBE_TIMEOUT, HTTP_TIMEOUT, RESTORE_CHECK, RECHECK_PROC_ROOT (test hooks)
+#   PORT_TIMEOUT, PROBE_TIMEOUT, HTTP_TIMEOUT, RESTORE_CHECK, ACCOUNT_CHECK, RECHECK_PROC_ROOT (test hooks)
 
 set -uo pipefail
 
@@ -92,9 +93,10 @@ CLOSED_LISTENERS="${CLOSED_LISTENERS:-shopware:22,1025,1080 chimodiazz_shopware:
 
 GIT_CHECKOUT_DIR="${GIT_CHECKOUT_DIR:-$COMPOSE_DIR}"
 GIT_BRANCH="${GIT_BRANCH:-main}"
-DEPLOYED_FILES="${DEPLOYED_FILES:-Caddyfile:/etc/caddy/Caddyfile hardening/fail2ban/jail.local:/etc/fail2ban/jail.local hardening/sshd_config.d/10-hardening.conf:/etc/ssh/sshd_config.d/10-hardening.conf hardening/firewall/sdwa5-firewall.sh:/usr/local/sbin/sdwa5-firewall.sh hardening/firewall/sdwa5-firewall.service:/etc/systemd/system/sdwa5-firewall.service hardening/netplan/60-ipv6.yaml:/etc/netplan/60-ipv6.yaml hardening/cloud-init/99-disable-network-config.cfg:/etc/cloud/cloud.cfg.d/99-disable-network-config.cfg}"
+DEPLOYED_FILES="${DEPLOYED_FILES:-Caddyfile:/etc/caddy/Caddyfile hardening/fail2ban/jail.local:/etc/fail2ban/jail.local hardening/sshd_config.d/10-hardening.conf:/etc/ssh/sshd_config.d/10-hardening.conf hardening/firewall/sdwa5-firewall.sh:/usr/local/sbin/sdwa5-firewall.sh hardening/firewall/sdwa5-firewall.service:/etc/systemd/system/sdwa5-firewall.service hardening/netplan/60-ipv6.yaml:/etc/netplan/60-ipv6.yaml}"
 DATABASE_BACKUP_CONTAINERS="${DATABASE_BACKUP_CONTAINERS:-dolibarr_db shopware paperless_sdwa5_db paperless_home_db}"
 RESTORE_CHECK="${RESTORE_CHECK:-$MONITORING_DIR/database-restore-check.sh}"
+ACCOUNT_CHECK="${ACCOUNT_CHECK:-$MONITORING_DIR/account-check.sh}"
 
 PORT_TIMEOUT="${PORT_TIMEOUT:-3}"
 PROBE_TIMEOUT="${PROBE_TIMEOUT:-2}"
@@ -811,6 +813,7 @@ run_host() {
     done
     emit "revision:$GIT_BRANCH" "$(check_revision)"
     emit "deployed:files" "$(check_deployed_files)"
+    emit "accounts:host" "$("$ACCOUNT_CHECK" 2>/dev/null)"
     if (( restore )); then
         for container in $DATABASE_BACKUP_CONTAINERS; do
             emit "restore:$container" "$(check_restore "$container")"

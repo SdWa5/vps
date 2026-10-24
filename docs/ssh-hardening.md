@@ -85,8 +85,9 @@ Editing the main file therefore changes nothing, and `sshd -T` would keep report
 `passwordauthentication yes` while the operator believed otherwise.
 
 The fix is [`hardening/sshd_config.d/10-hardening.conf`](../hardening/sshd_config.d/10-hardening.conf),
-which sorts **before** `50-cloud-init.conf` and so wins. `cloud-init.service` is still enabled, so it
-will keep rewriting its own file on boot, and that no longer matters.
+which sorts **before** `50-cloud-init.conf` and so wins. cloud-init was purged on 2026-10-24 and
+`50-cloud-init.conf` removed with it, see "Login accounts and root's keys" below. The file keeps its
+`10-` prefix, so a future drop-in still cannot override it.
 
 **Never assume a setting in `sshd_config` is live.** Read `sshd -T`, and read
 `/etc/ssh/sshd_config.d/` before concluding anything.
@@ -445,9 +446,8 @@ inbound    ssh -6 root@2a02:c206:3015:7801::1 logs in
 Contabo serves neither DHCPv6 nor router advertisements. At the first Debian 13 boot on 2026-10-15
 cloud-init ran despite `/etc/cloud/cloud-init.disabled`, rewrote `50-cloud-init.yaml` to `dhcp4` plus
 `dhcp6` and dropped the static address, so eth0 had link-local only and every IPv6 probe timed out until
-2026-10-16. The separate file survives such a rewrite, and
-[`hardening/cloud-init/99-disable-network-config.cfg`](../hardening/cloud-init/99-disable-network-config.cfg)
-stops cloud-init from rendering network config at all. Deploy both, then
+2026-10-16. The separate file survives such a rewrite, and since 2026-10-24 cloud-init is purged, so
+nothing rewrites `50-cloud-init.yaml` any more. Deploy the file, then
 `netplan generate && networkctl reload && networkctl reconfigure eth0`, which touches eth0 only and
 leaves Docker's bridges alone. On 2026-10-16 the address and route were up at once, but replies from
 outside started ca. 2 minutes later, so wait before calling a fresh IPv6 setup broken.
@@ -544,6 +544,32 @@ Note that `ip6tables-save` writes an **empty file** on this host, exiting 0. The
 and so looks normal. An empty restore file is a silent no-op, which is why the IPv6 baseline above is
 written by hand. Validate both with `iptables-restore --test` before trusting them.
 
+## Login accounts and root's keys
+
+Settled 2026-10-24 (SEC-34). The first Debian 13 boot on 2026-10-15 ran cloud-init although
+`/etc/cloud/cloud-init.disabled` existed. It created the image's default account `debian` with
+passwordless sudo, rewrote root's `authorized_keys` from the provider's metadata (same key, new
+mtime) and kept `50-cloud-init.conf`. The account had no key and a locked password, and nothing
+used it.
+
+What changed:
+
+- `debian` and `/etc/sudoers.d/90-cloud-init-users` are removed.
+- cloud-init is purged, together with `/etc/cloud` and `/var/lib/cloud`. Its logs in `/var/log` stay.
+  `50-cloud-init.yaml` in `/etc/netplan` is not part of the package and stays as a static file.
+- `50-cloud-init.conf` is removed from `/etc/ssh/sshd_config.d/`.
+- `10-hardening.conf` sets `AuthorizedKeysFile .ssh/authorized_keys`, so the legacy
+  `authorized_keys2` is no longer read.
+- `monitoring/account-check.sh` runs hourly in `vps-health` as `accounts` and in the security recheck.
+  It is CRIT on a login account other than root, a second uid 0, a member of a root-equivalent group,
+  a sudoers rule or include beyond Debian's defaults, an `authorized_keys2`, or a root key whose
+  fingerprint is missing from `/etc/vps-health/root-authorized-keys`. That allowlist lives on the
+  host only. After a key rotation, write it again:
+
+```bash
+ssh-keygen -lf /root/.ssh/authorized_keys | awk '{print $2}' > /etc/vps-health/root-authorized-keys
+```
+
 ## The `admin` account, and why uid 1000 is not free
 
 Settled 2026-09-08. It gets **neither an SSH key nor deletion**, and the reason is a uid collision
@@ -599,6 +625,12 @@ acceptable or right after the console has done its job.
 
 That is why disabling SSH password authentication costs nothing in recoverability. SSH passwords
 were never the fallback.
+
+**The panel's password reset is untested since cloud-init was purged on 2026-10-24.** Contabo does
+not document how the reset reaches the VM, and it reboots the server, so it may rely on cloud-init.
+The root password itself is unchanged and still works on the console. If the reset fails, the
+Contabo rescue system is the way in: boot it from the panel, mount the root partition and append a
+key to `/root/.ssh/authorized_keys`, then add its fingerprint to the allowlist above.
 
 ## Installation
 

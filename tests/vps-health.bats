@@ -30,6 +30,7 @@ setup() {
     [[ "$output" == *"http"* ]]
     [[ "$output" == *"caddy"* ]]
     [[ "$output" == *"vaultwarden_version"* ]]
+    [[ "$output" == *"accounts"* ]]
     [ "$(mail_count)" -eq 0 ]
 }
 
@@ -371,6 +372,23 @@ Container started." health
     [[ "$(mail_body)" == *"policy is not DROP"* ]]
     [[ "$(mail_body)" == *"fail2ban jump is missing"* ]]
     [[ "$(mail_body)" == *"no INPUT rule accepts tcp 22"* ]]
+}
+
+# --- accounts -------------------------------------------------------------
+
+# The state of 2026-10-24: the image's cloud-init had created `debian` with a login shell.
+@test "an unexpected login account is critical" {
+    printf 'debian:x:1001:1001:Debian:/home/debian:/bin/bash\n' >> "$ACCOUNT_CHECK_ETC/passwd"
+    health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"[CRIT] accounts"* ]]
+    [[ "$(mail_body)" == *"unexpected login account(s): debian"* ]]
+}
+
+@test "a missing account check is critical rather than silent" {
+    ACCOUNT_CHECK="$BATS_TEST_TMPDIR/missing" health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"[CRIT] accounts"* ]]
 }
 
 # --- version drift, the check that would have caught this outage ----------

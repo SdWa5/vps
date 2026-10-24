@@ -158,6 +158,7 @@ setup() {
     [[ "$output" != *$'\tCRIT\t'* ]]
     [ "$(recheck_status firewall:v6)" = OK ]
     [ "$(recheck_status isolation:dolibarr)" = OK ]
+    [ "$(recheck_status accounts:host)" = OK ]
     [ "$(recheck_status host:complete)" = OK ]
 }
 
@@ -333,6 +334,14 @@ setup() {
     recheck --host
     [ "$(recheck_status deployed:files)" = WARN ]
     [[ "$output" == *"deployed/b.conf"* ]]
+}
+
+@test "an added root key is CRIT on the host" {
+    printf '%s\n' "$TEST_KEY_B" >> "$ROOT_AUTHORIZED_KEYS"
+    recheck --host
+    [ "$status" -eq 1 ]
+    [ "$(recheck_status accounts:host)" = CRIT ]
+    [[ "$output" == *"$TEST_KEY_B_FP"* ]]
 }
 
 @test "restore checks run only with --restore" {

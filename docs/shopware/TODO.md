@@ -70,7 +70,7 @@
    `shopware.sitemap_generate` had stopped, and the worker now runs it again. **What is left is whether it has ever
    been submitted to Google Search Console**, which needs the account and cannot be answered from the host, plus the
    meta titles and descriptions, which were never measured
-8. update mysql
+8. update mysql (part of vps TODO #22, where the database would leave the dockware container)
 9. frosh tools system-status
     1. System Health
     2. Performance recommendations

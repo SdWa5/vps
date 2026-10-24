@@ -28,6 +28,56 @@ common_setup() {
     set_git_remote_reachable
     export REBOOT_REQUIRED_FILE="$BATS_TEST_TMPDIR/reboot-required"
     export BOOT_DIR="$BATS_TEST_TMPDIR/boot"
+    make_account_etc "$BATS_TEST_TMPDIR/etc"
+}
+
+# Two throwaway public keys for monitoring/account-check.sh; their private halves were deleted.
+export TEST_KEY_A='ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIyEMm5hKjn6FJa1g7Z+Ye+zrg5o3Yz4ztU9YbvX3FdH test-a'
+export TEST_KEY_A_FP='SHA256:sHwFfYuz1Suq0keOpaSvPPSIaMTFze54G10t2s2H0iQ'
+export TEST_KEY_B='ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIM6j2d15qK+TReYHT7wKKtf3aQqjKc+Blm/DZjUjU4NP test-b'
+export TEST_KEY_B_FP='SHA256:dNX7er5uVT9wUzq/ps8YCu/b4GJLX1g9SNSAoeh5oNQ'
+
+# make_account_etc DIR
+#
+# The /etc and root key file monitoring/account-check.sh reads, in the healthy state measured on the
+# host on 2026-10-24 after the cleanup: root is the only login account, sudo has no member, sudoers
+# holds Debian's defaults and root's one key is on the allowlist. The bats container's own /etc
+# would not pass, so every script that runs the check reads this one.
+make_account_etc() {
+    local dir="$1"
+
+    mkdir -p "$dir/sudoers.d" "$dir/root/.ssh" "$dir/vps-health"
+    cat > "$dir/passwd" <<'EOF'
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+sync:x:4:65534:sync:/bin:/bin/sync
+sshd:x:100:65534::/run/sshd:/usr/sbin/nologin
+EOF
+    cat > "$dir/group" <<'EOF'
+adm:x:4:
+sudo:x:27:
+docker:x:996:
+EOF
+    cat > "$dir/sudoers" <<'EOF'
+Defaults	env_reset
+Defaults	mail_badpass
+Defaults	use_pty
+
+# User privilege specification
+root	ALL=(ALL:ALL) ALL
+
+# Allow members of group sudo to execute any command
+%sudo   ALL=(ALL:ALL) ALL
+
+# See sudoers(5) for more information on "@include" directives:
+
+@includedir /etc/sudoers.d
+EOF
+    printf '#\n# Files in /etc/sudoers.d are parsed in sorted lexical order.\n#\n' > "$dir/sudoers.d/README"
+    printf '%s\n' "$TEST_KEY_A" > "$dir/root/.ssh/authorized_keys"
+    printf '%s\n' "$TEST_KEY_A_FP" > "$dir/vps-health/root-authorized-keys"
+    export ACCOUNT_CHECK_ETC="$dir"
+    export ROOT_AUTHORIZED_KEYS="$dir/root/.ssh/authorized_keys"
 }
 
 # The checkout the git_remote check watches. It is a tmpdir rather than the real repository root, so
@@ -478,6 +528,7 @@ recheck_setup() {
     printf 'config b\n' > "$GIT_CHECKOUT_DIR/etc/b.conf"
     cp "$GIT_CHECKOUT_DIR/etc/a.conf" "$GIT_CHECKOUT_DIR/etc/b.conf" "$BATS_TEST_TMPDIR/deployed/"
     export DEPLOYED_FILES="etc/a.conf:$BATS_TEST_TMPDIR/deployed/a.conf etc/b.conf:$BATS_TEST_TMPDIR/deployed/b.conf"
+    make_account_etc "$BATS_TEST_TMPDIR/etc"
 
     set_firewall_healthy
     export STUB_IPT_V6='-P INPUT DROP

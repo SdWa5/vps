@@ -26,7 +26,7 @@ CI_PYTHON_IMAGE='python:3.12.15-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c6
 
 echo "== bats =="
 docker run --rm -v "$REPO_ROOT:/code" -w /code --entrypoint sh "$CI_BATS_IMAGE" \
-    -c "apk add --no-cache coreutils jq git >/dev/null 2>&1 && bats ${*:-tests/}"
+    -c "apk add --no-cache coreutils jq git openssh-keygen >/dev/null 2>&1 && bats ${*:-tests/}"
 
 echo
 echo "== shellcheck =="
@@ -38,6 +38,7 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt "$CI_SHELLCHECK_IMAGE" -x \
     monitoring/database-backup.sh \
     monitoring/database-restore-check.sh \
     monitoring/security-recheck.sh \
+    monitoring/account-check.sh \
     monitoring/shopware-worker.sh \
     monitoring/chimodiazz-deploy.sh \
     restic/entrypoint.sh \

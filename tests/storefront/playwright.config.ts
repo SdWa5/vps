@@ -12,9 +12,18 @@ const viewports = {
 const projects: Project[] = Object.entries(viewports).flatMap(([name, use]) =>
   (['light', 'dark'] as const).map((colorScheme) => ({
     name: `${name}-${colorScheme}`,
+    testMatch: 'layout.spec.ts',
     use: { browserName: 'chromium' as const, ...use, colorScheme },
   })),
 );
+
+// The Content-Security-Policy check runs once. Every viewport and colour
+// scheme loads its sources from the same origin.
+projects.push({
+  name: 'csp',
+  testMatch: 'csp.spec.ts',
+  use: { browserName: 'chromium' as const, ...viewports.desktop },
+});
 
 export default defineConfig({
   testDir: '.',

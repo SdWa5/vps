@@ -203,8 +203,8 @@ The Contabo console remains the fallback and is unaffected by any of it, because
 getty and PAM rather than sshd. See [docs/ssh-hardening.md](docs/ssh-hardening.md).
 
 Every container except the two dockware shops runs with `no-new-privileges` and without `NET_RAW`, see
-[docs/infrastructure.md](docs/infrastructure.md). The storefront of sdwa5.org sends a report-only
-Content-Security-Policy, see [docs/caddy.md](docs/caddy.md). Every site writes a JSON access log without
+[docs/infrastructure.md](docs/infrastructure.md). The storefront of sdwa5.org enforces a
+Content-Security-Policy, see [docs/caddy.md](docs/caddy.md#hardening). Every site writes a JSON access log without
 cookies, credentials or token values, kept 14 days, see [docs/caddy.md](docs/caddy.md#access-logs).
 
 ## Tests
@@ -244,19 +244,24 @@ The tree scan flags `minecraft-data/server.properties` when you run it on a depl
 correct and expected: the live file holds a generated `rcon.password`, which is exactly why it is not
 tracked. CI never sees it, because an untracked file is not in the clone.
 
-The storefront layout suite checks the rendered SdWa5Theme with Playwright inside Docker:
+The storefront suite checks the rendered SdWa5Theme and the Content-Security-Policy with Playwright
+inside Docker:
 
 ```bash
 tests/storefront/run.sh                       # against https://sdwa5.org
 SDWA5_STOREFRONT_URL=http://localhost:8090 tests/storefront/run.sh   # against the dev mirror
+tests/storefront/run.sh --project csp         # only the Content-Security-Policy check
 tests/storefront/run.sh --update-snapshots    # after an intended design change
 ```
 
-It asserts that the header settings, the offcanvas settings and the offcanvas donate link share one
-centre line, and that the homepage tiles end at their padding. It also compares two element
+The layout spec asserts that the header settings, the offcanvas settings and the offcanvas donate link
+share one centre line, and that the homepage tiles end at their padding. It also compares two element
 screenshots against the baselines in `tests/storefront/layout.spec.ts-snapshots/`, at three widths in
-light and dark mode. It needs a running Shopware, so it is not part of `tests/run.sh` or CI. Run it
-after a theme deploy, or against the mirror before one.
+light and dark mode. The CSP spec enforces the storefront policy of the `Caddyfile` on every page of
+both sitemaps, the cart, the account pages, a search and the SoundCloud player, and fails on any
+violation, so it checks a policy change before its deploy. The suite needs a running Shopware, so it is
+not part of `tests/run.sh` or CI. Run it after a theme or policy deploy, or against the mirror before
+one.
 
 ## Licence
 

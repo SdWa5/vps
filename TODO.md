@@ -468,7 +468,8 @@
     take the image along (ca. 16 Stunden)
 37. (proposal) **retire the dockware data of sdwa5.org after the rollback window** (ca. 1 Stunde). Tag a restic
     snapshot `sdwa5-archive` holding `shopware-html-data/`'s untracked docroot and `shopware-mysql-data/`, then
-    delete both, and move the tracked shop sources from `shopware-html-data/` into `shopware/`
+    delete both together with `shopware-legacy-data-20260327/`, the unused MySQL datadir of 2026-03-27 that sat in
+    `shopware-data/`, and move the tracked shop sources from `shopware-html-data/` into `shopware/`
 38. (proposal) **a vps-health WARN for a pending `docker-ce` or `containerd.io` update** (ca. 45 Minuten). Both
     come from download.docker.com and restart every container, so they are held for a window rather than
     applied unattended, and nothing reports that one is waiting

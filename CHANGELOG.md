@@ -34,6 +34,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - The container, isolation, egress, listener and backup lists of the monitoring scripts name `shopware_db`.
 - `tools/shopware/dev-instance.sh` runs the production image with the deployment helper's staging mode.
 - `docs/maintenance.md` prunes images without the shop's local builds.
+- `.gitignore` ignores `shopware-legacy-data-20260327/`, and TODO item 37 also retires that datadir.
 - TODO items 12 to 21 renumbered to 11 to 20 and 23 to 37 to 21 to 35; items 1, 7, 14, 18, 20, 22 and 27
   point to the image.
 - Shopware TODO item 12 is the theme rollback rehearsal on the mirror; items 9 to 13 renumbered to 8 to 12.

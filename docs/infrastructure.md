@@ -257,6 +257,7 @@ where the flag was set.
 ├── shopware-data/                  # gitignored — files, media, thumbnail, sitemap, theme, log
 ├── shopware-db-data/               # gitignored — shopware_db (MySQL 8.4)
 ├── shopware-mysql-data/            # gitignored — the dockware database of the rollback window
+├── shopware-legacy-data-20260327/  # gitignored — unused MySQL datadir of 2026-03-27, retired with TODO #37
 ├── dolibarr-mariadb-data/          # gitignored — Dolibarr SdWa5 DB
 ├── chimodiazz-placeholder/         # tracked — maintenance page, routed while Chimo Diazz is off
 ├── chimodiazz-src/                 # gitignored — checkout of chimodiazz/website (own deploy key)

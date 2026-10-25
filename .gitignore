@@ -39,6 +39,7 @@ shopware-html-data/custom/static-plugins/*
 shopware-mysql-data/
 shopware-db-data/
 shopware-data/
+shopware-legacy-data-20260327/
 
 # Dolibarr SdWa5 data
 dolibarr-mariadb-data/

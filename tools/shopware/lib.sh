@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 #
-# Shared helpers for the scripts in tools/shopware/ that write to the live shop
-# through the admin API. Sourced, not executable on its own.
-#
-# The sourcing script sets APPLY (0 for a dry run, 1 to write) before calling
-# sw_report, and calls sw_auth once before the first sw_api.
+# Shared helpers for the scripts in tools/shopware/. Sourced, not executable on
+# its own. Two groups:
+#   - the admin API helpers of the scripts that write to the live shop. The
+#     sourcing script sets APPLY (0 for a dry run, 1 to write) before calling
+#     sw_report, and calls sw_auth once before the first sw_api;
+#   - the image helpers of image.sh, deploy.sh and dev-instance.sh
+#     (docs/shopware/image.md). Their callers set REPO_ROOT, the directory that
+#     holds docker-compose.yml, before calling them.
 #
 # Environment:
 #   SHOPWARE_MCP_CONFIG   json holding the api credentials,
@@ -92,4 +95,24 @@ sw_report() {
 
 sw_skip() {
     printf '  %-8s %s\n' "skip" "$1"
+}
+
+# --- image ------------------------------------------------------------------
+
+# The image a service of docker-compose.yml pins, so the scripts follow every
+# production bump without a second place to edit.
+compose_image() {
+    awk -v service="  $1:" '
+        $0 == service { found = 1; next }
+        found && /^  [a-z_]+:$/ { exit }
+        found && /^ +image:/ { print $2; exit }' "$REPO_ROOT/docker-compose.yml"
+}
+
+# deployment_helper PREFIX...: Shopware's deployment helper for a prebuilt image, run
+# through PREFIX in a one-off container of the image before its web container serves,
+# such as `docker compose run --rm --no-deps -T --name shopware-deploy shopware`.
+# deploy.sh and dev-instance.sh share it, so the mirror rehearses what production runs.
+# The image carries public/bundles, so nothing installs assets (docs/shopware/image.md#deploy).
+deployment_helper() {
+    "$@" vendor/bin/shopware-deployment-helper run --skip-assets-install
 }

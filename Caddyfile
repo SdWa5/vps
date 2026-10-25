@@ -127,14 +127,10 @@ https://sdwa5.org {
     }
 
     handle {
-        reverse_proxy https://127.0.0.1:8443 {
-            # Shopware picks the sales channel by Host. Caddy 2.11 sends the
-            # upstream address as Host to an HTTPS upstream, measured 2026-10-15,
-            # which answers "Sales Channel Not Found"; 2.6.2 passed it through.
-            header_up Host {host}
-            transport http {
-                tls_insecure_skip_verify
-            }
+        # Holds requests while tools/shopware/deploy.sh switches the container (docs/caddy.md).
+        # An HTTP upstream gets the client's Host, which Shopware picks the sales channel by.
+        reverse_proxy 127.0.0.1:8001 {
+            lb_try_duration 15s
         }
     }
 }

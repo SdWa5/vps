@@ -4,5 +4,6 @@ MAILTO=""
 # The second Shopware instance needs its own worker. Same script, different
 # container, and deliberately its own lock file: sharing the shopware-worker
 # lock would let either instance starve the other, because `flock -n` makes the
-# loser exit rather than queue. See docs/chimodiazz.md.
-* * * * * root SERVICE=chimodiazz_shopware /usr/bin/flock -n /run/lock/chimodiazz-worker.lock /opt/docker/monitoring/shopware-worker.sh 2>&1 | logger -t chimodiazz-worker
+# loser exit rather than queue. Its database runs inside the dockware container.
+# See docs/chimodiazz.md.
+* * * * * root SERVICE=chimodiazz_shopware SHOPWARE_WORKER_DB_CONTAINER=chimodiazz_shopware /usr/bin/flock -n /run/lock/chimodiazz-worker.lock /opt/docker/monitoring/shopware-worker.sh 2>&1 | logger -t chimodiazz-worker

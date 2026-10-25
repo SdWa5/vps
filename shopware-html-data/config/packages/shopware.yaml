@@ -13,3 +13,7 @@
 shopware:
     admin_worker:
         enable_admin_worker: false
+    # Plugins come only from composer in the image (docs/shopware/image.md), so the
+    # admin's extension store must not install one into the container layer.
+    deployment:
+        runtime_extension_management: false

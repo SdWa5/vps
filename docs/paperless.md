@@ -38,7 +38,7 @@ The shared settings sit in the `x-paperless-env` anchor of `docker-compose.yml`:
 - no consume folder (`PAPERLESS_CONSUMER_DISABLE`), because no scanner or phone reaches a folder on
   this host
 - no self sign-up
-- no mail, no Tika or Gotenberg, and AI features off (TODO #20)
+- no mail, no Tika or Gotenberg, and AI features off (TODO #19)
 
 Documents arrive by web upload or through a mobile app. The uploader becomes the owner.
 

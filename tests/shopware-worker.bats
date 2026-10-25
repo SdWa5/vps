@@ -106,3 +106,25 @@ worker() {
     worker --dry-run
     [[ "$output" == *"Boot grace:   300s"* ]]
 }
+
+@test "the grace follows the database container, which shopware_db is by default" {
+    STUB_DOCKER_LOG="$BATS_TEST_TMPDIR/docker.log" STUB_DB_PING_FAILS=1 \
+        STUB_STARTED_AT="$(date -u -d '-30 seconds' +%FT%TZ)" worker
+    [ "$status" -eq 0 ]
+    [ "$(mail_count)" -eq 0 ]
+    grep -qx "inspect -f {{.State.StartedAt}} shopware_db" "$BATS_TEST_TMPDIR/docker.log"
+    grep -qx "exec shopware_db mysqladmin --no-defaults -h 127.0.0.1 --connect-timeout=3 ping" "$BATS_TEST_TMPDIR/docker.log"
+}
+
+@test "a dockware shop pings the database inside its own container" {
+    STUB_DOCKER_LOG="$BATS_TEST_TMPDIR/docker.log" SERVICE=chimodiazz_shopware \
+        SHOPWARE_WORKER_DB_CONTAINER=chimodiazz_shopware STUB_DB_PING_FAILS=1 \
+        STUB_STARTED_AT="$(date -u -d '-30 seconds' +%FT%TZ)" worker
+    [ "$status" -eq 0 ]
+    grep -qx "exec chimodiazz_shopware mysqladmin --no-defaults -h 127.0.0.1 --connect-timeout=3 ping" "$BATS_TEST_TMPDIR/docker.log"
+}
+
+@test "the Chimo Diazz cron names its own database container" {
+    grep -q 'SERVICE=chimodiazz_shopware SHOPWARE_WORKER_DB_CONTAINER=chimodiazz_shopware ' \
+        "$REPO_ROOT/monitoring/cron.d/chimodiazz-worker"
+}

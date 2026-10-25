@@ -12,7 +12,8 @@ flowchart LR
         C["Caddy<br/>systemd · TLS via Let's Encrypt"]
 
         subgraph docker ["Docker · /opt/docker"]
-            SW["Shopware<br/>127.0.0.1:8001/8443"]
+            SW["Shopware · own image<br/>127.0.0.1:8001"]
+            SWDB[("MySQL 8.4<br/>shopware_db")]
             VW["Vaultwarden<br/>127.0.0.1:8000"]
             DL["Dolibarr SdWa5<br/>127.0.0.1:8002"]
             DLC["dolibarr_cron"]
@@ -52,6 +53,7 @@ flowchart LR
     C --> P2 & P3
     C --> CDW
     C --> PL & PH
+    SW --> SWDB
     PL --> PLDB
     PH --> PHDB
     DL --> DLDB
@@ -71,7 +73,8 @@ Domain → port mapping lives in the [Caddyfile](../Caddyfile); backup detail in
 
 | Service             | Image                        | Port (internal) | Public URL                 | Compose file                            |
 |---------------------|------------------------------|-----------------|----------------------------|-----------------------------------------|
-| Shopware            | dockware/shopware:6.7.15.1 (PHP 8.5) | 8001 / 8443     | https://sdwa5.org          | docker-compose.yml                      |
+| Shopware            | localhost/sdwa5-shopware:6.7.15.1-N (FrankenPHP, PHP 8.5) | 8001 | https://sdwa5.org | docker-compose.yml, see [shopware/image.md](shopware/image.md) |
+| Shopware database   | mysql:8.4                    | —               | —                          | docker-compose.yml                      |
 | Vaultwarden         | vaultwarden/server:latest    | 8000            | https://vault.sdwa5.org    | docker-compose.yml                      |
 | Dolibarr SdWa5      | dolibarr/dolibarr:24.0.2-php8.5 | 8002            | https://erp.sdwa5.org      | docker-compose.yml                      |
 | Dolibarr SdWa5 cron | dolibarr/dolibarr:24.0.2-php8.5 | —               | —                          | docker-compose.yml                      |
@@ -116,6 +119,7 @@ database as dockware's `root`/`root`.
 |---|---|---|
 | `vault` | vaultwarden | |
 | `shop` | shopware | |
+| `shop_db` | shopware_db, shopware | `internal`, so the database has no gateway |
 | `erp` | dolibarr, dolibarr_cron | Egress for mail and the PayPal API |
 | `erp_db` | dolibarr_db, dolibarr, dolibarr_cron | `internal`, so the database has no gateway |
 | `paper_sdwa5` | paperless_sdwa5 | Paperless-ngx Verein, see [paperless.md](paperless.md) |
@@ -136,10 +140,11 @@ mailcatcher, and DNS is Docker's embedded resolver.
 Every running service also drops `NET_RAW`, which takes away raw sockets and with them ARP and ICMP
 tricks on its bridge.
 
-Every running service except the two dockware shops also sets `no-new-privileges`, so no process in it can
-gain privileges through a setuid binary or file capabilities after the start. The shops cannot have it,
-because dockware starts as `www-data` and reaches root through setuid `sudo` (41 calls in its
-`/entrypoint.sh`). A production image without dockware would lift that, see TODO #22.
+Every running service sets `no-new-privileges`, so no process in it can gain privileges through a
+setuid binary or file capabilities after the start. The sdwa5.org shop has it since SEC-31, when its own
+image replaced dockware, and it also drops every capability. Only the switched-off Chimo Diazz shop
+cannot have it, because dockware starts as `www-data` and reaches root through setuid `sudo` (41 calls in
+its `/entrypoint.sh`).
 
 Measured after the cutover on 2026-10-15. From `chimodiazz_shopware`, `shopware` and `dolibarr`,
 every port of every other application was closed by IP. The one open path was `dolibarr` to
@@ -151,6 +156,11 @@ recreated the containers in ca. 2 minutes. `monitoring/security-recheck.sh` repe
 [monitoring.md](monitoring.md#security-recheck).
 
 ### Database accounts
+
+The sdwa5.org shop connects to `shopware_db` with the account the `mysql` image creates from compose
+secrets, limited to the shop database, and its root account is reachable only inside that container, see
+[shopware/image.md](shopware/image.md#secrets). The text below describes the dockware shops, which
+since SEC-31 means Chimo Diazz alone.
 
 Each dockware shop connects with an account of its own, `shopware@localhost`, limited to its own
 database. [`hardening/dockware-db-account.sh`](../hardening/dockware-db-account.sh) creates it,
@@ -195,6 +205,8 @@ one without reading its entrypoint:
 | `restic` | `RESTIC_PASSWORD_FILE`, read by restic itself | the file only |
 
 Vaultwarden's `ADMIN_TOKEN` stays in `.env`, because it is an argon2id hash rather than the token.
+The sdwa5.org shop reads its database password and `APP_SECRET` from the compose secret
+`shopware_env_local`, mounted as `.env.local`, so they are in no container environment.
 The dockware shops carry no secret in their container environment, since dockware's `SSH_PWD`,
 `TIDEWAYS_KEY` and `SW_API_ACCESS_KEY` hold the literal `not-set`. Their database passwords are in
 each shop's `.env` in the html volume, see the database accounts above. `monitoring/security-recheck.sh`
@@ -202,6 +214,9 @@ reports per container which secret names `docker inspect` or a process environme
 see [monitoring.md](monitoring.md#security-recheck).
 
 ### No sshd in the shop containers
+
+The sdwa5.org image contains neither `sshd` nor `mailcatcher`. The rest of this section applies to
+Chimo Diazz, and it applied to sdwa5.org until SEC-31.
 
 dockware is a development image, and its entrypoint starts `sshd` with password login for `root` and
 `dockware` and `mailcatcher` on every boot. Neither port was published, but an application container
@@ -212,8 +227,7 @@ dockware's own end-of-boot hook `/var/www/boot_end.sh` into both shops. It stops
 keeps `mailcatcher`, because its mail still falls back to `.env`'s `MAILER_DSN=smtp://127.0.0.1`
 and lands there, see [chimodiazz.md](chimodiazz.md). Tested on a bare `dockware/shopware:6.7.15.1`
 on 2026-10-16, where the container booted, `sshd` was gone in both variants and `mailcatcher` only
-where the flag was set. A production image instead of dockware would remove both for good, see
-[TODO.md](../TODO.md).
+where the flag was set.
 
 ## Directory layout (`/opt/docker/`)
 
@@ -232,16 +246,17 @@ where the flag was set. A production image instead of dockware would remove both
 ├── hardening/                      # host SSH and fail2ban config, deployed to /etc
 │   ├── sshd_config.d/10-hardening.conf
 │   ├── fail2ban/jail.local
-│   ├── dockware-boot-end.sh        # mounted into both shops as /var/www/boot_end.sh
+│   ├── dockware-boot-end.sh        # mounted into Chimo Diazz as /var/www/boot_end.sh
 │   └── dockware-db-account.sh      # gives a dockware shop its own database account
 ├── monitoring/                     # host cron scripts, deployed to /opt/docker/monitoring
 ├── vaultwarden-db-backup/          # gitignored — consistent sqlite copy for restic
-├── shopware-html-data/             # partially tracked — Shopware web root + MySQL
-│   ├── composer.json/.lock, symfony.lock, config/*   # tracked — all eleven plugins are locked here
-│   └── .env, auth.json, var/, vendor/, public/, files/, custom/, config/jwt/
-│                                                      # gitignored (secrets/build/uploads)
-├── shopware-mysql-data/            # gitignored
-├── shopware-data/                  # gitignored (legacy mount)
+├── shopware/                       # tracked — Dockerfile and runtime files of the shop image
+├── shopware-html-data/             # partially tracked — the image's Composer project
+│   ├── composer.json/.lock, symfony.lock, .shopware-project.yml, config/*   # tracked — all twelve plugins
+│   └── everything else             # gitignored — the dockware docroot of the rollback window
+├── shopware-data/                  # gitignored — files, media, thumbnail, sitemap, theme, log
+├── shopware-db-data/               # gitignored — shopware_db (MySQL 8.4)
+├── shopware-mysql-data/            # gitignored — the dockware database of the rollback window
 ├── dolibarr-mariadb-data/          # gitignored — Dolibarr SdWa5 DB
 ├── chimodiazz-placeholder/         # tracked — maintenance page, routed while Chimo Diazz is off
 ├── chimodiazz-src/                 # gitignored — checkout of chimodiazz/website (own deploy key)

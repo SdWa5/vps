@@ -294,15 +294,15 @@ setup() {
     [[ "$output" == *'restic: no process environment found to read'* ]]
 }
 
-@test "a shop with dockware's sshd or the main shop's mailcatcher still listening is WARN" {
+@test "the shop's Caddy admin API or chimodiazz's dockware sshd listening is WARN" {
     recheck --host
     [ "$(recheck_status listeners:shopware)" = OK ]
     [ "$(recheck_status listeners:chimodiazz_shopware)" = OK ]
-    export STUB_EXTRA_LISTEN="shopware:1080 chimodiazz_shopware:22"
+    export STUB_EXTRA_LISTEN="shopware:2019 chimodiazz_shopware:22"
     recheck --host
     [ "$(recheck_status listeners:shopware)" = WARN ]
     [ "$(recheck_status listeners:chimodiazz_shopware)" = WARN ]
-    [[ "$output" == *'shopware listens on 1080'* ]]
+    [[ "$output" == *'shopware listens on 2019, which should be closed (see CLOSED_LISTENERS)'* ]]
 }
 
 @test "a deployed revision behind origin is WARN" {
@@ -378,9 +378,9 @@ setup() {
     printf '#!/bin/sh\necho "restore of $1 ok"\n' > "$RESTORE_CHECK"
     chmod +x "$RESTORE_CHECK"
     recheck --host
-    [ -z "$(recheck_status restore:shopware)" ]
+    [ -z "$(recheck_status restore:shopware_db)" ]
     recheck --host --restore
-    [ "$(recheck_status restore:shopware)" = OK ]
+    [ "$(recheck_status restore:shopware_db)" = OK ]
     [[ "$output" == *"restore of dolibarr_db ok"* ]]
 }
 

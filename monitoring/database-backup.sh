@@ -9,7 +9,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 load_env
 
 DATABASE_BACKUP_DIR="${DATABASE_BACKUP_DIR:-$COMPOSE_DIR/database-backup}"
-DATABASE_BACKUP_CONTAINERS="${DATABASE_BACKUP_CONTAINERS:-dolibarr_db shopware paperless_sdwa5_db paperless_home_db}"
+DATABASE_BACKUP_CONTAINERS="${DATABASE_BACKUP_CONTAINERS:-dolibarr_db shopware_db paperless_sdwa5_db paperless_home_db}"
 DATABASE_BACKUP_TIMEOUT="${DATABASE_BACKUP_TIMEOUT:-900}"
 CHIMODIAZZ_DEPLOY_LOCK="${CHIMODIAZZ_DEPLOY_LOCK:-/run/lock/chimodiazz-deploy.lock}"
 WORK_DIR=""
@@ -32,14 +32,22 @@ if [ -n "${MYSQL_PASSWORD_FILE:-}" ]; then
     MYSQL_PWD=$(cat "$MYSQL_PASSWORD_FILE")
 fi
 export MYSQL_PWD
+# The MariaDB images ship mariadb and mariadb-dump, the MySQL images mysql and
+# mysqldump. mysqldump needs the PROCESS privilege for tablespaces, which the
+# application user lacks, and writes GTID state that an import into another
+# server must not carry.
+if command -v mariadb-dump >/dev/null 2>&1; then client=mariadb dump=mariadb-dump extra=
+else client=mysql dump=mysqldump extra='--no-tablespaces --set-gtid-purged=OFF'; fi
 if [ "$1" = probe ]; then
-    exec mariadb --no-defaults --user="$MYSQL_USER" --protocol=TCP --host=127.0.0.1 \
+    exec "$client" --no-defaults --user="$MYSQL_USER" --protocol=TCP --host=127.0.0.1 \
         --batch --skip-column-names --database="$MYSQL_DATABASE" \
         --execute="SELECT DATABASE(), VERSION(), COUNT(*), COALESCE(SUM(TABLE_TYPE = 'BASE TABLE' AND ENGINE <> 'InnoDB'), 0), (SELECT COUNT(*) FROM (SELECT 1 FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA = DATABASE() GROUP BY TABLE_NAME, CONSTRAINT_NAME HAVING COUNT(*) > 1) d) FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE()"
 fi
 routine_option=--routines
 [ "$1" != dump-tables ] || routine_option=--skip-routines
-exec mariadb-dump --no-defaults --user="$MYSQL_USER" --protocol=TCP --host=127.0.0.1 \
+# $extra holds zero or two options and is split on purpose. MySQL's clients
+# accept --no-defaults only as the first option.
+exec "$dump" --no-defaults $extra --user="$MYSQL_USER" --protocol=TCP --host=127.0.0.1 \
     --single-transaction --quick --skip-lock-tables "$routine_option" --events --triggers --hex-blob \
     --databases "$MYSQL_DATABASE"
 CLIENT
@@ -96,7 +104,7 @@ backup_one() {
         return 1
     }
     flavor=mysql
-    [[ "$container" == *_db ]] && flavor=mariadb
+    [[ "$version" == *MariaDB* ]] && flavor=mariadb
 
     if ! database_client "$container" dump > "$WORK_DIR/dump.sql" 2> "$WORK_DIR/error.log"; then
         if [[ "$flavor" == mariadb ]] && grep -q 'Column count of mysql.proc is wrong' "$WORK_DIR/error.log"; then

@@ -1,10 +1,11 @@
 # sdwa5.org Shopware Documentation
 
-**Shopware 6.7** · dockware container · https://sdwa5.org
+**Shopware 6.7** · own FrankenPHP image · https://sdwa5.org
 Admin: https://sdwa5.org/admin · `admin` / see project memory
 
 - [Admin API](admin-api.md) — auth grants, MCP integration, key API patterns
-- [Infrastructure](infrastructure.md) — docker, volumes, tracked files, the background worker
+- [Image](image.md) — build, ship, deploy with the deployment helper, the local mirror, rollback
+- [Infrastructure](infrastructure.md) — container, volumes, tracked files, the background worker
 - [Shop config](shop-config.md) — identity, languages & domains, SMTP, tax/payment/shipping
 - [Content & CMS](content-cms.md) — navigation, CMS pages, slot types, table styling, legal pages, footer
 - [Merch catalog](merch.md) — products, prices

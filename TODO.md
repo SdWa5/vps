@@ -23,6 +23,11 @@
        touches one. it needs the same discipline as
        [monitoring/vaultwarden-autoupdate.sh](monitoring/vaultwarden-autoupdate.sh): health-check
        after apply, and on failure `git reset --hard` to the previous commit plus a loud mail
+    5. re-check push against pull before planning. a push deploy puts a root-capable ssh key into github
+       secrets, and the decision of 2026-09-03 predates SEC-34
+    6. the deploy step ships the shop image with `tools/shopware/image.sh ship` (or a registry pull) and runs
+       `tools/shopware/deploy.sh` before any unscoped `docker compose up -d`, because only `deploy.sh` runs
+       the migrations before the container switch, see [docs/shopware/image.md](docs/shopware/image.md#deploy)
 2. connect google drive <-> [docs/dolibarr.md](docs/dolibarr.md) <-> shopware if possible
     1. **the dolibarr half now has a read path.** [tools/dolibarr/doli.sh](tools/dolibarr/doli.sh)
        reads the rest api with a dedicated api user, see
@@ -173,8 +178,8 @@
        is still wanted is a check that alerts when a plugin lands in `custom/plugins/` through the
        admin's plugin manager instead, because that one is locked as a path and not reproducible
        (ca. 4 Stunden)
-   With #22 this would be settled by the image build, which runs `composer install` once per release
-   instead of on the live shop.
+   Settled by #36, whose image build runs `composer install` once per release instead of on the
+   live shop.
 8. **Chimo cannot see what his own deploy did.** Deployment is a pull from this side, so a push into
     `chimodiazz/website` is handed over and then goes quiet. `monitoring/chimodiazz-deploy.sh` runs
     every five minutes, writes no state file and no log that anything off this host can read, and its
@@ -256,16 +261,7 @@
     dry run at v1.2.0, account 4 mapped, opening balance 333.40 € matched PayPal, daily job at
     06:00 UTC, queue mail to mail@sdwa5.org
     1. switch on `BANKSYNC_AUTOPOST_ENABLED` after the first real `would_post` decisions were reviewed
-11. **automate the SdWa5Theme deploy** ([docs/shopware/theme.md](docs/shopware/theme.md#deploy)) (ca. 2 Stunden
-    30 Minuten). a theme change reaches sdwa5.org only through a hand-run `composer install`, `plugin:update`,
-    `theme:compile` and `cache:clear` on the host. `monitoring/chimodiazz-deploy.sh` already does the rebuild,
-    the health check and the rollback for Chimo Diazz. extract its rebuild and health helpers into a shared
-    library at the theme's first update and run them for sdwa5.org as well. the script is not generalized as a
-    whole, because its rollback runs `git reset --hard` on the whole checkout, and at `/opt/docker` that is
-    every service in this repository
-    Possibly settled by #22, if its rollout runs Shopware's deployment helper (plugin update and theme
-    compile per release); to be checked when #22 is planned.
-12. **the share links in the Chimo Diazz offcanvas menu share the site root on every page.** measured on
+11. **the share links in the Chimo Diazz offcanvas menu share the site root on every page.** measured on
     2026-10-06 on a subpage of chimodiazz.sdwa5.org, where the share aside linked the subpage and the
     offcanvas linked `https://chimodiazz.sdwa5.org/`. the offcanvas is rendered inside the ESI header
     sub-request, so the request it reads its URL from is the header's own. the SdWa5Theme avoids it with a
@@ -274,8 +270,8 @@
     `sw-storefront-url` and `resolved-uri`, which on sdwa5.org gave the technical `/navigation/<id>` path,
     so the aside probably shares the same wrong URL wherever Chimo Diazz has SEO URLs. SdWa5Theme 1.0.4 uses `sw-sales-channel-absolute-base-url` and
     `sw-original-request-uri` instead (ca. 30 Minuten)
-13. also host gitlab and email myself (priority medium to low)
-14. **host the sdwa5.org dns ourselves** (priority low, ca. 8 Stunden). today the domain and its dns sit
+12. also host gitlab and email myself (priority medium to low)
+13. **host the sdwa5.org dns ourselves** (priority low, ca. 8 Stunden). today the domain and its dns sit
     at squarespace, and squarespace has no dns api. checked on 2026-10-16: it offers commerce apis only,
     its reseller apis are for approved partners, and its dns page drives an undocumented internal
     endpoint. every record is therefore a hand step in the squarespace ui
@@ -293,19 +289,19 @@
     5. deSEC (deSEC e.V., Berlin, free, rest api, tokens scoped per rrset) was considered as an api
        interim and set aside on 2026-10-16, because self-hosting is the goal
     6. side finding. no `_dmarc` record exists
-15. optimize memory and swap ([docs/infrastructure.md](docs/infrastructure.md#memory--swap)) (priority medium).
+14. optimize memory and swap ([docs/infrastructure.md](docs/infrastructure.md#memory--swap)) (priority medium).
     zram and the swapfile overflow are already set up, and zswap is unavailable because the debian cloud
     kernel is built without it
     1. tune the sysctls for zram first. `vm.swappiness=60` and `vm.page-cluster=3` are still the debian
        defaults, while a zram-first setup usually runs a swappiness of ca. 100 to 180 and
        `page-cluster=0`, because readahead from compressed ram buys nothing. measure swap use and
        latency before and after rather than taking the values on trust
-    Measure again after #22, which drops dockware's bundled Apache, MySQL and MailCatcher.
-16. **`apt autoremove` from 20.10.2026,** after a few quiet days on Debian 13. Removes the old 6.1
+    Measure again after the SEC-31 cutover. On the mirror the image used 227 MiB and `shopware_db` 491 MiB.
+15. **`apt autoremove` from 20.10.2026,** after a few quiet days on Debian 13. Removes the old 6.1
     kernels and the leftover Bookworm libraries. Measured 2026-10-24, the simulation removes 50 packages,
     now also the Python libraries cloud-init left behind, and none of `python3`, `netplan.io`,
     `openssh-server`, `sudo` or `cron` (ca. 10 Minuten)
-17. **FOSS Dolibarr module for ticket dependencies and merges** (priority medium,
+16. **FOSS Dolibarr module for ticket dependencies and merges** (priority medium,
     [docs/dolibarr.md](docs/dolibarr.md#projects-tasks-and-tickets)). This becomes phase 3b of the
     PmTools module ([SdWa5/dolibarr-pmtools](https://github.com/SdWa5/dolibarr-pmtools)), live on
     production since 2026-10-16, and targets Dolibarr 24 rather than 23.0. Dolibarr has no
@@ -316,7 +312,7 @@
     [tools/dolibarr/deploy-module.sh](tools/dolibarr/deploy-module.sh)
     1. check Dolistore and GitHub for an existing module first (ca. 30 Minuten)
     2. build, test against the 23.0 image and publish (ca. 24 Stunden)
-18. **migrate the remaining Dolibarr workarounds into module endpoints**
+17. **migrate the remaining Dolibarr workarounds into module endpoints**
     ([docs/dolibarr.md](docs/dolibarr.md#custom-modules)). The rule is to extend Dolibarr through its
     own module mechanism, never around it, and to migrate each workaround when its area is touched.
     Three remain
@@ -329,42 +325,30 @@
     3. editing a membership subscription, which today is a recipe around `Subscription::update()`
        because the ui refuses reconciled lines and rewrites bank line dates. a module endpoint would
        wrap that call with its checks (ca. 4 Stunden)
-19. **bring the Chimo Diazz shop back on Shopware 6.7.15.1 and PHP 8.5** ([docs/chimodiazz.md](docs/chimodiazz.md))
+18. **bring the Chimo Diazz shop back on Shopware 6.7.15.1 and PHP 8.5** ([docs/chimodiazz.md](docs/chimodiazz.md))
     (ca. 3 Stunden). It is switched off since 2026-10-24 and still runs 6.7.11.1 on PHP 8.2.31. The way
     back (`PHP_VERSION=8.5`, the mitigation ini mount, the cron files, the monitoring defaults and the
     Caddy proxy) is listed at the top of docs/chimodiazz.md. `composer audit --locked` with the vendored
     Composer reported 24 advisories in 9 packages on 2026-10-16. The procedure is the main shop's in
-    [docs/shopware/infrastructure.md](docs/shopware/infrastructure.md#updating-shopware). The mirror reads
-    its image only from `docker-compose.yml`, so for this shop it needs `SDWA5_SHOPWARE_DEV_IMAGE`,
-    `SDWA5_SHOPWARE_HTML` and `SDWA5_SHOPWARE_ARCHIVE` set as well, which is untested. The site comes from
+    [docs/shopware/infrastructure.md](docs/shopware/infrastructure.md#updating-shopware-on-dockware-2026-10-16).
+    The mirror runs only the production image since SEC-31, so a dockware rehearsal needs a container of its own. The site comes from
     the private `chimodiazz/website`, so the new lock presumably has to land there and needs Chimo's side
-    Superseded if #22 lands first, since the production image covers both shops; the dockware route
-    stays the fallback.
-20. **Paperless AI features with a local model** ([docs/paperless.md](docs/paperless.md)) (ca. 4 Stunden).
+    Superseded by #36 if that lands first; the dockware route stays the fallback.
+19. **Paperless AI features with a local model** ([docs/paperless.md](docs/paperless.md)) (ca. 4 Stunden).
     Paperless-ngx 3.x offers AI suggestions and a document chat behind `PAPERLESS_AI_ENABLED`, with Ollama
     as one of its backends, and both instances run with it off. `docker-compose.yml` already holds an
     `ollama` service as the inactive profile `ollama`, loopback-only on a network of its own. Paperless
     would need a network path to it, and document text would then never leave the VPS. RAM is the open
     question, because a model next to two shops and two Paperless instances on 5.9 GB needs measuring
     before it is switched on
-21. **the Chimo Diazz shop never delivers a mail** ([docs/chimodiazz.md](docs/chimodiazz.md#dockwares-bundled-tools-were-public-and-are-not-any-more))
+20. **the Chimo Diazz shop never delivers a mail** ([docs/chimodiazz.md](docs/chimodiazz.md#dockwares-bundled-tools-were-public-and-are-not-any-more))
     (ca. 1 Stunde 30 Minuten). Measured 2026-10-16: its `core.mailerSettings.emailAgent` is empty, so
     Shopware falls back to `.env`'s `MAILER_DSN=smtp://127.0.0.1`, which is dockware's MailCatcher. Order
     confirmations and password resets land there. Give it the main shop's relay settings, check that the
     Workspace relay accepts its sender address, send a test mail, then set `SDWA5_STOP_MAILCATCHER=1` for
     it in `docker-compose.projects.yml` and adjust `CLOSED_LISTENERS` in `monitoring/security-recheck.sh`
-    With #22 the relay settings become a step of Chimo's return, and the MailCatcher fallback disappears.
-22. **a production image instead of dockware for both shops** (ca. 24 Stunden). dockware is a
-    development image. `hardening/dockware-boot-end.sh` stops its sshd and MailCatcher on every boot, and
-    Caddy blocks Adminer and the log viewer, but all of it is still installed, root and `dockware` keep
-    their default passwords, and www-data has passwordless sudo. Shopware's own production template
-    with a PHP-FPM image would remove that, and it also ends the root/root database login that
-    `hardening/dockware-db-account.sh` has to keep for dockware's boot script. the image would also replace
-    dockware's Composer 2.2.9 of 2022, which has no `audit` and misses the fixes for CVE-2024-24821 and
-    CVE-2024-35241; the vendored Composer in `vendor/composer/composer` covers the audit until then
-    Would also settle #7, #19 and #21, item 8 of [docs/shopware/TODO.md](docs/shopware/TODO.md), and a
-    clean database stop at host shutdown, which dockware cannot give because it ignores SIGTERM.
-23. **send the monitoring mails to one mailbox instead of two** ([docs/monitoring.md](docs/monitoring.md)).
+    With #36 the relay settings become a step of Chimo's return, and the MailCatcher fallback disappears.
+21. **send the monitoring mails to one mailbox instead of two** ([docs/monitoring.md](docs/monitoring.md)).
     `MONITOR_MAIL_TO` in the vps `.env` lists the private Gmail address and ripper@sdwa5.org, so every
     health, backup and vaultwarden mail lands twice in Stefan's two main inboxes
     1. quick fix for now. set `MONITOR_MAIL_TO` to the private address alone and send a test mail with
@@ -374,24 +358,25 @@
        `monitoring/lib.sh` and `.env.example` changed to it. whether the mailbox exists is unchecked, if not it gets
        created first, as a Workspace group or shared inbox. `/etc/cron.d/chimodiazz-deploy` is checked
        for an override of its own at the same time (priority medium, ca. 45 Minuten)
-24. **share a single image from the Shopware image slider** (SdWa5Theme). The share links in
+22. **share a single image from the Shopware image slider** (SdWa5Theme). The share links in
     `layout/share/share-links.html.twig` share the page only, and the image slider has no share action
     of its own, so one picture cannot be sent by its url or through the browser share sheet
     1. give each slide a url of its own, either the media url or the page url with a fragment that opens
        the slider on that slide. the fragment needs slider javascript to jump to the slide
     2. a share button per slide that calls `navigator.share` with that url, and the WhatsApp, Telegram
-       and e-mail links as the fallback. the template notes that the deploy builds no storefront
-       javascript, so this needs a storefront js build in the deploy first, or an inline script (ca. 6 Stunden)
-25. **redirect `d.sdwa5.org` and `donate.sdwa5.org` to the PayPal donation page** ([docs/caddy.md](docs/caddy.md))
+       and e-mail links as the fallback. the image build runs `shopware-cli project ci`, which
+       builds a theme's storefront javascript, so the js build presumably exists since SEC-31; the theme's first
+       `main.js` verifies it (ca. 6 Stunden)
+23. **redirect `d.sdwa5.org` and `donate.sdwa5.org` to the PayPal donation page** ([docs/caddy.md](docs/caddy.md))
     (priority high, ca. 1 Stunde). The donation links on sdwa5.org point to `https://paypal.me/SdWa5`
     (measured 2026-10-16). Neither name has a DNS record yet
     1. two A records `d` and `donate` to 158.220.127.232 at Squarespace, entered by hand, since Squarespace
-       has no DNS API (TODO #14)
+       has no DNS API (TODO #13)
     2. one Caddy block for both names with `redir https://paypal.me/SdWa5 302`, deployed only once the records
        resolve, because Caddy retries ACME forever on a name without DNS
     3. the two names in `security-recheck.sh` (HSTS and TLS) and `docs/caddy.md`. `RECHECK_SITES` expects a
        200, so the check has to accept the redirect to PayPal there
-26. **change Dolibarr passwords through the API and the MCP server** ([docs/dolibarr.md](docs/dolibarr.md#mcp-server))
+24. **change Dolibarr passwords through the API and the MCP server** ([docs/dolibarr.md](docs/dolibarr.md#mcp-server))
     (ca. 4 Stunden). Dolibarr 24 already accepts `pass` in `PUT /users/{id}`, given the `user > password`
     right or admin (`user/class/api_users.class.php`, read on 2026-10-16). `GET /users/{id}/setPassword`
     only generates a random password and needs `API_ENABLE_LOGIN_API` and `API_ALLOW_PASSWORD_RESET`, so
@@ -401,22 +386,22 @@
     2. an MCP tool for the same call through the `addMcpTools` hook of PmTools. Decide first whether an MCP
        client may change passwords at all, because the `mcp` user would need the password right for it
        (ca. 2 Stunden 30 Minuten)
-27. **a new UI for Dolibarr that talks to it only over REST** (ca. 80 Stunden for a first version).
+25. **a new UI for Dolibarr that talks to it only over REST** (ca. 80 Stunden for a first version).
     Dolibarr's own UI hides common actions. The password change is the case found on 2026-10-16. Dolibarr 24
     has no button for it, the new password goes into the Password field of the Modify form
     (`user/card.php?id=<id>&action=edit`), and the **Reinit password** button generates a random one instead
     1. top-down. Layout and functionality are designed from the tasks the users actually do, independently
        of how Dolibarr structures its pages and menus. Dolibarr is the backend behind the REST API and the
        PmTools routes and does not shape the UI
-    2. a missing endpoint is added to Dolibarr as a module route, never worked around in the UI (TODO #18).
-       The password change uses the call of #26
+    2. a missing endpoint is added to Dolibarr as a module route, never worked around in the UI (TODO #17).
+       The password change uses the call of #24
     3. no change to the Dolibarr core, so the UI survives its upgrades
     4. open are the scope of a first version (which tasks), the stack, the hosting, and how it logs in, by an
        API key per user or through the login API, which is off today
-28. **rename the PmTools module, since it becomes the general REST and MCP extension of Dolibarr**
+26. **rename the PmTools module, since it becomes the general REST and MCP extension of Dolibarr**
     ([SdWa5/dolibarr-pmtools](https://github.com/SdWa5/dolibarr-pmtools),
     [docs/dolibarr.md](docs/dolibarr.md#custom-modules)) (ca. 6 Stunden). It started with the ticket
-    routes and the ten `pm_*` MCP tools, and #18 and #26 add
+    routes and the ten `pm_*` MCP tools, and #17 and #24 add
     endpoints outside project management. The new name is open. A rename touches
     1. the module class `modPmTools`, its `rights_class` `pmtools`, the `MAIN_MODULE_PMTOOLS` constant and the
        `custom/pmtools` directory. The module number 500302 can stay, but Dolibarr keys the constant and the
@@ -424,23 +409,24 @@
        new one, with the user rights granted again
     2. the REST route prefix and the MCP tool names, together with their callers
        [tools/dolibarr/sync-pm.sh](tools/dolibarr/sync-pm.sh) and the `mcp` user
-    3. the GitHub repository (GitHub redirects the old url), `docs/dolibarr.md`, the README and #17
+    3. the GitHub repository (GitHub redirects the old url), `docs/dolibarr.md`, the README and #16
     4. decide first between the rename and a second module beside PmTools for the endpoints outside
        project management
-29. (proposal) **move the Chimo Diazz shop off the host that runs Vaultwarden** ([docs/chimodiazz.md](docs/chimodiazz.md)).
+27. (proposal) **move the Chimo Diazz shop off the host that runs Vaultwarden** ([docs/chimodiazz.md](docs/chimodiazz.md)).
     the isolation of 2026-10-15 keeps the shop's containers from reaching the vault, which
     `monitoring/security-recheck.sh` measures, but a container escape in a third-party shop would still
     land on the host that holds the vault. the proposal is a separate small vps for the shop, done as its
-    own migration. it overlaps with #19 and #22 and waits while the shop is not an active project
+    own migration. it overlaps with #18 and #36, whose image would move along, and waits while the shop is
+    not an active project
     (ca. 6 Stunden)
-30. **delete the evidence of the 2026-10-24 compromise check after 2026-11-23** (ca. 10 Minuten).
+28. **delete the evidence of the 2026-10-24 compromise check after 2026-11-23** (ca. 10 Minuten).
     `/root/forensics-20261024`, the `forensic/*:20261024` images and the Dolibarr 24.0.2 upgrade leftover
     `/var/tmp/archive-verify.calVSV` (94 MB, a copy of Dolibarr documents) on the host
-31. (proposal) **state the server-log retention on the Datenschutz page** (ca. 15 Minuten). Its section
+29. (proposal) **state the server-log retention on the Datenschutz page** (ca. 15 Minuten). Its section
     "Speicherdauer" names no period for the IP address, browser and access times it lists under server logs.
     The Caddy access logs `/var/log/caddy/access-*.log` keep 14 days since 1.97.0, so the page would say
     "14 Tage".
-32. (proposal) **sshd: `AllowUsers root` and an hourly check of the effective settings**
+30. (proposal) **sshd: `AllowUsers root` and an hourly check of the effective settings**
     ([docs/ssh-hardening.md](docs/ssh-hardening.md#login-accounts-and-roots-keys)). sshd takes a key for any
     account, and a `nologin` shell does not stop `ssh -N` port forwarding, which stays on for root's
     Vaultwarden tunnel. Today only root has a key file, and the account check watches only root's (measured
@@ -449,28 +435,52 @@
     source such as `AuthorizedKeysCommand`, `TrustedUserCAKeys` or `AuthorizedPrincipalsFile`. The hourly part
     would read `sshd -T` and be CRIT on any of those, on password or keyboard-interactive login, and on a file
     in `sshd_config.d` other than `10-hardening.conf` (ca. 2 Stunden)
-33. (proposal) **count primary groups in the account check** ([monitoring/account-check.sh](monitoring/account-check.sh)).
+31. (proposal) **count primary groups in the account check** ([monitoring/account-check.sh](monitoring/account-check.sh)).
     The check reads only the member lists in `/etc/group`, while an account whose `/etc/passwd` group is
     `sudo` or `docker` is just as much a member. The check would compare the group ids too. `admin` (uid
     1000) has a private group of the same name, which is on the list of root-equivalent groups, so `admin`
     would leave that list. Debian's sudoers grants nothing to `%admin`, and a rule for it is already CRIT
     (ca. 45 Minuten)
-34. (proposal) **a package integrity check** ([docs/monitoring.md](docs/monitoring.md)). `dpkg --verify` finds no
+32. (proposal) **a package integrity check** ([docs/monitoring.md](docs/monitoring.md)). `dpkg --verify` finds no
     changed file outside the config files today (measured 2026-10-24). A run in `vps-health.sh` that is CRIT on
     a changed package file would catch a replaced `sshd`, `sudo` or library, which no check covers now. Root can
     rewrite dpkg's checksums too, so it catches careless or partial tampering, not a full root compromise. Its
     run time decides between a daily and an hourly run (ca. 1 Stunde 30 Minuten)
-35. (proposal) **review the access-log redaction from 2026-10-31** ([docs/caddy.md](docs/caddy.md#access-logs)).
+33. (proposal) **review the access-log redaction from 2026-10-31** ([docs/caddy.md](docs/caddy.md#access-logs)).
     In the first hour only scanner parameters appeared, so the redacted names come from the applications' known
     links, not from traffic. The pattern matches exact names, so a name such as `_sw_payment_token` or
     `securekey` would pass unredacted, and so would a token percent-encoded inside a `next=` target. After a
     week, list the query parameter names per site, names and counts only, then add the secret ones to the
     `access_log` snippet and to the `logs:` probe (ca. 1 Stunde)
-36. (proposal) **one site list for the access-log probe** ([tests/caddyfile.bats](tests/caddyfile.bats)). The
+34. (proposal) **one site list for the access-log probe** ([tests/caddyfile.bats](tests/caddyfile.bats)). The
     sites live in the Caddyfile's `import access_log` lines and again in `ACCESS_LOG_SITES` of
     `security-recheck.sh`, so a new site without the second edit gets no `logs:` probe, and nothing says so. A
     bats test that compares the two lists would fail CI instead (ca. 20 Minuten)
-37. (proposal) **test the console login with root's password once**
+35. (proposal) **test the console login with root's password once**
     ([docs/ssh-hardening.md](docs/ssh-hardening.md#login-accounts-and-roots-keys)). Root has a password
     (`passwd -S` shows `P`), but whether it logs in on the Contabo VNC console is untested, and that console is
     the way back after a lost key. It needs the password from the vault and the Contabo panel (ca. 15 Minuten)
+
+36. (proposal) **Chimo Diazz onto the production image when it returns** ([docs/shopware/image.md](docs/shopware/image.md)).
+    SEC-31 moved sdwa5.org off dockware, and Chimo Diazz stays on it while switched off. The same build with
+    the shop's own Composer project and theme from `chimodiazz/website` would settle #7, #18 and #20, end the
+    root/root login and setuid `sudo` there, and give it a clean database stop. A move off this host (#27) would
+    take the image along (ca. 16 Stunden)
+37. (proposal) **retire the dockware data of sdwa5.org after the rollback window** (ca. 1 Stunde). Tag a restic
+    snapshot `sdwa5-archive` holding `shopware-html-data/`'s untracked docroot and `shopware-mysql-data/`, then
+    delete both, and move the tracked shop sources from `shopware-html-data/` into `shopware/`
+38. (proposal) **a vps-health WARN for a pending `docker-ce` or `containerd.io` update** (ca. 45 Minuten). Both
+    come from download.docker.com and restart every container, so they are held for a window rather than
+    applied unattended, and nothing reports that one is waiting
+39. (proposal) **SEC-33: check the running shop image and its writes** (ca. 2 Stunden). Compare the image ID of
+    `shopware` with the one `docker-compose.yml` names, and report `docker diff shopware` outside `var/cache`
+    and `/tmp`, since a write to the code is what a compromise of the shop would leave
+40. (proposal) **a vps-health WARN when the running shop image is older than 45 days** (ca. 45 Minuten). The image
+    is only as patched as its last build, so its build date is the patch cadence of the shop
+41. (proposal) **`read_only: true` for the shop container** (ca. 3 Stunden). Measure `docker diff` first, then give
+    tmpfs to what it shows, such as `/config`, `/data` and `/tmp`, with the code owned by root and only `var/`
+    writable by 82. Shopware's reference Dockerfile copies the shop with `--chown=82`, so the measurement
+    comes first
+42. (proposal) **a retention for the shop's error log** (ca. 45 Minuten). Monolog's `nested` handler keeps every
+    daily file. `max_files: 14` in a `config/packages/prod/monolog.yaml` would cap it, after measuring that the
+    override merges with Shopware's handler

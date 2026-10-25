@@ -15,6 +15,20 @@ updates:
       # A MariaDB major version upgrades the data files in place and cannot be undone.
       - dependency-name: mariadb
         update-types: ["version-update:semver-major"]
+      # The same holds for MySQL.
+      - dependency-name: mysql
+        update-types: ["version-update:semver-major"]
+      # The shop image is built here and in no registry (docs/shopware/image.md).
+      - dependency-name: localhost/sdwa5-shopware
+
+  # The shop image's base and build images, pinned by digest. A new digest arrives as a pull
+  # request, and merging it deploys nothing until the image is rebuilt and shipped
+  # (docs/shopware/image.md#tags).
+  - package-ecosystem: docker
+    directory: /shopware
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 2
 
   # The workflow's actions, pinned to commits with the version as a comment.
   - package-ecosystem: github-actions

@@ -12,6 +12,7 @@
         "sdwa5/sdwa5-theme": "1.2.10",
         "shopware/administration": "*",
         "shopware/core": "v6.7.15.1",
+        "shopware/deployment-helper": "0.1.10",
         "shopware/elasticsearch": "*",
         "shopware/storefront": "*",
         "store.shopware.com/dnestorefrontdarkmode": "4.0.0",

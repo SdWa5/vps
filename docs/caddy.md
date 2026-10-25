@@ -52,7 +52,7 @@ apt-get install --allow-downgrades -o Dpkg::Options::=--force-confold ./caddy_2.
 
 | Domain                    | Upstream            | Notes                              |
 |---------------------------|---------------------|------------------------------------|
-| sdwa5.org                 | https://127.0.0.1:8443 | TLS skip verify, client `Host` passed through; de-browser 302→/de (see below) |
+| sdwa5.org                 | http://127.0.0.1:8001 | `lb_try_duration 15s` bridges a container switch; de-browser 302→/de (see below) |
 | vault.sdwa5.org           | http://localhost:8000 | sets `X-Real-IP` for Vaultwarden; `/admin` 404, HSTS |
 | erp.sdwa5.org             | http://localhost:8002 | API explorer and cron URL 404, HSTS |
 | paper.sdwa5.org           | http://localhost:8006 | `paperless` snippet: `/admin` 404, basic auth 403, HSTS |

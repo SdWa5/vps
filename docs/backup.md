@@ -177,7 +177,7 @@ its manifest. The image must be available locally. The container has no network,
 disabled scheduled SQL events and no production mounts. It uses only a new disposable data volume.
 SQL import, table count and `CHECK TABLE` on every base table must pass. The check runs through the
 SQL client, because not every server image ships `mysqlcheck`. The new volume is mounted with
-`volume-nocopy`, since the dockware Shopware image ships files under `/var/lib/mysql` that Docker would
+`volume-nocopy`, since the dockware Shopware image of Chimo Diazz ships files under `/var/lib/mysql` that Docker would
 otherwise copy in and that make `mysqld --initialize` abort. For MariaDB the import waits for the
 entrypoint's "init process done" line, because its temporary bootstrap server answers queries and
 then shuts down. `RESTORE_READY_TIMEOUT` (90 seconds) bounds that wait. The scratch files, container

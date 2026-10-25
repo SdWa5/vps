@@ -19,7 +19,9 @@ tools/secrets/write-secret-files.sh \
     dolibarr_db_root_password=random dolibarr_db_password=random \
     dolibarr_admin_init_password=random dolibarr_cron_key=random \
     paperless_sdwa5_db_root_password=random paperless_sdwa5_db_password=random paperless_sdwa5_secret_key=random \
-    paperless_home_db_root_password=random paperless_home_db_password=random paperless_home_secret_key=random
+    paperless_home_db_root_password=random paperless_home_db_password=random paperless_home_secret_key=random \
+    shopware_db_root_password=random shopware_db_password=random
+# shopware_env_local carries the existing shop's APP_SECRET, see docs/shopware/image.md#secrets
 docker compose up -d
 ```
 
@@ -96,8 +98,11 @@ docker compose logs -f
 # Reload Caddy config
 systemctl reload caddy
 
-# Stop a dockware container with a clean MySQL shutdown (dockware ignores SIGTERM)
-/opt/docker/tools/shopware/stop-dockware.sh shopware
+# Deploy the shop image that docker-compose.yml names (see docs/shopware/image.md)
+/opt/docker/tools/shopware/deploy.sh
+
+# Stop the Chimo Diazz dockware container with a clean MySQL shutdown (dockware ignores SIGTERM)
+/opt/docker/tools/shopware/stop-dockware.sh chimodiazz_shopware
 
 # Health check on demand (see docs/monitoring.md)
 /opt/docker/monitoring/vps-health.sh --dry-run
@@ -202,7 +207,7 @@ rule or root key ([docs/ssh-hardening.md](docs/ssh-hardening.md#login-accounts-a
 The Contabo console remains the fallback and is unaffected by any of it, because it goes through
 getty and PAM rather than sshd. See [docs/ssh-hardening.md](docs/ssh-hardening.md).
 
-Every container except the two dockware shops runs with `no-new-privileges` and without `NET_RAW`, see
+Every running container runs with `no-new-privileges` and without `NET_RAW`, see
 [docs/infrastructure.md](docs/infrastructure.md). The storefront of sdwa5.org enforces a
 Content-Security-Policy, see [docs/caddy.md](docs/caddy.md#hardening). Every site writes a JSON access log without
 cookies, credentials or token values, kept 14 days, see [docs/caddy.md](docs/caddy.md#access-logs).
@@ -267,7 +272,7 @@ one.
 
 Two licences, because this repository is part tooling and part writing.
 
-- **MIT** ([LICENSE](LICENSE)) for the code and configuration: `monitoring/`, `hardening/`, `minecraft/`, `tools/`, `tests/`, `.github/`, `Caddyfile`,
+- **MIT** ([LICENSE](LICENSE)) for the code and configuration: `monitoring/`, `hardening/`, `minecraft/`, `shopware/`, `tools/`, `tests/`, `.github/`, `Caddyfile`,
   `docker-compose*.yml`, `.env.example` and the theme code in `shopware-html-data/custom/static-plugins/SdWa5Theme/`.
 - **CC BY-SA 4.0** ([LICENSE-docs](LICENSE-docs)) for the prose and data: `docs/`, `README.md`, `CHANGELOG.md` and `TODO.md`.
 

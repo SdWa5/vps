@@ -6,6 +6,45 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.99.0] - 2026-10-25
+
+### Added
+
+- `shopware/`, the shop's own image on Shopware's FrankenPHP base, built with `shopware-cli project ci`.
+- `tools/shopware/image.sh` with `build`, `ship` and `composer`.
+- `tools/shopware/deploy.sh`, which backs up `shopware_db` and runs Shopware's deployment helper before the
+  container switch.
+- `shopware/deployment-helper` 0.1.10, `.shopware-project.yml` with a hook that refuses a fresh install, and
+  `config/packages/staging.yaml` for the mirror's staging mode.
+- The `shopware_db` service on `mysql:8.4` and the internal network `shop_db`.
+- The compose secrets `shopware_db_root_password`, `shopware_db_password` and `shopware_env_local`.
+- Dependabot for the `FROM` digests in `shopware/`.
+- `docs/shopware/image.md`.
+- `tests/shopware-image.bats` and `tests/shopware-deploy.bats`.
+- TODO items 36 to 42, Chimo Diazz onto the image and six follow-ups of SEC-31.
+
+### Changed
+
+- The `shopware` service runs `localhost/sdwa5-shopware:6.7.15.1-1` with `no-new-privileges`, every capability
+  dropped and the data under `shopware-data/`.
+- Caddy proxies sdwa5.org to `http://127.0.0.1:8001` with `lb_try_duration 15s`.
+- `runtime_extension_management` is off, so plugins come only from composer.
+- `monitoring/shopware-worker.sh` pings the shop's own database container.
+- `monitoring/database-backup.sh` picks the MySQL or MariaDB client from the server version.
+- The container, isolation, egress, listener and backup lists of the monitoring scripts name `shopware_db`.
+- `tools/shopware/dev-instance.sh` runs the production image with the deployment helper's staging mode.
+- `docs/maintenance.md` prunes images without the shop's local builds.
+- TODO items 12 to 21 renumbered to 11 to 20 and 23 to 37 to 21 to 35; items 1, 7, 14, 18, 20, 22 and 27
+  point to the image.
+- Shopware TODO item 12 is the theme rollback rehearsal on the mirror; items 9 to 13 renumbered to 8 to 12.
+
+### Removed
+
+- dockware for sdwa5.org.
+- `dev-instance.sh composer`, the mirror's own neutralisation SQL and its service deactivation.
+- TODO items 11 and 22, settled by the image and `deploy.sh`.
+- Shopware TODO item 8, the MySQL update.
+
 ## [1.98.0] - 2026-10-25
 
 ### Added

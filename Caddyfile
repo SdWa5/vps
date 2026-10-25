@@ -88,14 +88,15 @@ https://sdwa5.org {
     import hide_server_headers
     import access_log sdwa5.org
 
-    # Content-Security-Policy for the storefront, report-only first, see
-    # docs/caddy.md. Shopware's storefront template sends none, while the admin
-    # sends Shopware's own policy, so /admin and the APIs are left alone. The
-    # policy allows only sdwa5.org itself, measured 2026-10-17 on four pages;
-    # 'unsafe-inline' stays because each page carries inline scripts without a
-    # nonce.
+    # Content-Security-Policy for the storefront, enforced since 2026-10-25 after
+    # a week of report-only, see docs/caddy.md. Shopware's storefront template
+    # sends none, while the admin sends Shopware's own policy, so /admin and the
+    # APIs are left alone. The policy allows sdwa5.org itself and the SoundCloud
+    # player that the Music/Mixes page loads after a click; 'unsafe-inline' stays
+    # because each page carries inline scripts without a nonce.
+    # tests/storefront/csp.spec.ts checks this line against every page.
     @storefront not path /admin /admin/* /api /api/* /store-api /store-api/* /csp-report
-    header @storefront Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; report-uri /csp-report"
+    header @storefront Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; frame-src 'self' https://w.soundcloud.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; report-uri /csp-report"
 
     # Browsers POST their violation reports here. Caddy answers them itself and
     # writes them only to their own log, without the client address; they do not

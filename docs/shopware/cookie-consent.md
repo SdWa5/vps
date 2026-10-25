@@ -72,8 +72,9 @@ CMS slot holds a placeholder card + inline JS instead of the raw iframe: no requ
 `soundcloud.com` fires until the visitor clicks "Load SoundCloud player" (strongest-compliance
 opt-in, DSGVO/TKG-safe). Consent is remembered in first-party `localStorage` (`sc-consent`), not a
 cookie, so returning visitors auto-load. No plugin, no consent-manager entry needed — applied via
-`PATCH /api/cms-slot` (base + both language translations). The live shop sets no CSP header, so the
-inline script runs.
+`PATCH /api/cms-slot` (base + both language translations). The storefront's Content-Security-Policy
+allows the inline script and frames from `https://w.soundcloud.com`, see
+[docs/caddy.md](../caddy.md#hardening). A facade for another host needs that host in the policy first.
 
 ## Third-party CMP decision threshold
 

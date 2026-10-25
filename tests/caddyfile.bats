@@ -11,12 +11,12 @@ site_block() {
     awk -v site="$1" '$0 == site " {" { s = 1 } s { print } s && /^}$/ { exit }' "$REPO_ROOT/Caddyfile"
 }
 
-@test "sdwa5.org sends the storefront CSP report-only and leaves the admin and the APIs out" {
+@test "sdwa5.org enforces the storefront CSP and leaves the admin and the APIs out" {
     local block
     block="$(site_block https://sdwa5.org)"
     grep -q '@storefront not path /admin /admin/\* /api /api/\* /store-api /store-api/\* /csp-report$' <<<"$block"
-    grep -q "header @storefront Content-Security-Policy-Report-Only \"default-src 'self';.*object-src 'none';.*report-uri /csp-report\"" <<<"$block"
-    ! grep -q 'header @storefront Content-Security-Policy "' <<<"$block" || false
+    grep -q "header @storefront Content-Security-Policy \"default-src 'self';.*frame-src 'self' https://w.soundcloud.com;.*object-src 'none';.*report-uri /csp-report\"" <<<"$block"
+    ! grep -q 'Content-Security-Policy-Report-Only' <<<"$block" || false
 }
 
 @test "only sdwa5.org carries a CSP, so the other sites keep their upstream behaviour" {

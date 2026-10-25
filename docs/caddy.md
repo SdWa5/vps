@@ -96,18 +96,31 @@ Each blocked path answers a flat `404` from Caddy and never reaches the containe
 each response carried Caddy's own `Server` header plus the upstream's, for example
 `Apache/2.4.58 (Ubuntu)` or `Rocket`.
 
-sdwa5.org sends a `Content-Security-Policy-Report-Only` header on every storefront path, so outside
-`/admin`, `/api`, `/store-api` and `/csp-report`. Shopware's storefront template sends no policy of its own,
-while the admin sends Shopware's enforcing one, which Caddy leaves alone. The policy allows only the site
-itself, plus `data:` for images and fonts. `'unsafe-inline'` stays for scripts and styles, because each page
-carries inline scripts without a nonce, so its gain is `object-src`, `base-uri`, `form-action`,
-`frame-ancestors` and foreign script hosts, not inline XSS. Browsers report violations to `POST /csp-report`,
-which Caddy answers itself with `204` and logs through the named logger `csp_report` (`log_name`) to
-`/var/log/caddy/sdwa5-csp-report.log` without the client address and cookies. These requests do not reach the
-site's access log. The CSP log holds only them, and it does not contain the report body, so a report
-shows that a violation happened and in which browser, not which page or source. Count them with
-`wc -l /var/log/caddy/sdwa5-csp-report.log`. Report-only started on 2026-10-18, and switching to the
-enforcing `Content-Security-Policy` header is TODO #30.
+sdwa5.org sends an enforcing `Content-Security-Policy` header on every storefront path, so outside `/admin`,
+`/api`, `/store-api` and `/csp-report`. Shopware's storefront template sends no policy of its own, while the
+admin sends Shopware's enforcing one, which Caddy leaves alone. The policy allows the site itself, `data:` for
+images and fonts, and frames from `https://w.soundcloud.com` for the player that the Music/Mixes page loads
+after a click ([cookie consent](shopware/cookie-consent.md)). `'unsafe-inline'` stays for scripts and styles,
+because each page carries inline scripts without a nonce, so its gain is `object-src`, `base-uri`,
+`form-action`, `frame-ancestors` and foreign script and frame hosts, not inline XSS.
+
+The policy ran as `Content-Security-Policy-Report-Only` from 2026-10-18 and is enforced since 2026-10-25. That
+week brought one report from a browser. `tests/storefront/csp.spec.ts` then found the SoundCloud player as the
+only source the policy blocked on 76 pages, so `frame-src` was added before the switch. The spec enforces the
+policy line of the Caddyfile on every page of both sitemaps, on the cart, the login, the registration and a
+search, and on the player behind its facade. `tests/storefront/run.sh --project csp` therefore checks a policy
+change before its deploy, and a new embed in a CMS page needs its host in the policy first.
+
+Browsers report violations to `POST /csp-report`, which Caddy answers itself with `204` and logs through the
+named logger `csp_report` (`log_name`) to `/var/log/caddy/sdwa5-csp-report.log` without the client address and
+cookies. These requests do not reach the site's access log. The report body is not logged, so a report shows
+that a violation happened and in which browser, not which page or source. The log also holds the plain-HTTP
+requests that Caddy redirects to HTTPS, mostly from scanners, which made up 551 of its 554 lines on 2026-10-25.
+Count only the reports, which arrive as `application/csp-report` or `application/reports+json`:
+
+```bash
+grep -cE '"Content-Type":\["application/(csp-report|reports\+json)"' /var/log/caddy/sdwa5-csp-report.log
+```
 
 HSTS is set by Caddy for vault, erp and both Paperless sites with `max-age=31536000`. The two Shopware sites send
 `max-age=31536000; includeSubDomains` from the upstream, so Caddy leaves them alone.

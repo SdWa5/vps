@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.98.0] - 2026-10-25
+
+### Added
+
+- `tests/storefront/csp.spec.ts`, the Playwright project `csp`: it enforces the storefront policy of the
+  `Caddyfile` on every page of both sitemaps, the cart, the account pages, a search and the SoundCloud
+  player, and fails on any violation.
+
+### Changed
+
+- sdwa5.org enforces its storefront `Content-Security-Policy` instead of `Content-Security-Policy-Report-Only`,
+  with `frame-src 'self' https://w.soundcloud.com` for the Music/Mixes player.
+- `docs/caddy.md` counts CSP reports by their Content-Type, since the report log also holds plain-HTTP
+  redirects.
+- TODO items 31 to 38 renumbered to 30 to 37.
+
+### Removed
+
+- TODO item 30, the CSP enforcement.
+
 ## [1.97.1] - 2026-10-24
 
 ### Added

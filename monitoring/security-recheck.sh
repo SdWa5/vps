@@ -10,7 +10,7 @@
 # The script runs in two places. From a workstation it probes the public side itself and then runs
 # its own --host part on the VPS over ssh, merging both into one report. On the VPS, --host probes
 # the firewall, the container isolation, the secrets in container environments, the listeners
-# dockware's boot hook must have closed, the deployed revision, the deployed config copies and the
+# that must be closed (the shop's Caddy admin API, chimodiazz's dockware sshd), the deployed revision, the deployed config copies and the
 # login accounts, sudoers rules and root keys (account-check.sh).
 #
 # Usage:
@@ -77,25 +77,26 @@ FIREWALL_UDP_PORTS="${FIREWALL_UDP_PORTS:-443}"
 WAN_INTERFACE="${WAN_INTERFACE:-eth0}"
 
 # app=container,container. A container may reach its own application and nothing else.
-ISOLATION_APPS="${ISOLATION_APPS:-vault=vaultwarden shop=shopware chimodiazz=chimodiazz_shopware erp=dolibarr,dolibarr_cron,dolibarr_db paper=paperless_sdwa5,paperless_sdwa5_db,paperless_sdwa5_broker paperhome=paperless_home,paperless_home_db,paperless_home_broker backup=restic}"
+ISOLATION_APPS="${ISOLATION_APPS:-vault=vaultwarden shop=shopware,shopware_db chimodiazz=chimodiazz_shopware erp=dolibarr,dolibarr_cron,dolibarr_db paper=paperless_sdwa5,paperless_sdwa5_db,paperless_sdwa5_broker paperhome=paperless_home,paperless_home_db,paperless_home_broker backup=restic}"
 # The containers probed from. They run third-party or internet-facing code, or hold the vault and the
 # backup credentials. A source without bash is probed with busybox nc.
 ISOLATION_SOURCES="${ISOLATION_SOURCES:-shopware dolibarr paperless_sdwa5 paperless_home vaultwarden restic}"
 # The one path inside an application that must stay open, measured 2026-10-15.
-ISOLATION_EXPECT_OPEN="${ISOLATION_EXPECT_OPEN:-dolibarr>dolibarr_db:3306 paperless_sdwa5>paperless_sdwa5_db:3306 paperless_sdwa5>paperless_sdwa5_broker:6379 paperless_home>paperless_home_db:3306 paperless_home>paperless_home_broker:6379}"
+ISOLATION_EXPECT_OPEN="${ISOLATION_EXPECT_OPEN:-shopware>shopware_db:3306 dolibarr>dolibarr_db:3306 paperless_sdwa5>paperless_sdwa5_db:3306 paperless_sdwa5>paperless_sdwa5_broker:6379 paperless_home>paperless_home_db:3306 paperless_home>paperless_home_broker:6379}"
 GATEWAY_OPEN="${GATEWAY_OPEN:-22 80 443}"
 GATEWAY_CLOSED="${GATEWAY_CLOSED:-25 2019 3306 8000 8002 8006 8007 8443 33113}"
-NO_EGRESS_CONTAINERS="${NO_EGRESS_CONTAINERS:-dolibarr_db paperless_sdwa5_db paperless_sdwa5_broker paperless_home_db paperless_home_broker}"
+NO_EGRESS_CONTAINERS="${NO_EGRESS_CONTAINERS:-shopware_db dolibarr_db paperless_sdwa5_db paperless_sdwa5_broker paperless_home_db paperless_home_broker}"
 EGRESS_PROBES="${EGRESS_PROBES:-1.1.1.1:443 9.9.9.9:53}"
-# "container:port,port" pairs that must not listen. dockware starts sshd (22) and mailcatcher (1025
-# SMTP, 1080 web) on every boot, and hardening/dockware-boot-end.sh stops them again. chimodiazz keeps
-# mailcatcher, because its mail still falls back to it, see that script.
-CLOSED_LISTENERS="${CLOSED_LISTENERS:-shopware:22,1025,1080 chimodiazz_shopware:22}"
+# "container:port,port" pairs that must not listen. The shop image's `admin off` keeps the Admin API
+# of its Caddy closed (docs/shopware/image.md). dockware starts sshd (22) and mailcatcher on every
+# boot, and hardening/dockware-boot-end.sh stops sshd again in chimodiazz, which keeps mailcatcher,
+# because its mail still falls back to it, see that script.
+CLOSED_LISTENERS="${CLOSED_LISTENERS:-shopware:2019 chimodiazz_shopware:22}"
 
 GIT_CHECKOUT_DIR="${GIT_CHECKOUT_DIR:-$COMPOSE_DIR}"
 GIT_BRANCH="${GIT_BRANCH:-main}"
 DEPLOYED_FILES="${DEPLOYED_FILES:-Caddyfile:/etc/caddy/Caddyfile hardening/fail2ban/jail.local:/etc/fail2ban/jail.local hardening/sshd_config.d/10-hardening.conf:/etc/ssh/sshd_config.d/10-hardening.conf hardening/firewall/sdwa5-firewall.sh:/usr/local/sbin/sdwa5-firewall.sh hardening/firewall/sdwa5-firewall.service:/etc/systemd/system/sdwa5-firewall.service hardening/netplan/60-ipv6.yaml:/etc/netplan/60-ipv6.yaml}"
-DATABASE_BACKUP_CONTAINERS="${DATABASE_BACKUP_CONTAINERS:-dolibarr_db shopware paperless_sdwa5_db paperless_home_db}"
+DATABASE_BACKUP_CONTAINERS="${DATABASE_BACKUP_CONTAINERS:-dolibarr_db shopware_db paperless_sdwa5_db paperless_home_db}"
 RESTORE_CHECK="${RESTORE_CHECK:-$MONITORING_DIR/database-restore-check.sh}"
 ACCOUNT_CHECK="${ACCOUNT_CHECK:-$MONITORING_DIR/account-check.sh}"
 ACCESS_LOG_DIR="${ACCESS_LOG_DIR:-/var/log/caddy}"
@@ -130,7 +131,7 @@ External: open ports on IPv4 and IPv6, HTTP/3, sites answering 200, no Server or
 X-Powered-By header, HSTS, blocked paths including bypass variants.
 Host: INPUT and DOCKER-USER on both families, cross-application isolation, the
 container gateways, database egress, secrets in container environments, the
-dockware listeners that must be closed, deployed revision and config copies.
+listeners that must be closed, deployed revision and config copies.
 
 Read-only. See docs/monitoring.md for the variables and the pass conditions.
 USAGE
@@ -684,7 +685,7 @@ check_closed_listeners() {
         in_list "$port" "$ports" && open+=("$port")
     done
     if (( ${#open[@]} )); then
-        printf 'WARN\t%s listens on %s, which its boot hook should have closed\n' "$container" "${open[*]}"
+        printf 'WARN\t%s listens on %s, which should be closed (see CLOSED_LISTENERS)\n' "$container" "${open[*]}"
     else
         printf 'OK\tnone of %s listens\n' "$ports"
     fi

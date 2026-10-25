@@ -70,11 +70,10 @@
    `shopware.sitemap_generate` had stopped, and the worker now runs it again. **What is left is whether it has ever
    been submitted to Google Search Console**, which needs the account and cannot be answered from the host, plus the
    meta titles and descriptions, which were never measured
-8. update mysql (part of vps TODO #22, where the database would leave the dockware container)
-9. frosh tools system-status
+8. frosh tools system-status
     1. System Health
     2. Performance recommendations
-10. Content
+9. Content
     1. add images
     2. add "useful links" page
         1. grouped overview
@@ -82,19 +81,17 @@
     3. Artists & Friends
         1. add links
         2. asked in SdWa5 Family Whatsapp group who wants to be featured -> wait for responses
-11. Apply the legal-page wording fixes from the 2026-07-22 review before editing the live
+10. Apply the legal-page wording fixes from the 2026-07-22 review before editing the live
     Datenschutz, AGB, Impressum and Widerrufsrecht CMS pages. **The review itself lives in Google
     Drive and deliberately not here**, decided 2026-09-13: it is a dated, itemised list of gaps on a
     live Austrian webshop written by its own operator, and in a public repository that is a ready-made
     checklist for anybody minded to send an Abmahnung. Its findings are therefore not restated in this
     file either. One of them is a characterization decision that needs the Obmann or the board rather
     than a wording patch, and that is the item this one waits on (`decision`)
-12. **A preview for theme changes** (medium priority, ca. 1 hour 45 minutes). The SdWa5Theme went live directly,
-    decided 2026-10-06, so every theme change is seen first on the live site. A second sales channel on a preview
-    domain with the theme assigned, or a separate environment, would let a change be checked before it reaches the
-    Storefront channel. Decide which of the two, then document it in [theme.md](theme.md#deploy). Once it exists, rehearse
-    the rollback from [theme.md](theme.md) there. It was never run live, only the dry run of
-    `set-homepage-sections.sh --revert`, and on 2026-10-06 it was decided not to switch the live site back for the test
-13. **Text wordmark as the header logo** (ca. 20 minutes), if the small graffiti logo of the SdWa5Theme does not
+11. **Rehearse the theme rollback on the mirror** (ca. 45 minutes). Since SEC-31 the mirror on the production image
+    is the preview for theme changes, see [image.md#mirror](image.md#mirror). The rollback from [theme.md](theme.md#rollback)
+    was never run live, only the dry run of `set-homepage-sections.sh --revert`, and on 2026-10-06 it was decided not
+    to switch the live site back for the test, so the mirror is where to rehearse it
+12. **Text wordmark as the header logo** (ca. 20 minutes), if the small graffiti logo of the SdWa5Theme does not
     convince. Decided 2026-10-06 to try the graffiti logo first. The wordmark would be "SdWa5" in Space Grotesk in
     `layout_header_logo_image`, which needs no image and stays sharp at every size

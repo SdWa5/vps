@@ -282,7 +282,6 @@ change, it was not:
 127.0.0.1:8000  vaultwarden
 127.0.0.1:8001  shopware
 127.0.0.1:8002  dolibarr
-127.0.0.1:8443  shopware tls
 ```
 
 **Every *running* Docker publish binds `127.0.0.1`**, which is why nothing was exposed through Docker
@@ -630,7 +629,7 @@ were never the fallback.
 **The panel's password reset is untested since cloud-init was purged on 2026-10-24.** Contabo does
 not document how the reset reaches the VM, and it reboots the server, so it may rely on cloud-init.
 Root still has a password (`passwd -S` shows `P`), but a console login with it is untested, see
-TODO #37. If the reset fails, the Contabo rescue system is the way in. Boot it from the panel, mount
+TODO #35. If the reset fails, the Contabo rescue system is the way in. Boot it from the panel, mount
 the root partition and append a key to `/root/.ssh/authorized_keys`, then add its fingerprint to the
 allowlist above.
 

@@ -9,7 +9,9 @@
 # Debian VPS. jq comes along for the same reason: the scripts in tools/shopware/
 # build their JSON payloads with it, and so do their suites' fixtures. git is real
 # rather than stubbed for tools/dolibarr/deploy-module.sh, whose suite clones a
-# throwaway repository.
+# throwaway repository. GNU tar replaces busybox's, which lacks the --null that
+# tools/shopware/image.sh exports the build context with, and util-linux flock
+# replaces busybox's, which lacks the -w that tools/shopware/deploy.sh waits with.
 #
 # Usage: tests/run.sh [bats arguments]
 
@@ -26,7 +28,7 @@ CI_PYTHON_IMAGE='python:3.12.15-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c6
 
 echo "== bats =="
 docker run --rm -v "$REPO_ROOT:/code" -w /code --entrypoint sh "$CI_BATS_IMAGE" \
-    -c "apk add --no-cache coreutils jq git openssh-keygen >/dev/null 2>&1 && bats ${*:-tests/}"
+    -c "apk add --no-cache coreutils jq git openssh-keygen tar flock >/dev/null 2>&1 && bats ${*:-tests/}"
 
 echo
 echo "== shellcheck =="
@@ -65,6 +67,8 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt "$CI_SHELLCHECK_IMAGE" -x \
     tools/secrets/write-secret-files.sh \
     tools/compose.sh \
     tools/shopware/lib.sh \
+    tools/shopware/image.sh \
+    tools/shopware/deploy.sh \
     tools/shopware/create-products.sh \
     tools/shopware/edit-slots.sh \
     tools/shopware/check-order-mail.sh \

@@ -32,19 +32,11 @@ Every require is pinned to the exact version, because a floating constraint woul
 the pin. On 2026-10-01 newer releases existed for `TcinnCopyrightCustom` (1.1.1), `FroshTools` (3.14.1),
 `SwagExtensionStore` (7.0.0) and `SwagLanguagePack` (5.72.0).
 
-An update follows the run of `SwagPlatformSecurity` from 4.0.11 to 4.0.16 on 2026-10-01, which took two
-minutes of maintenance mode with the worker lock held, as in the migration below:
-
-```bash
-composer require --no-interaction store.shopware.com/swagplatformsecurity:4.0.16
-php bin/console plugin:update SwagPlatformSecurity
-php bin/console cache:clear
-pkill -USR2 -f '^php-fpm: master'             # as root in the container
-```
-
-The FPM reload is a precaution, because the path of an updated plugin stays the same. The pattern is
-anchored, because an unanchored `pgrep -f 'php-fpm: master'` inside `sh -c` also matches that shell's own
-command line and hands `kill` two PIDs, which stopped the 6.7.15.1 update on 2026-10-16 before the reload.
+Since SEC-31 an update changes the pin with `tools/shopware/image.sh composer require … --no-install
+--no-scripts --no-plugins`, builds a new image and deploys it, see [image.md#updates](image.md#updates).
+The deployment helper runs `plugin:update` for every plugin whose version rose. On dockware the run of
+`SwagPlatformSecurity` from 4.0.11 to 4.0.16 on 2026-10-01 took two minutes of maintenance mode with
+`composer require`, `plugin:update`, `cache:clear` and an FPM reload inside the container.
 
 ## Where composer puts a plugin here
 
@@ -83,14 +75,16 @@ The path repository throws if `custom/plugins/` is missing, so a fresh checkout 
 
 The three Store plugins come from `https://packages.shopware.com`, the fourth repository in
 `composer.json`. It needs the composer token of the shop `sdwa5.org` from the Shopware Account, which
-lives in Vaultwarden and on the host in `shopware-html-data/auth.json`:
+lives in Vaultwarden and on the build workstation in `~/.config/sdwa5/shopware-auth.json`, which enters the
+build as a BuildKit secret, see [image.md#build](image.md#build). Until the rollback window ends, the host also
+keeps it in `shopware-html-data/auth.json` for the dockware docroot:
 
 ```json
 {"bearer": {"packages.shopware.com": "<token>"}}
 ```
 
-`auth.json` is gitignored through the `shopware-html-data/*` line. A restore from this repository therefore
-needs that file put back before `composer install`, and without it the three Store plugins fail to
+`auth.json` is gitignored through the `shopware-html-data/*` line. A build from this repository therefore
+needs that file, and without it the three Store plugins fail to
 download. The repository answers HTTP 400 with the body `"Token invalid."` for a wrong token, while
 the same URL without any token answers 200 with a public package list. A 400 therefore means the token,
 not an outage.

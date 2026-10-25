@@ -63,3 +63,11 @@ site_block() {
     grep -q 'request>uri regexp ' "$REPO_ROOT/Caddyfile"
     grep -q 'resp_headers>Location regexp ' "$REPO_ROOT/Caddyfile"
 }
+
+@test "sdwa5.org proxies plain HTTP to the shop and holds requests through a deploy" {
+    local block
+    block="$(site_block https://sdwa5.org)"
+    grep -qE '^\s+reverse_proxy 127\.0\.0\.1:8001 \{$' <<<"$block"
+    grep -qE '^\s+lb_try_duration 15s$' <<<"$block"
+    ! grep -qE '8443|tls_insecure_skip_verify' <<<"$block" || false
+}

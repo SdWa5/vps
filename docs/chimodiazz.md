@@ -11,7 +11,7 @@ defaults leave it out. It was live from 2026-09-15.
 
 The way back, as one change, is the following.
 1. Update it to 6.7.15.1 with `PHP_VERSION=8.5` and the mitigation ini mount, like `shopware` in
-   `docker-compose.yml` (TODO #19).
+   `docker-compose.yml` (TODO #18).
 2. Put `chimodiazz_shopware` back into `EXPECTED_CONTAINERS` and `DATABASE_BACKUP_CONTAINERS` in
    `monitoring/vps-health.sh`, `DATABASE_BACKUP_CONTAINERS` in `monitoring/database-backup.sh` and
    `monitoring/security-recheck.sh`, and `ISOLATION_SOURCES` in the latter.

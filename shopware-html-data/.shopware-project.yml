@@ -1,0 +1,17 @@
+# Shopware's deployment helper (docs/shopware/image.md#deploy). tools/shopware/deploy.sh
+# runs it in production and tools/shopware/dev-instance.sh in the local mirror, which
+# alone sets SHOPWARE_DEPLOYMENT_STAGING=1.
+deployment:
+  hooks:
+    # deploy.sh only updates the live shop. Without this hook the helper would install a
+    # fresh shop with a default admin into a database it does not find installed.
+    pre-install: |
+      echo "Refusing a fresh install, see docs/shopware/image.md#deploy." >&2
+      exit 1
+  theme-compile:
+    # The new container replaces the old one right after the run, so the theme compiles
+    # now rather than in the queue.
+    force-theme-compile-sync: true
+  # Extension management keeps its default: every plugin that composer provides is
+  # installed and active (docs/shopware/plugins.md). A plugin that has to stay inactive
+  # needs an entry under extension-management.overrides with state: inactive.

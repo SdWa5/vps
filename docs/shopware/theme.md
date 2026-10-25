@@ -171,7 +171,7 @@ gemeinnützig or charitable and never promises a tax benefit, because the associ
 only as not aimed at profit. A test fails on any of those words in the donation snippets.
 
 Until 2026-10-15 the copy also never tied a donation to merch, because that legal question was open and
-still waits on the Obmann or the board (item 12 of [TODO.md](TODO.md)). On 2026-10-15 Stefan decided to
+still waits on the Obmann or the board (item 10 of [TODO.md](TODO.md)). On 2026-10-15 Stefan decided to
 show merch as a voluntary donation anyway, see the next section.
 
 ## Merch as a donation
@@ -263,29 +263,19 @@ theme overrides neither of its snippets, and only its look changed.
 
 The theme is a composer path package. `shopware-html-data/composer.json` requires
 `sdwa5/sdwa5-theme` at its exact version, and `composer install` symlinks it into `vendor/` from
-`custom/static-plugins/SdWa5Theme`, see [plugins.md](plugins.md). The first install on the host:
-
-```bash
-cd /opt/docker && git pull --ff-only
-chown -R 33:33 shopware-html-data/custom/static-plugins/SdWa5Theme
-flock /run/lock/shopware-worker.lock sh -c 'set -e
-  docker exec shopware composer install --no-interaction
-  docker exec shopware bin/console plugin:refresh
-  docker exec shopware bin/console plugin:install --activate SdWa5Theme
-  docker exec shopware bin/console theme:change SdWa5Theme --sales-channel 019c36d914f7706bbebf391b033a74d0 --sync
-  docker exec shopware bin/console cache:clear'
-docker exec -u root shopware pkill -USR2 -f '^php-fpm: master'
-tools/shopware/set-homepage-sections.sh            # from a workstation, then again with --apply
-```
-
-A later change to the theme needs a version bump in the places the tests compare, then on the host the
-pull, `composer install`, `plugin:refresh`, `plugin:update SdWa5Theme`, `theme:compile --active-only
---sync` and `cache:clear` under the worker lock, and the FPM reload. `plugin:update` already recompiles
-the theme. The option is `--active-only`, and `--only-active` aborts the command. The deploy marker
-`<meta name="sdwa5:theme" content="…">` in every page head shows which version is live. Automating
-this is filed in the root [TODO.md](../../TODO.md). Afterwards `tests/storefront/run.sh` checks the
+`custom/static-plugins/SdWa5Theme`, see [plugins.md](plugins.md). Since SEC-31 the theme ships inside
+the shop image, and a change follows [image.md#updates](image.md#updates): a version bump in the places
+the tests compare, a build, the mirror as preview, then ship and `tools/shopware/deploy.sh`. The
+deployment helper runs `plugin:update` for the raised version and compiles the theme synchronously, so
+no manual `theme:compile` or FPM reload is left. The deploy marker `<meta name="sdwa5:theme" content="…">`
+in every page head shows which version is live. Afterwards `tests/storefront/run.sh` checks the
 rendered header, offcanvas and tile layout against the live shop, see the Tests section of the
 [README](../../README.md#tests).
+
+The first install on 2026-10 ran on dockware with `composer install`, `plugin:install --activate
+SdWa5Theme`, `theme:change … --sync`, `cache:clear` and an FPM reload under the worker lock, followed by
+`tools/shopware/set-homepage-sections.sh`. `theme:compile` takes `--active-only`, and `--only-active`
+aborts the command.
 
 ## Rollback
 

@@ -48,34 +48,25 @@ services:
 
 
   shopware:
-    # Exact pin, by tag and digest. Shopware 6.7.15.1, rebuilt by dockware on
-    # 2026-10-22 with PHP 8.5.12, and run on PHP 8.5 through PHP_VERSION below
-    # (tools/shopware/dev-instance.sh rehearses it). The digest is part of the pin because
-    # dockware rebuilds existing tags. The image still ships Composer 2.2.9.
-    # A Shopware update is therefore a deliberate bump of this line. That is the point: nothing ever ran
-    # `docker compose pull` for this service, so `:latest` gave neither updates
-    # nor reproducibility.
-    #
-    # This comment used to justify the exact pin by claiming dockware publishes
-    # no 6.7 series tag. Measured 2026-09-15: `dockware/shopware:6.7-latest`
-    # exists, so that was wrong. The pin stays exact anyway, because that tag
-    # rolls forward across minor versions and Shopware minors run forward-only
-    # database migrations, which is the same reason Dolibarr is pinned exactly.
-    image: dockware/shopware:6.7.15.1@sha256:0472eef46236ce5885364bdaca6a6f5d7d5705bd003f7aae48f94b5f538ee011
+    # The sdwa5.org shop, built from shopware/Dockerfile by tools/shopware/image.sh on the
+    # workstation and loaded with `image.sh ship`. It is in no registry, so nothing may pull it.
+    # The tag is the Shopware version and a build number, and this line is the only place that
+    # names it (docs/shopware/image.md#tags). A new tag goes live only through
+    # tools/shopware/deploy.sh, which runs the migrations before the switch.
+    image: localhost/sdwa5-shopware:6.7.15.1-1
+    pull_policy: never
     container_name: shopware
     ports:
-      - "127.0.0.1:8001:80"
-      - "127.0.0.1:8443:443"
+      - "127.0.0.1:8001:8000"
     environment:
-      - SHOP_DOMAIN=sdwa5.org
       - APP_URL=https://sdwa5.org
-      # dockware ships PHP 8.2 to 8.5 and switches at boot. 8.5 since the PHP
-      # security release of 2026-10-21, and 8.2 security support ends on
-      # 2026-12-31, see docs/maintenance.md#php-85.
-      - PHP_VERSION=8.5
-      # This shop sends through core.mailerSettings to smtp-relay.gmail.com, so
-      # dockware's mailcatcher catches nothing here and the boot hook stops it.
-      - SDWA5_STOP_MAILCATCHER=1
+      # Caddy on the host terminates TLS. Only it reaches 8001, and it overwrites any
+      # X-Forwarded-* a client sends, so the direct peer is trusted, whichever address the
+      # image's own Caddy hands PHP (docs/shopware/image.md#proxy-headers).
+      - SYMFONY_TRUSTED_PROXIES=REMOTE_ADDR
+      - SHOPWARE_HTTP_DEFAULT_TTL=7200
+      - SHOPWARE_ES_ENABLED=0
+      - SHOPWARE_ES_INDEXING_ENABLED=0
       # Keeps Shopware AG's service apps out (SEC-29, 2026-10-17). The persisted
       # core.services.disabled flag already blocks every consent-bound service,
       # but SwagGmvReportingService requires only a Shopware account and the
@@ -83,20 +74,52 @@ services:
       # does nothing. POST /api/services/enable plus removing this line is the
       # way back.
       - ENABLE_SERVICES=false
+      # FrankenPHP starts 2 x CPUs PHP threads at 512m each; 5 matches the FPM variant's default.
+      - FRANKENPHP_CONFIG=num_threads 5
     logging: *default-logging
     volumes:
-      - ./shopware-mysql-data:/var/lib/mysql
-      - ./shopware-html-data:/var/www/html
-      # dockware's own end-of-boot hook. It stops the sshd and mailcatcher the
-      # development image starts, see the script's header.
-      - ./hardening/dockware-boot-end.sh:/var/www/boot_end.sh:ro
-      - ./hardening/php/99-php-security-mitigation.ini:/etc/php/8.5/fpm/conf.d/99-php-security-mitigation.ini:ro
+      - ./shopware-data/files:/var/www/html/files
+      - ./shopware-data/media:/var/www/html/public/media
+      - ./shopware-data/thumbnail:/var/www/html/public/thumbnail
+      - ./shopware-data/sitemap:/var/www/html/public/sitemap
+      - ./shopware-data/theme:/var/www/html/public/theme
+      - ./shopware-data/log:/var/www/html/var/log
+      - ./hardening/php/99-php-security-mitigation.ini:/usr/local/etc/php/conf.d/99-php-security-mitigation.ini:ro
+    secrets:
+      # APP_SECRET, INSTANCE_ID and DATABASE_URL, owner 82 (www-data), see docs/shopware/image.md#secrets.
+      - source: shopware_env_local
+        target: /var/www/html/.env.local
+    depends_on: [shopware_db]
     restart: unless-stopped
-    networks: [shop]
-    cap_drop: [NET_RAW]
-    # No no-new-privileges: dockware starts as www-data and reaches root through
-    # setuid sudo, see docs/infrastructure.md.
+    networks: [shop, shop_db]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
 
+  shopware_db:
+    # MySQL 8.4 LTS, series pin like dolibarr_db. The shop moves here from dockware's MySQL 8.0
+    # (EOL) with SEC-31. A major version upgrades the data files and is a one-way door.
+    image: mysql:8.4
+    container_name: shopware_db
+    restart: unless-stopped
+    command: ["--mysqlx=OFF"]
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/sdwa5-secrets/shopware_db_root_password
+      MYSQL_DATABASE: shopware
+      MYSQL_USER: shopware
+      MYSQL_PASSWORD_FILE: /run/sdwa5-secrets/shopware_db_password
+    logging: *default-logging
+    volumes:
+      - ./shopware-db-data:/var/lib/mysql
+    secrets:
+      - source: shopware_db_root_password
+        target: /run/sdwa5-secrets/shopware_db_root_password
+      - source: shopware_db_password
+        target: /run/sdwa5-secrets/shopware_db_password
+    # InnoDB flushes on SIGTERM; Docker's default 10 s would kill a slow shutdown (SEC-35).
+    stop_grace_period: 60s
+    networks: [shop_db]
+    cap_drop: [NET_RAW]
+    security_opt: ["no-new-privileges:true"]
 
   minecraft:
     # Not pinned. Profile-gated, the image is not even present on the host, so
@@ -555,6 +578,12 @@ secrets:
     file: ./secrets/paperless_home_secret_key
   restic_password:
     file: ./secrets/restic_password
+  shopware_db_root_password:
+    file: ./secrets/shopware_db_root_password
+  shopware_db_password:
+    file: ./secrets/shopware_db_password
+  shopware_env_local:
+    file: ./secrets/shopware_env_local
 
 # One network per application instead of the shared default. Until 2026-10-15
 # every container sat on docker_default, and chimodiazz_shopware could open
@@ -567,6 +596,8 @@ secrets:
 networks:
   vault:
   shop:
+  shop_db:
+    internal: true
   erp:
   erp_db:
     internal: true

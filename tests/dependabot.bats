@@ -10,12 +10,24 @@ setup() {
     local config="$REPO_ROOT/.github/dependabot.yml"
     grep -qx '  - package-ecosystem: docker-compose' "$config"
     grep -qx '  - package-ecosystem: github-actions' "$config"
-    [ "$(grep -c '^      interval: weekly$' "$config")" = 2 ]
+    [ "$(grep -c '^      interval: weekly$' "$config")" = 3 ]
 }
 
 @test "Dependabot never proposes a MariaDB major version" {
     awk '/dependency-name: mariadb/ { m = 1; next } m { print; exit }' "$REPO_ROOT/.github/dependabot.yml" \
         | grep -q 'version-update:semver-major'
+}
+
+@test "Dependabot never proposes a MySQL major version and skips the local shop image" {
+    local config="$REPO_ROOT/.github/dependabot.yml"
+    awk '/dependency-name: mysql$/ { m = 1; next } m { print; exit }' "$config" \
+        | grep -q 'version-update:semver-major'
+    grep -qx '      - dependency-name: localhost/sdwa5-shopware' "$config"
+}
+
+@test "Dependabot watches the shop image's Dockerfile" {
+    awk '/package-ecosystem: docker$/ { m = 1; next } m { print; exit }' "$REPO_ROOT/.github/dependabot.yml" \
+        | grep -qx '    directory: /shopware'
 }
 
 @test "no image line uses a YAML anchor, which Dependabot's compose updater cannot edit" {

@@ -430,7 +430,7 @@ status is 1 with any CRIT, 1 with any WARN under `--strict`, 2 for a usage error
 | `hsts` | vault and erp send `max-age` of at least 31536000 | | missing or shorter |
 | `blocked` | every variant of each blocked path from [caddy.md](caddy.md#hardening) gets Caddy's own `Not Found` | a variant reached the upstream, which answered 404 | a variant got anything but a 404 |
 | `firewall` | INPUT DROP on both families, the fail2ban jump first, tcp 22/80/443 and udp 443 accepted; DOCKER-USER drops `eth0` | the fail2ban jump is not first | anything else missing |
-| `isolation` | from `shopware`, `dolibarr`, both Paperless instances, `vaultwarden` and `restic`, no listener of another application answers, and `dolibarr` and Paperless reach their own database and broker | | a foreign listener answers, or the database path is closed |
+| `isolation` | from `shopware`, `dolibarr`, both Paperless instances, `vaultwarden` and `restic`, no listener of another application answers, and `shopware`, `dolibarr` and Paperless reach their own database and broker | | a foreign listener answers, or the database path is closed |
 | `gateway` | the host answers on 22, 80 and 443 only | one of those does not answer | 25, 2019, 3306, 8000, 8002, 8443 or 33113 answers |
 | `egress` | `dolibarr_db` reaches neither 1.1.1.1:443 nor 9.9.9.9:53 | | it does |
 | `revision` | `/opt/docker` HEAD equals `origin/main`, no tracked file modified | it differs, a tracked file is modified, or origin is unreachable | not a checkout |
@@ -438,7 +438,7 @@ status is 1 with any CRIT, 1 with any WARN under `--strict`, 2 for a usage error
 | `accounts` | `account-check.sh` reports OK, as the health check's `accounts` row | no allowlist or an unreadable file | an unexpected account, group member, sudoers line or root key |
 | `logs` | per site, `/var/log/caddy/access-<site>.log` holds no credential header and no unredacted token value; only counts are printed | the file is missing | a `Cookie`, `Authorization`, `Proxy-Authorization`, `Referer` or `Set-Cookie` field, or a token value other than `REDACTED` |
 | `env` | per container of `ISOLATION_APPS`: no secret value in `docker inspect`; names a process environment still carries are listed in the message | a secret value in `docker inspect`, or the process environments cannot be read | |
-| `listeners` | neither `shopware` (22, 1025, 1080) nor `chimodiazz_shopware` (22) listens on a port its boot hook closes | one of them listens | |
+| `listeners` | neither `shopware` (2019, the FrankenPHP admin API) nor `chimodiazz_shopware` (22, which its boot hook closes) listens on a port of `CLOSED_LISTENERS` | one of them listens | |
 | `restore` | `database-restore-check.sh` passes for each database | | it fails |
 | `host` | the ssh part ran to its end | | ssh failed, or the output ended early or was malformed |
 
@@ -467,7 +467,8 @@ changed its uid, such as an Apache child, a Paperless worker or `mariadbd`, beca
 container, so it reported such containers as clean without having read them. A PID that has ended is
 skipped. An existing environment that cannot be read is a WARN with the count, and so is a container
 whose processes cannot be listed.
-The `listeners` check reads `/proc/net/tcp*` like the isolation check, see
+The `listeners` check reads `/proc/net/tcp*` like the isolation check. The image sets `admin off` in
+FrankenPHP's Caddy, see [shopware/image.md](shopware/image.md#runtime), and Chimo Diazz relies on
 [`hardening/dockware-boot-end.sh`](../hardening/dockware-boot-end.sh).
 
 Every value is an environment variable

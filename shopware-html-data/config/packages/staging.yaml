@@ -1,0 +1,23 @@
+# Shopware's staging mode for the local mirror. The deployment helper applies it only
+# where SHOPWARE_DEPLOYMENT_STAGING=1 is set, which tools/shopware/dev-instance.sh alone
+# does, never production (docs/shopware/image.md#mirror). dev-instance.sh checks the
+# result before the copy serves a request.
+shopware:
+    staging:
+        mailing:
+            disable_delivery: true
+        storefront:
+            # tests/storefront compares the mirror's layout with production's.
+            show_banner: false
+        administration:
+            show_banner: true
+        extensions:
+            # It reports the shop to Shopmon, which a copy must never do.
+            disable: [FroshShopmon]
+        sales_channel:
+            domain_rewrite:
+                # Every http(s) domain moves to the mirror's own URL and keeps its path. A
+                # headless placeholder such as default.headless0 is no URL and stays.
+                - type: regex
+                  match: '#^https?://[^/]+#'
+                  replace: '%env(APP_URL)%'

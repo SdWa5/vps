@@ -50,7 +50,7 @@ du -h --max-depth=1 /root 2>/dev/null | sort -rh | head
 rm -rf /root/.cache/*                 # regenerable; refills slowly, re-nuke anytime
 journalctl --vacuum-size=200M         # trim systemd journal
 apt-get clean                         # nuke apt package cache
-docker image prune -a                 # remove images not used by any container
+docker image prune -a --filter 'label!=org.opencontainers.image.title=sdwa5-shopware'  # keep the shop's local builds for a rollback
 ```
 
 ### 4. Volumes — handle with care
@@ -191,7 +191,8 @@ its own.
 
 | Service | Tag | Why |
 |---|---|---|
-| `shopware` | `dockware/shopware:6.7.15.1@sha256:0472eef4…` | Exact, by tag and digest, because dockware rebuilds existing tags (6.7.15.1 was rebuilt on 2026-10-22 with PHP 8.5.12, which `PHP_VERSION=8.5` selects, see [PHP 8.5](#php-85)). The `6.7-latest` series tag exists but rolls across minors, whose migrations run forward only. An update is a deliberate bump of the line after a rehearsal, see [Updating Shopware](shopware/infrastructure.md#updating-shopware). Chimo Diazz stays on 6.7.11.1 in `docker-compose.projects.yml` and is switched off |
+| `shopware` | `localhost/sdwa5-shopware:6.7.15.1-N`, built on this host | The tag is the locked core version plus a build number, and the base and build images are pinned by digest in `shopware/Dockerfile`. `pull_policy: never`, so nothing outside the host replaces it. An update is a rehearsal on the mirror, then a build, ship and deploy, see [image.md](shopware/image.md#updates) |
+| `shopware_db` | `mysql:8.4` | LTS series. Patch updates are safe; a major is ignored by Dependabot and goes through a restore rehearsal. Chimo Diazz stays on dockware 6.7.11.1 in `docker-compose.projects.yml` and is switched off |
 | `dolibarr`, `dolibarr_cron` | `dolibarr/dolibarr:24.0.2-php8.5@sha256:46c066a9…` | Exact, by tag, PHP variant and digest, because upstream rebuilds tags. The isolated rehearsal takes its target from this pin, so a Dolibarr update starts by bumping it, see [Dolibarr 24.0.1 upgrade](#dolibarr-2401-upgrade) |
 | `dolibarr_db` and the project DBs | `mariadb:12.3` | Minor series. Patch updates inside 12.3 are safe and wanted; crossing a major version is the one-way door |
 | `paperless_sdwa5`, `paperless_home` | `ghcr.io/paperless-ngx/paperless-ngx:3.3.2@sha256:d232cba3…` | Exact, by tag and digest, the same pin on both services, which a test keeps equal. 3.3.2 of 2026-10-16 fixes GHSA-c8f3-pqr2-rr24. A minor runs forward-only migrations, so a bump goes through the dev mirror first, see [paperless.md](paperless.md#updates) |
@@ -225,7 +226,7 @@ in its first days out of the proposals.
 
 **A merged proposal deploys nothing**, because production pulls by hand. A Shopware or Dolibarr pull
 request is a signal that a version exists. It goes through
-[Updating Shopware](shopware/infrastructure.md#updating-shopware) or the Dolibarr rehearsal, never
+[Updates](shopware/image.md#updates) or the Dolibarr rehearsal, never
 through a plain merge, and the rehearsal's commit replaces the proposal. Dependabot pushes its branches
 to this repository, so the workflow's `push` trigger runs the tests on them with a read-only token.
 
@@ -315,7 +316,7 @@ The live order puts Dolibarr first, because mod_php parses the request body befo
 4. Shopware: hold `/run/lock/shopware-worker.lock`, maintenance on,
    `tools/shopware/stop-dockware.sh shopware`, `docker compose up -d shopware`, wait for
    `/var/www/container.launched`, then `cache:clear`, the FPM reload and maintenance off. Accept as in
-   [Updating Shopware](shopware/infrastructure.md#updating-shopware).
+   [Updating Shopware on dockware](shopware/infrastructure.md#updating-shopware-on-dockware-2026-10-16).
 
 The rollback for each service is the previous image line from git plus `docker compose up -d`, with
 `stop-dockware.sh` first for Shopware. The old images stay on the host for that reason.

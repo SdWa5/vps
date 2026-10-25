@@ -41,6 +41,30 @@ restore_database() {
     done
 }
 
+@test "a MySQL 8.4 database container is archived with the mysql flavor" {
+    DATABASE_BACKUP_CONTAINERS=shopware_db STUB_DB_VERSION=8.4.13 backup_databases
+    [ "$status" -eq 0 ]
+    tar -xOzf "$DATABASE_BACKUP_DIR/shopware_db.tar.gz" manifest.tsv | grep -qx $'flavor\tmysql'
+    tar -xOzf "$DATABASE_BACKUP_DIR/shopware_db.tar.gz" manifest.tsv | grep -qx $'version\t8.4.13'
+}
+
+@test "a MariaDB database container is archived with the mariadb flavor" {
+    DATABASE_BACKUP_CONTAINERS=dolibarr_db STUB_DB_VERSION=12.3.1-MariaDB backup_databases
+    [ "$status" -eq 0 ]
+    tar -xOzf "$DATABASE_BACKUP_DIR/dolibarr_db.tar.gz" manifest.tsv | grep -qx $'flavor\tmariadb'
+}
+
+@test "the client picks mysqldump without its tablespace and GTID output where mariadb-dump is missing" {
+    grep -q "else client=mysql dump=mysqldump extra='--no-tablespaces --set-gtid-purged=OFF'; fi" \
+        "$REPO_ROOT/monitoring/database-backup.sh"
+    grep -q 'exec "\$dump" --no-defaults \$extra ' "$REPO_ROOT/monitoring/database-backup.sh"
+}
+
+@test "the default list backs up shopware_db rather than the dockware container" {
+    grep -q 'DATABASE_BACKUP_CONTAINERS:-dolibarr_db shopware_db paperless_sdwa5_db paperless_home_db}' \
+        "$REPO_ROOT/monitoring/database-backup.sh"
+}
+
 @test "probe failure preserves the previous archive and hides database diagnostics" {
     backup_databases
     [ "$status" -eq 0 ]

@@ -64,7 +64,11 @@ case "${1:-}" in
                 echo 'sensitive database diagnostic' >&2
                 exit 1
             fi
-            printf 'app\t8.0.46\t2\t%s\t%s\n' "${STUB_NONTRANSACTIONAL_TABLES:-0}" \
+            # docker exec -i --user root CONTAINER ...: a *_db container answers like
+            # MariaDB and a dockware shop like its MySQL, unless STUB_DB_VERSION says otherwise.
+            version=8.0.46
+            [[ "$5" == *_db ]] && version=12.3.1-MariaDB
+            printf 'app\t%s\t2\t%s\t%s\n' "${STUB_DB_VERSION:-$version}" "${STUB_NONTRANSACTIONAL_TABLES:-0}" \
                 "${STUB_DUPLICATE_FOREIGN_KEYS:-0}"
         elif [[ "$*" == 'exec -i fkdb '* ]]; then
             # tools/mariadb/recreate-foreign-keys.sh sends its SQL on stdin.

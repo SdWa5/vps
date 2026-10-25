@@ -6,6 +6,7 @@
 # deploy precondition.
 .env.*
 !.env.example
+!shopware/.env
 rclone-config/
 
 # Pre-git backups (contain original files with inline credentials)
@@ -16,6 +17,7 @@ shopware-html-data/*
 !shopware-html-data/composer.json
 !shopware-html-data/composer.lock
 !shopware-html-data/symfony.lock
+!shopware-html-data/.shopware-project.yml
 !shopware-html-data/config/
 shopware-html-data/config/*
 !shopware-html-data/config/packages/
@@ -35,7 +37,9 @@ shopware-html-data/custom/*
 shopware-html-data/custom/static-plugins/*
 !shopware-html-data/custom/static-plugins/SdWa5Theme/
 shopware-mysql-data/
+shopware-db-data/
 shopware-data/
+shopware-legacy-data-20260327/
 
 # Dolibarr SdWa5 data
 dolibarr-mariadb-data/

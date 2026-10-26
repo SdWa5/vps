@@ -485,3 +485,7 @@
 42. (proposal) **a retention for the shop's error log** (ca. 45 Minuten). Monolog's `nested` handler keeps every
     daily file. `max_files: 14` in a `config/packages/prod/monolog.yaml` would cap it, after measuring that the
     override merges with Shopware's handler
+43. (proposal) **keep the database passwords out of `mysqld`'s environment in `shopware_db`** (ca. 1 Stunde 30
+    Minuten). The `mysql:8.4` entrypoint exports `MYSQL_PASSWORD` and `MYSQL_ROOT_PASSWORD` from their
+    `*_FILE`, so the server process carries both, as the security recheck lists. Measure whether a wrapper that
+    unsets them before `exec mysqld` keeps the first-start initialisation working, since that needs them

@@ -50,7 +50,8 @@ argon2 `ADMIN_TOKEN` hash, is in `.env`, see `.env.example`.
 
 Monitoring, Vaultwarden, the SdWa5 shop and the SdWa5 ERP send through the Google Workspace relay
 without SMTP credentials. Monitoring, Vaultwarden and Shopware use STARTTLS on port 587. Dolibarr
-uses implicit TLS on port 465 because its no-authentication path skips STARTTLS. See
+uses implicit TLS on port 465 because its no-authentication path skips STARTTLS. Shopware reads the
+relay from `MAILER_DSN` and greets it as `sdwa5.org` ([docs/shopware/image.md](docs/shopware/image.md#mail)). See
 [relay configuration and verification](docs/monitoring.md#outgoing-email-verification) and
 [Dolibarr email settings](docs/dolibarr.md#outgoing-email).
 

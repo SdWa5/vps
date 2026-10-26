@@ -21,6 +21,7 @@
 #   HEALTH_URLS                    space-separated "label=url" pairs
 #   BACKUP_MAX_AGE_HOURS           age at which the restic backup counts as stale
 #   DB_BACKUP_MAX_AGE_HOURS        age at which the Vaultwarden db dump counts as stale
+#   SHOPWARE_MAIL_FAILED_HOURS     look-back for failed Shopware mails in the mail archive
 #   VAULTWARDEN_DRIFT_GRACE_HOURS  how long an unapplied Vaultwarden release stays acceptable
 #   FIREWALL_PORTS                 tcp ports the INPUT chain must still accept
 #   REBOOT_REQUIRED_FILE, BOOT_DIR where apt flags a pending reboot, and the installed kernels
@@ -48,6 +49,9 @@ DATABASE_BACKUP_CONTAINERS="${DATABASE_BACKUP_CONTAINERS:-dolibarr_db shopware_d
 # generous and still catches an outage the same morning. The one this check
 # exists for ran unnoticed for 47 days.
 SHOPWARE_TASK_MAX_AGE_HOURS="${SHOPWARE_TASK_MAX_AGE_HOURS:-2}"
+# A failed shop mail is an order confirmation the customer never got, and Shopware only archives it.
+# On 2026-10-25 the relay began refusing the shop's EHLO, and nothing here noticed (docs/shopware/image.md#mail).
+SHOPWARE_MAIL_FAILED_HOURS="${SHOPWARE_MAIL_FAILED_HOURS:-24}"
 VAULTWARDEN_RELEASE_API="${VAULTWARDEN_RELEASE_API:-https://api.github.com/repos/dani-garcia/vaultwarden/releases/latest}"
 # How long a new Vaultwarden release may sit unapplied before it is worth a mail.
 #
@@ -176,6 +180,43 @@ check_shopware_tasks() {
             "$age_hours" "$newest" "$SHOPWARE_TASK_MAX_AGE_HOURS"
     else
         printf 'OK\tShopware scheduled tasks ran %sh ago (%s)\n' "$age_hours" "$newest"
+    fi
+}
+
+# Counts the mails FroshMailArchive recorded as failed within SHOPWARE_MAIL_FAILED_HOURS. The query
+# runs as the shop's database user inside shopware_db, whose password stays in the container. The
+# timestamp is in the message, so a new failure changes the fingerprint and mails again.
+check_shopware_mail() {
+    local hours="$SHOPWARE_MAIL_FAILED_HOURS" out count newest
+
+    if [[ ! "$hours" =~ ^[1-9][0-9]*$ ]]; then
+        printf 'WARN\tSHOPWARE_MAIL_FAILED_HOURS is not a positive integer: %s\n' "$hours"
+        return
+    fi
+
+    out="$(timeout 30 docker exec -i --user root shopware_db sh -s -- "$hours" mail-failures 2>&1 <<'CLIENT'
+set -eu
+MYSQL_PWD="${MYSQL_PASSWORD:-}"
+if [ -n "${MYSQL_PASSWORD_FILE:-}" ]; then
+    MYSQL_PWD=$(cat "$MYSQL_PASSWORD_FILE")
+fi
+export MYSQL_PWD
+exec mysql --no-defaults -u"$MYSQL_USER" -N -B "$MYSQL_DATABASE" -e "SELECT COUNT(*), COALESCE(DATE_FORMAT(MAX(created_at), '%Y-%m-%d %H:%i'), '-') FROM frosh_mail_archive WHERE transport_state = 'failed' AND created_at >= UTC_TIMESTAMP() - INTERVAL $1 HOUR"
+CLIENT
+)" || {
+        printf 'WARN\tCannot read the Shopware mail archive: %s\n' "$(head -1 <<< "$out")"
+        return
+    }
+
+    count="${out%%$'\t'*}"
+    newest="${out#*$'\t'}"
+    if [[ ! "$count" =~ ^[0-9]+$ ]]; then
+        printf 'WARN\tCannot read the Shopware mail archive: %s\n' "$(head -1 <<< "$out")"
+    elif (( count > 0 )); then
+        printf 'WARN\t%s Shopware mail(s) failed in the last %sh, the newest at %s UTC. See frosh_mail_archive\n' \
+            "$count" "$hours" "$newest"
+    else
+        printf 'OK\tNo Shopware mail failed in the last %sh\n' "$hours"
     fi
 }
 
@@ -556,13 +597,13 @@ completely silent. Repeat reminders for an unchanged problem back off: 1, 2, 4,
   vps-health.sh --help       this text
 
 Checks: disk, containers, restic backup age, Shopware scheduled task age,
-Vaultwarden database dump age, public HTTP endpoints, Caddy, Vaultwarden
-version drift.
+failed Shopware mails, Vaultwarden database dump age, public HTTP endpoints,
+Caddy, Vaultwarden version drift.
 
 Environment overrides (also honoured from the compose .env): DISK_WARN,
 DISK_CRIT, EXPECTED_CONTAINERS, HEALTH_URLS, BACKUP_MAX_AGE_HOURS,
-DB_BACKUP_MAX_AGE_HOURS, SHOPWARE_TASK_MAX_AGE_HOURS, FIREWALL_PORTS,
-STATE_DIR, FAKE_NOW.
+DB_BACKUP_MAX_AGE_HOURS, SHOPWARE_TASK_MAX_AGE_HOURS,
+SHOPWARE_MAIL_FAILED_HOURS, FIREWALL_PORTS, STATE_DIR, FAKE_NOW.
 USAGE
 }
 
@@ -633,6 +674,7 @@ run_checks() {
     emit containers            "$(check_containers)"
     emit backup                "$(check_backup)"
     emit shopware_tasks        "$(check_shopware_tasks)"
+    emit shopware_mail         "$(check_shopware_mail)"
     emit vaultwarden_db_backup "$(check_vaultwarden_db_backup)"
     emit database_backups      "$(check_database_backups)"
     emit http                  "$(check_http)"

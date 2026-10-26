@@ -88,6 +88,7 @@ service_block() {
     ! grep -q 'cap_add' <<<"$shop" || false
     grep -qx '    pull_policy: never' <<<"$shop"
     grep -qx '      - FRANKENPHP_CONFIG=num_threads 5' <<<"$shop"
+    grep -qxF '      - MAILER_DSN=smtp://smtp-relay.gmail.com:587?local_domain=sdwa5.org&require_tls=true' <<<"$shop"
     ! grep -qE '^      - [A-Z_]*(SECRET|PASSWORD|DATABASE_URL)[A-Z_]*=' <<<"$shop" || false
     grep -qx '        target: /var/www/html/.env.local' <<<"$shop"
     db="$(service_block shopware_db)"

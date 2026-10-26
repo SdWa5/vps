@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.100.2] - 2026-10-26
+
+### Changed
+
+- TODO: BankSync follow-ups at v1.4.0, the auto-post decision and the module's own TODO.
+
 ## [1.100.1] - 2026-10-26
 
 ### Fixed

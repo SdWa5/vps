@@ -115,7 +115,8 @@ smtp://smtp-relay.gmail.com:587?local_domain=sdwa5.org&require_tls=true
 Check it on the host:
 
 ```bash
-docker exec shopware php bin/console system:config:get core.mailerSettings.emailAgent   # empty line
+docker exec shopware php bin/console system:config:get core.mailerSettings.emailAgent --format=json
+# {"core.mailerSettings.emailAgent":""}; the default format prints `key => value`, never an empty line
 docker exec shopware printenv MAILER_DSN
 ```
 

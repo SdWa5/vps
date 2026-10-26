@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.100.1] - 2026-10-26
+
+### Fixed
+
+- `docs/shopware/image.md#mail` checks `emailAgent` with `--format=json`, because the default output is never
+  an empty line.
+
 ## [1.100.0] - 2026-10-26
 
 ### Added

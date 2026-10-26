@@ -67,6 +67,11 @@ services:
       - SHOPWARE_HTTP_DEFAULT_TTL=7200
       - SHOPWARE_ES_ENABLED=0
       - SHOPWARE_ES_INDEXING_ENABLED=0
+      # Shopware's own SMTP settings cannot set the EHLO name, and Google's relay refuses Symfony
+      # Mailer's default [127.0.0.1] with 421-4.7.0 (docs/shopware/image.md#mail). This DSN only
+      # applies while the admin's mailer settings use the environment configuration, an empty
+      # core.mailerSettings.emailAgent. No credentials, because the relay admits this host by its IP.
+      - MAILER_DSN=smtp://smtp-relay.gmail.com:587?local_domain=sdwa5.org&require_tls=true
       # Keeps Shopware AG's service apps out (SEC-29, 2026-10-17). The persisted
       # core.services.disabled flag already blocks every consent-bound service,
       # but SwagGmvReportingService requires only a Shopware account and the

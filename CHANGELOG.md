@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.100.0] - 2026-10-26
+
+### Added
+
+- vps-health's `shopware_mail` check, a WARN for every mail FroshMailArchive recorded as failed in the last
+  `SHOPWARE_MAIL_FAILED_HOURS` (24).
+- `docs/shopware/image.md#mail`.
+- TODO item 43, the database passwords in `shopware_db`'s process environment.
+
+### Fixed
+
+- Shopware mail through the Google relay, which refuses Symfony Mailer's default `EHLO [127.0.0.1]`.
+  `MAILER_DSN` sets `local_domain=sdwa5.org` and `require_tls=true`, and the admin's mailer settings use the
+  environment configuration.
+
 ## [1.99.0] - 2026-10-25
 
 ### Added

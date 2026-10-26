@@ -44,6 +44,7 @@ auto-update.
 | `accounts` | `monitoring/account-check.sh`: a login account other than root, a second uid 0, a member of a root-equivalent group, a sudoers rule or include beyond Debian's defaults, an `authorized_keys2`, or a root key outside `/etc/vps-health/root-authorized-keys` (CRIT); an unreadable file or no allowlist (WARN) |
 | `firewall` | the IPv4 `INPUT` policy is not `DROP`, fail2ban's jump is gone, a port in `FIREWALL_PORTS` (22 80 443) is no longer accepted, or **`DOCKER-USER` is missing or back to Docker's empty `-j RETURN`**, which leaves every published container port unfiltered. The same holds for IPv6: an open v6 policy, a missing v6 `f2b-sshd` chain or a v6 chain without its jump is a CRIT too |
 | `shopware_tasks` | the newest Shopware scheduled task ran longer than `SHOPWARE_TASK_MAX_AGE_HOURS` (2) ago, the task list cannot be read, or no task has ever run |
+| `shopware_mail` | FroshMailArchive holds a mail with `transport_state` `failed` from the last `SHOPWARE_MAIL_FAILED_HOURS` (24), or the archive cannot be read (WARN, with the count and the newest time) |
 | `vaultwarden_version` | the running version is behind the newest GitHub release **and that release is older than `VAULTWARDEN_DRIFT_GRACE_HOURS` (26)** |
 | `git_remote` | `git ls-remote` against the checkout's origin fails, so `/opt/docker` cannot pull |
 | `reboot` | `/var/run/reboot-required` exists, so installed kernel or library fixes are not running yet (WARN, with the running and newest installed kernel) |
@@ -380,6 +381,14 @@ four senders:
 | SdWa5 Shopware | STARTTLS, port 587 | Both application test messages arrived |
 | SdWa5 Dolibarr | Implicit TLS, port 465 | Application relay test arrived |
 
+On 2026-10-25 the relay began refusing the greetings `EHLO [127.0.0.1]` and `EHLO localhost` with
+`421-4.7.0 Try again later`. Shopware's test mail failed that way, because Symfony Mailer greets with
+`[127.0.0.1]` by default. Since 1.100.0 Shopware presents `sdwa5.org`, see
+[shopware/image.md](shopware/image.md#mail), and vps-health's `shopware_mail` check warns about a failed
+shop mail. The other senders greet with names the relay accepted in the same probes. Monitoring's curl
+presents the host name, while Vaultwarden and Dolibarr present their container IDs. Their delivery was not
+retested on that day.
+
 Dolibarr needs the [port 465 configuration](dolibarr.md#outgoing-email) because its current
 no-authentication path skips STARTTLS. Keep certificate validation enabled for every sender.
 
@@ -458,7 +467,8 @@ A value in `docker inspect` is the regression it guards against, since SEC-11 mo
 compose file secrets. A name that only a process environment carries is not a regression but the
 known residual. Paperless's s6 `init-env-file` exports what it reads from a `*_FILE`, so its processes
 still hold the value, and the OK message lists them so they stay visible. The MariaDB containers carried
-none on 2026-10-16.
+none on 2026-10-16. `shopware_db` on `mysql:8.4` carries `MYSQL_PASSWORD` and `MYSQL_ROOT_PASSWORD` since
+2026-10-25, because the MySQL entrypoint exports what it reads from a `*_FILE` as well.
 
 The process environments are read on the host, in `/proc/<pid>/environ` of each PID `docker top`
 reports, not inside the container. Inside, even root cannot read the environment of a process that

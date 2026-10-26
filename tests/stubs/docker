@@ -70,6 +70,15 @@ case "${1:-}" in
             [[ "$5" == *_db ]] && version=12.3.1-MariaDB
             printf 'app\t%s\t2\t%s\t%s\n' "${STUB_DB_VERSION:-$version}" "${STUB_NONTRANSACTIONAL_TABLES:-0}" \
                 "${STUB_DUPLICATE_FOREIGN_KEYS:-0}"
+        elif [[ "${!#}" == mail-failures ]]; then
+            # monitoring/vps-health.sh counts failed shop mails in shopware_db. Unset means
+            # the query failed; the value is the client's "count<TAB>newest" line.
+            cat >/dev/null
+            [[ -z "${STUB_SHOPWARE_MAIL_FAILED+set}" ]] && {
+                echo "ERROR 1146 (42S02): Table 'shopware.frosh_mail_archive' doesn't exist"
+                exit 1
+            }
+            printf '%s\n' "$STUB_SHOPWARE_MAIL_FAILED"
         elif [[ "$*" == 'exec -i fkdb '* ]]; then
             # tools/mariadb/recreate-foreign-keys.sh sends its SQL on stdin.
             sql="$(cat)"

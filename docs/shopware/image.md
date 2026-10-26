@@ -89,6 +89,40 @@ that a client sends, so `SYMFONY_TRUSTED_PROXIES=REMOTE_ADDR` trusts the direct 
 Caddy hands PHP. Measured on the mirror: a request with `X-Forwarded-Proto: https` answered 400 and the same request
 without it 200, so Symfony trusts the header.
 
+## Mail
+
+The shop sends through the Google Workspace relay without credentials, because the relay admits this host by its
+IP. The transport comes from `MAILER_DSN` in compose:
+
+```
+smtp://smtp-relay.gmail.com:587?local_domain=sdwa5.org&require_tls=true
+```
+
+- **Why the environment, not the admin.** Symfony Mailer greets with `EHLO [127.0.0.1]` unless the DSN sets
+  `local_domain`. Shopware 6.7's mailer settings build the DSN from `system_config` and cannot set it. On
+  2026-10-25 the relay refused every `EHLO [127.0.0.1]` and `EHLO localhost` with `421-4.7.0 Try again later`,
+  and it accepted `sdwa5.org`, container IDs and the host's name. The last mails with the old setting went out on
+  2026-10-15.
+- **The admin must keep the environment configuration.** Shopware uses `MAILER_DSN` only while
+  `core.mailerSettings.emailAgent` is empty. Choosing SMTP in the admin's mailer settings switches back to
+  `[127.0.0.1]`. The base image sets `MAILER_DSN=null://localhost`, and dotenv does not override a real environment
+  variable, so `.env.local` cannot carry the DSN. Without the compose line an empty `emailAgent` would drop every
+  mail silently.
+- **`require_tls=true`** refuses a plaintext fallback if the relay ever stops offering STARTTLS.
+- **The mirror** passes `MAILER_DSN=null://null` and runs in staging mode, so it sends nothing whichever agent the
+  copied `system_config` names.
+
+Check it on the host:
+
+```bash
+docker exec shopware php bin/console system:config:get core.mailerSettings.emailAgent   # empty line
+docker exec shopware printenv MAILER_DSN
+```
+
+Shopware sends from the queue, so a mail goes out within a minute through the worker. FroshMailArchive records
+each mail with `transport_state` `sent` or `failed`, and vps-health warns about every failed mail of the last 24
+hours ([../monitoring.md](../monitoring.md#outgoing-email-verification)).
+
 ## Secrets
 
 - `secrets/shopware_db_root_password` and `secrets/shopware_db_password` come from

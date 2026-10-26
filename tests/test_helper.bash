@@ -25,6 +25,7 @@ common_setup() {
     set_database_archives_fresh
     set_firewall_healthy
     set_shopware_tasks_fresh
+    export STUB_SHOPWARE_MAIL_FAILED=$'0\t-'
     set_git_remote_reachable
     export REBOOT_REQUIRED_FILE="$BATS_TEST_TMPDIR/reboot-required"
     export BOOT_DIR="$BATS_TEST_TMPDIR/boot"

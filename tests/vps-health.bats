@@ -178,6 +178,38 @@ Finished Backup at $(date -u '+%Y-%m-%d %H:%M:%S') after 3 seconds" health
     [[ "$output" == *"shopware_tasks"* ]]
 }
 
+# --- Shopware mail ----------------------------------------------------------
+
+# Regression for 2026-10-25. The relay began refusing the shop's EHLO, and the
+# only trace was a failed row in the mail archive.
+@test "a failed Shopware mail warns with its count and time" {
+    export STUB_SHOPWARE_MAIL_FAILED=$'2\t2026-10-25 21:57'
+    health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"[WARN] shopware_mail"* ]]
+    [[ "$(mail_body)" == *"2 Shopware mail(s) failed in the last 24h, the newest at 2026-10-25 21:57 UTC"* ]]
+}
+
+@test "no failed Shopware mail is healthy" {
+    health --dry-run
+    [[ "$output" == *"shopware_mail"* ]]
+    [[ "$output" == *"No Shopware mail failed in the last 24h"* ]]
+}
+
+@test "an unreadable Shopware mail archive warns" {
+    unset STUB_SHOPWARE_MAIL_FAILED
+    health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"Cannot read the Shopware mail archive: ERROR 1146"* ]]
+}
+
+@test "a non-numeric mail look-back warns instead of reaching SQL" {
+    export STUB_DOCKER_LOG="$BATS_TEST_TMPDIR/docker.log"
+    SHOPWARE_MAIL_FAILED_HOURS='1; DROP TABLE x' health --dry-run
+    [[ "$output" == *"SHOPWARE_MAIL_FAILED_HOURS is not a positive integer"* ]]
+    ! grep -q mail-failures "$STUB_DOCKER_LOG" || false
+}
+
 # --- the two bugs this check replaced -------------------------------------
 
 # Regression for 2026-09-08. Adding `init: true` to the restic service

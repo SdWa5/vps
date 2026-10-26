@@ -262,7 +262,7 @@
     to mail@sdwa5.org. The Thomann purchase of 2026-10-16 is booked as SI2610-0001 with its Beleg, and the
     PayPal account stands at 190.28 € like PayPal. Module work is in
     [sdwa5-banksync/TODO.md](https://github.com/SdWa5/banksync/blob/main/TODO.md)
-    1. decide whether to switch on `BANKSYNC_AUTOPOST_ENABLED`. Then a shop purchase gets its supplier
+    1. `BANKSYNC_AUTOPOST_ENABLED` stays off for now, decided 2026-10-27, and may be switched on later. On, then a shop purchase gets its supplier
        invoice with PayPal's reference and is booked the next morning, and it waits in the queue as
        "Beleg missing" until the PDF is uploaded. Left off, it waits for a person, who books it with the
        real invoice number through `POST banksync/transactions/{id}/supplierinvoice`

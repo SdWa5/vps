@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.100.3] - 2026-10-27
+
+### Changed
+
+- TODO 10: automatic posting stays off for now.
+
 ## [1.100.2] - 2026-10-26
 
 ### Changed

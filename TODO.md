@@ -257,10 +257,15 @@
        to paper.ripper.sdwa5.org. A Paperless mobile app uploads straight from the phone, and the uploader
        becomes the owner. Household papers may go in, because the Contabo panel login, which reaches both
        instances, has 2FA enabled. The effort depends on the size of the pile, which is not counted yet
-10. **BankSync follow-ups** ([docs/dolibarr.md](docs/dolibarr.md#custom-modules)). Live since 2026-10-05 in
-    dry run at v1.2.0, account 4 mapped, opening balance 333.40 € matched PayPal, daily job at
-    06:00 UTC, queue mail to mail@sdwa5.org
-    1. switch on `BANKSYNC_AUTOPOST_ENABLED` after the first real `would_post` decisions were reviewed
+10. **BankSync follow-ups** ([docs/dolibarr.md](docs/dolibarr.md#custom-modules)). Live since 2026-10-05,
+    at v1.4.0 since 2026-10-26 and still in dry run, account 4 mapped, daily job at 06:00 UTC, queue mail
+    to mail@sdwa5.org. The Thomann purchase of 2026-10-16 is booked as SI2610-0001 with its Beleg, and the
+    PayPal account stands at 190.28 € like PayPal. Module work is in
+    [sdwa5-banksync/TODO.md](https://github.com/SdWa5/banksync/blob/main/TODO.md)
+    1. decide whether to switch on `BANKSYNC_AUTOPOST_ENABLED`. Then a shop purchase gets its supplier
+       invoice with PayPal's reference and is booked the next morning, and it waits in the queue as
+       "Beleg missing" until the PDF is uploaded. Left off, it waits for a person, who books it with the
+       real invoice number through `POST banksync/transactions/{id}/supplierinvoice`
 11. **the share links in the Chimo Diazz offcanvas menu share the site root on every page.** measured on
     2026-10-06 on a subpage of chimodiazz.sdwa5.org, where the share aside linked the subpage and the
     offcanvas linked `https://chimodiazz.sdwa5.org/`. the offcanvas is rendered inside the ESI header

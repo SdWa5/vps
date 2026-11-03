@@ -326,7 +326,8 @@ recovery alerts immediately rather than waiting out the old interval.
 ## Mail delivery
 
 Recipients are every space-separated address in `MONITOR_MAIL_TO`. It defaults to `ripper@sdwa5.org`
-alone, and the host adds any further recipient in `/opt/docker/.env`.
+alone, and the host sets its own list in `/opt/docker/.env`. Since 2026-11-03 that list is one private
+address, so each alert arrives once.
 
 **A private address belongs in `.env` and not in this repository.** The default used to carry one
 directly in `monitoring/lib.sh`, which would have published it the moment the repository went public,

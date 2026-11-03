@@ -353,16 +353,11 @@
     Workspace relay accepts its sender address, send a test mail, then set `SDWA5_STOP_MAILCATCHER=1` for
     it in `docker-compose.projects.yml` and adjust `CLOSED_LISTENERS` in `monitoring/security-recheck.sh`
     With #36 the relay settings become a step of Chimo's return, and the MailCatcher fallback disappears.
-21. **send the monitoring mails to one mailbox instead of two** ([docs/monitoring.md](docs/monitoring.md)).
-    `MONITOR_MAIL_TO` in the vps `.env` lists the private Gmail address and ripper@sdwa5.org, so every
-    health, backup and vaultwarden mail lands twice in Stefan's two main inboxes
-    1. quick fix for now. set `MONITOR_MAIL_TO` to the private address alone and send a test mail with
-       `monitoring/vps-health.sh`. the default in `monitoring/lib.sh` stays ripper@sdwa5.org, so it
-       only applies when `.env` sets nothing (priority high, ca. 10 Minuten)
-    2. later, a shared org IT mailbox it@sdwa5.org as the only recipient, and the default in
-       `monitoring/lib.sh` and `.env.example` changed to it. whether the mailbox exists is unchecked, if not it gets
-       created first, as a Workspace group or shared inbox. `/etc/cron.d/chimodiazz-deploy` is checked
-       for an override of its own at the same time (priority medium, ca. 45 Minuten)
+21. **a shared org IT mailbox it@sdwa5.org as the only monitoring recipient** ([docs/monitoring.md](docs/monitoring.md))
+    (priority medium, ca. 45 Minuten). Since 2026-11-03 `MONITOR_MAIL_TO` in the vps `.env` lists the private
+    Gmail address alone. Change the default in `monitoring/lib.sh` and `.env.example` to it@sdwa5.org and drop
+    the `.env` line. Whether the mailbox exists is unchecked; if not, it gets created first, as a Workspace group
+    or shared inbox. Measured 2026-11-03: no file under `/etc/cron.d` sets `MONITOR_MAIL_TO`
 22. **share a single image from the Shopware image slider** (SdWa5Theme). The share links in
     `layout/share/share-links.html.twig` share the page only, and the image slider has no share action
     of its own, so one picture cannot be sent by its url or through the browser share sheet

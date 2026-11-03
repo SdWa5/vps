@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.100.4] - 2026-11-03
+
+### Changed
+
+- Monitoring mail recipient documented as one address set by the host.
+- TODO 21: only the shared it@sdwa5.org mailbox remains.
+
 ## [1.100.3] - 2026-10-27
 
 ### Changed

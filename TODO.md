@@ -489,3 +489,10 @@
     Minuten). The `mysql:8.4` entrypoint exports `MYSQL_PASSWORD` and `MYSQL_ROOT_PASSWORD` from their
     `*_FILE`, so the server process carries both, as the security recheck lists. Measure whether a wrapper that
     unsets them before `exec mysqld` keeps the first-start initialisation working, since that needs them
+44. (priority high) **Shopmon reports "SdWa5 · Production" red and not updatable** (ca. 1 Stunde). Two mails from
+    Shopmon (`noreply@fos.gg`) reached ripper@sdwa5.org on 2026-11-03 at 19:14, "Environment SdWa5 · Production
+    could not be updated" and "Environment SdWa5 · Production status changed to red". At 19:19 the shop answered
+    200 on `/` and on `/api/_info/health-check`, so it was reachable from outside. The cause is not measured yet,
+    because `gmail-headers` reads no mail bodies. The failed update presumably turned the status red. First read
+    the error on the environment's page in Shopmon, then check the `FroshShopmon` plugin (0.2.1, see
+    [docs/shopware/plugins.md](docs/shopware/plugins.md)) and its app integration in the shop

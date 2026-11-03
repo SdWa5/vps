@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.101.1] - 2026-11-03
+
+### Added
+
+- TODO 44: Shopmon reports the production environment red and not updatable.
+
 ## [1.101.0] - 2026-11-03
 
 ### Added

@@ -81,6 +81,9 @@ unattended-upgrades never reboots (`Automatic-Reboot` stays at Debian's default 
 2026-10-17 (SEC-D02). A fix that needs a reboot runs only after a manual one, and the `reboot` check of
 [vps-health.sh](monitoring.md) warns while one is pending.
 
+It also takes `trixie-updates`, Debian's stable-updates suite with tzdata and similar time-sensitive data,
+since 2026-11-03 through [`hardening/apt/52unattended-upgrades-local`](../hardening/apt/52unattended-upgrades-local).
+
 The first such reboot ran on 2026-10-17 at 23:35 for linux 6.12.113 (DSA-6568-1), which unattended-upgrades
 had installed at 06:59. SSH answered again after ca. 40 seconds. All 13 containers came back, and the static
 IPv6 address and route from `hardening/netplan/60-ipv6.yaml` survived their first boot. `security-recheck.sh

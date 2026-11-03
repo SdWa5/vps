@@ -1,0 +1,7 @@
+// SdWa5 VPS: unattended-upgrades also takes Debian's stable-updates suite
+// (trixie-updates: tzdata and similar time-sensitive data). apt appends this
+// entry to the list in Debian's 50unattended-upgrades, which stays untouched.
+// Deploy: install -m 644 -o root -g root hardening/apt/52unattended-upgrades-local /etc/apt/apt.conf.d/
+Unattended-Upgrade::Origins-Pattern {
+        "origin=Debian,codename=${distro_codename}-updates,label=Debian";
+};

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.101.0] - 2026-11-03
+
+### Added
+
+- hardening/apt/52unattended-upgrades-local: unattended-upgrades also takes trixie-updates.
+
 ## [1.100.4] - 2026-11-03
 
 ### Changed

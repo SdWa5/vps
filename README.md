@@ -123,6 +123,9 @@ monitoring/security-recheck.sh
 # Set a stopped MariaDB service's root password back to its configured value (see docs/backup.md)
 /opt/docker/tools/mariadb/reset-root-password.sh dolibarr_db
 
+# Upload a folder tree into Paperless as one user, dry-run by default (see docs/paperless.md)
+tools/paperless/upload-tree.sh SPEC USER ROOT...
+
 # Read the Dolibarr ERP from a workstation (see docs/dolibarr.md)
 tools/dolibarr/doli.sh status
 

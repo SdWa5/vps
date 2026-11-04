@@ -46,7 +46,8 @@
        module since 1.77.0, while closing a task stays a ui job. every run ends with a read back of
        tickets closed in the ui and tickets the spec does not name, since 1.82.0
 3. [docs/shopware/TODO.md](docs/shopware/TODO.md)
-4. maybe add nextcloud (docker-compose.yml)
+4. maybe add nextcloud (docker-compose.yml). It may later take the household's working files and the live Google
+   files of the Shared Drive "Ripper privat", while Paperless stays the archive of finished documents
 5. [docs/minecraft.md](docs/minecraft.md)
     1. auto-detect minecraft version from the mods in the modlist (the docker minecraft server in use already has
        this functionality, but it had a bug; that should be fixed by now)
@@ -243,7 +244,7 @@
        rest of the host's monitoring does not. It is the cheapest of the four and it closes the human
        half only, because a mailbox is not something his session reads (ca. 30 Minuten)
 9. **Paperless-ngx follow-ups** ([docs/paperless.md](docs/paperless.md)). Two instances, one for the
-    Verein and one for the household, live on prod since 2026-10-16 (ca. 2 Stunden 15 Minuten for what is left)
+    Verein and one for the household, live on prod since 2026-10-16 (ca. 4 Stunden 15 Minuten for what is left)
     0. waiting for the second household account (priority low, ca. 10 Minuten). It was invited to the household
        Vaultwarden organization on 2026-10-17, which holds the household logins. Once the invitation is accepted, an
        owner confirms it in the web vault or with `bw confirm org-member` after an unlock. Then the account logs in
@@ -256,7 +257,12 @@
     3. photograph all paper documents and upload them, Verein papers to paper.sdwa5.org and household papers
        to paper.ripper.sdwa5.org. A Paperless mobile app uploads straight from the phone, and the uploader
        becomes the owner. Household papers may go in, because the Contabo panel login, which reaches both
-       instances, has 2FA enabled. The effort depends on the size of the pile, which is not counted yet
+       instances, has 2FA enabled. The effort depends on the size of the pile, which is not counted yet.
+       Files already on disk go in with `tools/paperless/upload-tree.sh`
+    4. restore drill of the household instance (ca. 2 Stunden), due before 2026-12-04. The originals of the
+       Shared Drive "Ripper privat" went to the Drive trash on 2026-11-04 for their import into this instance,
+       which holds the only copy once that trash empties 30 days later. Restore the latest restic snapshot of `paperless-home-media` and the newest
+       `paperless_home_db` dump onto the dev mirror, then run `document_sanity_checker` there
 10. **BankSync follow-ups** ([docs/dolibarr.md](docs/dolibarr.md#custom-modules)). Live since 2026-10-05,
     at v1.4.0 since 2026-10-26 and still in dry run, account 4 mapped, daily job at 06:00 UTC, queue mail
     to mail@sdwa5.org. The Thomann purchase of 2026-10-16 is booked as SI2610-0001 with its Beleg, and the

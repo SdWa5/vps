@@ -61,6 +61,7 @@ docker run --rm -v "$REPO_ROOT:/mnt" -w /mnt "$CI_SHELLCHECK_IMAGE" -x \
     tools/paperless/dev-instance.sh \
     tools/paperless/setup.sh \
     tools/paperless/visibility-check.sh \
+    tools/paperless/upload-tree.sh \
     tools/mariadb/recreate-foreign-keys.sh \
     tools/mariadb/reset-root-password.sh \
     tools/mariadb/reset-root-password.inner.sh \

@@ -1,7 +1,7 @@
 # The sdwa5.org shop (docs/shopware/image.md). tools/shopware/image.sh builds it
 # from a git export: this directory is the main context, and the named context
 # `project` is shopware-html-data/ with the composer files, config and theme.
-FROM ghcr.io/shopware/shopware-cli:0.19.5-php-8.5@sha256:864044741e24e3e8a6a97bf9f81964560c1cfd446bbdf984aef8b4083b82cdf0 AS build
+FROM ghcr.io/shopware/shopware-cli:0.19.8-php-8.5@sha256:6ad035a6b4b11b38f890d9657c64fb541b032d80931ed97ecb9b0464bcb91fbe AS build
 WORKDIR /src
 COPY --from=project composer.json composer.lock symfony.lock .shopware-project.yml ./
 COPY --from=project config ./config
@@ -15,7 +15,7 @@ RUN --mount=type=secret,id=composer_auth,dst=/src/auth.json \
 # Shopware's own guard against its web installer, besides SHOPWARE_SKIP_WEBINSTALLER.
 RUN touch install.lock
 
-FROM ghcr.io/shopware/docker-base:8.5.12-frankenphp@sha256:db6b49d54cd91337fb1d35be75d6d73c4be6471f695897d53f9a095cfe4e4647
+FROM ghcr.io/shopware/docker-base:8.5.12-frankenphp@sha256:25b0762ff358ddde7caf3919cb791c933d75e314accd5c428f4920b643f9d142
 USER root
 # The shop listens on 8000, so frankenphp needs no file capability, and with one it
 # cannot start under cap_drop: [ALL]. Caddy on the host writes the access log with

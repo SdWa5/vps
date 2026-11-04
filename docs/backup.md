@@ -342,6 +342,8 @@ Auto Backup keeps the old copy until it rotates either way.
 
 **First run 2026-09-08, and it passed.** The repository had never been restored from, so it was
 unproven end to end. Re-run it after any change to the backup path, and otherwise once a quarter.
+The Paperless instances have their own drill in [paperless.md](paperless.md#restore-drill), which runs
+at the same time.
 
 Restoring through the existing container is deliberate: it already holds `RESTIC_REPOSITORY`,
 `RESTIC_PASSWORD_FILE` and the rclone config, so the drill never handles the repository password.

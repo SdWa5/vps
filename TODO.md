@@ -244,7 +244,7 @@
        rest of the host's monitoring does not. It is the cheapest of the four and it closes the human
        half only, because a mailbox is not something his session reads (ca. 30 Minuten)
 9. **Paperless-ngx follow-ups** ([docs/paperless.md](docs/paperless.md)). Two instances, one for the
-    Verein and one for the household, live on prod since 2026-10-16 (ca. 4 Stunden 15 Minuten for what is left)
+    Verein and one for the household, live on prod since 2026-10-16 (ca. 2 Stunden 15 Minuten for what is left)
     0. the second household account logs in to paper.ripper.sdwa5.org once and enrolls TOTP (priority low,
        ca. 10 Minuten). It is a confirmed member of the household Vaultwarden organization since 2026-11-04, which
        holds the household logins. All other logins have TOTP since 2026-10-16
@@ -258,10 +258,6 @@
        becomes the owner. Household papers may go in, because the Contabo panel login, which reaches both
        instances, has 2FA enabled. The effort depends on the size of the pile, which is not counted yet.
        Files already on disk go in with `tools/paperless/upload-tree.sh`
-    4. restore drill of the household instance (ca. 2 Stunden), due before 2026-12-04. The originals of the
-       Shared Drive "Ripper privat" went to the Drive trash on 2026-11-04 for their import into this instance,
-       which holds the only copy once that trash empties 30 days later. Restore the latest restic snapshot of `paperless-home-media` and the newest
-       `paperless_home_db` dump onto the dev mirror, then run `document_sanity_checker` there
 10. **BankSync follow-ups** ([docs/dolibarr.md](docs/dolibarr.md#custom-modules)). Live since 2026-10-05,
     at v1.4.0 since 2026-10-26 and still in dry run, account 4 mapped, daily job at 06:00 UTC, queue mail
     to mail@sdwa5.org. The Thomann purchase of 2026-10-16 is booked as SI2610-0001 with its Beleg, and the

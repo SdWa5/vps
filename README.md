@@ -253,13 +253,14 @@ The tree scan flags `minecraft-data/server.properties` when you run it on a depl
 correct and expected: the live file holds a generated `rcon.password`, which is exactly why it is not
 tracked. CI never sees it, because an untracked file is not in the clone.
 
-The storefront suite checks the rendered SdWa5Theme and the Content-Security-Policy with Playwright
-inside Docker:
+The storefront suite checks the rendered SdWa5Theme, its brand-colour overrides and the
+Content-Security-Policy with Playwright inside Docker:
 
 ```bash
 tests/storefront/run.sh                       # against https://sdwa5.org
 SDWA5_STOREFRONT_URL=http://localhost:8090 tests/storefront/run.sh   # against the dev mirror
 tests/storefront/run.sh --project csp         # only the Content-Security-Policy check
+tests/storefront/run.sh --project theme-colours   # only the brand-colour override check
 tests/storefront/run.sh --update-snapshots    # after an intended design change
 ```
 
@@ -268,7 +269,8 @@ share one centre line, and that the homepage tiles end at their padding. It also
 screenshots against the baselines in `tests/storefront/layout.spec.ts-snapshots/`, at three widths in
 light and dark mode. The CSP spec enforces the storefront policy of the `Caddyfile` on every page of
 both sitemaps, the cart, the account pages, a search and the SoundCloud player, and fails on any
-violation, so it checks a policy change before its deploy. The suite needs a running Shopware, so it is
+violation, so it checks a policy change before its deploy. The theme-colours spec fails when the core CSS
+sets the brand green or red as text colour for a selector that the theme does not override. The suite needs a running Shopware, so it is
 not part of `tests/run.sh` or CI. Run it after a theme or policy deploy, or against the mirror before
 one.
 

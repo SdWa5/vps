@@ -27,7 +27,8 @@
        secrets, and the decision of 2026-09-03 predates SEC-34
     6. the deploy step ships the shop image with `tools/shopware/image.sh ship` (or a registry pull) and runs
        `tools/shopware/deploy.sh` before any unscoped `docker compose up -d`, because only `deploy.sh` runs
-       the migrations before the container switch, see [docs/shopware/image.md](docs/shopware/image.md#deploy)
+       the migrations before the container switch and switches maintenance itself for a new core version,
+       see [docs/shopware/image.md](docs/shopware/image.md#deploy)
 2. connect google drive <-> [docs/dolibarr.md](docs/dolibarr.md) <-> shopware if possible
     1. **the dolibarr half now has a read path.** [tools/dolibarr/doli.sh](tools/dolibarr/doli.sh)
        reads the rest api with a dedicated api user, see
@@ -331,7 +332,7 @@
     3. editing a membership subscription, which today is a recipe around `Subscription::update()`
        because the ui refuses reconciled lines and rewrites bank line dates. a module endpoint would
        wrap that call with its checks (ca. 4 Stunden)
-18. **bring the Chimo Diazz shop back on Shopware 6.7.15.1 and PHP 8.5** ([docs/chimodiazz.md](docs/chimodiazz.md))
+18. **bring the Chimo Diazz shop back on the production image's core version and PHP 8.5** ([docs/chimodiazz.md](docs/chimodiazz.md))
     (ca. 3 Stunden). It is switched off since 2026-10-24 and still runs 6.7.11.1 on PHP 8.2.31. The way
     back (`PHP_VERSION=8.5`, the mitigation ini mount, the cron files, the monitoring defaults and the
     Caddy proxy) is listed at the top of docs/chimodiazz.md. `composer audit --locked` with the vendored
@@ -358,7 +359,9 @@
     (priority medium, ca. 45 Minuten). Since 2026-11-03 `MONITOR_MAIL_TO` in the vps `.env` lists the private
     Gmail address alone. Change the default in `monitoring/lib.sh` and `.env.example` to it@sdwa5.org and drop
     the `.env` line. Whether the mailbox exists is unchecked; if not, it gets created first, as a Workspace group
-    or shared inbox. Measured 2026-11-03: no file under `/etc/cron.d` sets `MONITOR_MAIL_TO`
+    or shared inbox. Measured 2026-11-03: no file under `/etc/cron.d` sets `MONITOR_MAIL_TO`. Shopmon's
+    notification address, ripper@sdwa5.org since 2026-11-03, moves to it@sdwa5.org too
+    ([docs/monitoring.md](docs/monitoring.md#shopmon))
 22. **share a single image from the Shopware image slider** (SdWa5Theme). The share links in
     `layout/share/share-links.html.twig` share the page only, and the image slider has no share action
     of its own, so one picture cannot be sent by its url or through the browser share sheet
@@ -452,7 +455,8 @@
     links, not from traffic. The pattern matches exact names, so a name such as `_sw_payment_token` or
     `securekey` would pass unredacted, and so would a token percent-encoded inside a `next=` target. After a
     week, list the query parameter names per site, names and counts only, then add the secret ones to the
-    `access_log` snippet and to the `logs:` probe (ca. 1 Stunde)
+    `access_log` snippet and to the `logs:` probe. The log also records request headers such as Shopmon's
+    `Shopmon-Shop-Token`, which the snippet should redact too (ca. 1 Stunde 20 Minuten)
 34. (proposal) **one site list for the access-log probe** ([tests/caddyfile.bats](tests/caddyfile.bats)). The
     sites live in the Caddyfile's `import access_log` lines and again in `ACCESS_LOG_SITES` of
     `security-recheck.sh`, so a new site without the second edit gets no `logs:` probe, and nothing says so. A
@@ -490,10 +494,8 @@
     Minuten). The `mysql:8.4` entrypoint exports `MYSQL_PASSWORD` and `MYSQL_ROOT_PASSWORD` from their
     `*_FILE`, so the server process carries both, as the security recheck lists. Measure whether a wrapper that
     unsets them before `exec mysqld` keeps the first-start initialisation working, since that needs them
-44. (priority high) **Shopmon reports "SdWa5 · Production" red and not updatable** (ca. 1 Stunde). Two mails from
-    Shopmon (`noreply@fos.gg`) reached ripper@sdwa5.org on 2026-11-03 at 19:14, "Environment SdWa5 · Production
-    could not be updated" and "Environment SdWa5 · Production status changed to red". At 19:19 the shop answered
-    200 on `/` and on `/api/_info/health-check`, so it was reachable from outside. The cause is not measured yet,
-    because `gmail-headers` reads no mail bodies. The failed update presumably turned the status red. First read
-    the error on the environment's page in Shopmon, then check the `FroshShopmon` plugin (0.2.1, see
-    [docs/shopware/plugins.md](docs/shopware/plugins.md)) and its app integration in the shop
+44. (proposal) **remove FroshShopmon** ([docs/shopware/plugins.md](docs/shopware/plugins.md)) (ca. 1 Stunde 30
+    Minuten). It is deprecated, and FroshTools 3.17.2 or later serves Shopmon through the same integration. Its
+    uninstall deletes that integration, so run `plugin:uninstall FroshShopmon --keep-user-data` in the running
+    container first, then `composer remove frosh/shopmon`, drop its `staging.yaml` entry and the
+    `dev-instance.sh` assertion, and rehearse it on the mirror. A separate release keeps the rollback simple

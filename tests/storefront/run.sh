@@ -8,6 +8,8 @@
 # box cannot, such as the dropdown caret. csp.spec.ts opens every page of the
 # sitemaps and the SoundCloud player under the storefront policy of the
 # Caddyfile, enforced, and fails on any Content-Security-Policy violation.
+# theme-colours.spec.ts fails when the core CSS sets a brand colour as text
+# colour and the theme has no readable override for that selector.
 #
 # It needs a running Shopware, so it is not part of tests/run.sh and CI. A push
 # would otherwise be judged by what is deployed rather than by what was pushed.
@@ -18,6 +20,7 @@
 #   tests/storefront/run.sh                       all projects against sdwa5.org
 #   tests/storefront/run.sh --update-snapshots    rewrite the baselines after an intended design change
 #   tests/storefront/run.sh --project csp         only the Content-Security-Policy check
+#   tests/storefront/run.sh --project theme-colours   only the brand-colour override check
 #   tests/storefront/run.sh --project phone-dark  any other playwright test argument
 #
 # Environment:

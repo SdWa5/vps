@@ -145,3 +145,12 @@ advisory. SwagExtensionStore 7.0.0 brings one migration, which sets `SwagExtensi
 `https://sky-bridge-store.production.shopware.in`, the page the admin's extension store loads in a frame. Live
 the shop was in maintenance from 03:41:53 to 03:43:08, and the extra minute came from an FPM reload typed with an
 unanchored `pgrep`.
+
+### Updating Shopware in the image (2026-11-04)
+
+From 6.7.15.1 to 6.7.16.0 with FroshTools 3.17.5, FroshPlatformMailArchive 3.8.3, SwagLanguagePack 5.77.0,
+shopware-cli 0.19.8 and a new docker-base digest, as image tag 6.7.16.0-1. One `composer update
+--with-all-dependencies` resolved it, moving `symfony/type-info` and `symfony/var-dumper` to 8.1, and the audit
+went from 17 advisories to none. The build took 51 s with a warm cache, the fetch 6 s and the restore 28 s. The
+storefront suite passed on the mirror, and `theme-colours` found no new core rule with a brand colour as text
+colour. It was the first core update in which `deploy.sh` switched maintenance itself.

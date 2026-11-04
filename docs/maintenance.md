@@ -194,7 +194,7 @@ its own.
 
 | Service | Tag | Why |
 |---|---|---|
-| `shopware` | `localhost/sdwa5-shopware:6.7.15.1-N`, built on this host | The tag is the locked core version plus a build number, and the base and build images are pinned by digest in `shopware/Dockerfile`. `pull_policy: never`, so nothing outside the host replaces it. An update is a rehearsal on the mirror, then a build, ship and deploy, see [image.md](shopware/image.md#updates) |
+| `shopware` | `localhost/sdwa5-shopware:<core version>-N`, built on this host | The tag is the locked core version plus a build number, and the base and build images are pinned by digest in `shopware/Dockerfile`. `pull_policy: never`, so nothing outside the host replaces it. An update is a rehearsal on the mirror, then a build, ship and deploy, see [image.md](shopware/image.md#updates) |
 | `shopware_db` | `mysql:8.4` | LTS series. Patch updates are safe; a major is ignored by Dependabot and goes through a restore rehearsal. Chimo Diazz stays on dockware 6.7.11.1 in `docker-compose.projects.yml` and is switched off |
 | `dolibarr`, `dolibarr_cron` | `dolibarr/dolibarr:24.0.2-php8.5@sha256:46c066a9…` | Exact, by tag, PHP variant and digest, because upstream rebuilds tags. The isolated rehearsal takes its target from this pin, so a Dolibarr update starts by bumping it, see [Dolibarr 24.0.1 upgrade](#dolibarr-2401-upgrade) |
 | `dolibarr_db` and the project DBs | `mariadb:12.3` | Minor series. Patch updates inside 12.3 are safe and wanted; crossing a major version is the one-way door |

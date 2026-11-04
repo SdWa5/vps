@@ -1,8 +1,10 @@
 # Shopware plugins on sdwa5.org
 
 Which plugins the live shop runs, where each one comes from, and what in this repository records it.
-The state below was measured on the running instance on 2026-10-01, right after the migration to
-composer, with `plugin:list`, the `plugin` table and `composer.lock`.
+The versions live only in the exact pins of
+[`composer.json`](../../shopware-html-data/composer.json), and `console plugin:list` shows the ones that
+run. The inventory was first measured on 2026-10-01, right after the migration to composer, with
+`plugin:list`, the `plugin` table and `composer.lock`.
 
 ## The inventory
 
@@ -12,25 +14,29 @@ reproduces the whole set. Eleven are locked as zip downloads in `composer.lock`.
 shop's own theme `SdWa5Theme`, which lives in this repository and is locked as a path, see
 [The one path lock](#the-one-path-lock). `tests/shopware-plugins.bats` keeps it that way.
 
-| Plugin | Composer name | Version | Source |
-|---|---|---|---|
-| `DneStorefrontDarkMode` | `store.shopware.com/dnestorefrontdarkmode` | 4.0.0 | Shopware Store |
-| `FroshLazySizes` | `frosh/lazy-sizes` | 3.2.0 | Packagist |
-| `FroshPlatformFilterSearch` | `frosh/platform-filter-search` | 3.1.0 | Packagist |
-| `FroshPlatformMailArchive` | `frosh/mail-platform-archive` | 3.6.0 | Packagist |
-| `FroshPlatformThumbnailProcessor` | `frosh/platform-thumbnail-processor` | 5.4.0 | Packagist |
-| `FroshShopmon` | `frosh/shopmon` | 0.2.1 | Packagist |
-| `FroshTools` | `frosh/tools` | 3.9.0 | Packagist |
-| `SwagExtensionStore` | `swag/swag-extension-store` | 4.2.2 | Packagist |
-| `SwagLanguagePack` | `swag/language-pack` | 5.58.0 | Packagist |
-| `SwagPlatformSecurity` | `store.shopware.com/swagplatformsecurity` | 4.0.16 | Shopware Store |
-| `SdWa5Theme` | `sdwa5/sdwa5-theme` | 1.2.10 | this repository, [theme.md](theme.md) |
-| `TcinnCopyrightCustom` | `store.shopware.com/tcinncopyrightcustom` | 1.0.7 | Shopware Store |
+| Plugin | Composer name | Source |
+|---|---|---|
+| `DneStorefrontDarkMode` | `store.shopware.com/dnestorefrontdarkmode` | Shopware Store |
+| `FroshLazySizes` | `frosh/lazy-sizes` | Packagist |
+| `FroshPlatformFilterSearch` | `frosh/platform-filter-search` | Packagist |
+| `FroshPlatformMailArchive` | `frosh/mail-platform-archive` | Packagist |
+| `FroshPlatformThumbnailProcessor` | `frosh/platform-thumbnail-processor` | Packagist |
+| `FroshShopmon` | `frosh/shopmon` | Packagist |
+| `FroshTools` | `frosh/tools` | Packagist |
+| `SwagExtensionStore` | `swag/swag-extension-store` | Packagist |
+| `SwagLanguagePack` | `swag/language-pack` | Packagist |
+| `SwagPlatformSecurity` | `store.shopware.com/swagplatformsecurity` | Shopware Store |
+| `SdWa5Theme` | `sdwa5/sdwa5-theme` | this repository, [theme.md](theme.md) |
+| `TcinnCopyrightCustom` | `store.shopware.com/tcinncopyrightcustom` | Shopware Store |
 
 Every require is pinned to the exact version, because a floating constraint would turn the next
 `composer update` into an unplanned plugin upgrade on a live shop. An upgrade is a deliberate change of
-the pin. On 2026-10-01 newer releases existed for `TcinnCopyrightCustom` (1.1.1), `FroshTools` (3.14.1),
-`SwagExtensionStore` (7.0.0) and `SwagLanguagePack` (5.72.0).
+the pin.
+
+`FroshTools` keeps the role of the Shopmon integration up to date on every install and update since
+3.17.2, see [monitoring.md#shopmon](../monitoring.md#shopmon). `FroshShopmon` is deprecated in favour of
+it. Its uninstall deletes that shared integration, so it may only be uninstalled with
+`plugin:uninstall FroshShopmon --keep-user-data`.
 
 Since SEC-31 an update changes the pin with `tools/shopware/image.sh composer require … --no-install
 --no-scripts --no-plugins`, builds a new image and deploys it, see [image.md#updates](image.md#updates).

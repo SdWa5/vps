@@ -9,14 +9,19 @@
 #   2. the worker cron's lock, so no scheduled task or queue consumer runs
 #      against a half-migrated database;
 #   3. shopware_db must answer and hold an installed shop;
-#   4. a fresh backup of shopware_db, because migrations cannot be undone;
-#   5. the helper in a one-off container of the new image, while the old
+#   4. for a new Shopware core version, maintenance mode for every sales
+#      channel in the serving container, so no order lands between the backup
+#      and the migrations;
+#   5. a fresh backup of shopware_db, because migrations cannot be undone;
+#   6. the helper in a one-off container of the new image, while the old
 #      container keeps serving;
-#   6. system:check --context=pre_rollout, because the health route that
-#      `up --wait` waits for renders no storefront page;
-#   7. the switch to the new container, which returns once its healthcheck
-#      passes. Caddy holds requests meanwhile.
-# A failure before step 7 leaves the old container serving.
+#   7. system:check --context=pre_rollout, because the health route that
+#      `up --wait` waits for renders no storefront page. Under maintenance it
+#      runs after the switch instead, since it cannot pass before;
+#   8. the switch to the new container, which returns once its healthcheck
+#      passes. Caddy holds requests meanwhile. Maintenance then goes off.
+# A failure before step 8 leaves the old container serving and switches
+# maintenance off again.
 #
 # It needs Compose v2 for `up --wait`, so it calls `docker compose` rather than
 # tools/compose.sh, whose v1 fallback lacks --wait.
@@ -50,8 +55,26 @@ db_query() {
     docker exec shopware_db sh -c 'MYSQL_PWD="$(cat "$MYSQL_PASSWORD_FILE")" exec mysql --no-defaults -h 127.0.0.1 -u"$MYSQL_USER" -N -B "$MYSQL_DATABASE" -e "$1"' sh "$1"
 }
 
+# The tag without its build number, e.g. 6.7.16.0 for …:6.7.16.0-1.
+core_version() {
+    local tag="${1##*:}"
+    printf '%s\n' "${tag%-*}"
+}
+
+# Each container caches the maintenance flag, so it is set and cleared through
+# the serving container and followed by a cache clear there.
+serving_console() {
+    docker exec shopware php bin/console "$@" --no-interaction
+}
+
+maintenance_off() {
+    serving_console sales-channel:maintenance:disable --all
+    serving_console cache:clear
+    printf 'Maintenance off at %s.\n' "$(date +%T)"
+}
+
 deploy() {
-    local image lock archive start
+    local image lock archive start running maintenance=0
 
     cd "$REPO_ROOT"
     image="$(compose_image shopware)"
@@ -69,6 +92,19 @@ deploy() {
     one_off vendor/bin/shopware-deployment-helper is-installed >/dev/null \
         || die "shopware_db holds no installed shop or does not answer. deploy.sh never installs one."
 
+    # The helper's own maintenance option would set the flag from the one-off
+    # container only (docs/shopware/image.md#deploy).
+    # A sales channel already in maintenance leaves the switch to the operator.
+    running="$(docker inspect -f '{{.Config.Image}}' shopware 2>/dev/null || true)"
+    if [[ -n "$running" && "$(core_version "$running")" != "$(core_version "$image")" ]] \
+        && [[ "$(db_query 'SELECT COUNT(*) FROM sales_channel WHERE maintenance = 1')" == 0 ]]; then
+        serving_console sales-channel:maintenance:enable --all
+        maintenance=1
+        trap maintenance_off EXIT
+        serving_console cache:clear
+        printf 'Maintenance on at %s for %s -> %s.\n' "$(date +%T)" "$(core_version "$running")" "$(core_version "$image")"
+    fi
+
     # A concurrent backup run exits 0 without a dump, hence the mtime check.
     start="$(date +%s)"
     DATABASE_BACKUP_CONTAINERS=shopware_db monitoring/database-backup.sh \
@@ -80,14 +116,23 @@ deploy() {
     deployment_helper one_off \
         || die "the deployment helper failed. The old container still serves; see docs/shopware/image.md#rollback."
 
-    if [[ "$(db_query 'SELECT COUNT(*) FROM sales_channel WHERE maintenance = 1')" == 0 ]]; then
+    if ((maintenance == 0)) && [[ "$(db_query 'SELECT COUNT(*) FROM sales_channel WHERE maintenance = 1')" == 0 ]]; then
         one_off php bin/console system:check --context=pre_rollout --no-interaction \
             || die "system:check failed. The old container still serves; see docs/shopware/image.md#rollback."
     else
         printf 'Skipping system:check: a sales channel is in maintenance mode.\n'
     fi
 
-    docker compose up -d --no-deps --wait --wait-timeout 360 shopware
+    # From here on the new code runs the migrated database, so a failure keeps
+    # maintenance on rather than reopening the shop.
+    trap - EXIT
+    docker compose up -d --no-deps --wait --wait-timeout 360 shopware \
+        || die "the new container did not become healthy.$( ((maintenance)) && printf ' Maintenance stays on.') See docs/shopware/image.md#rollback."
+    if ((maintenance)); then
+        maintenance_off
+        serving_console system:check --context=pre_rollout \
+            || die "system:check failed on the new container. See docs/shopware/image.md#rollback."
+    fi
     printf 'Deployed %s.\n' "$image"
 }
 

@@ -8,12 +8,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [1.103.0] - 2026-11-04
 
+### Added
+
+- docs/monitoring.md: Shopmon, its integration, privileges and log user agent
+- `tests/storefront/theme-colours.spec.ts`: core rules with a brand colour as text colour need an override
+- `deploy.sh` switches maintenance on and off itself for a new core version, with its tests
+
 ### Changed
 
 - Shopware 6.7.16.0, FroshTools 3.17.5, FroshPlatformMailArchive 3.8.3 and SwagLanguagePack 5.77.0
 - deployment-helper 0.1.11 and dev-tools 1.6.0
 - Symfony 7.4 patch releases, with type-info and var-dumper 8.1
 - shopware-cli 0.19.8, the docker-base digest and the image tag 6.7.16.0-1
+- Stack tables name the shop image tag without a core version
+- TODO 1, 18, 21 and 33 and Shopware TODO 8 take up the findings of 2026-11-04
+
+### Fixed
+
+- Shopmon's 403 on the queue and SBOM endpoints, through FroshTools 3.17.5
+- The 17 Composer security advisories of the Symfony packages
+
+### Removed
+
+- The Version column of the plugin table, stale in four rows
+- TODO 44, done; the number now holds the FroshShopmon removal proposal
 
 ## [1.102.2] - 2026-11-04
 

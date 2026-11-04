@@ -25,6 +25,14 @@ projects.push({
   use: { browserName: 'chromium' as const, ...viewports.desktop },
 });
 
+// The brand-colour override check runs once. It reads only the theme CSS
+// bundle and opens no page.
+projects.push({
+  name: 'theme-colours',
+  testMatch: 'theme-colours.spec.ts',
+  use: { browserName: 'chromium' as const },
+});
+
 export default defineConfig({
   testDir: '.',
   forbidOnly: true,

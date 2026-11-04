@@ -21,7 +21,7 @@ services:
     # versions, and a Shopware minor runs forward-only database migrations.
     # Holding both instances on one version also means a Shopware upgrade is one
     # deliberate decision rather than two drifting ones.
-    image: dockware/shopware:6.7.11.1
+    image: dockware/shopware:6.7.15.1
     container_name: chimodiazz_shopware
     # Profile-gated on purpose. As of 2026-09-15 chimodiazz/website has no
     # deployable application yet, so this service is defined but must not start:

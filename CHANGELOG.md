@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.102.2] - 2026-11-04
+
+### Added
+
+- docs/paperless.md: restore drill of the household instance, first run on 2026-11-04
+
+### Removed
+
+- TODO 9.4, done
+
 ## [1.102.1] - 2026-11-04
 
 ### Changed

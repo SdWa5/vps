@@ -184,6 +184,44 @@ copy with `url` and `password_dir` pointed there runs `setup.sh` and `visibility
 - The Verein's archive is handed over with `docker exec -u paperless paperless_sdwa5 document_exporter
   ../export`, which writes into the data volume.
 
+### Restore drill
+
+The household instance holds the only copy of the former Shared Drive "Ripper privat" once its Drive
+trash empties on 2026-12-04, so its backup is restored into a throwaway dev mirror and checked by
+Paperless itself. Run it from the repository root on the notebook, with `INSTANCE=home` or `sdwa5`
+(the DB container is `paperless_<instance>_db`, the media directory `paperless-<instance>-media`):
+
+```
+ssh sdwa5.org "DATABASE_BACKUP_CONTAINERS=paperless_${INSTANCE}_db /opt/docker/monitoring/database-backup.sh && find /opt/docker/paperless-${INSTANCE}-media/documents/originals -type f | wc -l"
+ssh sdwa5.org 'docker exec restic /bin/sh /opt/restic/backup.sh'   # expect "Backup Successful" and "Forget Successful"
+
+export SDWA5_PAPERLESS_DEV_DIR="$XDG_RUNTIME_DIR/sdwa5-paperless-drill"; D="$SDWA5_PAPERLESS_DEV_DIR/$INSTANCE"; set -o pipefail
+tools/paperless/dev-instance.sh up "$INSTANCE" && docker stop "sdwa5-paperless-dev-$INSTANCE"
+ssh sdwa5.org "docker exec restic restic dump latest /data/database-backup/paperless_${INSTANCE}_db.tar.gz" | tar -xzO dump.sql \
+    | { printf 'DROP DATABASE IF EXISTS paperless;\n'; cat; } \
+    | docker exec -i "sdwa5-paperless-dev-$INSTANCE-db" sh -c 'MYSQL_PWD="$MARIADB_ROOT_PASSWORD" exec mariadb --no-defaults --user=root'
+ssh sdwa5.org "docker exec restic restic dump latest /data/paperless-${INSTANCE}-media" | tar -x --strip-components=2 -C "$D/media"
+find "$D/media/documents/originals" -type f | wc -l   # must equal the production count above
+tools/paperless/dev-instance.sh up "$INSTANCE"
+docker exec -u paperless "sdwa5-paperless-dev-$INSTANCE" /command/with-contenv python3 manage.py document_sanity_checker
+tools/paperless/dev-instance.sh purge "$INSTANCE" && rmdir "$SDWA5_PAPERLESS_DEV_DIR"
+```
+
+- The fresh dump and backup come first, because the nightly pair can miss documents added in between.
+- The mirror lives in the `$XDG_RUNTIME_DIR` tmpfs, because the notebook's root is not encrypted and
+  deleted documents would stay in its free blocks.
+- The drill passes when the originals count matches and the checker reports no `ERROR` and no
+  orphaned file. On a finding, keep the mirror and investigate.
+- Re-run it quarterly together with the vault drill in [backup.md](backup.md#restore-drill), and after
+  a change to the backup path or a Paperless major update.
+- It does not test a restore without this host, which needs the restic password from the offline
+  vault copies and access to the Shared Drive "SdWa5 Backup" without the service-account key stored
+  on the host.
+
+| Date | Instance | Snapshot | Originals | Checker |
+|---|---|---|---|---|
+| 2026-11-04 | home | `d83b5c67` | 237 of 237 | passed; 3 INFO for documents without OCR text |
+
 ## Updates
 
 Both instances pin the same image in `docker-compose.yml`, by tag and digest, written out on each

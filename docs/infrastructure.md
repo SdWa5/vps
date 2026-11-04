@@ -73,7 +73,7 @@ Domain → port mapping lives in the [Caddyfile](../Caddyfile); backup detail in
 
 | Service             | Image                        | Port (internal) | Public URL                 | Compose file                            |
 |---------------------|------------------------------|-----------------|----------------------------|-----------------------------------------|
-| Shopware            | localhost/sdwa5-shopware:6.7.15.1-N (FrankenPHP, PHP 8.5) | 8001 | https://sdwa5.org | docker-compose.yml, see [shopware/image.md](shopware/image.md) |
+| Shopware            | localhost/sdwa5-shopware:<core version>-N (FrankenPHP, PHP 8.5) | 8001 | https://sdwa5.org | docker-compose.yml, see [shopware/image.md](shopware/image.md) |
 | Shopware database   | mysql:8.4                    | —               | —                          | docker-compose.yml                      |
 | Vaultwarden         | vaultwarden/server:latest    | 8000            | https://vault.sdwa5.org    | docker-compose.yml                      |
 | Dolibarr SdWa5      | dolibarr/dolibarr:24.0.2-php8.5 | 8002            | https://erp.sdwa5.org      | docker-compose.yml                      |

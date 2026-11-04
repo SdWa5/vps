@@ -38,13 +38,16 @@ STUB
 }
 
 # IMAGE_MISSING, NOT_INSTALLED, HELPER_FAIL and CHECK_FAIL fail their call,
-# MAINTENANCE sets the count of sales channels in maintenance.
+# MAINTENANCE sets the count of sales channels in maintenance. RUNNING_IMAGE is
+# the serving container's image, by default the fixture's core version, and
+# RUNNING_MISSING=1 fails the inspect as if no container existed.
 fake_docker() {
     cat > "$BATS_TEST_TMPDIR/bin/docker" <<'STUB'
 #!/bin/bash
 printf 'CALL %s\n' "$*" >> "$DOCKER_LOG"
 case "$*" in
     'image inspect '*) exit "${IMAGE_MISSING:-0}" ;;
+    'inspect -f '*) printf '%s\n' "${RUNNING_IMAGE-localhost/sdwa5-shopware:6.7.15.1-1}"; exit "${RUNNING_MISSING:-0}" ;;
     *'shopware-deployment-helper is-installed') exit "${NOT_INSTALLED:-0}" ;;
     *'shopware-deployment-helper run '*) exit "${HELPER_FAIL:-0}" ;;
     *'system:check'*) exit "${CHECK_FAIL:-0}" ;;
@@ -143,6 +146,46 @@ ONE_OFF='compose run --rm --no-deps -T --name shopware-deploy shopware'
     [[ "$output" == *'Skipping system:check: a sales channel is in maintenance mode.'* ]]
     run ! grep -q 'system:check' "$DOCKER_LOG"
     grep -q 'compose up -d --no-deps --wait' "$DOCKER_LOG"
+}
+
+@test "a new core version runs behind maintenance from before the backup until after the switch" {
+    run env RUNNING_IMAGE=localhost/sdwa5-shopware:6.7.14.0-3 bash "$DEPLOY_SCRIPT"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *'Maintenance on at '*' for 6.7.14.0 -> 6.7.15.1.'* ]]
+    [[ "$output" == *'Maintenance off at '* ]]
+    enable="$(line_of 'exec shopware php bin/console sales-channel:maintenance:enable --all --no-interaction')"
+    backup="$(line_of 'CALL backup')"
+    up="$(line_of 'compose up -d --no-deps --wait --wait-timeout 360 shopware')"
+    disable="$(line_of 'exec shopware php bin/console sales-channel:maintenance:disable --all --no-interaction')"
+    check="$(line_of 'exec shopware php bin/console system:check --context=pre_rollout --no-interaction')"
+    [ -n "$enable" ] && [ -n "$check" ]
+    [ "$enable" -lt "$backup" ] && [ "$backup" -lt "$up" ] && [ "$up" -lt "$disable" ] && [ "$disable" -lt "$check" ]
+    run ! grep -q "$ONE_OFF php bin/console system:check" "$DOCKER_LOG"
+}
+
+@test "a new build of the same core version deploys without maintenance" {
+    run bash "$DEPLOY_SCRIPT"
+    [ "$status" -eq 0 ]
+    run ! grep -q 'maintenance:enable' "$DOCKER_LOG"
+}
+
+@test "a failure before the switch turns maintenance off in the old container" {
+    run env RUNNING_IMAGE=localhost/sdwa5-shopware:6.7.14.0-3 HELPER_FAIL=1 bash "$DEPLOY_SCRIPT"
+    [ "$status" -eq 1 ]
+    grep -q 'exec shopware php bin/console sales-channel:maintenance:disable --all' "$DOCKER_LOG"
+    run ! grep -q 'compose up -d --no-deps --wait' "$DOCKER_LOG"
+}
+
+@test "a sales channel already in maintenance leaves the switch to the operator" {
+    run env RUNNING_IMAGE=localhost/sdwa5-shopware:6.7.14.0-3 MAINTENANCE=1 bash "$DEPLOY_SCRIPT"
+    [ "$status" -eq 0 ]
+    run ! grep -q 'maintenance:' "$DOCKER_LOG"
+}
+
+@test "a first deploy without a running container skips maintenance" {
+    run env RUNNING_MISSING=1 RUNNING_IMAGE= bash "$DEPLOY_SCRIPT"
+    [ "$status" -eq 0 ]
+    run ! grep -q 'maintenance:enable' "$DOCKER_LOG"
 }
 
 @test "the helper config refuses a fresh install and compiles the theme synchronously" {

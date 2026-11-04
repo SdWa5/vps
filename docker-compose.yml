@@ -53,7 +53,7 @@ services:
     # The tag is the Shopware version and a build number, and this line is the only place that
     # names it (docs/shopware/image.md#tags). A new tag goes live only through
     # tools/shopware/deploy.sh, which runs the migrations before the switch.
-    image: localhost/sdwa5-shopware:6.7.15.1-1
+    image: localhost/sdwa5-shopware:6.7.16.0-1
     pull_policy: never
     container_name: shopware
     ports:

@@ -151,15 +151,20 @@ git pull --ff-only && tools/shopware/deploy.sh
 2. takes the worker cron's lock `/run/lock/shopware-worker.lock`, so no scheduled task or queue consumer runs
    against a half-migrated database;
 3. starts `shopware_db` and requires an installed shop (`shopware-deployment-helper is-installed`);
-4. writes a fresh backup of `shopware_db`, because migrations cannot be undone, and requires the archive to be
+4. for a new Shopware core version, the tag without its build number, switches every sales channel into
+   maintenance in the serving container and clears its cache there, so no order lands between the backup and the
+   migrations. A sales channel already in maintenance leaves this to the operator;
+5. writes a fresh backup of `shopware_db`, because migrations cannot be undone, and requires the archive to be
    newer than the run's start;
-5. runs the helper in a one-off container of the new image while the old container keeps serving;
-6. runs `system:check --context=pre_rollout`, which renders the storefront in-process, because the health route
+6. runs the helper in a one-off container of the new image while the old container keeps serving;
+7. runs `system:check --context=pre_rollout`, which renders the storefront in-process, because the health route
    that `up --wait` waits for renders no storefront page;
-7. switches to the new container with `docker compose up -d --wait`, while Caddy holds requests for up to 15 s
-   (`lb_try_duration`).
+8. switches to the new container with `docker compose up -d --wait`, while Caddy holds requests for up to 15 s
+   (`lb_try_duration`). After the maintenance of step 4 it then switches maintenance off in the new container and
+   runs the `system:check` of step 7 there, since it cannot pass under maintenance.
 
-A failure before step 7 leaves the old container serving.
+A failure before step 8 leaves the old container serving and switches maintenance off again. A failure at or after
+the switch leaves maintenance on, see [Rollback](#rollback).
 
 **The deployment helper** (`shopware/deployment-helper`, configured in
 [`.shopware-project.yml`](../../shopware-html-data/.shopware-project.yml)) runs `system:update:finish` when the
@@ -189,14 +194,17 @@ For a Shopware, plugin or PHP bump, or a merged Dependabot pull request of the `
 1. Change the Composer files with `tools/shopware/image.sh composer require|update … --no-install --no-scripts
    --no-plugins`, or take the digest, and raise the tag in `docker-compose.yml`.
 2. `tools/shopware/image.sh build`, then `tools/shopware/dev-instance.sh restore` as the preview and rehearsal, and
-   `SDWA5_STOREFRONT_URL=http://localhost:8090 tests/storefront/run.sh`.
+   `SDWA5_STOREFRONT_URL=http://localhost:8090 tests/storefront/run.sh`. The suite includes the `theme-colours`
+   check for new core rules with a brand colour as text colour ([theme.md](theme.md)).
 3. Commit, merge, `tools/shopware/image.sh ship`, then on the host `git pull --ff-only` and
    `tools/shopware/deploy.sh`.
-4. A Shopware version change switches maintenance on in the old container before `deploy.sh`
-   (`docker exec shopware php bin/console sales-channel:maintenance:enable --all`, then `cache:clear`), and off in
-   the new one afterwards. Then run the skipped `system:check --context=pre_rollout` by hand.
+4. For a Shopware version change `deploy.sh` switches maintenance on and off itself and runs `system:check` after
+   the switch. A sales channel that is already in maintenance leaves both to the operator.
 
-Whether Dependabot alerts watch `composer.lock` is a repository setting that still needs confirming.
+Dependabot alerts are on and the dependency graph lists the Composer packages, but on 2026-11-04 it raised none of
+the 17 advisories that `composer audit` reported, because 16 of them come only from
+FriendsOfPHP/security-advisories. `composer audit` is the source that sees them, through the FroshTools health
+check and Shopmon's SBOM check ([monitoring.md#shopmon](../monitoring.md#shopmon)).
 
 ## Mirror
 
@@ -249,6 +257,9 @@ The defaults read `/opt/docker/shopware-data` and `shopware_db.tar.gz`, which ex
 - **After a deploy**, the previous tag in `docker-compose.yml` and `docker compose up -d shopware` restore the
   previous image, which stays on the host. When the deploy ran migrations, the database comes back from the
   pre-deploy archive that `deploy.sh` wrote (`database-backup/shopware_db.tar.gz`, see [../backup.md](../backup.md)).
+  When `deploy.sh` died at or after the switch of a core update, maintenance is still on, and
+  `docker exec shopware php bin/console sales-channel:maintenance:disable --all` followed by `cache:clear` ends it
+  once the shop serves again.
 - **After the shop has opened on the image**, a return to dockware would mean dumping `shopware_db`, importing it
   into dockware's MySQL 8.0 and copying the five data directories back. That path is untested, so a forward fix
   comes first.

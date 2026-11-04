@@ -88,13 +88,17 @@ breadcrumb and the offcanvas headline, and those compile to the literal green an
 repeats each of those selectors with a readable token. The list was collected on 2026-10-06 from the
 compiled CSS of Shopware 6.7.11.1. The scan of 6.7.15.1 on the mirror on 2026-10-16 found two new rules,
 `.account-guest-conversion__subtitle` and `.product-detail-garan-label-show-link`, which SdWa5Theme 1.2.1
-overrides, and `.header-minimal-contact a` was gone from the core's list. **After a Shopware update,
-collect it again and compare it with that list**, because a new core rule with green text would be back at 1.5:1 on the light background. The scan
-still shows the overridden rules, since the core's own rules stay in the bundle:
+overrides, and `.header-minimal-contact a` was gone from the core's list. Since 2026-11-04 the storefront
+test `tests/storefront/theme-colours.spec.ts` replaces that manual scan, because a new core rule with green
+text would be back at 1.5:1 on the light background. It reads the compiled CSS and fails, naming the
+selectors, when a rule outside `data-theme` sets the literal green or red as text colour and no later rule
+gives the same selector another colour. Its `COVERED_ELSEWHERE` list holds the four exceptions:
+`.header-cart-total`, which `_header.scss` hides, and three secondary icons, for which WCAG 1.4.11 asks 3:1
+and the red reaches 4.20:1. The 6.7.16.0 core added no such rule. After a Shopware update it runs with the
+suite against the mirror, or alone:
 
 ```bash
-css=$(curl -s https://sdwa5.org/ | grep -oE 'https://sdwa5.org/theme/[^"]*all\.css[^"]*' | head -1)
-curl -s "$css" | grep -aoE '[^{}]+\{([^{}]*;)?color:#(1fe51f|e5231f)[^{}]*\}' | grep -v data-theme
+SDWA5_STOREFRONT_URL=http://localhost:8090 tests/storefront/run.sh --project theme-colours
 ```
 
 `TcinnCopyrightCustom` prints its copyright line with an inline `color:#fff`. The footer overrides it
@@ -327,6 +331,9 @@ plugin author, for the global decoration, or to Shopware, for the fragile valida
 - merch shows as a donation in both languages, every donation template keys on price 0 with a list price,
   and the production cost comes from the field the sync script writes
 - the VAT wording is untouched, and every override calls `parent()` unless it replaces a block on purpose
+
+`tests/storefront/theme-colours.spec.ts` checks the compiled CSS for core rules with a brand colour as text
+colour and no override, see [Colours](#colours-and-the-dark-mode-plugin).
 
 `tests/shopware-homepage-sections.bats` covers the sections script, including that the classes it sets
 are the ones `_hero.scss` styles.

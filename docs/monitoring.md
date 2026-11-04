@@ -517,6 +517,17 @@ state of `fe80::1` and an IPv4 control. The gateway is not pinged, because neith
 next hop answers echo requests even while IPv6 works. Each probe sends two requests; the initial
 single-request startup failure is kept separate from the later two-request evidence.
 
+## Shopmon
+
+[Shopmon](https://shopmon.fos.gg) is an external service of FriendsOfShopware. It scrapes the shop's Admin
+API hourly and mails ripper@sdwa5.org when the shop turns red or a scrape fails. It logs in through the
+integration `a1b2c3d4e5f6789012345678901234ab` with the role `frosh_shopmon_role`. `FroshTools` 3.17.2 or
+later rewrites that role's privileges on every plugin install and update
+([shopware/plugins.md](shopware/plugins.md)). Its requests carry the user agent `Shopmon` in
+`/var/log/caddy/access-sdwa5.org.log`, and a 403 there means a missing privilege. Its SBOM check reports
+Composer security advisories, which GitHub Dependabot does not raise for this repository, because most
+of them come only from FriendsOfPHP/security-advisories.
+
 ## Installation
 
 ```bash

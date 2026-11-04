@@ -71,7 +71,8 @@
    been submitted to Google Search Console**, which needs the account and cannot be answered from the host, plus the
    meta titles and descriptions, which were never measured
 8. frosh tools system-status
-    1. System Health
+    1. System Health. After the 6.7.16.0 update the mirror run of 2026-11-04 left one warning that production
+       also shows, `composer-conflicts-repository` with "not configured"
     2. Performance recommendations
 9. Content
     1. add images

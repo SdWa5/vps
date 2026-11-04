@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.102.1] - 2026-11-04
+
+### Changed
+
+- TODO 9.0: the second household account is confirmed in the household Vaultwarden organization, and only its
+  Paperless TOTP enrolment is left.
+
 ## [1.102.0] - 2026-11-04
 
 ### Added

@@ -38,7 +38,6 @@ source "$SCRIPT_DIR/lib.sh"
 
 usage() { sed -n '3,30p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
 
-TASK_WAIT="${PAPERLESS_TASK_WAIT:-300}"
 WORK_DIR=""
 UPLOADED=()
 
@@ -73,23 +72,12 @@ make_pdf() {
 
 # Uploads as USER and waits for the consumer. Prints the new document's id.
 upload() {
-    local user="$1" title="$2" tag_id="$3" file task attempt result status
+    local user="$1" title="$2" tag_id="$3" file
     file="$WORK_DIR/$(tr ' ' '-' <<< "$title").pdf"
     make_pdf "$title" "$file"
     local -a fields=(-F "document=@$file;type=application/pdf" -F "title=$title")
     [[ -n "$tag_id" ]] && fields+=(-F "tags=$tag_id")
-    task="$(api "$user" POST /api/documents/post_document/ "" "${fields[@]}" | tr -d '"')" \
-        || die "$user could not upload."
-    for (( attempt = 0; attempt < TASK_WAIT; attempt += 2 )); do
-        result="$(api "$user" GET "/api/tasks/?task_id=$task")"
-        status="$(jq -r '.results[0].status // empty' <<< "$result")"
-        case "$status" in
-            success) jq -r '.results[0].related_document_ids[0]' <<< "$result"; return 0 ;;
-            failure|revoked) die "the upload of \"$title\" failed: $(jq -c '.results[0].result_data' <<< "$result")" ;;
-        esac
-        sleep 2
-    done
-    die "\"$title\" was not consumed within $TASK_WAIT s."
+    post_and_wait "$user" "\"$title\"" "${fields[@]}"
 }
 
 # Delete, then purge from the trash, so the next run starts clean and no test

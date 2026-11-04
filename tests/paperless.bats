@@ -141,3 +141,128 @@ if [ -e '$BATS_TEST_TMPDIR/once' ]; then printf '{\"token\":\"fresh\"}'; else to
         shared_with_all alice && shared_with_all bob && ! shared_with_all carol'
     [ "$status" -eq 0 ]
 }
+
+# A fake Paperless for upload-tree.sh. Every request is logged as
+# "METHOD URL|form field|...". Hashes listed in held/ exist, task.json is the
+# task answer, and new tags count up from 101.
+paperless_stub() {
+    mkdir -p "$BATS_TEST_TMPDIR/passwords" "$BATS_TEST_TMPDIR/held"
+    printf 'stefan-token' > "$BATS_TEST_TMPDIR/passwords/stefan.token"
+    printf '{"results":[{"status":"success","related_document_ids":[42]}]}' > "$BATS_TEST_TMPDIR/task.json"
+    printf '{"results":[{"id":5,"name":"Finanzen"}],"next":null}' > "$BATS_TEST_TMPDIR/tags.json"
+    stub sleep 'exit 0'
+    stub file 'for a; do p="$a"; done
+case "$p" in *.pdf) echo application/pdf ;; *.jpg) echo image/jpeg ;; *.png) echo image/png ;; *) echo text/plain ;; esac'
+    cat > "$BATS_TEST_TMPDIR/bin/curl" <<STUB
+#!/bin/sh
+d='$BATS_TEST_TMPDIR'
+method=GET; out=; form=
+for a; do url="\$a"; done
+while [ \$# -gt 0 ]; do
+    case "\$1" in
+        --output) out="\$2"; shift ;;
+        --request) method="\$2"; shift ;;
+        -F|--form-string) form="\$form|\$2"; shift ;;
+        --max-time|--config|--header|--data-binary|--write-out) shift ;;
+    esac
+    shift
+done
+printf '%s %s%s\n' "\$method" "\$url" "\$form" >> "\$d/requests"
+case "\$method \$url" in
+    "GET "*/api/tags/*) body="\$(cat "\$d/tags.json")" ;;
+    "GET "*checksum__iexact=*)
+        sha="\${url#*checksum__iexact=}"; sha="\${sha%%&*}"
+        if [ -e "\$d/held/\$sha" ]; then body='{"count":1,"results":[{"id":7}]}'; else body='{"count":0,"results":[]}'; fi ;;
+    "POST "*/api/tags/) n=\$(( \$(cat "\$d/tagn" 2>/dev/null || echo 100) + 1 )); echo \$n > "\$d/tagn"; body="{\"id\":\$n}" ;;
+    "POST "*/post_document/) body='"task-1"' ;;
+    "GET "*/api/tasks/*) body="\$(cat "\$d/task.json")" ;;
+esac
+printf '%s' "\$body" > "\$out"
+printf 200
+STUB
+    chmod +x "$BATS_TEST_TMPDIR/bin/curl"
+    ROOT="$BATS_TEST_TMPDIR/root"
+    mkdir -p "$ROOT"
+}
+
+# put RELATIVE_PATH writes a file with its own path as content, so every file
+# has its own hash.
+put() { mkdir -p "$ROOT/$(dirname "$1")"; printf '%s' "$1" > "$ROOT/$1"; }
+
+upload_tree() { bash "$TOOLS/upload-tree.sh" "$@" 2>"$BATS_TEST_TMPDIR/err"; }
+
+@test "upload-tree: junk, secrets, unsafe names and other types are skipped with a reason" {
+    paperless_stub
+    put 'a/Thumbs.db'; put 'a/~$brief.docx'; put 'a/.~lock.brief.odt#'; put 'a/x.sync-conflict-1.pdf'
+    put 'a/konto_sensibel.pdf'; put 'a/say "hi".pdf'; put 'a/notes.txt'
+    run upload_tree "$SPEC" stefan "$ROOT"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+    [ "$(cut -f2 "$BATS_TEST_TMPDIR/err" | sort | paste -sd' ')" = 'junk junk junk junk local:text/plain name secret' ]
+    ! grep -q checksum "$BATS_TEST_TMPDIR/requests"
+}
+
+@test "upload-tree: a dated name gives title, created and the folder tags plus Offen" {
+    paperless_stub
+    put 'Finanzen/Strom/2024-03-01_Rechnung_Strom_OFFEN.pdf'
+    run upload_tree "$SPEC" stefan "$ROOT"
+    [ "$status" -eq 0 ]
+    line="$(grep '^would-upload' <<< "$output")"
+    [ "$(cut -f3- <<< "$line")" = "$ROOT/Finanzen/Strom/2024-03-01_Rechnung_Strom_OFFEN.pdf"$'\tRechnung Strom\t2024-03-01\tFinanzen/Strom/Offen' ]
+    [ "$(grep -c '^would-create-tag' <<< "$output")" -eq 2 ]
+}
+
+@test "upload-tree: other names stay verbatim, a bad date is no date, long titles are cut" {
+    paperless_stub
+    long="$(printf 'x%.0s' {1..200})"
+    put 'Tickets/Ozora/Böhm, Verena/Rechnung Nr. 5.pdf'; put '2024-13-45_x.pdf'; put "$long.pdf"
+    run upload_tree "$SPEC" stefan "$ROOT"
+    [ "$status" -eq 0 ]
+    grep -qF $'\tRechnung Nr. 5\t\tTickets/Ozora/Böhm, Verena' <<< "$output"
+    grep -qF $'\t2024-13-45_x\t\t' <<< "$output"
+    [ "$(grep -F "$long" <<< "$output" | cut -f4 | tr -d '\n' | wc -c)" -eq 128 ]
+}
+
+@test "upload-tree: a dry-run writes nothing, names a tag once and reports a second copy" {
+    paperless_stub
+    put 'Bildung/a.pdf'; put 'Bildung/b.pdf'; printf 'Bildung/a.pdf' > "$ROOT/Bildung/c.pdf"
+    run upload_tree "$SPEC" stefan "$ROOT"
+    [ "$status" -eq 0 ]
+    ! grep -q '^POST' "$BATS_TEST_TMPDIR/requests"
+    [ "$(grep -c '^would-create-tag	Bildung$' <<< "$output")" -eq 1 ]
+    [ "$(grep -c '^would-upload' <<< "$output")" -eq 2 ]
+    grep -q "^skip	duplicate	$ROOT/Bildung/c.pdf\$" "$BATS_TEST_TMPDIR/err"
+}
+
+@test "upload-tree: a held checksum prints exists and is not uploaded" {
+    paperless_stub
+    put 'Finanzen/a.pdf'
+    sha="$(sha256sum < "$ROOT/Finanzen/a.pdf" | cut -d' ' -f1)"
+    touch "$BATS_TEST_TMPDIR/held/$sha"
+    run upload_tree --apply "$SPEC" stefan "$ROOT"
+    [ "$status" -eq 0 ]
+    [ "$output" = "exists	7	$sha	$ROOT/Finanzen/a.pdf" ]
+    ! grep -q '^POST' "$BATS_TEST_TMPDIR/requests"
+}
+
+@test "upload-tree: --apply creates the tag, posts the fields, waits and stops at --limit" {
+    paperless_stub
+    put 'Finanzen/Strom/2024-03-01_Rechnung.pdf'; put 'Finanzen/Strom/2024-04-01_Rechnung.pdf'
+    run upload_tree --apply --limit 1 "$SPEC" stefan "$ROOT"
+    [ "$status" -eq 0 ]
+    sha="$(sha256sum < "$ROOT/Finanzen/Strom/2024-03-01_Rechnung.pdf" | cut -d' ' -f1)"
+    [ "$output" = "tag	101	Strom"$'\n'"uploaded	42	$sha	$ROOT/Finanzen/Strom/2024-03-01_Rechnung.pdf" ]
+    grep -qF "/api/documents/post_document/|document=@\"$ROOT/Finanzen/Strom/2024-03-01_Rechnung.pdf\"|title=Rechnung|created=2024-03-01|tags=5|tags=101" "$BATS_TEST_TMPDIR/requests"
+    grep -q 'tasks/?task_id=task-1' "$BATS_TEST_TMPDIR/requests"
+    [ "$(grep -c 'post_document' "$BATS_TEST_TMPDIR/requests")" -eq 1 ]
+}
+
+@test "upload-tree: a failed task stops the run with its message" {
+    paperless_stub
+    put 'a.pdf'
+    printf '{"results":[{"status":"failure","result_data":"broken PDF"}]}' > "$BATS_TEST_TMPDIR/task.json"
+    run upload_tree --apply "$SPEC" stefan "$ROOT"
+    [ "$status" -ne 0 ]
+    grep -q 'failed: "broken PDF"' "$BATS_TEST_TMPDIR/err"
+    ! grep -q '^uploaded' <<< "$output"
+}

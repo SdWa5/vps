@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.102.0] - 2026-11-04
+
+### Added
+
+- `tools/paperless/upload-tree.sh` uploads folder trees into Paperless as one user, dry-run by
+  default, with folder tags, dates and titles from the filing convention and a checksum lookup that
+  makes reruns resume, with its suite and a section in `docs/paperless.md`.
+- TODO 9.4: restore drill of the household Paperless before 2026-12-04.
+
+### Changed
+
+- The upload-and-wait loop lives in `lib.sh` as `post_and_wait`, shared by `visibility-check.sh`
+  and `upload-tree.sh`.
+- TODO 4 and 9.3 name the later roles of Nextcloud and `upload-tree.sh`.
+
 ## [1.101.1] - 2026-11-03
 
 ### Added

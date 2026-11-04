@@ -1,6 +1,7 @@
 # shellcheck shell=bash
 #
-# Shared by tools/paperless/setup.sh and tools/paperless/visibility-check.sh.
+# Shared by tools/paperless/setup.sh, tools/paperless/visibility-check.sh and
+# tools/paperless/upload-tree.sh.
 # Sourced, never run.
 #
 # Both scripts talk to the Paperless-ngx REST API with a token per user. The
@@ -8,6 +9,7 @@
 # in the process list, in the terminal or in a log.
 
 PAPERLESS_CURL_TIMEOUT="${PAPERLESS_CURL_TIMEOUT:-60}"
+PAPERLESS_TASK_WAIT="${PAPERLESS_TASK_WAIT:-300}"
 
 die() { printf '%s: %s\n' "$(basename "$0")" "$*" >&2; exit 1; }
 
@@ -113,4 +115,25 @@ api_all() {
         page=$((page + 1))
     done
     printf '%s' "$out"
+}
+
+# post_and_wait USER LABEL CURL_ARG... uploads a document as USER with the given
+# multipart fields and waits for the consumer task. Prints the new document's
+# id. LABEL names the document in error messages. The task status is polled
+# every 2 s for up to PAPERLESS_TASK_WAIT seconds.
+post_and_wait() {
+    local user="$1" label="$2" task attempt result status
+    shift 2
+    task="$(api "$user" POST /api/documents/post_document/ "" "$@" | tr -d '"')" \
+        || die "$user could not upload $label."
+    for (( attempt = 0; attempt < PAPERLESS_TASK_WAIT; attempt += 2 )); do
+        result="$(api "$user" GET "/api/tasks/?task_id=$task")"
+        status="$(jq -r '.results[0].status // empty' <<< "$result")"
+        case "$status" in
+            success) jq -r '.results[0].related_document_ids[0]' <<< "$result"; return 0 ;;
+            failure|revoked) die "the upload of $label failed: $(jq -c '.results[0].result_data' <<< "$result")" ;;
+        esac
+        sleep 2
+    done
+    die "$label was not consumed within $PAPERLESS_TASK_WAIT s."
 }

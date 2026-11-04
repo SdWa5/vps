@@ -119,6 +119,54 @@ docker exec -u paperless paperless_sdwa5 /command/with-contenv python3 manage.py
 `docker exec` without it fails with `PAPERLESS_SECRET_KEY is not set`. Both production instances
 passed the check on 2026-10-17, and every user saw exactly the expected set.
 
+## Importing a folder tree
+
+`tools/paperless/upload-tree.sh` uploads existing folders from a workstation as one user. It is a
+dry-run by default and keeps no state of its own, because it asks Paperless for each file's SHA-256
+checksum first.
+
+```bash
+tools/paperless/upload-tree.sh SPEC USER ROOT... > import.dry 2> import.skip   # review
+tools/paperless/upload-tree.sh --apply --limit 3 SPEC USER ROOT...             # canary
+tools/paperless/upload-tree.sh --apply SPEC USER ROOT... > import.log 2>&1     # the rest
+```
+
+- **Ownership.** USER uploads, so USER owns every document and it starts out private. A user with
+  TOTP needs a token file made on the host, as above.
+- **Tags.** Each folder between ROOT and the file becomes a tag, which is the rule of Paperless's own
+  `PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS`, plus `Offen` for a name containing `_OFFEN`. A missing tag is
+  created as USER and is private to USER as well.
+- **Title and date.** A name `YYYY-MM-DD_rest.ext` with a valid date sets `created` to that date, and
+  the title is `rest` with `_` and `-` as spaces and `_OFFEN` dropped. Any other name keeps its
+  basename as the title, and Paperless dates the document from its content. Titles are cut to 128
+  characters.
+- **Skipped.** Junk (`Thumbs.db`, `desktop.ini`, `.DS_Store`, office lock files, Syncthing
+  conflicts), names containing `_SENSIBEL` in any case, paths with a tab, newline, `"` or `\`, and
+  every type other than PDF, JPEG and PNG. Office files stay out, because both instances run without
+  Tika and Gotenberg. Such a file can go in as a PDF made with `soffice --headless --convert-to pdf`.
+- **Output.** stdout lists `exists ID SHA256 PATH`, `would-create-tag NAME`,
+  `would-upload SHA256 PATH TITLE CREATED TAGS` with the tags joined by `/`, and with `--apply`
+  `tag ID NAME` and `uploaded ID SHA256 PATH`. stderr lists `skip REASON PATH`, where a dry-run
+  reports a second copy of a file as `duplicate`. All lines are tab-separated.
+- **Bandwidth.** One request may take 30 minutes (`PAPERLESS_CURL_TIMEOUT`, default 1800 here),
+  because a home uplink measured 36 KB/s, which is ca. 14 minutes for a 30 MB scan. A stopped run
+  is simply started again.
+- **Resume and verification.** A rerun resumes through the `exists` lines. A dry-run after the
+  upload must print no `would-upload`, and its `exists` lines with their hashes are the list of
+  originals that are safe to delete, after a `sha256sum --check` where they live.
+- **Sharing.** Bulk-add `Haushalt` in the UI to the documents the household should see. The share
+  workflow also fires on "Document Updated".
+
+Searching the full text from a workstation, with the token passed on a pipe:
+
+```bash
+curl -sfG --config <(printf 'header = "Authorization: Token %s"\n' "$(< PASSWORD_DIR/USER.token)") \
+    --data-urlencode 'query=<words>' -d page_size=25 -d fields=id,created,title URL/api/documents/ \
+    | jq -r '.results[] | [.id, .created, .title] | @tsv'
+```
+
+A hit opens at `URL/documents/<id>/details`.
+
 ## Dev mirror
 
 `tools/paperless/dev-instance.sh up|down|status|purge [sdwa5|home]` runs an empty instance from the

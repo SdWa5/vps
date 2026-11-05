@@ -508,3 +508,11 @@
     'root'@'127.0.0.1' (using password: NO)" appeared, presumably from the `mysqladmin ping`. Neither failed the
     deploy and neither cause is measured. Reproduce both on the mirror with a restore of the 6.7.15.1 image followed
     by the 6.7.16.0 helper, then silence the ping or report the FroshTools order upstream
+47. (proposal) **close the Dolibarr tasks that tickets replaced on 2026-10-15**
+    ([docs/dolibarr.md](docs/dolibarr.md#projects-tasks-and-tickets)) (ca. 45 Minuten). 14 of the 23 open tasks
+    from 2026-09 still stand next to a ticket with the same subject, such as TK2609-0003 next to TS2610-0036, so
+    `todo-sync` lists each of them twice. Set those 14 to 100 % with a note that names the replacing ticket. The
+    other nine have no ticket. As of 2026-11-05 TK2609-0007 is done, and TK2609-0002 probably arrived with the last
+    order and needs a check on site. TK2609-0006 waits, because a first test found no damage after a probable
+    overload in summer 2026, so measuring each Achenbach driver on its own goes into TS2509-0015. The other six
+    become tickets or close

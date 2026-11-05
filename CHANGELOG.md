@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.103.2] - 2026-11-05
+
+### Added
+
+- TODO 47 (close the Dolibarr tasks that tickets replaced) as a proposal
+
 ## [1.103.1] - 2026-11-05
 
 ### Added

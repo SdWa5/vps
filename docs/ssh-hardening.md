@@ -601,6 +601,53 @@ Locking the password and changing the shell does not touch the containers. They 
 through their own `/etc/passwd`, never the host's. Verified afterwards: 10 uid 1000 processes still
 running, all 3461 files still owned, Dolibarr still returning 200, all three containers healthy.
 
+## Relay for the home machines
+
+Added 2026-11-05. stefan-desktop and stefan-notebook sit behind NAT on changing addresses. Each keeps
+a reverse SSH tunnel to the account `relay` here and publishes its own sshd on a loopback port of
+this host. The other machine reaches that port with `ProxyJump relay@sdwa5.org`. The tunnel unit, its
+installer and the client config live in `bestcodename/ai`, see `docs/ssh-relay.md` there.
+
+| Port on this host | Machine behind it |
+|---|---|
+| `localhost:2201` | stefan-desktop |
+| `localhost:2202` | stefan-notebook |
+
+**The account.** `relay` is a system account with the shell `/usr/sbin/nologin`, no home and no
+password. Its uid must not be one the Docker data uses (0, 33, 82, 101, 999 and 1000, see the `admin`
+section). `nologin` does not stop `ssh -N` port forwarding, which is what the account is for, and
+`ForceCommand` stops everything else. `AllowUsers root relay` closes every other account.
+
+**The keys** live in `/etc/ssh/relay_authorized_keys`, root 0644, on the host only like root's
+allowlist. The file holds three lines:
+
+```
+restrict,port-forwarding,permitlisten="localhost:2201" ssh-ed25519 … relay@stefan-desktop
+restrict,port-forwarding,permitlisten="localhost:2202" ssh-ed25519 … relay@stefan-notebook
+restrict,port-forwarding,permitopen="127.0.0.1:2201",permitopen="127.0.0.1:2202" ssh-ed25519 … (root's key)
+```
+
+Each tunnel key may listen only on its own port. The last line is root's own key, limited to opening
+the two ports, so the jump between the home machines does not log in as root. ssh sends `localhost`
+as the listen host when `-R` names none, which is why `permitlisten` names `localhost`.
+
+**The ceiling.** The `Match User relay` block at the end of `10-hardening.conf` caps every line of
+that file. It allows listening and opening on the two ports only, and no agent, stream-local or X11
+forwarding, no TTY and no command. An edited key line therefore cannot widen the account.
+`ClientAliveInterval 15` with `ClientAliveCountMax 3` drops a vanished laptop within 45 seconds,
+which frees its port for the reconnect. A Match block runs to the end of the file it starts in, so
+the block stays last there, and `tests/sshd-config.bats` checks that root still gets the settings of
+the main config.
+
+**fail2ban does not ban a rejected tunnel.** Its sshd filter in fail2ban 1.1.0 marks
+`Failed publickey` and `Connection closed by authenticating user` as `nofail`. Measured on
+2026-11-05, there were 1613 such lines in two days and no ban. A tunnel that retries every 10 seconds
+with a key not yet registered therefore cannot get a home address banned. `Invalid user` does count,
+so the account must exist before any tunnel starts.
+
+**Revoking a machine** means deleting its line from `/etc/ssh/relay_authorized_keys` and running
+`pkill -u relay`. The other tunnel reconnects within ca. 20 seconds.
+
 ## Break-glass
 
 **The Contabo console is the fallback and nothing in this document affects it.** It logs in through
@@ -647,6 +694,15 @@ sshd -t && systemctl reload ssh          # validate BEFORE touching the running 
 systemctl restart fail2ban
 ```
 
+The relay account is created once, before its key file and before any tunnel starts. The key file
+is written from a home machine, see `docs/ssh-relay.md` in `bestcodename/ai`.
+
+```bash
+id relay || useradd --system --user-group --shell /usr/sbin/nologin --home-dir /nonexistent \
+    --no-create-home --comment 'SSH relay for the home machines, port forwarding only' relay
+id -u relay          # must not be 0, 33, 82, 101, 999 or 1000
+```
+
 Use `reload`, not `restart`, so existing sessions survive. Keep the working session open and prove a
 second one before closing it.
 
@@ -664,6 +720,11 @@ ssh -F /dev/null -o BatchMode=yes -o PubkeyAuthentication=no \
     -o PreferredAuthentications=password,keyboard-interactive root@sdwa5.org true
 ssh -F /dev/null -o BatchMode=yes -o PubkeyAuthentication=no \
     -o PreferredAuthentications=password,keyboard-interactive admin@sdwa5.org true
+
+# relay: the ceiling applies to relay only, and both tunnels listen
+sshd -T -C user=relay,host=h,addr=203.0.113.9 | grep -E '^(permitlisten|permitopen|authorizedkeysfile|forcecommand) '
+sshd -T -C user=root,host=h,addr=203.0.113.9 | grep -E '^(permitlisten|permitopen|x11forwarding|allowusers) '
+ss -Htln | grep -E ':220[12] '
 
 # fail2ban
 fail2ban-client status sshd
@@ -688,11 +749,6 @@ test never authenticates at all.
 
 ## Open items
 
-- **There is no account allowlist.** Measured 2026-09-17: sshd has no `AllowUsers`, no
-  `AllowGroups` and no `DenyUsers`, and not a single `Match` block, so any account on this host
-  that carries a key can log in. That was harmless while `root` was the only such account and
-  `admin` had no key. It stops being harmless the moment a second account is created, which is
-  what TODO item 8.1 proposes, so the `AllowGroups` belongs in the same change.
 - Inbound IPv6 is unverified. Outbound works, no AAAA record is published, and the client used for
   testing had IPv6 blocked by its VPN. Settle it from a host with working IPv6 before publishing an
   AAAA record. See the firewall section.

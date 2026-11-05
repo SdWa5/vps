@@ -207,7 +207,9 @@
        no password and no `sudo` group membership, his own public key in its `authorized_keys` behind
        `restrict,command="…"`, a `Match User` block that repeats `ForceCommand`, `PermitTTY no` and
        `AllowTcpForwarding no` so that an edited `authorized_keys` cannot widen it, and one
-       `/etc/sudoers.d` line naming a single root-owned helper with no wildcard in it.
+       `/etc/sudoers.d` line naming a single root-owned helper with no wildcard in it. Since 1.105.0
+       `AllowUsers root relay` and the relay `Match` block exist, so the account joins that list and its
+       `Match` block goes next to the relay one at the end of `10-hardening.conf`.
 
        **The `docker` group is not the way in and staying out of it is the whole point**, because a
        member of it bind-mounts `/` into a container and is thereby root on this host. The wrapper
@@ -430,15 +432,14 @@
     "Speicherdauer" names no period for the IP address, browser and access times it lists under server logs.
     The Caddy access logs `/var/log/caddy/access-*.log` keep 14 days since 1.97.0, so the page would say
     "14 Tage".
-30. (proposal) **sshd: `AllowUsers root` and an hourly check of the effective settings**
-    ([docs/ssh-hardening.md](docs/ssh-hardening.md#login-accounts-and-roots-keys)). sshd takes a key for any
-    account, and a `nologin` shell does not stop `ssh -N` port forwarding, which stays on for root's
-    Vaultwarden tunnel. Today only root has a key file, and the account check watches only root's (measured
-    2026-10-24). `AllowUsers root` in `10-hardening.conf` would close the other accounts. The recheck compares
-    only that drop-in with the checkout, so a second drop-in or an edit to `sshd_config` could still add a key
-    source such as `AuthorizedKeysCommand`, `TrustedUserCAKeys` or `AuthorizedPrincipalsFile`. The hourly part
-    would read `sshd -T` and be CRIT on any of those, on password or keyboard-interactive login, and on a file
-    in `sshd_config.d` other than `10-hardening.conf` (ca. 2 Stunden)
+30. (proposal) **sshd: an hourly check of the effective settings**
+    ([docs/ssh-hardening.md](docs/ssh-hardening.md#login-accounts-and-roots-keys)). `AllowUsers root relay`
+    closes every other account since 1.105.0, and the relay account's keys sit in `/etc/ssh/relay_authorized_keys`
+    under a `Match` ceiling. The recheck compares only `10-hardening.conf` with the checkout, so a second drop-in
+    or an edit to `sshd_config` could still add a key source such as `AuthorizedKeysCommand`, `TrustedUserCAKeys`
+    or `AuthorizedPrincipalsFile`. The hourly part would read `sshd -T` and be CRIT on any of those, on password
+    or keyboard-interactive login, on a file in `sshd_config.d` other than `10-hardening.conf`, and on a relay key
+    line without `restrict` (ca. 2 Stunden)
 31. (proposal) **count primary groups in the account check** ([monitoring/account-check.sh](monitoring/account-check.sh)).
     The check reads only the member lists in `/etc/group`, while an account whose `/etc/passwd` group is
     `sudo` or `docker` is just as much a member. The check would compare the group ids too. `admin` (uid

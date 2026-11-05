@@ -153,4 +153,5 @@ shopware-cli 0.19.8 and a new docker-base digest, as image tag 6.7.16.0-1. One `
 --with-all-dependencies` resolved it, moving `symfony/type-info` and `symfony/var-dumper` to 8.1, and the audit
 went from 17 advisories to none. The build took 51 s with a warm cache, the fetch 6 s and the restore 28 s. The
 storefront suite passed on the mirror, and `theme-colours` found no new core rule with a brand colour as text
-colour. It was the first core update in which `deploy.sh` switched maintenance itself.
+colour. It was the first core update in which `deploy.sh` switched maintenance itself, live from 22:29:05 to
+22:29:58, so 53 s, and the whole run took 1 min 13 s.

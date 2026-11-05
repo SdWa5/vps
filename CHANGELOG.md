@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.103.1] - 2026-11-05
+
+### Added
+
+- TODO 45 (Paperless 3.4.1) and 46 (deploy log error lines) as proposals
+
+### Changed
+
+- docs/shopware/infrastructure.md: the 53 s maintenance window of the 6.7.16.0 deploy
+- TODO 36 takes up Dependabot PR #4, Shopware TODO 3 the maintenance page during core updates
+
 ## [1.103.0] - 2026-11-04
 
 ### Added

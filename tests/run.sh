@@ -12,6 +12,8 @@
 # throwaway repository. GNU tar replaces busybox's, which lacks the --null that
 # tools/shopware/image.sh exports the build context with, and util-linux flock
 # replaces busybox's, which lacks the -w that tools/shopware/deploy.sh waits with.
+# openssh-server brings the sshd that tests/sshd-config.bats asks for the effective
+# settings of hardening/sshd_config.d/10-hardening.conf.
 #
 # Usage: tests/run.sh [bats arguments]
 
@@ -28,7 +30,7 @@ CI_PYTHON_IMAGE='python:3.12.15-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c6
 
 echo "== bats =="
 docker run --rm -v "$REPO_ROOT:/code" -w /code --entrypoint sh "$CI_BATS_IMAGE" \
-    -c "apk add --no-cache coreutils jq git openssh-keygen tar flock >/dev/null 2>&1 && bats ${*:-tests/}"
+    -c "apk add --no-cache coreutils jq git openssh-keygen openssh-server tar flock >/dev/null 2>&1 && bats ${*:-tests/}"
 
 echo
 echo "== shellcheck =="

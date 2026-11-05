@@ -6,7 +6,8 @@
     1. dont get too fancy (e.g. with corporate or blogging style expressions)
     2. en and de
 2. Layout for 404 pages Assign layout...
-3. Shop page layout for maintenance pages Select layout
+3. Shop page layout for maintenance pages Select layout. Since 2026-11-04 `deploy.sh` shows that page for about a
+   minute on every core update
 4. Search: include CMS pages — **measured 2026-09-08 and confirmed**. `?search=Hoodie` returns products,
    while `Membership`, `Hardware`, `Impressum`, `Datenschutz` and `Gallery` return nothing at all, even though all
    five exist as CMS pages and all five are in the sitemap. So the storefront search is product-only as suspected.

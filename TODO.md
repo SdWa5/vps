@@ -470,7 +470,8 @@
     SEC-31 moved sdwa5.org off dockware, and Chimo Diazz stays on it while switched off. The same build with
     the shop's own Composer project and theme from `chimodiazz/website` would settle #7, #18 and #20, end the
     root/root login and setuid `sudo` there, and give it a clean database stop. A move off this host (#27) would
-    take the image along (ca. 16 Stunden)
+    take the image along (ca. 16 Stunden). Dependabot PR #4 (dockware 6.7.11.1 to 6.7.15.1) belongs here and #18,
+    and closes once neither needs dockware
 37. (proposal) **retire the dockware data of sdwa5.org after the rollback window** (ca. 1 Stunde). Tag a restic
     snapshot `sdwa5-archive` holding `shopware-html-data/`'s untracked docroot and `shopware-mysql-data/`, then
     delete both together with `shopware-legacy-data-20260327/`, the unused MySQL datadir of 2026-03-27 that sat in
@@ -499,3 +500,11 @@
     uninstall deletes that integration, so run `plugin:uninstall FroshShopmon --keep-user-data` in the running
     container first, then `composer remove frosh/shopmon`, drop its `staging.yaml` entry and the
     `dev-instance.sh` assertion, and rehearse it on the mirror. A separate release keeps the rollback simple
+45. (proposal) **Paperless-ngx 3.3.2 to 3.4.1** ([docs/paperless.md](docs/paperless.md)), Dependabot PR #5
+    (ca. 45 Minuten). Read the release notes, merge, deploy and run the restore drill's checks
+46. (proposal) **two error lines in the deploy log of 2026-11-04** ([tools/shopware/deploy.sh](tools/shopware/deploy.sh))
+    (ca. 45 Minuten). FroshTools logged "Could not persist FroshTools security activity" with
+    `TableNotFoundException` five times while the helper updated it, and a line "Access denied for user
+    'root'@'127.0.0.1' (using password: NO)" appeared, presumably from the `mysqladmin ping`. Neither failed the
+    deploy and neither cause is measured. Reproduce both on the mirror with a restore of the 6.7.15.1 image followed
+    by the 6.7.16.0 helper, then silence the ping or report the FroshTools order upstream

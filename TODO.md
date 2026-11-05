@@ -421,7 +421,7 @@
     `monitoring/security-recheck.sh` measures, but a container escape in a third-party shop would still
     land on the host that holds the vault. the proposal is a separate small vps for the shop, done as its
     own migration. it overlaps with #18 and #36, whose image would move along, and waits while the shop is
-    not an active project
+    not an active project. It is candidate 4 of #48
     (ca. 6 Stunden)
 28. **delete the evidence of the 2026-10-24 compromise check after 2026-11-23** (ca. 10 Minuten).
     `/root/forensics-20261024`, the `forensic/*:20261024` images and the Dolibarr 24.0.2 upgrade leftover
@@ -516,3 +516,22 @@
     order and needs a check on site. TK2609-0006 waits, because a first test found no damage after a probable
     overload in summer 2026, so measuring each Achenbach driver on its own goes into TS2509-0015. The other six
     become tickets or close
+48. (high) **separate the projects on the vps by user or container sandbox, so that a third-party project such as
+    Chimo Diazz is cut off from the rest** ([docs/infrastructure.md](docs/infrastructure.md#container-isolation))
+    (ca. 16 Stunden). Requested on 2026-11-05. Since 2026-10-15 each application has its own Docker network,
+    drops `NET_RAW` and, except dockware, sets `no-new-privileges`. Everything still runs under one rootful
+    Docker daemon from the shared `/opt/docker` checkout, so a container escape or a shell account (#8) lands as
+    root next to Vaultwarden and every other service. Candidates, to be compared before a plan:
+    1. **one unix user per project with rootless Docker or Podman**, its own home with checkout, volumes and
+       systemd user units, and Caddy proxying to its loopback port. It also gives #8 an account that reaches
+       only its own instance
+    2. **`userns-remap` on the existing daemon**, so container root is an unprivileged host uid. It is cheaper
+       but daemon-wide, so every volume needs new ownership, and it keeps the shared checkout and daemon
+    3. **a sandbox runtime such as gVisor or Sysbox** for the third-party containers only
+    4. **a separate vps**, which is #27
+
+    Check each against the monitoring that reads all containers as root (`monitoring/vps-health.sh`,
+    `monitoring/security-recheck.sh`, `monitoring/database-backup.sh`), restic, the deploy cron and the
+    automatic provisioning of #1, which should build on the result. Chimo Diazz is switched off, so its return
+    in [docs/chimodiazz.md](docs/chimodiazz.md) is the natural first rollout, and it should not come back
+    without this.

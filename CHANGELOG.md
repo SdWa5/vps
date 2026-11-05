@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.104.0] - 2026-11-05
+
+### Added
+
+- TODO 48 (high): separate the projects by user or container sandbox
+- TODO 27 names itself candidate 4 of TODO 48
+
 ## [1.103.2] - 2026-11-05
 
 ### Added

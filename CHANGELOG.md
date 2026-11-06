@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.106.0] - 2026-11-06
+
+### Changed
+
+- relay account may forward the desktop's Syncthing on 2211
+
 ## [1.105.0] - 2026-11-05
 
 ### Added

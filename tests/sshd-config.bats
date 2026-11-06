@@ -27,10 +27,10 @@ effective() {
     [ "$status" -eq 0 ]
 }
 
-@test "relay gets the ceiling: two listen ports, two open ports, no agent, tty or X11" {
+@test "relay gets the ceiling: three listen ports, three open ports, no agent, tty or X11" {
     effective relay
-    [[ "$output" == *$'\npermitlisten localhost:2201 localhost:2202\n'* ]]
-    [[ "$output" == *$'\npermitopen 127.0.0.1:2201 127.0.0.1:2202\n'* ]]
+    [[ "$output" == *$'\npermitlisten localhost:2201 localhost:2202 localhost:2211\n'* ]]
+    [[ "$output" == *$'\npermitopen 127.0.0.1:2201 127.0.0.1:2202 127.0.0.1:2211\n'* ]]
     [[ "$output" == *$'\nauthorizedkeysfile /etc/ssh/relay_authorized_keys\n'* ]]
     [[ "$output" == *$'\nallowagentforwarding no\n'* ]]
     [[ "$output" == *$'\nallowstreamlocalforwarding no\n'* ]]

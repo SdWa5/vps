@@ -612,6 +612,7 @@ installer and the client config live in `bestcodename/ai`, see `docs/ssh-relay.m
 |---|---|
 | `localhost:2201` | stefan-desktop |
 | `localhost:2202` | stefan-notebook |
+| `localhost:2211` | Syncthing of stefan-desktop, opened only by the notebook's tunnel key, since 2026-11-06 |
 
 **The account.** `relay` is a system account with the shell `/usr/sbin/nologin`, no home and no
 password. Its uid must not be one the Docker data uses (0, 33, 82, 101, 999 and 1000, see the `admin`
@@ -622,17 +623,18 @@ section). `nologin` does not stop `ssh -N` port forwarding, which is what the ac
 allowlist. The file holds three lines:
 
 ```
-restrict,port-forwarding,permitlisten="localhost:2201" ssh-ed25519 … relay@stefan-desktop
-restrict,port-forwarding,permitlisten="localhost:2202" ssh-ed25519 … relay@stefan-notebook
+restrict,port-forwarding,permitlisten="localhost:2201",permitlisten="localhost:2211" ssh-ed25519 … relay@stefan-desktop
+restrict,port-forwarding,permitlisten="localhost:2202",permitopen="127.0.0.1:2211" ssh-ed25519 … relay@stefan-notebook
 restrict,port-forwarding,permitopen="127.0.0.1:2201",permitopen="127.0.0.1:2202" ssh-ed25519 … (root's key)
 ```
 
-Each tunnel key may listen only on its own port. The last line is root's own key, limited to opening
+Each tunnel key may listen only on its own ports. The desktop also publishes its Syncthing on 2211, and the
+notebook's key may open that port and nothing else, which carries Syncthing away from home. The last line is root's own key, limited to opening
 the two ports, so the jump between the home machines does not log in as root. ssh sends `localhost`
 as the listen host when `-R` names none, which is why `permitlisten` names `localhost`.
 
 **The ceiling.** The `Match User relay` block at the end of `10-hardening.conf` caps every line of
-that file. It allows listening and opening on the two ports only, and no agent, stream-local or X11
+that file. It allows listening and opening on the three ports only, and no agent, stream-local or X11
 forwarding, no TTY and no command. An edited key line therefore cannot widen the account.
 `ClientAliveInterval 15` with `ClientAliveCountMax 3` drops a vanished laptop within 45 seconds,
 which frees its port for the reconnect. A Match block runs to the end of the file it starts in, so

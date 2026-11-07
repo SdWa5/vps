@@ -536,3 +536,15 @@
     automatic provisioning of #1, which should build on the result. Chimo Diazz is switched off, so its return
     in [docs/chimodiazz.md](docs/chimodiazz.md) is the natural first rollout, and it should not come back
     without this.
+49. (proposal) **public `jami.sdwa5.org` once someone besides the owner keeps an account on the Jami peer**
+    ([docs/jami.md](docs/jami.md#access)) (ca. 3 Stunden). Until then the UI stays on an SSH tunnel. The steps:
+    - an A record `jami` → 158.220.127.232 at Squarespace, entered by hand
+    - a Caddy site with `import hide_server_headers`, `import access_log jami.sdwa5.org` and HSTS that answers 404
+      for `/api/admin`, `/api/admin/*`, `/api/auth/new-account`, `/api/auth/link-token` and `/api/auth/link/*`,
+      deployed only after the name resolves. Caddy forwards WebSocket upgrades on its own
+    - `accesstoken` in both access-log redaction regexes, because the websocket passes `?accessToken=`
+    - `CORS_ORIGINS=https://jami.sdwa5.org` on `jami_web`
+    - `jami.sdwa5.org` in the recheck site lists (`RECHECK_SITES`, `HSTS_SITES`, `ACCESS_LOG_SITES`) and in
+      `tests/caddyfile.bats`
+    - an upstream issue asking Jami Web for a `trust proxy` setting, because behind Caddy every login shares one
+      rate-limit bucket, so anyone's failed logins lock everyone out for five minutes

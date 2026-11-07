@@ -79,6 +79,8 @@ paperless-sdwa5-mariadb-data/
 paperless-home-data/
 paperless-home-media/
 paperless-home-mariadb-data/
+# Jami Web and daemon data, account keys included (docs/jami.md).
+jami-web-data/
 
 # Minecraft data (world/mods/logs stay ignored, server config tracked below)
 minecraft-data/*

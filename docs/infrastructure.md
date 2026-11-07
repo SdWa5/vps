@@ -27,6 +27,7 @@ flowchart LR
             PLDB[("MariaDB + valkey<br/>paperless_sdwa5_*")]
             PH["Paperless household<br/>127.0.0.1:8007"]
             PHDB[("MariaDB + valkey<br/>paperless_home_*")]
+            JW["Jami Web · always-on Jami peer<br/>127.0.0.1:8008 · SSH tunnel only"]
             OL["Ollama<br/>127.0.0.1 via DOCKER-USER · inactive"]
             MC["Minecraft<br/>0.0.0.0:25565 · profile, inactive"]
             RS["Restic backup<br/>daily 04:00 · source /opt/docker (ro)"]
@@ -41,6 +42,7 @@ flowchart LR
         SSHD["sshd :22<br/>key-only · fail2ban"]
     end
 
+    DHT(("Jami peers<br/>OpenDHT · ns.jami.net"))
     GD[("Shared Drive SdWa5 Backup<br/>rclone:sdwa5backup:restic-backups")]
     U -- " sdwa5.org " --> C
     U -- " vault.sdwa5.org " --> C
@@ -61,6 +63,7 @@ flowchart LR
     P2 --> P2DB
     P3 --> P3DB
     RS -- " rclone (service account) " --> GD
+    JW -- " outbound UDP/TCP, ICE/TURN " --> DHT
     HC -. " checks " .-> C & SW & VW & DL & RS
     AU -- " updates " --> VW
     HC & AU -- " SMTP alerts " --> MB[("Mail<br/>MONITOR_MAIL_TO")]
@@ -81,6 +84,7 @@ Domain → port mapping lives in the [Caddyfile](../Caddyfile); backup detail in
 | Chimo Diazz (switched off) | dockware/shopware:6.7.11.1 | 8005 / 8444 | https://chimodiazz.sdwa5.org (placeholder) | docker-compose.projects.yml (profile: chimodiazz) |
 | Paperless Verein    | paperless-ngx:3.3.2 + mariadb:12.3 + valkey:9.0 | 8006 | https://paper.sdwa5.org | docker-compose.yml          |
 | Paperless household | paperless-ngx:3.3.2 + mariadb:12.3 + valkey:9.0 | 8007 | https://paper.ripper.sdwa5.org | docker-compose.yml   |
+| Jami Web            | localhost/sdwa5-jami-web:<jami-web version>-N (npm package, Node 26) | 8008 | (no domain, SSH tunnel) | docker-compose.yml, see [jami.md](jami.md) |
 | Ollama              | ollama/ollama:latest         | 11434           | (no domain, firewalled)    | docker-compose.yml                      |
 | Restic backup       | creativeprojects/resticprofile | —               | —                          | docker-compose.yml                      |
 | Minecraft           | itzg/minecraft-server:latest | 25565           | —                          | docker-compose.yml (profile: minecraft) |
@@ -126,6 +130,7 @@ database as dockware's `root`/`root`.
 | `paper_sdwa5_db` | paperless_sdwa5_db, paperless_sdwa5_broker, paperless_sdwa5 | `internal` |
 | `paper_home`, `paper_home_db` | the household instance | Same shape as the Verein instance |
 | `backup` | restic | Egress to Google Drive |
+| `jami` | jami_web | Egress to the Jami network, see [jami.md](jami.md) |
 | `chimodiazz` | chimodiazz_shopware | Third-party theme code runs here |
 | `minecraft`, `ollama` | profile-gated services | |
 
@@ -213,6 +218,11 @@ each shop's `.env` in the html volume, see the database accounts above. `monitor
 reports per container which secret names `docker inspect` or a process environment still carries,
 see [monitoring.md](monitoring.md#security-recheck).
 
+`secrets/jami_web_admin_password` is the one file in `secrets/` that no service mounts. Jami Web runs as
+uid 1000 and cannot read a root 400 file, and it needs the password only once, so the file is piped
+into `jami-web setup`, which stores an argon2 hash in `jami-web-data/jami-web/admin.json`, see
+[jami.md](jami.md#setup).
+
 ### No sshd in the shop containers
 
 The sdwa5.org image contains neither `sshd` nor `mailcatcher`. The rest of this section applies to
@@ -271,6 +281,8 @@ where the flag was set.
 ├── paperless-{sdwa5,home}-mariadb-data/  # gitignored — Paperless DBs
 ├── tools/paperless/                # Paperless dev mirror, setup and visibility check
 ├── tools/secrets/                  # writes the compose file secrets
+├── jami-web/                       # tracked — Dockerfile, package.json and lock of the Jami Web image
+├── jami-web-data/                  # gitignored — Jami Web config and the daemon's account keys, 700 uid 1000
 ├── ollama-data/                    # gitignored — Ollama model cache
 ├── minecraft-data/                 # partially tracked — Minecraft world data
 │   ├── server.properties.example, eula.txt, ops.json, whitelist.json, banned-*.json, config/  # tracked

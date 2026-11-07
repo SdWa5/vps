@@ -1,0 +1,9 @@
+{
+  "name": "sdwa5-jami-web",
+  "private": true,
+  "description": "Jami Web for the SdWa5 VPS peer, see docs/jami.md",
+  "license": "MIT",
+  "dependencies": {
+    "@savoirfairelinux/jami-web": "0.2.3"
+  }
+}

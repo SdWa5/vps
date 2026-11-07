@@ -35,6 +35,7 @@ docker compose up -d
 | Paperless-ngx Verein | https://paper.sdwa5.org     | docker-compose.yml             |
 | Paperless-ngx household | https://paper.ripper.sdwa5.org | docker-compose.yml        |
 | Ollama (inactive)  | :11434 (no public domain)     | docker-compose.yml (profile: ollama) |
+| Jami Web (always-on Jami peer) | SSH tunnel to 127.0.0.1:8008 (no public domain) | docker-compose.yml |
 | Restic backup      | —                             | docker-compose.yml             |
 | Chimo Diazz (switched off) | https://chimodiazz.sdwa5.org (placeholder) | docker-compose.projects.yml (profile: chimodiazz) |
 | Minecraft (inactive) | :25565                      | docker-compose.yml (profile: minecraft) |
@@ -70,6 +71,7 @@ See `docs/` for per-service documentation:
 - [Dolibarr](docs/dolibarr.md)
 - [Vaultwarden](docs/vaultwarden.md)
 - [Paperless-ngx (two instances)](docs/paperless.md)
+- [Jami Web (always-on Jami peer)](docs/jami.md)
 - [Backup (Restic + rclone)](docs/backup.md)
 - [Caddy](docs/caddy.md)
 - [Ollama](docs/ollama.md)
@@ -113,6 +115,9 @@ systemctl reload caddy
 
 # Restore an SQL archive in an isolated temporary container
 /opt/docker/monitoring/database-restore-check.sh dolibarr_db
+
+# Jami Web UI from a workstation, then open http://localhost:8008 (see docs/jami.md)
+ssh -N -L 8008:127.0.0.1:8008 root@sdwa5.org
 
 # Security recheck from a workstation: exposure, firewall, isolation (see docs/monitoring.md)
 monitoring/security-recheck.sh

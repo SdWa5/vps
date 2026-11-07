@@ -62,7 +62,7 @@ setup() {
     extra="$(awk '/^  [a-z0-9_]+:$/ { svc = $1 } /^    security_opt:.*no-new-privileges/ && svc == "chimodiazz_shopware:" { print svc }' \
         "$REPO_ROOT/docker-compose.yml" "$REPO_ROOT/docker-compose.projects.yml")"
     [ -z "$extra" ] || { echo "dockware needs setuid sudo: $extra"; return 1; }
-    [ "$(grep -c 'no-new-privileges:true' "$REPO_ROOT/docker-compose.yml")" -eq 13 ]
+    [ "$(grep -c 'no-new-privileges:true' "$REPO_ROOT/docker-compose.yml")" -eq 14 ]
 }
 
 @test "every PHP web service mounts the PHP security mitigation ini read-only" {
@@ -105,4 +105,18 @@ service_block() {
     version="$(jq -r '.packages[] | select(.name == "shopware/core") | .version | ltrimstr("v")' \
         "$REPO_ROOT/shopware-html-data/composer.lock")"
     [ "${BASH_REMATCH[1]}" = "$version" ]
+}
+
+@test "the Jami Web peer is a local image tagged with its locked package version, on loopback only" {
+    local block image
+    block="$(service_block jami_web)"
+    image="$(awk '/^    image:/ { print $2 }' <<<"$block")"
+    [[ "$image" =~ ^localhost/sdwa5-jami-web:([0-9.]+)-[1-9][0-9]*$ ]]
+    [ "${BASH_REMATCH[1]}" = "$(jq -r '.dependencies["@savoirfairelinux/jami-web"]' "$REPO_ROOT/jami-web/package.json")" ]
+    [ "${BASH_REMATCH[1]}" = "$(jq -r '.packages["node_modules/@savoirfairelinux/jami-web"].version' "$REPO_ROOT/jami-web/package-lock.json")" ]
+    grep -qx '    pull_policy: never' <<<"$block"
+    grep -qx '    networks: \[jami\]' <<<"$block"
+    [ "$(grep -cE '^      - "[0-9.:]+"$' <<<"$block")" = 1 ]
+    grep -qx '      - "127.0.0.1:8008:8080"' <<<"$block"
+    grep -qx '    cap_drop: \[NET_RAW\]' <<<"$block"
 }

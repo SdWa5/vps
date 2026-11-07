@@ -112,6 +112,11 @@ The admin password stays in `secrets/` and is mounted nowhere, see
 
 `docker exec jami_web jami-web accounts list` then shows the account.
 
+Both were tested on 2026-11-07. The link ran through Jami's relay, as expected without inbound UDP. For the
+offline test, a throwaway account in a separate daemon sent a message while the notebook's daemon was stopped, and
+then went offline itself. The restarted notebook had fetched the message two seconds later, and this peer was the
+only device that could have provided it.
+
 ### An account for a trusted person
 
 People in general run their own Jami. For someone the owner knows well, an account on this peer is
@@ -137,4 +142,4 @@ account itself stays valid on every other device.
   connections and the TURN relay `turn.jami.net`. A call to the account also rings this device
 - Behind a proxy all logins share one rate-limit bucket, because Jami Web sets no `trust proxy`. Over
   the tunnel the only client is the tunnel itself
-- Idle memory was 85 MiB with one account in a local test on 2026-11-07
+- Memory was 92 MiB with the owner's account linked, measured on the VPS on 2026-11-07

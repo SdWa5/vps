@@ -203,14 +203,15 @@ its own.
 | `paperless_*_broker` | `valkey/valkey:9.1-alpine` | Minor series. A queue without a volume, so nothing persists across an update. 9.0 to 9.1 on 2026-10-18 through Dependabot; 9.2-alpine was only 9.2.0-rc1 then |
 | `vaultwarden` | `vaultwarden/server:latest` | Deliberately unpinned. [`monitoring/vaultwarden-autoupdate.sh`](../monitoring/vaultwarden-autoupdate.sh) pulls it daily and verifies the result, and a pin would silently freeze security updates for a password vault. See [vaultwarden.md](vaultwarden.md) |
 | `restic` | `creativeprojects/resticprofile:0.33.1-amd64` | Exact. Used only for the restic, rclone, crond and flock it ships; the schedule and the run are [`restic/`](../restic/). `latest` is rebuilt weekly and would move restic and rclone on its own. Until 2026-10-15 this was `lobaro/restic-backup-docker:latest`, frozen since 2021-05-05 at restic 0.12.0. A bump is followed by the [restore drill](backup.md#restore-drill) |
+| `jami_web` | `localhost/sdwa5-jami-web:<jami-web version>-N`, built on this host | The tag is the locked `@savoirfairelinux/jami-web` version plus a build number, and the base image is pinned by digest in `jami-web/Dockerfile`. `pull_policy: never`. An update is a Dependabot PR plus a tag bump, then `docker compose up -d --build jami_web`, see [jami.md](jami.md#updates) |
 | `minecraft`, `ollama` | `:latest` | Profile-gated and not present on the host, so there is no running digest to pin to. For Minecraft the build is decided by the `VERSION` environment variable anyway |
 
 ### Update proposals
 
 Dependabot checks the pins weekly, configured in
 [`.github/dependabot.yml`](../.github/dependabot.yml) since 2026-10-18. It covers the compose files'
-images and the workflow's actions, and it opens at most three image pull requests and two action pull
-requests at a time. A MariaDB major version is never proposed, because it upgrades the data files in
+images, the shop and Jami Web build directories and the workflow's actions, and it opens at most three
+image pull requests and two pull requests per other ecosystem at a time. A MariaDB major version is never proposed, because it upgrades the data files in
 place. The `:latest` services have no version to compare and are skipped. The test images in
 `tests/run.sh` are not covered and stay with [CI dependencies](#ci-dependencies).
 

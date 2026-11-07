@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.107.0] - 2026-11-07
+
+### Added
+
+- Jami Web as an always-on Jami peer, built from `jami-web/`, on 127.0.0.1:8008
+- Dependabot for the Jami Web base image and npm lock
+- Jami Web in the health check, security recheck and tests
+- docs/jami.md
+
+### Changed
+
+- README, infrastructure and maintenance docs list Jami Web
+- TODO: public jami.sdwa5.org proposal
+
 ## [1.106.0] - 2026-11-06
 
 ### Changed

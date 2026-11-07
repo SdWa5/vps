@@ -39,7 +39,7 @@ load_env
 
 DISK_WARN="${DISK_WARN:-85}"
 DISK_CRIT="${DISK_CRIT:-92}"
-EXPECTED_CONTAINERS="${EXPECTED_CONTAINERS:-vaultwarden shopware shopware_db dolibarr dolibarr_db dolibarr_cron restic paperless_sdwa5 paperless_sdwa5_db paperless_sdwa5_broker paperless_home paperless_home_db paperless_home_broker}"
+EXPECTED_CONTAINERS="${EXPECTED_CONTAINERS:-vaultwarden shopware shopware_db dolibarr dolibarr_db dolibarr_cron restic paperless_sdwa5 paperless_sdwa5_db paperless_sdwa5_broker paperless_home paperless_home_db paperless_home_broker jami_web}"
 HEALTH_URLS="${HEALTH_URLS:-vaultwarden=https://vault.sdwa5.org/alive shopware=https://sdwa5.org/ dolibarr=https://erp.sdwa5.org/ chimodiazz=https://chimodiazz.sdwa5.org/ paperless=https://paper.sdwa5.org/accounts/login/ paperless-home=https://paper.ripper.sdwa5.org/accounts/login/}"
 BACKUP_MAX_AGE_HOURS="${BACKUP_MAX_AGE_HOURS:-26}"
 DB_BACKUP_MAX_AGE_HOURS="${DB_BACKUP_MAX_AGE_HOURS:-26}"

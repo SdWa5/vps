@@ -10,7 +10,7 @@ setup() {
     local config="$REPO_ROOT/.github/dependabot.yml"
     grep -qx '  - package-ecosystem: docker-compose' "$config"
     grep -qx '  - package-ecosystem: github-actions' "$config"
-    [ "$(grep -c '^      interval: weekly$' "$config")" = 3 ]
+    [ "$(grep -c '^      interval: weekly$' "$config")" = 5 ]
 }
 
 @test "Dependabot never proposes a MariaDB major version" {
@@ -28,6 +28,15 @@ setup() {
 @test "Dependabot watches the shop image's Dockerfile" {
     awk '/package-ecosystem: docker$/ { m = 1; next } m { print; exit }' "$REPO_ROOT/.github/dependabot.yml" \
         | grep -qx '    directory: /shopware'
+}
+
+@test "Dependabot watches the Jami Web image's Dockerfile and npm lock and skips the local image" {
+    local config="$REPO_ROOT/.github/dependabot.yml"
+    grep -qx '      - dependency-name: localhost/sdwa5-jami-web' "$config"
+    for ecosystem in docker npm; do
+        awk -v e="$ecosystem" '$0 == "  - package-ecosystem: " e { getline; print }' "$config" \
+            | grep -qx '    directory: /jami-web'
+    done
 }
 
 @test "no image line uses a YAML anchor, which Dependabot's compose updater cannot edit" {

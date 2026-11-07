@@ -58,7 +58,7 @@ RECHECK_TARGET_V6="${RECHECK_TARGET_V6-2a02:c206:3015:7801::1}"
 # The 44 ports of the 2026-10-14 audit's selection plus 33113 and the Paperless publishes 8006 and 8007: well-known services, databases,
 # Docker and Caddy admin ports, the loopback publishes of this host and the Minecraft and Ollama
 # profiles. A selection, not a full scan.
-EXTERNAL_TCP_PORTS="${EXTERNAL_TCP_PORTS:-21 22 23 25 53 80 110 111 135 139 143 443 445 465 587 993 995 1433 2019 2375 2376 3000 3306 3389 5000 5355 5432 5900 6379 8000 8001 8002 8003 8004 8005 8080 8006 8007 8443 8444 9000 9200 11211 11434 25565 27017 33113}"
+EXTERNAL_TCP_PORTS="${EXTERNAL_TCP_PORTS:-21 22 23 25 53 80 110 111 135 139 143 443 445 465 587 993 995 1433 2019 2375 2376 3000 3306 3389 5000 5355 5432 5900 6379 8000 8001 8002 8003 8004 8005 8080 8006 8007 8008 8443 8444 9000 9200 11211 11434 25565 27017 33113}"
 EXPECTED_TCP_OPEN="${EXPECTED_TCP_OPEN:-22 80 443}"
 
 # A site with a path is fetched there instead of at /, for an application whose / redirects to
@@ -77,14 +77,14 @@ FIREWALL_UDP_PORTS="${FIREWALL_UDP_PORTS:-443}"
 WAN_INTERFACE="${WAN_INTERFACE:-eth0}"
 
 # app=container,container. A container may reach its own application and nothing else.
-ISOLATION_APPS="${ISOLATION_APPS:-vault=vaultwarden shop=shopware,shopware_db chimodiazz=chimodiazz_shopware erp=dolibarr,dolibarr_cron,dolibarr_db paper=paperless_sdwa5,paperless_sdwa5_db,paperless_sdwa5_broker paperhome=paperless_home,paperless_home_db,paperless_home_broker backup=restic}"
+ISOLATION_APPS="${ISOLATION_APPS:-vault=vaultwarden shop=shopware,shopware_db chimodiazz=chimodiazz_shopware erp=dolibarr,dolibarr_cron,dolibarr_db paper=paperless_sdwa5,paperless_sdwa5_db,paperless_sdwa5_broker paperhome=paperless_home,paperless_home_db,paperless_home_broker backup=restic jami=jami_web}"
 # The containers probed from. They run third-party or internet-facing code, or hold the vault and the
 # backup credentials. A source without bash is probed with busybox nc.
-ISOLATION_SOURCES="${ISOLATION_SOURCES:-shopware dolibarr paperless_sdwa5 paperless_home vaultwarden restic}"
+ISOLATION_SOURCES="${ISOLATION_SOURCES:-shopware dolibarr paperless_sdwa5 paperless_home vaultwarden restic jami_web}"
 # The one path inside an application that must stay open, measured 2026-10-15.
 ISOLATION_EXPECT_OPEN="${ISOLATION_EXPECT_OPEN:-shopware>shopware_db:3306 dolibarr>dolibarr_db:3306 paperless_sdwa5>paperless_sdwa5_db:3306 paperless_sdwa5>paperless_sdwa5_broker:6379 paperless_home>paperless_home_db:3306 paperless_home>paperless_home_broker:6379}"
 GATEWAY_OPEN="${GATEWAY_OPEN:-22 80 443}"
-GATEWAY_CLOSED="${GATEWAY_CLOSED:-25 2019 3306 8000 8002 8006 8007 8443 33113}"
+GATEWAY_CLOSED="${GATEWAY_CLOSED:-25 2019 3306 8000 8002 8006 8007 8008 8443 33113}"
 NO_EGRESS_CONTAINERS="${NO_EGRESS_CONTAINERS:-shopware_db dolibarr_db paperless_sdwa5_db paperless_sdwa5_broker paperless_home_db paperless_home_broker}"
 EGRESS_PROBES="${EGRESS_PROBES:-1.1.1.1:443 9.9.9.9:53}"
 # "container:port,port" pairs that must not listen. The shop image's `admin off` keeps the Admin API

@@ -548,3 +548,16 @@
       `tests/caddyfile.bats`
     - an upstream issue asking Jami Web for a `trust proxy` setting, because behind Caddy every login shares one
       rate-limit bucket, so anyone's failed logins lock everyone out for five minutes
+50. (proposal) **The Jami peer as the call host of a group** ([docs/jami.md](docs/jami.md#known-limits))
+    (ca. 1 Stunde 30 Minuten). A Jami group can name one device as its call host, so group calls run on the
+    always-on peer instead of on whichever member starts them. The daemon in `jami_web` supports it, since its
+    `jamid.node` carries the swarm keys `rdvAccount` and `rdvDevice` (measured 2026-11-08). Jami Web 0.2.3 has
+    no control for it, so the host is chosen in a group's details on the notebook or the phone. The steps:
+    - make the peer the host of a test group, start a group call from the notebook and join from the phone
+    - measure `docker stats jami_web` during the call, because the host mixes the media for everyone, and check
+      `docker logs jami_web` for TURN, since the firewall accepts no inbound UDP
+    - write the result into the known limits of `docs/jami.md`
+    The account-wide "Rendezvous point" switch in Jami Web's settings (`Account.rendezVous`) is not the same thing
+    and stays off on the owner's account, because it turns the account into a meeting room that answers every
+    incoming call into one conference. A permanent meeting room, if one is wanted, is a separate account on the
+    peer with that switch on.

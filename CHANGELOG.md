@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.107.2] - 2026-11-08
+
+### Changed
+
+- TODO: Jami peer as group call host proposal
+
 ## [1.107.1] - 2026-11-07
 
 ### Changed

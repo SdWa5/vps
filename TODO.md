@@ -279,7 +279,7 @@
     `sw-storefront-url` and `resolved-uri`, which on sdwa5.org gave the technical `/navigation/<id>` path,
     so the aside probably shares the same wrong URL wherever Chimo Diazz has SEO URLs. SdWa5Theme 1.0.4 uses `sw-sales-channel-absolute-base-url` and
     `sw-original-request-uri` instead (ca. 30 Minuten)
-12. also host gitlab and email myself (priority medium to low)
+12. also host gitlab myself (priority high since 2026-11-08, in the sandbox of #48) and email (priority medium to low)
 13. **host the sdwa5.org dns ourselves** (priority low, ca. 8 Stunden). today the domain and its dns sit
     at squarespace, and squarespace has no dns api. checked on 2026-10-16: it offers commerce apis only,
     its reseller apis are for approved partners, and its dns page drives an undocumented internal

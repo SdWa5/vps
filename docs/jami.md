@@ -188,8 +188,19 @@ curl -fsS -H "Authorization: Bearer $access_token" http://localhost:8008/api/acc
 unset access_token
 ```
 
-The daemon logs each entry at start. The log line carries the account ID, so read it only through
-`docker logs jami_web 2>&1 | grep -o 'Bootstrap node: .*' | sort -u`.
+The daemon does not log its bootstrap list at its default level, so the check is a capture in
+`dhtnode`'s network namespace while `jami_web` restarts. It counted 3 packets on 2026-11-12:
+
+```bash
+cd /opt/docker
+dht_pid="$(docker inspect -f '{{.State.Pid}}' dhtnode)"
+jami_ip="$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' jami_web)"
+timeout 90 nsenter -t "$dht_pid" -n tcpdump -n -q -i eth0 "udp and src host $jami_ip and dst port 4222" &
+sleep 2 && docker compose restart jami_web && wait
+```
+
+Container-to-container traffic on one bridge never reaches conntrack here, because `br_netfilter` is
+not loaded, so `/proc/net/nf_conntrack` shows none of it.
 
 ### Checking it from outside
 

@@ -5,3 +5,10 @@
 Unattended-Upgrade::Origins-Pattern {
         "origin=Debian,codename=${distro_codename}-updates,label=Debian";
 };
+
+// Reboot only when /var/run/reboot-required exists, at the next 04:00 host time.
+// The VPS uses Europe/Berlin. This replaces SEC-D02's manual-only policy
+// by the owner's decision of 2026-11-12. See docs/maintenance.md.
+Unattended-Upgrade::Automatic-Reboot "true";
+Unattended-Upgrade::Automatic-Reboot-Time "04:00";
+Unattended-Upgrade::Automatic-Reboot-WithUsers "true";

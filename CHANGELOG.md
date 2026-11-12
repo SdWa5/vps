@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.108.1] - 2026-11-12
+
+### Added
+
+- APT parser regression checks for reboot scheduling, preserved security origins and emergency overrides
+
+### Changed
+
+- Required reboots are scheduled by unattended-upgrades for 04:00 Europe/Berlin, including with logged-in users
+- Maintenance and monitoring documentation covers automatic scheduling, service recovery and cancellation
+
 ### Fixed
 
 - Jami docs: check jami_web's bootstrap with a packet capture, since the daemon does not log it

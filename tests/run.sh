@@ -98,6 +98,7 @@ echo "== python =="
 # The versions the shop-images image resolves for rembg 2.0.84.
 docker run --rm -v "$REPO_ROOT:/code:ro" -w /code -e PIP_ROOT_USER_ACTION=ignore "$CI_PYTHON_IMAGE" \
     sh -c "pip install -q --disable-pip-version-check numpy==2.5.4 pillow==12.3.0 \
+        && python -I -B tests/apt-config.py \
         && python -I -B tests/shopware-merch-tools.py \
         && python -B -m unittest discover -s .github/tests -v"
 

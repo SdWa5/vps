@@ -62,9 +62,8 @@ VAULTWARDEN_RELEASE_API="${VAULTWARDEN_RELEASE_API:-https://api.github.com/repos
 # which is the only version of this alert anybody can act on.
 VAULTWARDEN_DRIFT_GRACE_HOURS="${VAULTWARDEN_DRIFT_GRACE_HOURS:-26}"
 FIREWALL_PORTS="${FIREWALL_PORTS:-22 80 443}"
-# unattended-upgrades installs kernel and library fixes but never reboots, by decision of 2026-10-17
-# (SEC-D02). A fix that needs a reboot therefore only takes effect after a manual one, and this is the
-# reminder that one is due.
+# unattended-upgrades schedules a required reboot for 04:00 Europe/Berlin, by decision of 2026-11-12.
+# Keep warning while the marker exists, so a reboot that never happens remains visible.
 REBOOT_REQUIRED_FILE="${REBOOT_REQUIRED_FILE:-/var/run/reboot-required}"
 BOOT_DIR="${BOOT_DIR:-/boot}"
 # The dead-man's switch (SEC-D06, 2026-10-17). Every alert above depends on this script running and on

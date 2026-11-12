@@ -1,7 +1,7 @@
 # The sdwa5.org shop (docs/shopware/image.md). tools/shopware/image.sh builds it
 # from a git export: this directory is the main context, and the named context
 # `project` is shopware-html-data/ with the composer files, config and theme.
-FROM ghcr.io/shopware/shopware-cli:0.19.8-php-8.5@sha256:6ad035a6b4b11b38f890d9657c64fb541b032d80931ed97ecb9b0464bcb91fbe AS build
+FROM ghcr.io/shopware/shopware-cli:0.19.9-php-8.5@sha256:d7b4a07bd7b1f07e017112456af7d14ef5a753a39cf6ecf6a3508f8c91c3b7e5 AS build
 WORKDIR /src
 COPY --from=project composer.json composer.lock symfony.lock .shopware-project.yml ./
 COPY --from=project config ./config

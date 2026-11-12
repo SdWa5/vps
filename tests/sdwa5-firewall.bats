@@ -60,6 +60,12 @@ wrote() {
     wrote "-A DOCKER-USER -i eth0 -p udp --dport 25565 -j RETURN"
 }
 
+@test "DOCKER-USER keeps the OpenDHT node reachable over udp only" {
+    firewall
+    wrote "-A DOCKER-USER -i eth0 -p udp --dport 4222 -j RETURN"
+    ! wrote "-A DOCKER-USER -i eth0 -p tcp --dport 4222 -j RETURN" || false
+}
+
 @test "DOCKER-USER returns container egress rather than accepting it" {
     # RETURN hands the packet back so Docker's own isolation chains still judge
     # it. ACCEPT would skip them and switch off isolation between projects.

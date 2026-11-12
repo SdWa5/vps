@@ -65,11 +65,11 @@ Docker comes from Docker's own apt repository since 2026-10-15, not from Debian.
 20.10.24 carried runc 1.1.5 and containerd 1.6.20, both behind the 2024 and 2025 container escape
 fixes, and Debian 13 would still ship runc 1.1.15.
 
-| Package | Version on 2026-10-15 |
+| Package | Version on 2026-11-12 |
 |---|---|
-| `docker-ce`, `docker-ce-cli` | 29.9.1 |
+| `docker-ce`, `docker-ce-cli` | 29.9.3 |
 | `containerd.io` | 2.4.2, bundles runc 1.5.2 |
-| `docker-compose-plugin` | 5.6.0 |
+| `docker-compose-plugin` | 5.7.1 |
 
 The key is `/etc/apt/keyrings/docker.asc` (fingerprint `9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF
 CD88`) and the source is `/etc/apt/sources.list.d/docker.list`. The host has no gpg, so the key is
@@ -204,6 +204,7 @@ its own.
 | `vaultwarden` | `vaultwarden/server:latest` | Deliberately unpinned. [`monitoring/vaultwarden-autoupdate.sh`](../monitoring/vaultwarden-autoupdate.sh) pulls it daily and verifies the result, and a pin would silently freeze security updates for a password vault. See [vaultwarden.md](vaultwarden.md) |
 | `restic` | `creativeprojects/resticprofile:0.33.1-amd64` | Exact. Used only for the restic, rclone, crond and flock it ships; the schedule and the run are [`restic/`](../restic/). `latest` is rebuilt weekly and would move restic and rclone on its own. Until 2026-10-15 this was `lobaro/restic-backup-docker:latest`, frozen since 2021-05-05 at restic 0.12.0. A bump is followed by the [restore drill](backup.md#restore-drill) |
 | `jami_web` | `localhost/sdwa5-jami-web:<jami-web version>-N`, built on this host | The tag is the locked `@savoirfairelinux/jami-web` version plus a build number, and the base image is pinned by digest in `jami-web/Dockerfile`. `pull_policy: never`. An update is a Dependabot PR plus a tag bump, then `docker compose up -d --build jami_web`, see [jami.md](jami.md#updates) |
+| `dhtnode` | `ghcr.io/savoirfairelinux/opendht/dhtnode:v4.4.2.1@sha256:dcf8b8d4…` | Exact, by tag and digest. Upstream's `v4.4.99` to `v4.4.10x` development tags are ignored by Dependabot. After a merge, `docker compose pull dhtnode && docker compose up -d dhtnode`, see [jami.md](jami.md#opendht-node) |
 | `minecraft`, `ollama` | `:latest` | Profile-gated and not present on the host, so there is no running digest to pin to. For Minecraft the build is decided by the `VERSION` environment variable anyway |
 
 ### Update proposals

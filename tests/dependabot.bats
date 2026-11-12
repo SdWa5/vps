@@ -39,6 +39,12 @@ setup() {
     done
 }
 
+@test "Dependabot skips upstream's OpenDHT development builds" {
+    local config="$REPO_ROOT/.github/dependabot.yml"
+    grep -A1 -x '      - dependency-name: ghcr.io/savoirfairelinux/opendht/dhtnode' "$config" \
+        | grep -qxF '        versions: [">= 4.4.99, < 4.5.0"]'
+}
+
 @test "no image line uses a YAML anchor, which Dependabot's compose updater cannot edit" {
     # dependabot-core matches the image right after "image:" in the raw text,
     # so "image: &x name:tag" and "image: *x" fail the whole update run.

@@ -6,6 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [1.108.0] - 2026-11-12
+
+### Added
+
+- Public OpenDHT node `dhtnode` on udp 4222 (IPv4), upstream image pinned by tag and digest, with a perl healthcheck
+- TODO 50: IPv6 for the OpenDHT node (proposal)
+- TODO 51: public DHT proxy at `dht.sdwa5.org` with UnifiedPush (proposal)
+- Tests for the node's compose block, its DOCKER-USER rule, its proxy listener and its Dependabot ignore
+
+### Changed
+
+- Firewall: DOCKER-USER returns udp 4222 from the WAN
+- security-recheck: `dhtnode` in the `jami` isolation group and `dhtnode:8080` in `CLOSED_LISTENERS`
+- vps-health: `dhtnode` in `EXPECTED_CONTAINERS`
+- Dependabot: ignores upstream's OpenDHT development tags 4.4.99 to 4.4.10x
+- Docs: Jami page covers the OpenDHT node; infrastructure, DOCKER-USER, monitoring and image tables list it;
+  Docker package versions of 2026-11-12
+- TODO items 16 to 50 renumbered to 15 to 49
+
+### Removed
+
+- TODO 15: `apt autoremove`, done on 2026-11-12
+
 ## [1.107.3] - 2026-11-08
 
 ### Changed

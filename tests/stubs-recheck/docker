@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Fake docker for security-recheck.sh, modelled on the containers measured on 2026-10-15, plus the
 # Paperless-ngx containers of 2026-10-16 in the shape their compose networks give them, and the Jami Web
-# container of 2026-11-07 on its own network.
+# container of 2026-11-07 on its own network, which the OpenDHT node of 2026-11-12 shares.
 #
 # Listening ports, addresses and gateways come from the fixture table below. The probe snippet that
 # security-recheck.sh runs through "docker exec SRC bash -c ..." is not executed; the stub answers
@@ -38,6 +38,7 @@ fixture() {
         paperless_home_db)      echo "172.27.0.2| |3306" ;;
         paperless_home_broker)  echo "172.27.0.3| |6379" ;;
         jami_web)               echo "172.28.0.2|172.28.0.1|8080" ;;
+        dhtnode)                echo "172.28.0.3|172.28.0.1|" ;;
         *) return 1 ;;
     esac
 }

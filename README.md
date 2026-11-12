@@ -36,6 +36,7 @@ docker compose up -d
 | Paperless-ngx household | https://paper.ripper.sdwa5.org | docker-compose.yml        |
 | Ollama (inactive)  | :11434 (no public domain)     | docker-compose.yml (profile: ollama) |
 | Jami Web (always-on Jami peer) | SSH tunnel to 127.0.0.1:8008 (no public domain) | docker-compose.yml |
+| OpenDHT node (public Jami DHT node) | udp 4222, IPv4, public | docker-compose.yml |
 | Restic backup      | —                             | docker-compose.yml             |
 | Chimo Diazz (switched off) | https://chimodiazz.sdwa5.org (placeholder) | docker-compose.projects.yml (profile: chimodiazz) |
 | Minecraft (inactive) | :25565                      | docker-compose.yml (profile: minecraft) |
@@ -71,7 +72,7 @@ See `docs/` for per-service documentation:
 - [Dolibarr](docs/dolibarr.md)
 - [Vaultwarden](docs/vaultwarden.md)
 - [Paperless-ngx (two instances)](docs/paperless.md)
-- [Jami Web (always-on Jami peer)](docs/jami.md)
+- [Jami (always-on peer and OpenDHT node)](docs/jami.md)
 - [Backup (Restic + rclone)](docs/backup.md)
 - [Caddy](docs/caddy.md)
 - [Ollama](docs/ollama.md)

@@ -448,7 +448,7 @@ status is 1 with any CRIT, 1 with any WARN under `--strict`, 2 for a usage error
 | `accounts` | `account-check.sh` reports OK, as the health check's `accounts` row | no allowlist or an unreadable file | an unexpected account, group member, sudoers line or root key |
 | `logs` | per site, `/var/log/caddy/access-<site>.log` holds no credential header and no unredacted token value; only counts are printed | the file is missing | a `Cookie`, `Authorization`, `Proxy-Authorization`, `Referer` or `Set-Cookie` field, or a token value other than `REDACTED` |
 | `env` | per container of `ISOLATION_APPS`: no secret value in `docker inspect`; names a process environment still carries are listed in the message | a secret value in `docker inspect`, or the process environments cannot be read | |
-| `listeners` | neither `shopware` (2019, the FrankenPHP admin API) nor `chimodiazz_shopware` (22, which its boot hook closes) listens on a port of `CLOSED_LISTENERS` | one of them listens | |
+| `listeners` | none of `shopware` (2019, the FrankenPHP admin API), `chimodiazz_shopware` (22, which its boot hook closes) and `dhtnode` (8080, the OpenDHT proxy, which must stay on loopback) listens on a port of `CLOSED_LISTENERS` | one of them listens | |
 | `restore` | `database-restore-check.sh` passes for each database | | it fails |
 | `host` | the ssh part ran to its end | | ssh failed, or the output ended early or was malformed |
 

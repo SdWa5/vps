@@ -85,6 +85,9 @@ See `docs/` for per-service documentation:
 
 ## Common operations
 
+Required reboots are scheduled automatically for 04:00 Europe/Berlin. The existing health check
+checks service recovery afterward. See [automatic reboots](docs/maintenance.md#automatic-reboots).
+
 ```bash
 # Start all main services
 docker compose up -d
@@ -237,7 +240,7 @@ tests/run.sh
 ```
 
 Runs the bats suite for the monitoring scripts and `tools/`, shellcheck, the PHP database-client
-checks, the Python tool checks and the CI installer regression tests inside Docker. Test images use
+checks, the Python tool checks, APT configuration parser checks and the CI installer regression tests inside Docker. Test images use
 exact tags and immutable digests. Nothing has to be installed on the host beyond Docker. See
 [CI dependency maintenance](docs/maintenance.md#ci-dependencies) for the recorded versions and updates.
 

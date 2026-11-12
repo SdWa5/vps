@@ -47,7 +47,7 @@ auto-update.
 | `shopware_mail` | FroshMailArchive holds a mail with `transport_state` `failed` from the last `SHOPWARE_MAIL_FAILED_HOURS` (24), or the archive cannot be read (WARN, with the count and the newest time) |
 | `vaultwarden_version` | the running version is behind the newest GitHub release **and that release is older than `VAULTWARDEN_DRIFT_GRACE_HOURS` (26)** |
 | `git_remote` | `git ls-remote` against the checkout's origin fails, so `/opt/docker` cannot pull |
-| `reboot` | `/var/run/reboot-required` exists, so installed kernel or library fixes are not running yet (WARN, with the running and newest installed kernel) |
+| `reboot` | `/var/run/reboot-required` exists, so installed kernel or library fixes are not running yet (WARN, with the running and newest installed kernel); unattended-upgrades schedules the reboot for 04:00 Europe/Berlin, see [maintenance](maintenance.md#automatic-reboots) |
 
 A container reporting `starting` is not an alert, that is a normal `start_period`. GitHub being
 unreachable is not an alert either, otherwise the recipient learns to ignore this mail.

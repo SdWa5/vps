@@ -77,9 +77,39 @@ stored armored. It was installed with `--no-install-recommends`, which leaves ou
 rootless extras, because nothing here builds images. `nftables` came in as a hard dependency, and its
 service stays disabled, because `/etc/nftables.conf` would flush the firewall at boot.
 
-unattended-upgrades never reboots (`Automatic-Reboot` stays at Debian's default `false`), decided on
-2026-10-17 (SEC-D02). A fix that needs a reboot runs only after a manual one, and the `reboot` check of
-[vps-health.sh](monitoring.md) warns while one is pending.
+### Automatic reboots
+
+By the owner's decision of 2026-11-12, unattended-upgrades schedules a reboot for the next **04:00
+Europe/Berlin** when `/var/run/reboot-required` exists. This replaces the manual-only decision of
+2026-10-17 (SEC-D02). It does not reboot every day without a pending requirement. Logged-in users do
+not defer the maintenance window (`Automatic-Reboot-WithUsers` is explicitly true).
+
+The configuration lives in
+[`hardening/apt/52unattended-upgrades-local`](../hardening/apt/52unattended-upgrades-local).
+The existing `apt-daily-upgrade.timer` runs unattended-upgrades, which calls `shutdown -r 04:00` when
+required. If that run finishes after 04:00, the reboot is scheduled for the following day. No additional
+reboot timer or worker is needed. The host's Europe/Berlin timezone also handles summer time.
+
+SQL backups start at 03:40 and the Vaultwarden database copy at 03:50 host time. Restic starts at
+04:00 UTC, which is 05:00 CET or 06:00 CEST. The native scheduler does not wait for an unusually long
+backup or another running job. Docker and Caddy updates remain manual as described below.
+
+`docker-compose.service` starts the stack at boot. The existing hourly health check at `:17` checks
+containers, HTTP endpoints, backups, Caddy and firewall state, and alerts on faults. Its `reboot` check
+continues warning while the requirement marker exists. The external dead-man's switch reports a host
+that fails to return; see [monitoring](monitoring.md#dead-mans-switch).
+
+Deploy and inspect the effective configuration as root on the VPS:
+
+```bash
+install -m 644 -o root -g root hardening/apt/52unattended-upgrades-local /etc/apt/apt.conf.d/
+apt-config dump | grep 'Unattended-Upgrade::Automatic-Reboot'
+```
+
+No service restart or immediate reboot is required. To disable future automatic scheduling, set
+`Unattended-Upgrade::Automatic-Reboot "false";` in the local configuration. Cancel an already scheduled
+reboot separately with `shutdown -c`. Do not invoke unattended-upgrades as a deployment check, since it
+can install updates and schedule a reboot.
 
 It also takes `trixie-updates`, Debian's stable-updates suite with tzdata and similar time-sensitive data,
 since 2026-11-03 through [`hardening/apt/52unattended-upgrades-local`](../hardening/apt/52unattended-upgrades-local).
@@ -87,7 +117,7 @@ since 2026-11-03 through [`hardening/apt/52unattended-upgrades-local`](../harden
 The first such reboot ran on 2026-10-17 at 23:35 for linux 6.12.113 (DSA-6568-1), which unattended-upgrades
 had installed at 06:59. SSH answered again after ca. 40 seconds. All 13 containers came back, and the static
 IPv6 address and route from `hardening/netplan/60-ipv6.yaml` survived their first boot. `security-recheck.sh
---restore` reported the same 67 OK before and after. A manual reboot is therefore a short window with a
+--restore` reported the same 67 OK before and after. For an additional manual reboot, use a short window with a
 recheck on both sides:
 
 ```bash

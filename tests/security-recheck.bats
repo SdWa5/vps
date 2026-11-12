@@ -305,6 +305,15 @@ setup() {
     [[ "$output" == *'shopware listens on 2019, which should be closed (see CLOSED_LISTENERS)'* ]]
 }
 
+@test "the OpenDHT node's proxy beyond loopback is WARN" {
+    recheck --host
+    [ "$(recheck_status listeners:dhtnode)" = OK ]
+    export STUB_EXTRA_LISTEN="dhtnode:8080"
+    recheck --host
+    [ "$(recheck_status listeners:dhtnode)" = WARN ]
+    [[ "$output" == *'dhtnode listens on 8080, which should be closed (see CLOSED_LISTENERS)'* ]]
+}
+
 @test "a deployed revision behind origin is WARN" {
     export STUB_GIT_REMOTE=2222222222222222222222222222222222222222
     recheck --host

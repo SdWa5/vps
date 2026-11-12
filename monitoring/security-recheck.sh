@@ -77,7 +77,7 @@ FIREWALL_UDP_PORTS="${FIREWALL_UDP_PORTS:-443}"
 WAN_INTERFACE="${WAN_INTERFACE:-eth0}"
 
 # app=container,container. A container may reach its own application and nothing else.
-ISOLATION_APPS="${ISOLATION_APPS:-vault=vaultwarden shop=shopware,shopware_db chimodiazz=chimodiazz_shopware erp=dolibarr,dolibarr_cron,dolibarr_db paper=paperless_sdwa5,paperless_sdwa5_db,paperless_sdwa5_broker paperhome=paperless_home,paperless_home_db,paperless_home_broker backup=restic jami=jami_web}"
+ISOLATION_APPS="${ISOLATION_APPS:-vault=vaultwarden shop=shopware,shopware_db chimodiazz=chimodiazz_shopware erp=dolibarr,dolibarr_cron,dolibarr_db paper=paperless_sdwa5,paperless_sdwa5_db,paperless_sdwa5_broker paperhome=paperless_home,paperless_home_db,paperless_home_broker backup=restic jami=jami_web,dhtnode}"
 # The containers probed from. They run third-party or internet-facing code, or hold the vault and the
 # backup credentials. A source without bash is probed with busybox nc.
 ISOLATION_SOURCES="${ISOLATION_SOURCES:-shopware dolibarr paperless_sdwa5 paperless_home vaultwarden restic jami_web}"
@@ -90,8 +90,9 @@ EGRESS_PROBES="${EGRESS_PROBES:-1.1.1.1:443 9.9.9.9:53}"
 # "container:port,port" pairs that must not listen. The shop image's `admin off` keeps the Admin API
 # of its Caddy closed (docs/shopware/image.md). dockware starts sshd (22) and mailcatcher on every
 # boot, and hardening/dockware-boot-end.sh stops sshd again in chimodiazz, which keeps mailcatcher,
-# because its mail still falls back to it, see that script.
-CLOSED_LISTENERS="${CLOSED_LISTENERS:-shopware:2019 chimodiazz_shopware:22}"
+# because its mail still falls back to it, see that script. The OpenDHT node's REST proxy exists only
+# for its healthcheck and must stay on the container's loopback (docs/jami.md#opendht-node).
+CLOSED_LISTENERS="${CLOSED_LISTENERS:-shopware:2019 chimodiazz_shopware:22 dhtnode:8080}"
 
 GIT_CHECKOUT_DIR="${GIT_CHECKOUT_DIR:-$COMPOSE_DIR}"
 GIT_BRANCH="${GIT_BRANCH:-main}"

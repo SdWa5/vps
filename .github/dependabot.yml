@@ -22,6 +22,10 @@ updates:
       - dependency-name: localhost/sdwa5-shopware
       # The Jami Web image is built here from jami-web/ and in no registry (docs/jami.md).
       - dependency-name: localhost/sdwa5-jami-web
+      # Upstream's v4.4.99 to v4.4.10x tags of the OpenDHT node are development builds toward 4.5.0
+      # (docs/jami.md#opendht-node).
+      - dependency-name: ghcr.io/savoirfairelinux/opendht/dhtnode
+        versions: [">= 4.4.99, < 4.5.0"]
 
   # The shop image's base and build images, pinned by digest. A new digest arrives as a pull
   # request, and merging it deploys nothing until the image is rebuilt and shipped

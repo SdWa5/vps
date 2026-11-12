@@ -62,7 +62,7 @@ setup() {
     extra="$(awk '/^  [a-z0-9_]+:$/ { svc = $1 } /^    security_opt:.*no-new-privileges/ && svc == "chimodiazz_shopware:" { print svc }' \
         "$REPO_ROOT/docker-compose.yml" "$REPO_ROOT/docker-compose.projects.yml")"
     [ -z "$extra" ] || { echo "dockware needs setuid sudo: $extra"; return 1; }
-    [ "$(grep -c 'no-new-privileges:true' "$REPO_ROOT/docker-compose.yml")" -eq 14 ]
+    [ "$(grep -c 'no-new-privileges:true' "$REPO_ROOT/docker-compose.yml")" -eq 15 ]
 }
 
 @test "every PHP web service mounts the PHP security mitigation ini read-only" {
@@ -119,4 +119,21 @@ service_block() {
     [ "$(grep -cE '^      - "[0-9.:]+"$' <<<"$block")" = 1 ]
     grep -qx '      - "127.0.0.1:8008:8080"' <<<"$block"
     grep -qx '    cap_drop: \[NET_RAW\]' <<<"$block"
+}
+
+@test "the OpenDHT node publishes only udp 4222 over IPv4 and runs unprivileged" {
+    local block command
+    block="$(service_block dhtnode)"
+    [[ "$(awk '/^    image:/ { print $2 }' <<<"$block")" =~ ^ghcr\.io/savoirfairelinux/opendht/dhtnode:v[0-9.]+@sha256:[0-9a-f]{64}$ ]]
+    [ "$(grep -cE '^      - "' <<<"$block")" = 1 ]
+    grep -qx '      - "0.0.0.0:4222:4222/udp"' <<<"$block"
+    grep -qx '    user: "65534:65534"' <<<"$block"
+    grep -qx '    read_only: true' <<<"$block"
+    grep -qx '    cap_drop: \[ALL\]' <<<"$block"
+    grep -qx '    networks: \[jami\]' <<<"$block"
+    command="$(grep '^    command:' <<<"$block")"
+    [[ "$command" == *'"-s"'* ]]
+    [[ "$command" == *'"--public-stable"'* ]]
+    [[ "$command" == *'"--proxy-addr", "127.0.0.1"'* ]]
+    [[ "$command" != *no-rate-limit* ]]
 }

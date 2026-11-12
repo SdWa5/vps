@@ -95,6 +95,8 @@ done
 # minecraft publishes 25565 on all interfaces on purpose, so it stays reachable.
 iptables -A DOCKER-USER -i "$WAN" -p tcp --dport 25565 -j RETURN
 iptables -A DOCKER-USER -i "$WAN" -p udp --dport 25565 -j RETURN
+# The public OpenDHT node, IPv4 only, see docs/jami.md#opendht-node.
+iptables -A DOCKER-USER -i "$WAN" -p udp --dport 4222 -j RETURN
 # Anything else arriving from outside toward a container. This is what an
 # accidental 0.0.0.0 publish runs into, which is the whole point of the chain.
 iptables -A DOCKER-USER -i "$WAN" -j DROP
@@ -108,6 +110,9 @@ iptables -A DOCKER-USER -j RETURN
 # which is a local socket judged by the v6 INPUT chain below. Not measured,
 # because minecraft is profile-gated and not running. Since docker-ce 29 (2026-10-15) Docker's ip6tables default is on,
 # so ip6tables holds its chain skeleton, 11 lines of `ip6tables -S`, and no DNAT.
+# The OpenDHT node publishes on 0.0.0.0 only, so docker-proxy does not serve it
+# over IPv6 either, where it would hide the peers' addresses (TODO "IPv6 for the
+# OpenDHT node").
 # Enabling Docker's IPv6 would change that, and then this needs a v6 counterpart
 # written with nft, because ip6tables reports the v6 DOCKER-USER chain as
 # incompatible with its compat layer.

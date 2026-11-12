@@ -74,6 +74,37 @@ services:
       retries: 3
       start_period: 120s
 
+  dhtnode:
+    # The public OpenDHT node: a node of the DHT that every Jami client uses, run as a contribution to
+    # the network and as jami_web's first bootstrap. Upstream's image, pinned by tag and digest. It
+    # publishes udp 4222 over IPv4 only, because with Docker's userland-proxy a publish without a host
+    # address would also serve IPv6 through docker-proxy, which hides the peers' real addresses. It
+    # keeps no state on purpose: a restart rejoins through bootstrap.jami.net within seconds. The
+    # REST proxy listens on the container's own loopback and exists only for the healthcheck. See
+    # docs/jami.md#opendht-node.
+    image: ghcr.io/savoirfairelinux/opendht/dhtnode:v4.4.2.1@sha256:dcf8b8d48d0da0ef7c5d057744b4b7f534d2f326c8fd9dd47df947f130fc6c70
+    container_name: dhtnode
+    restart: unless-stopped
+    logging: *default-logging
+    user: "65534:65534"
+    command: ["dhtnode", "-s", "-p", "4222", "-b", "bootstrap.jami.net", "--public-stable", "--proxyserver", "8080", "--proxy-addr", "127.0.0.1"]
+    ports:
+      - "0.0.0.0:4222:4222/udp"
+    networks: [jami]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    # Measured 5.7 MiB after 90 s on 2026-11-12. The limit keeps a flood from reaching the shop.
+    mem_limit: 256m
+    healthcheck:
+      # Healthy while the node knows at least one good IPv4 peer. The image has perl but no curl,
+      # wget, python3 or bash.
+      test: ["CMD", "perl", "-MIO::Socket::INET", "-e", 'my $$socket = IO::Socket::INET->new(PeerAddr => "127.0.0.1:8080", Timeout => 5) or exit 1; print $$socket "GET /node/info HTTP/1.0\r\n\r\n"; local $$/; my $$reply = <$$socket>; exit($$reply =~ /"ipv4":\{[^}]*"good":[1-9]/ ? 0 : 1)']
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+
   shopware:
     # The sdwa5.org shop, built from shopware/Dockerfile by tools/shopware/image.sh on the
     # workstation and loaded with `image.sh ship`. It is in no registry, so nothing may pull it.

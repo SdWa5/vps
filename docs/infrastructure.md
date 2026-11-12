@@ -28,6 +28,7 @@ flowchart LR
             PH["Paperless household<br/>127.0.0.1:8007"]
             PHDB[("MariaDB + valkey<br/>paperless_home_*")]
             JW["Jami Web · always-on Jami peer<br/>127.0.0.1:8008 · SSH tunnel only"]
+            DN["OpenDHT node<br/>0.0.0.0:4222/udp · public, IPv4"]
             OL["Ollama<br/>127.0.0.1 via DOCKER-USER · inactive"]
             MC["Minecraft<br/>0.0.0.0:25565 · profile, inactive"]
             RS["Restic backup<br/>daily 04:00 · source /opt/docker (ro)"]
@@ -64,6 +65,8 @@ flowchart LR
     P3 --> P3DB
     RS -- " rclone (service account) " --> GD
     JW -- " outbound UDP/TCP, ICE/TURN " --> DHT
+    JW -- " bootstrap " --> DN
+    DN <-- " udp 4222 " --> DHT
     HC -. " checks " .-> C & SW & VW & DL & RS
     AU -- " updates " --> VW
     HC & AU -- " SMTP alerts " --> MB[("Mail<br/>MONITOR_MAIL_TO")]
@@ -85,6 +88,7 @@ Domain → port mapping lives in the [Caddyfile](../Caddyfile); backup detail in
 | Paperless Verein    | paperless-ngx:3.3.2 + mariadb:12.3 + valkey:9.0 | 8006 | https://paper.sdwa5.org | docker-compose.yml          |
 | Paperless household | paperless-ngx:3.3.2 + mariadb:12.3 + valkey:9.0 | 8007 | https://paper.ripper.sdwa5.org | docker-compose.yml   |
 | Jami Web            | localhost/sdwa5-jami-web:<jami-web version>-N (npm package, Node 26) | 8008 | (no domain, SSH tunnel) | docker-compose.yml, see [jami.md](jami.md) |
+| OpenDHT node        | ghcr.io/savoirfairelinux/opendht/dhtnode:v4.4.2.1 | 4222/udp | public, IPv4 only | docker-compose.yml, see [jami.md](jami.md#opendht-node) |
 | Ollama              | ollama/ollama:latest         | 11434           | (no domain, firewalled)    | docker-compose.yml                      |
 | Restic backup       | creativeprojects/resticprofile | —               | —                          | docker-compose.yml                      |
 | Minecraft           | itzg/minecraft-server:latest | 25565           | —                          | docker-compose.yml (profile: minecraft) |
@@ -130,7 +134,7 @@ database as dockware's `root`/`root`.
 | `paper_sdwa5_db` | paperless_sdwa5_db, paperless_sdwa5_broker, paperless_sdwa5 | `internal` |
 | `paper_home`, `paper_home_db` | the household instance | Same shape as the Verein instance |
 | `backup` | restic | Egress to Google Drive |
-| `jami` | jami_web | Egress to the Jami network, see [jami.md](jami.md) |
+| `jami` | jami_web, dhtnode | Egress to the Jami network and the public OpenDHT node, see [jami.md](jami.md) |
 | `chimodiazz` | chimodiazz_shopware | Third-party theme code runs here |
 | `minecraft`, `ollama` | profile-gated services | |
 
@@ -267,7 +271,7 @@ where the flag was set.
 ├── shopware-data/                  # gitignored — files, media, thumbnail, sitemap, theme, log
 ├── shopware-db-data/               # gitignored — shopware_db (MySQL 8.4)
 ├── shopware-mysql-data/            # gitignored — the dockware database of the rollback window
-├── shopware-legacy-data-20260327/  # gitignored — unused MySQL datadir of 2026-03-27, retired with TODO #37
+├── shopware-legacy-data-20260327/  # gitignored — unused MySQL datadir of 2026-03-27, retired with TODO #36
 ├── dolibarr-mariadb-data/          # gitignored — Dolibarr SdWa5 DB
 ├── chimodiazz-placeholder/         # tracked — maintenance page, routed while Chimo Diazz is off
 ├── chimodiazz-src/                 # gitignored — checkout of chimodiazz/website (own deploy key)

@@ -322,6 +322,7 @@ What it holds, in order:
 | `ESTABLISHED,RELATED` → `RETURN` | without it every reply a container waits for is dropped |
 | each Docker bridge → `RETURN` | container egress and traffic between containers |
 | `eth0` tcp and udp 25565 → `RETURN` | `minecraft` publishes on all interfaces on purpose |
+| `eth0` udp 4222 → `RETURN` | the public OpenDHT node, IPv4 only ([jami.md](jami.md#opendht-node)) |
 | `eth0` anything else → `DROP` | what an accidental `0.0.0.0` publish runs into |
 | `RETURN` | hand the rest back to Docker |
 
@@ -678,7 +679,7 @@ were never the fallback.
 **The panel's password reset is untested since cloud-init was purged on 2026-10-24.** Contabo does
 not document how the reset reaches the VM, and it reboots the server, so it may rely on cloud-init.
 Root still has a password (`passwd -S` shows `P`), but a console login with it is untested, see
-TODO #35. If the reset fails, the Contabo rescue system is the way in. Boot it from the panel, mount
+TODO #34. If the reset fails, the Contabo rescue system is the way in. Boot it from the panel, mount
 the root partition and append a key to `/root/.ssh/authorized_keys`, then add its fingerprint to the
 allowlist above.
 

@@ -82,7 +82,7 @@ services:
     # keeps no state on purpose: a restart rejoins through bootstrap.jami.net within seconds. The
     # REST proxy listens on the container's own loopback and exists only for the healthcheck. See
     # docs/jami.md#opendht-node.
-    image: ghcr.io/savoirfairelinux/opendht/dhtnode:v4.4.2.1@sha256:dcf8b8d48d0da0ef7c5d057744b4b7f534d2f326c8fd9dd47df947f130fc6c70
+    image: ghcr.io/savoirfairelinux/opendht/dhtnode:v4.4.104@sha256:528d5f9928c93924ae637412b839d5cc2256db172e50c009bc8509667b7df95c
     container_name: dhtnode
     restart: unless-stopped
     logging: *default-logging

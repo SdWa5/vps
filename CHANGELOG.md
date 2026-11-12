@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed
+
+- Jami docs: check jami_web's bootstrap with a packet capture, since the daemon does not log it
+
 ## [1.108.0] - 2026-11-12
 
 ### Added

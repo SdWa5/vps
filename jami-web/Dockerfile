@@ -6,7 +6,7 @@
 # calls fail and username lookups report every name as free (upstream issue #273). libvdpau1 is not
 # on upstream's list any more, but jami-core 0.5.4's jamid.node still links it (ldd, 2026-11-07); the
 # ldd check below fails the build whenever a library is missing.
-FROM node:26-trixie-slim@sha256:5adad64f9a1fca2d51972caa65983634c8a774eb300d72b20f7f2a0f60368072
+FROM node:26-trixie-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \

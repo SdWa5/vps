@@ -90,10 +90,10 @@
     checklist for anybody minded to send an Abmahnung. Its findings are therefore not restated in this
     file either. One of them is a characterization decision that needs the Obmann or the board rather
     than a wording patch, and that is the item this one waits on (`decision`)
-11. **Rehearse the theme rollback on the mirror** (ca. 45 minutes). Since SEC-31 the mirror on the production image
+11. **Rehearse the theme rollback on the mirror** (ca. 25 minutes). Since SEC-31 the mirror on the production image
     is the preview for theme changes, see [image.md#mirror](image.md#mirror). The rollback from [theme.md](theme.md#rollback)
     was never run live, only the dry run of `set-homepage-sections.sh --revert`, and on 2026-10-06 it was decided not
     to switch the live site back for the test, so the mirror is where to rehearse it
-12. **Text wordmark as the header logo** (ca. 20 minutes), if the small graffiti logo of the SdWa5Theme does not
+12. **Text wordmark as the header logo** (ca. 10 minutes), if the small graffiti logo of the SdWa5Theme does not
     convince. Decided 2026-10-06 to try the graffiti logo first. The wordmark would be "SdWa5" in Space Grotesk in
     `layout_header_logo_image`, which needs no image and stays sharp at every size

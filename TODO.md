@@ -578,3 +578,13 @@
       measurement whether Jami needs `/node/pingPush`, which would otherwise be an open push relay, and the
       recheck site lists with their tests
     - optionally a self-hosted ntfy at `ntfy.sdwa5.org` as the UnifiedPush distributor (ca. 3 Stunden)
+52. (proposal) **server secrets in plain text in the owner's My Drive** ([docs/vaultwarden.md](docs/vaultwarden.md)).
+    The My Drive of ripper@sdwa5.org holds `Backup/Server` with three Google Docs of 2025-12-06, `docker-compose.yml`,
+    `rclone.conf` and `Caddyfile`, shared with nobody (measured 2026-11-16, key names only). `docker-compose.yml`
+    carries `ADMIN_TOKEN`, `DOLI_ADMIN_PASSWORD`, `DOLI_DB_PASSWORD`, `DOLI_CRON_KEY`, `MYSQL_PASSWORD`,
+    `MYSQL_ROOT_PASSWORD` and `RESTIC_PASSWORD`, and `rclone.conf` a drive `token` and `client_secret`. Every Drive
+    token of that account can read them. The steps:
+    - compare each value with the live `.env` and compose files by checksum without printing it, attach what is still
+      needed to a Vaultwarden item, and move the three docs to the Drive trash with `rclone-vault run delete` of
+      bestcodename/ai through the `SdWa5-rw` remote (ca. 30 Minuten)
+    - rotate every value that is still live (ca. 2 Stunden)

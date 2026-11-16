@@ -1,4 +1,4 @@
-1. automatic provisioning and deployment (ca. 16 Stunden)
+1. automatic provisioning and deployment (ca. 8 Stunden)
 
     today only the vaultwarden **image** updates itself, daily, via
     [monitoring/vaultwarden-autoupdate.sh](monitoring/vaultwarden-autoupdate.sh). everything in this
@@ -7,7 +7,7 @@
     manually, which is the same silent-drift class the monitoring work removed for image versions.
 
     decided on 2026-09-03: push-based github action. a pull-based self-update cron job on the vps was
-    the cheaper alternative at ca. 5 Stunden and was considered and rejected, because the action gives
+    the cheaper alternative at ca. 2 Stunden 30 Minuten and was considered and rejected, because the action gives
     a deployment record per merge and gated deploys. do not re-open that comparison without a reason.
 
     1. move credentials from vps to [docs/vaultwarden.md](docs/vaultwarden.md)
@@ -35,7 +35,7 @@
        [docs/dolibarr.md](docs/dolibarr.md#api-access). shopware's read side is already documented in
        [docs/shopware/admin-api.md](docs/shopware/admin-api.md). what is missing is the drive side and
        a decision on what should actually flow between the three, because "if possible" was never
-       turned into a list of records (`decision`, ca. 2 Stunden)
+       turned into a list of records (`decision`, ca. 1 Stunde)
     2. **the write path exists now for person records**, see
        [tools/dolibarr/set-address.sh](tools/dolibarr/set-address.sh). setup values stay a ui job,
        because `/setup/company` is `GET` only, measured against the live instance on 2026-09-14
@@ -56,7 +56,7 @@
        downloaded artifacts in 27 languages rather than configuration. every file under
        `minecraft-data/` arrived in one commit and none has been edited since, so nothing
        there is hand-maintained. untracking the translations is cleanup with no security value, and it
-       makes the next `git pull` on the host delete them, so it is not free (ca. 15 Minuten)
+       makes the next `git pull` on the host delete them, so it is not free (ca. 10 Minuten)
     3. `ops.json` and `whitelist.json` are tracked and hold **five** distinct Minecraft usernames with
        their UUIDs, not four. counted on 2026-09-13: `bestcodename`, `Boehmb0Ss`, `DCXI`, `Emirgfk`
        and `NABI`, several of them appearing twice with an offline and an online uuid. the same names
@@ -70,11 +70,11 @@
        change it, so this is a message to those people rather than an action here. **which accounts
        they are and what they hold is deliberately not written down**, here or in
        `sdwa5/docs/services.md`, because read beside a reachable `vault.sdwa5.org` it names the soft
-       target and prices it. the admin panel has it for anybody who should (ca. 15 Minuten)
+       target and prices it. the admin panel has it for anybody who should (ca. 10 Minuten)
     2. finish the emergency access enrolment with the new member, in progress since 2026-09-08, so the
        org has a recovery path that does not depend on one master password. the grantee count is the
        thing to check in the admin panel and is not written down here, for the same reason as 6.1
-       (ca. 30 Minuten)
+       (ca. 15 Minuten)
     3. ipv6 drops out for minutes at a time and recovers on its own. the first time was 2026-09-08 and
        the second was 2026-10-15, from at least 01:43 to 01:52 Berlin time. measured during the second:
        the host kept its address and its static default route via `fe80::1`, echo requests and tcp syns
@@ -91,7 +91,7 @@
        a further both-target failure at 14:03 with ipv4 working and neighbour REACHABLE. the raw evidence
        and a German Contabo draft are retained privately; the temporary cron is retired. the remaining
        action is for the operator to submit the request, then track Contabo's answer. see the
-       [measurement result](docs/monitoring.md#ipv6-reachability-log) (ca. 15 Minuten)
+       [measurement result](docs/monitoring.md#ipv6-reachability-log) (ca. 10 Minuten)
     4. **DONE on 2026-09-13.** `/opt/docker` had been unable to pull since the 2026-09-12 move: its
        `origin` still named the deleted personal repository and its `HEAD` was a pre-rewrite commit
        that existed nowhere. Nothing noticed, because deploys are manual. It now tracks
@@ -149,7 +149,7 @@
        is a different sentence from "it is gone". Decided on 2026-10-17: the window closes on its own,
        and after 2026-12-12 a check confirms that the six are gone from
        <https://github.com/settings/repositories> and the organization's equivalent, together with the
-       deploy key test in 6.4 (ca. 10 Minuten)
+       deploy key test in 6.4 (ca. 5 Minuten)
 
        **A history rewrite breaks this again**, because the host's `HEAD` stops existing. The repair is
        `fetch` plus `reset --hard` and never a re-clone, since `/opt/docker` carries the untracked
@@ -172,14 +172,14 @@
        is the obvious move and the dangerous one, because it reaches the network from a production
        shop, it can fail halfway, and the rollback would have to undo it as well. A safer shape runs
        it only when `composer.lock` moved, behind the same rollback, with the vendor directory
-       snapshotted first (ca. 6 Stunden)
+       snapshotted first (ca. 3 Stunden)
     2. store-bought plugins. These come from `packages.shopware.com` through composer, which
        `sdwa5.org` does since 2026-10-01 with its own shop token in an untracked `auth.json`, see
        [docs/shopware/plugins.md](docs/shopware/plugins.md). Chimo Diazz would need the composer
        token of its own shop, and installing it on deploy is then the same question as half 1. What
        is still wanted is a check that alerts when a plugin lands in `custom/plugins/` through the
        admin's plugin manager instead, because that one is locked as a path and not reproducible
-       (ca. 4 Stunden)
+       (ca. 2 Stunden)
    Settled by #35, whose image build runs `composer install` once per release instead of on the
    live shop.
 8. **Chimo cannot see what his own deploy did.** Deployment is a pull from this side, so a push into
@@ -228,7 +228,7 @@
        because losing that key should cost the shop and nothing else. Revocation is one line out of
        `authorized_keys`. **Worth doing in the same pass is an `AllowGroups`**, since today any
        account on this host that has a key can log in, and that was acceptable while there was only
-       one such account (ca. 6 Stunden)
+       one such account (ca. 3 Stunden)
     2. **a status file that the deploy script writes and Caddy serves.** Each run would record the
        branch, the commit, the timestamp, the outcome and, on a failure, the tail of the command that
        failed, as JSON somewhere under `/opt/docker`, and a `handle` in the `chimodiazz.sdwa5.org`
@@ -236,20 +236,20 @@
        it opens no port and no account, and an agent can poll it. What it needs deciding first is
        whether commit hashes and build error output are fit to sit behind a single static token on a
        public name, and whether a failing `theme:compile` may quote plugin source. The state file is
-       worth building either way, because proposal 1 wants the same data to print (ca. 3 Stunden)
+       worth building either way, because proposal 1 wants the same data to print (ca. 1 Stunde 30 Minuten)
     3. **the same result written back to `chimodiazz/website` as a commit status**, which is where he
        is looking anyway and where an agent reads it without any new endpoint. It costs a token with
        write access to a repository this host does not own, which inverts the read-only direction that
        the pull deployment was chosen for in the first place. That is the reason to expect this one to
-       be rejected rather than a detail to solve (ca. 4 Stunden)
+       be rejected rather than a detail to solve (ca. 2 Stunden)
     4. **a second recipient for this script alone**, by setting `MONITOR_MAIL_TO` in
        `/etc/cron.d/chimodiazz-deploy` rather than in `.env`, so the deploy mails reach him and the
        rest of the host's monitoring does not. It is the cheapest of the four and it closes the human
-       half only, because a mailbox is not something his session reads (ca. 30 Minuten)
+       half only, because a mailbox is not something his session reads (ca. 15 Minuten)
 9. **Paperless-ngx follow-ups** ([docs/paperless.md](docs/paperless.md)). Two instances, one for the
-    Verein and one for the household, live on prod since 2026-10-16 (ca. 2 Stunden 15 Minuten for what is left)
+    Verein and one for the household, live on prod since 2026-10-16 (ca. 1 Stunde 10 Minuten for what is left)
     0. the second household account logs in to paper.ripper.sdwa5.org once and enrolls TOTP (priority low,
-       ca. 10 Minuten). It is a confirmed member of the household Vaultwarden organization since 2026-11-04, which
+       ca. 5 Minuten). It is a confirmed member of the household Vaultwarden organization since 2026-11-04, which
        holds the household logins. All other logins have TOTP since 2026-10-16
     1. maybe fork paperless-ngx into the SdWa5 organization rather than running the upstream image
        unchanged. Nothing asks for a code change yet, so a fork is worth it only once one does,
@@ -278,9 +278,9 @@
     links into the main content the same way or by dropping them. its aside builds the URL from
     `sw-storefront-url` and `resolved-uri`, which on sdwa5.org gave the technical `/navigation/<id>` path,
     so the aside probably shares the same wrong URL wherever Chimo Diazz has SEO URLs. SdWa5Theme 1.0.4 uses `sw-sales-channel-absolute-base-url` and
-    `sw-original-request-uri` instead (ca. 30 Minuten)
+    `sw-original-request-uri` instead (ca. 15 Minuten)
 12. also host gitlab myself (priority high since 2026-11-08, in the sandbox of #47) and email (priority medium to low)
-13. **host the sdwa5.org dns ourselves** (priority low, ca. 8 Stunden). today the domain and its dns sit
+13. **host the sdwa5.org dns ourselves** (priority low, ca. 4 Stunden). today the domain and its dns sit
     at squarespace, and squarespace has no dns api. checked on 2026-10-16: it offers commerce apis only,
     its reseller apis are for approved partners, and its dns page drives an undocumented internal
     endpoint. every record is therefore a hand step in the squarespace ui
@@ -315,23 +315,23 @@
     the message and closes the merged ticket, and REST endpoints so `sync-pm.sh` can write both.
     Publish it as an open-source module, deployed like BankSync via
     [tools/dolibarr/deploy-module.sh](tools/dolibarr/deploy-module.sh)
-    1. check Dolistore and GitHub for an existing module first (ca. 30 Minuten)
-    2. build, test against the 23.0 image and publish (ca. 24 Stunden)
+    1. check Dolistore and GitHub for an existing module first (ca. 15 Minuten)
+    2. build, test against the 23.0 image and publish (ca. 12 Stunden)
 16. **migrate the remaining Dolibarr workarounds into module endpoints**
     ([docs/dolibarr.md](docs/dolibarr.md#custom-modules)). The rule is to extend Dolibarr through its
     own module mechanism, never around it, and to migrate each workaround when its area is touched.
     Three remain
     1. the company address. `/setup/company` is `GET` only, so the address of the Verein itself is a
        ui job beside [tools/dolibarr/set-address.sh](tools/dolibarr/set-address.sh), which covers
-       person records only. a PmTools route or a small module of its own would write it (ca. 3 Stunden)
+       person records only. a PmTools route or a small module of its own would write it (ca. 1 Stunde 30 Minuten)
     2. the `sdwa5-inventur` tools that pipe PHP through `docker exec`, namely the auslagen import, the
        kassenbuch and subscription dumps and the PayPal history. each becomes a module endpoint or a
-       BankSync feature (ca. 16 Stunden)
+       BankSync feature (ca. 8 Stunden)
     3. editing a membership subscription, which today is a recipe around `Subscription::update()`
        because the ui refuses reconciled lines and rewrites bank line dates. a module endpoint would
-       wrap that call with its checks (ca. 4 Stunden)
+       wrap that call with its checks (ca. 2 Stunden)
 17. **bring the Chimo Diazz shop back on the production image's core version and PHP 8.5** ([docs/chimodiazz.md](docs/chimodiazz.md))
-    (ca. 3 Stunden). It is switched off since 2026-10-24 and still runs 6.7.11.1 on PHP 8.2.31. The way
+    (ca. 1 Stunde 30 Minuten). It is switched off since 2026-10-24 and still runs 6.7.11.1 on PHP 8.2.31. The way
     back (`PHP_VERSION=8.5`, the mitigation ini mount, the cron files, the monitoring defaults and the
     Caddy proxy) is listed at the top of docs/chimodiazz.md. `composer audit --locked` with the vendored
     Composer reported 24 advisories in 9 packages on 2026-10-16. The procedure is the main shop's in
@@ -339,7 +339,7 @@
     The mirror runs only the production image since SEC-31, so a dockware rehearsal needs a container of its own. The site comes from
     the private `chimodiazz/website`, so the new lock presumably has to land there and needs Chimo's side
     Superseded by #35 if that lands first; the dockware route stays the fallback.
-18. **Paperless AI features with a local model** ([docs/paperless.md](docs/paperless.md)) (ca. 4 Stunden).
+18. **Paperless AI features with a local model** ([docs/paperless.md](docs/paperless.md)) (ca. 2 Stunden).
     Paperless-ngx 3.x offers AI suggestions and a document chat behind `PAPERLESS_AI_ENABLED`, with Ollama
     as one of its backends, and both instances run with it off. `docker-compose.yml` already holds an
     `ollama` service as the inactive profile `ollama`, loopback-only on a network of its own. Paperless
@@ -347,14 +347,14 @@
     question, because a model next to two shops and two Paperless instances on 5.9 GB needs measuring
     before it is switched on
 19. **the Chimo Diazz shop never delivers a mail** ([docs/chimodiazz.md](docs/chimodiazz.md#dockwares-bundled-tools-were-public-and-are-not-any-more))
-    (ca. 1 Stunde 30 Minuten). Measured 2026-10-16: its `core.mailerSettings.emailAgent` is empty, so
+    (ca. 45 Minuten). Measured 2026-10-16: its `core.mailerSettings.emailAgent` is empty, so
     Shopware falls back to `.env`'s `MAILER_DSN=smtp://127.0.0.1`, which is dockware's MailCatcher. Order
     confirmations and password resets land there. Give it the main shop's relay settings, check that the
     Workspace relay accepts its sender address, send a test mail, then set `SDWA5_STOP_MAILCATCHER=1` for
     it in `docker-compose.projects.yml` and adjust `CLOSED_LISTENERS` in `monitoring/security-recheck.sh`
     With #35 the relay settings become a step of Chimo's return, and the MailCatcher fallback disappears.
 20. **a shared org IT mailbox it@sdwa5.org as the only monitoring recipient** ([docs/monitoring.md](docs/monitoring.md))
-    (priority medium, ca. 45 Minuten). Since 2026-11-03 `MONITOR_MAIL_TO` in the vps `.env` lists the private
+    (priority medium, ca. 25 Minuten). Since 2026-11-03 `MONITOR_MAIL_TO` in the vps `.env` lists the private
     Gmail address alone. Change the default in `monitoring/lib.sh` and `.env.example` to it@sdwa5.org and drop
     the `.env` line. Whether the mailbox exists is unchecked; if not, it gets created first, as a Workspace group
     or shared inbox. Measured 2026-11-03: no file under `/etc/cron.d` sets `MONITOR_MAIL_TO`. Shopmon's
@@ -368,9 +368,9 @@
     2. a share button per slide that calls `navigator.share` with that url, and the WhatsApp, Telegram
        and e-mail links as the fallback. the image build runs `shopware-cli project ci`, which
        builds a theme's storefront javascript, so the js build presumably exists since SEC-31; the theme's first
-       `main.js` verifies it (ca. 6 Stunden)
+       `main.js` verifies it (ca. 3 Stunden)
 22. **redirect `d.sdwa5.org` and `donate.sdwa5.org` to the PayPal donation page** ([docs/caddy.md](docs/caddy.md))
-    (priority high, ca. 1 Stunde). The donation links on sdwa5.org point to `https://paypal.me/SdWa5`
+    (priority high, ca. 30 Minuten). The donation links on sdwa5.org point to `https://paypal.me/SdWa5`
     (measured 2026-10-16). Neither name has a DNS record yet
     1. two A records `d` and `donate` to 158.220.127.232 at Squarespace, entered by hand, since Squarespace
        has no DNS API (TODO #13)
@@ -379,16 +379,16 @@
     3. the two names in `security-recheck.sh` (HSTS and TLS) and `docs/caddy.md`. `RECHECK_SITES` expects a
        200, so the check has to accept the redirect to PayPal there
 23. **change Dolibarr passwords through the API and the MCP server** ([docs/dolibarr.md](docs/dolibarr.md#mcp-server))
-    (ca. 4 Stunden). Dolibarr 24 already accepts `pass` in `PUT /users/{id}`, given the `user > password`
+    (ca. 2 Stunden). Dolibarr 24 already accepts `pass` in `PUT /users/{id}`, given the `user > password`
     right or admin (`user/class/api_users.class.php`, read on 2026-10-16). `GET /users/{id}/setPassword`
     only generates a random password and needs `API_ENABLE_LOGIN_API` and `API_ALLOW_PASSWORD_RESET`, so
     it does not fit
     1. a `set-password` command beside [tools/dolibarr/doli.sh](tools/dolibarr/doli.sh) that reads the new
-       password from a file or a pipe such as `<(bw get password ID)` and never prints it (ca. 1 Stunde 30 Minuten)
+       password from a file or a pipe such as `<(bw get password ID)` and never prints it (ca. 45 Minuten)
     2. an MCP tool for the same call through the `addMcpTools` hook of PmTools. Decide first whether an MCP
        client may change passwords at all, because the `mcp` user would need the password right for it
-       (ca. 2 Stunden 30 Minuten)
-24. **a new UI for Dolibarr that talks to it only over REST** (ca. 80 Stunden for a first version).
+       (ca. 1 Stunde 15 Minuten)
+24. **a new UI for Dolibarr that talks to it only over REST** (ca. 40 Stunden for a first version).
     Dolibarr's own UI hides common actions. The password change is the case found on 2026-10-16. Dolibarr 24
     has no button for it, the new password goes into the Password field of the Modify form
     (`user/card.php?id=<id>&action=edit`), and the **Reinit password** button generates a random one instead
@@ -402,7 +402,7 @@
        API key per user or through the login API, which is off today
 25. **rename the PmTools module, since it becomes the general REST and MCP extension of Dolibarr**
     ([SdWa5/dolibarr-pmtools](https://github.com/SdWa5/dolibarr-pmtools),
-    [docs/dolibarr.md](docs/dolibarr.md#custom-modules)) (ca. 6 Stunden). It started with the ticket
+    [docs/dolibarr.md](docs/dolibarr.md#custom-modules)) (ca. 3 Stunden). It started with the ticket
     routes and the ten `pm_*` MCP tools, and #16 and #23 add
     endpoints outside project management. The new name is open. A rename touches
     1. the module class `modPmTools`, its `rights_class` `pmtools`, the `MAIN_MODULE_PMTOOLS` constant and the
@@ -420,11 +420,11 @@
     land on the host that holds the vault. the proposal is a separate small vps for the shop, done as its
     own migration. it overlaps with #17 and #35, whose image would move along, and waits while the shop is
     not an active project. It is candidate 4 of #47
-    (ca. 6 Stunden)
-27. **delete the evidence of the 2026-10-24 compromise check after 2026-11-23** (ca. 10 Minuten).
+    (ca. 3 Stunden)
+27. **delete the evidence of the 2026-10-24 compromise check after 2026-11-23** (ca. 5 Minuten).
     `/root/forensics-20261024`, the `forensic/*:20261024` images and the Dolibarr 24.0.2 upgrade leftover
     `/var/tmp/archive-verify.calVSV` (94 MB, a copy of Dolibarr documents) on the host
-28. (proposal) **state the server-log retention on the Datenschutz page** (ca. 15 Minuten). Its section
+28. (proposal) **state the server-log retention on the Datenschutz page** (ca. 10 Minuten). Its section
     "Speicherdauer" names no period for the IP address, browser and access times it lists under server logs.
     The Caddy access logs `/var/log/caddy/access-*.log` keep 14 days since 1.97.0, so the page would say
     "14 Tage".
@@ -435,78 +435,76 @@
     or an edit to `sshd_config` could still add a key source such as `AuthorizedKeysCommand`, `TrustedUserCAKeys`
     or `AuthorizedPrincipalsFile`. The hourly part would read `sshd -T` and be CRIT on any of those, on password
     or keyboard-interactive login, on a file in `sshd_config.d` other than `10-hardening.conf`, and on a relay key
-    line without `restrict` (ca. 2 Stunden)
+    line without `restrict` (ca. 1 Stunde)
 30. (proposal) **count primary groups in the account check** ([monitoring/account-check.sh](monitoring/account-check.sh)).
     The check reads only the member lists in `/etc/group`, while an account whose `/etc/passwd` group is
     `sudo` or `docker` is just as much a member. The check would compare the group ids too. `admin` (uid
     1000) has a private group of the same name, which is on the list of root-equivalent groups, so `admin`
     would leave that list. Debian's sudoers grants nothing to `%admin`, and a rule for it is already CRIT
-    (ca. 45 Minuten)
+    (ca. 25 Minuten)
 31. (proposal) **a package integrity check** ([docs/monitoring.md](docs/monitoring.md)). `dpkg --verify` finds no
     changed file outside the config files today (measured 2026-10-24). A run in `vps-health.sh` that is CRIT on
     a changed package file would catch a replaced `sshd`, `sudo` or library, which no check covers now. Root can
     rewrite dpkg's checksums too, so it catches careless or partial tampering, not a full root compromise. Its
-    run time decides between a daily and an hourly run (ca. 1 Stunde 30 Minuten)
+    run time decides between a daily and an hourly run (ca. 45 Minuten)
 32. (proposal) **review the access-log redaction from 2026-10-31** ([docs/caddy.md](docs/caddy.md#access-logs)).
     In the first hour only scanner parameters appeared, so the redacted names come from the applications' known
     links, not from traffic. The pattern matches exact names, so a name such as `_sw_payment_token` or
     `securekey` would pass unredacted, and so would a token percent-encoded inside a `next=` target. After a
     week, list the query parameter names per site, names and counts only, then add the secret ones to the
     `access_log` snippet and to the `logs:` probe. The log also records request headers such as Shopmon's
-    `Shopmon-Shop-Token`, which the snippet should redact too (ca. 1 Stunde 20 Minuten)
+    `Shopmon-Shop-Token`, which the snippet should redact too (ca. 40 Minuten)
 33. (proposal) **one site list for the access-log probe** ([tests/caddyfile.bats](tests/caddyfile.bats)). The
     sites live in the Caddyfile's `import access_log` lines and again in `ACCESS_LOG_SITES` of
     `security-recheck.sh`, so a new site without the second edit gets no `logs:` probe, and nothing says so. A
-    bats test that compares the two lists would fail CI instead (ca. 20 Minuten)
+    bats test that compares the two lists would fail CI instead (ca. 10 Minuten)
 34. (proposal) **test the console login with root's password once**
     ([docs/ssh-hardening.md](docs/ssh-hardening.md#login-accounts-and-roots-keys)). Root has a password
     (`passwd -S` shows `P`), but whether it logs in on the Contabo VNC console is untested, and that console is
-    the way back after a lost key. It needs the password from the vault and the Contabo panel (ca. 15 Minuten)
+    the way back after a lost key. It needs the password from the vault and the Contabo panel (ca. 10 Minuten)
 
 35. (proposal) **Chimo Diazz onto the production image when it returns** ([docs/shopware/image.md](docs/shopware/image.md)).
     SEC-31 moved sdwa5.org off dockware, and Chimo Diazz stays on it while switched off. The same build with
     the shop's own Composer project and theme from `chimodiazz/website` would settle #7, #17 and #19, end the
     root/root login and setuid `sudo` there, and give it a clean database stop. A move off this host (#26) would
-    take the image along (ca. 16 Stunden). Dependabot PR #4 (dockware 6.7.11.1 to 6.7.15.1) belongs here and #17,
+    take the image along (ca. 8 Stunden). Dependabot PR #4 (dockware 6.7.11.1 to 6.7.15.1) belongs here and #17,
     and closes once neither needs dockware
-36. (proposal) **retire the dockware data of sdwa5.org after the rollback window** (ca. 1 Stunde). Tag a restic
+36. (proposal) **retire the dockware data of sdwa5.org after the rollback window** (ca. 30 Minuten). Tag a restic
     snapshot `sdwa5-archive` holding `shopware-html-data/`'s untracked docroot and `shopware-mysql-data/`, then
     delete both together with `shopware-legacy-data-20260327/`, the unused MySQL datadir of 2026-03-27 that sat in
     `shopware-data/`, and move the tracked shop sources from `shopware-html-data/` into `shopware/`
-37. (proposal) **a vps-health WARN for a pending `docker-ce` or `containerd.io` update** (ca. 45 Minuten). Both
+37. (proposal) **a vps-health WARN for a pending `docker-ce` or `containerd.io` update** (ca. 25 Minuten). Both
     come from download.docker.com and restart every container, so they are held for a window rather than
     applied unattended, and nothing reports that one is waiting
-38. (proposal) **SEC-33: check the running shop image and its writes** (ca. 2 Stunden). Compare the image ID of
+38. (proposal) **SEC-33: check the running shop image and its writes** (ca. 1 Stunde). Compare the image ID of
     `shopware` with the one `docker-compose.yml` names, and report `docker diff shopware` outside `var/cache`
     and `/tmp`, since a write to the code is what a compromise of the shop would leave
-39. (proposal) **a vps-health WARN when the running shop image is older than 45 days** (ca. 45 Minuten). The image
+39. (proposal) **a vps-health WARN when the running shop image is older than 45 days** (ca. 25 Minuten). The image
     is only as patched as its last build, so its build date is the patch cadence of the shop
-40. (proposal) **`read_only: true` for the shop container** (ca. 3 Stunden). Measure `docker diff` first, then give
+40. (proposal) **`read_only: true` for the shop container** (ca. 1 Stunde 30 Minuten). Measure `docker diff` first, then give
     tmpfs to what it shows, such as `/config`, `/data` and `/tmp`, with the code owned by root and only `var/`
     writable by 82. Shopware's reference Dockerfile copies the shop with `--chown=82`, so the measurement
     comes first
-41. (proposal) **a retention for the shop's error log** (ca. 45 Minuten). Monolog's `nested` handler keeps every
+41. (proposal) **a retention for the shop's error log** (ca. 25 Minuten). Monolog's `nested` handler keeps every
     daily file. `max_files: 14` in a `config/packages/prod/monolog.yaml` would cap it, after measuring that the
     override merges with Shopware's handler
-42. (proposal) **keep the database passwords out of `mysqld`'s environment in `shopware_db`** (ca. 1 Stunde 30
-    Minuten). The `mysql:8.4` entrypoint exports `MYSQL_PASSWORD` and `MYSQL_ROOT_PASSWORD` from their
+42. (proposal) **keep the database passwords out of `mysqld`'s environment in `shopware_db`** (ca. 45 Minuten). The `mysql:8.4` entrypoint exports `MYSQL_PASSWORD` and `MYSQL_ROOT_PASSWORD` from their
     `*_FILE`, so the server process carries both, as the security recheck lists. Measure whether a wrapper that
     unsets them before `exec mysqld` keeps the first-start initialisation working, since that needs them
-43. (proposal) **remove FroshShopmon** ([docs/shopware/plugins.md](docs/shopware/plugins.md)) (ca. 1 Stunde 30
-    Minuten). It is deprecated, and FroshTools 3.17.2 or later serves Shopmon through the same integration. Its
+43. (proposal) **remove FroshShopmon** ([docs/shopware/plugins.md](docs/shopware/plugins.md)) (ca. 45 Minuten). It is deprecated, and FroshTools 3.17.2 or later serves Shopmon through the same integration. Its
     uninstall deletes that integration, so run `plugin:uninstall FroshShopmon --keep-user-data` in the running
     container first, then `composer remove frosh/shopmon`, drop its `staging.yaml` entry and the
     `dev-instance.sh` assertion, and rehearse it on the mirror. A separate release keeps the rollback simple
 44. (proposal) **Paperless-ngx 3.3.2 to 3.4.1** ([docs/paperless.md](docs/paperless.md)), Dependabot PR #5
-    (ca. 45 Minuten). Read the release notes, merge, deploy and run the restore drill's checks
+    (ca. 25 Minuten). Read the release notes, merge, deploy and run the restore drill's checks
 45. (proposal) **two error lines in the deploy log of 2026-11-04** ([tools/shopware/deploy.sh](tools/shopware/deploy.sh))
-    (ca. 45 Minuten). FroshTools logged "Could not persist FroshTools security activity" with
+    (ca. 25 Minuten). FroshTools logged "Could not persist FroshTools security activity" with
     `TableNotFoundException` five times while the helper updated it, and a line "Access denied for user
     'root'@'127.0.0.1' (using password: NO)" appeared, presumably from the `mysqladmin ping`. Neither failed the
     deploy and neither cause is measured. Reproduce both on the mirror with a restore of the 6.7.15.1 image followed
     by the 6.7.16.0 helper, then silence the ping or report the FroshTools order upstream
 46. (proposal) **close the Dolibarr tasks that tickets replaced on 2026-10-15**
-    ([docs/dolibarr.md](docs/dolibarr.md#projects-tasks-and-tickets)) (ca. 45 Minuten). 14 of the 23 open tasks
+    ([docs/dolibarr.md](docs/dolibarr.md#projects-tasks-and-tickets)) (ca. 25 Minuten). 14 of the 23 open tasks
     from 2026-09 still stand next to a ticket with the same subject, such as TK2609-0003 next to TS2610-0036, so
     `todo-sync` lists each of them twice. Set those 14 to 100 % with a note that names the replacing ticket. The
     other nine have no ticket. As of 2026-11-05 TK2609-0007 is done, and TK2609-0002 probably arrived with the last
@@ -515,7 +513,7 @@
     become tickets or close
 47. (high) **separate the projects on the vps by user or container sandbox, so that a third-party project such as
     Chimo Diazz is cut off from the rest** ([docs/infrastructure.md](docs/infrastructure.md#container-isolation))
-    (ca. 16 Stunden). Requested on 2026-11-05. Since 2026-10-15 each application has its own Docker network,
+    (ca. 8 Stunden). Requested on 2026-11-05. Since 2026-10-15 each application has its own Docker network,
     drops `NET_RAW` and, except dockware, sets `no-new-privileges`. Everything still runs under one rootful
     Docker daemon from the shared `/opt/docker` checkout, so a container escape or a shell account (#8) lands as
     root next to Vaultwarden and every other service. Candidates, to be compared before a plan:
@@ -533,7 +531,7 @@
     in [docs/chimodiazz.md](docs/chimodiazz.md) is the natural first rollout, and it should not come back
     without this.
 48. (proposal) **public `jami.sdwa5.org` once someone besides the owner keeps an account on the Jami peer**
-    ([docs/jami.md](docs/jami.md#access)) (ca. 3 Stunden). Until then the UI stays on an SSH tunnel. The steps:
+    ([docs/jami.md](docs/jami.md#access)) (ca. 1 Stunde 30 Minuten). Until then the UI stays on an SSH tunnel. The steps:
     - an A record `jami` → 158.220.127.232 at Squarespace, entered by hand
     - a Caddy site with `import hide_server_headers`, `import access_log jami.sdwa5.org` and HSTS that answers 404
       for `/api/admin`, `/api/admin/*`, `/api/auth/new-account`, `/api/auth/link-token` and `/api/auth/link/*`,
@@ -545,7 +543,7 @@
     - an upstream issue asking Jami Web for a `trust proxy` setting, because behind Caddy every login shares one
       rate-limit bucket, so anyone's failed logins lock everyone out for five minutes
 49. (proposal) **The Jami peer as the call host of a group** ([docs/jami.md](docs/jami.md#known-limits))
-    (ca. 1 Stunde 30 Minuten). A Jami group can name one device as its call host, so group calls run on the
+    (ca. 45 Minuten). A Jami group can name one device as its call host, so group calls run on the
     always-on peer instead of on whichever member starts them. The daemon in `jami_web` supports it, since its
     `jamid.node` carries the swarm keys `rdvAccount` and `rdvDevice` (measured 2026-11-08). Jami Web 0.2.3 has
     no control for it, so the host is chosen in a group's details on the notebook or the phone. The steps:
@@ -557,7 +555,7 @@
     and stays off on the owner's account, because it turns the account into a meeting room that answers every
     incoming call into one conference. A permanent meeting room, if one is wanted, is a separate account on the
     peer with that switch on.
-50. (proposal) **IPv6 for the OpenDHT node** ([docs/jami.md](docs/jami.md#opendht-node)) (ca. 3 Stunden). The node
+50. (proposal) **IPv6 for the OpenDHT node** ([docs/jami.md](docs/jami.md#opendht-node)) (ca. 1 Stunde 30 Minuten). The node
     publishes `udp 4222` on `0.0.0.0` only, because with Docker's userland-proxy an IPv6 publish runs through
     docker-proxy and hides every peer's address. The steps:
     - IPv6 on the `jami` network (a ULA subnet), so Docker DNATs IPv6 natively with the real source addresses
@@ -571,13 +569,13 @@
     own FCM and APNs credentials. Jami's clients list only `dhtproxy1` to `dhtproxy5.jami.net` in
     `config.jami.net/proxyList` (measured 2026-11-12). The UnifiedPush AND_3 fix is OpenDHT PR #804 (merged
     30.11.2025); PR #916 (push platform kept up to date, merged 26.10.2026) is not in v4.4.2.1. The steps:
-    - ask SFL in the Jami forum whether community proxies are wanted in the proxy list (ca. 30 Minuten)
-    - the proxy behind Caddy with an A record `dht` at Squarespace, entered by hand (ca. 4 Stunden), including a
+    - ask SFL in the Jami forum whether community proxies are wanted in the proxy list (ca. 15 Minuten)
+    - the proxy behind Caddy with an A record `dht` at Squarespace, entered by hand (ca. 2 Stunden), including a
       fail2ban jail on `/var/log/caddy/access-dht.sdwa5.org.log`, `sdwa5-firewall.sh` restoring the jump of
       every `f2b-*` chain rather than only `f2b-sshd`, a Caddy body-size cap, `/node/stats` blocked, a
       measurement whether Jami needs `/node/pingPush`, which would otherwise be an open push relay, and the
       recheck site lists with their tests
-    - optionally a self-hosted ntfy at `ntfy.sdwa5.org` as the UnifiedPush distributor (ca. 3 Stunden)
+    - optionally a self-hosted ntfy at `ntfy.sdwa5.org` as the UnifiedPush distributor (ca. 1 Stunde 30 Minuten)
 52. (proposal) **server secrets in plain text in the owner's My Drive** ([docs/vaultwarden.md](docs/vaultwarden.md)).
     The My Drive of ripper@sdwa5.org holds `Backup/Server` with three Google Docs of 2025-12-06, `docker-compose.yml`,
     `rclone.conf` and `Caddyfile`, shared with nobody (measured 2026-11-16, key names only). `docker-compose.yml`
@@ -586,5 +584,5 @@
     token of that account can read them. The steps:
     - compare each value with the live `.env` and compose files by checksum without printing it, attach what is still
       needed to a Vaultwarden item, and move the three docs to the Drive trash with `rclone-vault run delete` of
-      bestcodename/ai through the `SdWa5-rw` remote (ca. 30 Minuten)
-    - rotate every value that is still live (ca. 2 Stunden)
+      bestcodename/ai through the `SdWa5-rw` remote (ca. 15 Minuten)
+    - rotate every value that is still live (ca. 1 Stunde)

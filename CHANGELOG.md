@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `docs/shopware/TODO.md`: item 9.4 proposes linking the public git projects and Jami on sdwa5.org
 - `TODO.md`: item 12 gets the measured sandbox memory as GitLab's sizing basis
 - `TODO.md`: item 12 gets the host's RAM and disk headroom and the Contabo upgrade options
+- `TODO.md`: item 12 records the open decision between GitLab and Forgejo
 - `docs/sandbox.md`: measured figures, writing a root-owned file into a home, stdin in heredoc scripts
 
 ### Changed

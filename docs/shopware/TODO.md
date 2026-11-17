@@ -83,6 +83,14 @@
     3. Artists & Friends
         1. add links
         2. asked in SdWa5 Family Whatsapp group who wants to be featured -> wait for responses
+    4. (proposal) projects and Jami, requested on 2026-11-17 (ca. 45 Minuten)
+        1. link the owner's public git projects, grouped by owner: `github.com/sdwa5` (docs, vps, 3d, dsp, banksync,
+           dolibarr-pmtools) and `github.com/bestcodename` (agent-eta, yt-dlp-wrapper and whatever item 86 of
+           bestcodename/ai makes public next); a CMS page or a homepage section, by [content-cms.md](content-cms.md)
+        2. Jami: what SdWa5 runs for it ([../jami.md](../jami.md), the public OpenDHT node and the always-on peer), how
+           members join with their own Jami app, and the upstream swarm admin contribution. A Jami ID or username on
+           the page needs the owner's explicit yes first, because the workstation rules keep Messenger identities out
+           of everything but Vaultwarden
 10. Apply the legal-page wording fixes from the 2026-07-22 review before editing the live
     Datenschutz, AGB, Impressum and Widerrufsrecht CMS pages. **The review itself lives in Google
     Drive and deliberately not here**, decided 2026-09-13: it is a dated, itemised list of gaps on a

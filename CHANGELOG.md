@@ -10,6 +10,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - `TODO.md`: item 51 (52 before 1.109.0) proposes moving the server secrets out of the owner's My Drive
 - `docs/shopware/TODO.md`: item 9.4 proposes linking the public git projects and Jami on sdwa5.org
+- `TODO.md`: item 12 gets the measured sandbox memory as GitLab's sizing basis
+- `docs/sandbox.md`: measured figures, writing a root-owned file into a home, stdin in heredoc scripts
 
 ### Changed
 

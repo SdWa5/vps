@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Fake getent for the group and passwd databases. Each variable holds lines in
+# the database's own format; the line whose first field is the key is printed.
+# Nothing is found (exit 2) when the key or the variable is missing.
+#
+#   STUB_GETENT_GROUP    lines of /etc/group
+#   STUB_GETENT_PASSWD   lines of /etc/passwd
+case "${1:-}" in
+    group)  database="${STUB_GETENT_GROUP-}" ;;
+    passwd) database="${STUB_GETENT_PASSWD-}" ;;
+    *)      exit 1 ;;
+esac
+key="${2:-}"
+while IFS= read -r line; do
+    [[ -n "$line" && "${line%%:*}" == "$key" ]] || continue
+    printf '%s\n' "$line"
+    exit 0
+done <<< "$database"
+exit 2

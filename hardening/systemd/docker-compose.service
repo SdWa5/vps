@@ -5,7 +5,8 @@
 # so the unit survives the move from Debian's docker.io to docker-ce. `$$` is a
 # literal `$` for bash, because systemd expands `$VAR` in Exec lines itself.
 #
-# The profile-gated services and docker-compose.projects.yml are not started here.
+# The profile-gated services are not started here, and the projects in projects/
+# run in their sandboxes (docs/sandbox.md).
 
 [Unit]
 Description=Docker Compose application services in /opt/docker

@@ -41,7 +41,8 @@ Automated backups via **Restic** + **rclone** to Google Drive.
 | Setting           | Value                              |
 |-------------------|------------------------------------|
 | Schedule          | Daily at **04:00 UTC**, which is 06:00 CEST / 05:00 CET — the restic container has no `TZ` set and runs UTC |
-| Source            | `/data` (= `/opt/docker/` read-only mount) |
+| Source            | `/data` (= `/opt/docker/` read-only mount), sandbox homes in `sandbox/` included |
+| Excluded          | `/data/sandbox/*/.local/share/docker` through `RESTIC_JOB_ARGS`, the rootless image stores; sandbox projects keep their data in bind mounts, see [sandbox.md](sandbox.md) |
 | Repository        | `rclone:sdwa5backup:restic-backups`, Shared Drive "SdWa5 Backup" |
 | Retention         | 6 daily, 3 weekly, 11 monthly, 2 yearly, plus every snapshot tagged `sdwa5-archive` |
 | Restic password   | compose secret `secrets/restic_password`, read by restic through `RESTIC_PASSWORD_FILE`; off-host copies below |
@@ -153,7 +154,7 @@ backs up the `mysql` schema to `system_mysql_backup_<old version>.sql.zst` in th
 upgrade with grants off and then starts normally. No root login is needed for that.
 
 The root password (the compose secret `secrets/<service>_db_root_password`, or a variable in
-`docker-compose.projects.yml`) reaches the database only when an empty datadir is initialised. When the
+`projects/chimodiazz/docker-compose.yml`) reaches the database only when an empty datadir is initialised. When the
 two have drifted apart, `tools/mariadb/reset-root-password.sh` sets every existing root account back
 to the configured value. It runs a throwaway container of the stopped service with grants and
 networking off, proves the new password with a root login and never prints it.
@@ -248,7 +249,7 @@ docker exec restic restic check
 ```
 
 A restic restore brings `shopware-html-data/auth.json` back with the rest of `/opt/docker`, since
-`RESTIC_BACKUP_ARGS` sets no excludes, for every snapshot from 2026-10-02 on. A rebuild
+only the rootless image stores are excluded, for every snapshot from 2026-10-02 on. A rebuild
 from the git repository alone does not, because that file is gitignored. Its composer token for
 `packages.shopware.com` then has to come from Vaultwarden before `composer install`, or the three Store
 plugins fail to download, see [shopware/plugins.md](shopware/plugins.md).

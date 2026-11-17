@@ -9,6 +9,7 @@ setup() {
 @test "Dependabot watches the compose images and the workflow actions weekly" {
     local config="$REPO_ROOT/.github/dependabot.yml"
     grep -qx '  - package-ecosystem: docker-compose' "$config"
+    grep -qxF '    directories: ["/", "/projects/*"]' "$config"
     grep -qx '  - package-ecosystem: github-actions' "$config"
     [ "$(grep -c '^      interval: weekly$' "$config")" = 5 ]
 }
@@ -48,7 +49,7 @@ setup() {
 @test "no image line uses a YAML anchor, which Dependabot's compose updater cannot edit" {
     # dependabot-core matches the image right after "image:" in the raw text,
     # so "image: &x name:tag" and "image: *x" fail the whole update run.
-    ! grep -nE '^[[:space:]]+image:[[:space:]]*[&*]' "$REPO_ROOT"/docker-compose*.yml
+    ! grep -nE '^[[:space:]]+image:[[:space:]]*[&*]' "$REPO_ROOT"/docker-compose*.yml "$REPO_ROOT"/projects/*/docker-compose.yml
 }
 
 @test "both Paperless instances, both brokers and both Dolibarr services pin the same image" {

@@ -42,6 +42,7 @@ auto-update.
 | `http` | `vault.sdwa5.org/alive`, `sdwa5.org`, `erp.sdwa5.org` or `chimodiazz.sdwa5.org` returns anything but 200 |
 | `caddy` | `systemctl is-active caddy` is not `active` |
 | `accounts` | `monitoring/account-check.sh`: a login account other than root, a second uid 0, a member of a root-equivalent group, a sudoers rule or include beyond Debian's defaults, an `authorized_keys2`, or a root key outside `/etc/vps-health/root-authorized-keys` (CRIT); an unreadable file or no allowlist (WARN) |
+| `sandbox` | `monitoring/sandbox-check.sh`: a sandbox account reaches host loopback, a root-daemon container or a private path, a sandbox home is not 700, or an ignored path of `/opt/docker` is open to others (CRIT); a positive control such as `sdwa5.org:443` fails (WARN), see [Sandbox check](#sandbox-check) |
 | `firewall` | the IPv4 `INPUT` policy is not `DROP`, fail2ban's jump is gone, a port in `FIREWALL_PORTS` (22 80 443) is no longer accepted, or **`DOCKER-USER` is missing or back to Docker's empty `-j RETURN`**, which leaves every published container port unfiltered. The same holds for IPv6: an open v6 policy, a missing v6 `f2b-sshd` chain or a v6 chain without its jump is a CRIT too |
 | `shopware_tasks` | the newest Shopware scheduled task ran longer than `SHOPWARE_TASK_MAX_AGE_HOURS` (2) ago, the task list cannot be read, or no task has ever run |
 | `shopware_mail` | FroshMailArchive holds a mail with `transport_state` `failed` from the last `SHOPWARE_MAIL_FAILED_HOURS` (24), or the archive cannot be read (WARN, with the count and the newest time) |
@@ -446,6 +447,7 @@ status is 1 with any CRIT, 1 with any WARN under `--strict`, 2 for a usage error
 | `revision` | `/opt/docker` HEAD equals `origin/main`, no tracked file modified | it differs, a tracked file is modified, or origin is unreachable | not a checkout |
 | `deployed` | the Caddyfile, jail.local, sshd drop-in, firewall script and unit and the netplan file under `/etc` equal the checkout | one differs or is missing | |
 | `accounts` | `account-check.sh` reports OK, as the health check's `accounts` row | no allowlist or an unreadable file | an unexpected account, group member, sudoers line or root key |
+| `sandbox:host` | `sandbox-check.sh` reports OK, as the health check's `sandbox` row | a positive control fails | a sandbox reaches something closed, or private data is open to others |
 | `logs` | per site, `/var/log/caddy/access-<site>.log` holds no credential header and no unredacted token value; only counts are printed | the file is missing | a `Cookie`, `Authorization`, `Proxy-Authorization`, `Referer` or `Set-Cookie` field, or a token value other than `REDACTED` |
 | `env` | per container of `ISOLATION_APPS`: no secret value in `docker inspect`; names a process environment still carries are listed in the message | a secret value in `docker inspect`, or the process environments cannot be read | |
 | `listeners` | none of `shopware` (2019, the FrankenPHP admin API), `chimodiazz_shopware` (22, which its boot hook closes) and `dhtnode` (8080, the OpenDHT proxy, which must stay on loopback) listens on a port of `CLOSED_LISTENERS` | one of them listens | |
@@ -484,6 +486,23 @@ FrankenPHP's Caddy, see [shopware/image.md](shopware/image.md#runtime), and Chim
 
 Every value is an environment variable
 with a default, listed in the script's header. The first live run on 2026-10-16 took ca. 40 seconds.
+
+## Sandbox check
+
+`monitoring/sandbox-check.sh` proves the isolation of [sandbox.md](sandbox.md) from the sandbox's own
+side. For each member of the group `sandbox` it runs, as that account (`as_sandbox` in `lib.sh`):
+
+| Probe | Default | Status if it connects or passes |
+|---|---|---|
+| `SANDBOX_CLOSED_TCP` | every host loopback listener (25, 2019, 2201, 2202, 2211, 8000-8008) on IPv4 and `::1`, and `sdwa5.org:22` | CRIT |
+| `SANDBOX_CONTAINER_PROBES` | `shopware_db:3306 vaultwarden:80`, IP read from the root daemon | CRIT |
+| `SANDBOX_PRIVATE_PATHS` | `.env`, `secrets`, `vaultwarden-data`, `paperless-home-media`, `database-backup`, `/root`, `/var/lib/docker`, `docker.sock`, each with `test -r`, `-x`, `-w` | CRIT |
+| `SANDBOX_OPEN_TCP` | `sdwa5.org:443 1.1.1.1:443` | WARN if it does **not** connect |
+
+Independent of members, any git-ignored path or `.git` of `/opt/docker` open to "other" and any sandbox
+home not mode 700 is CRIT. Without members the line reads `OK  no sandbox accounts; private data
+closed`. Each probe times out after `PROBE_TIMEOUT` (2) seconds. It runs inside `vps-health.sh` and
+`security-recheck.sh --host`, so nothing extra is installed.
 
 ## IPv6 reachability log
 
@@ -539,7 +558,8 @@ install -m 644 -o root -g root monitoring/cron.d/vaultwarden-db-backup   /etc/cr
 install -m 644 -o root -g root monitoring/cron.d/database-backup         /etc/cron.d/database-backup
 install -m 644 -o root -g root monitoring/cron.d/vaultwarden-autoupdate  /etc/cron.d/vaultwarden-autoupdate
 install -m 644 -o root -g root monitoring/cron.d/shopware-worker         /etc/cron.d/shopware-worker
-# Not installed while Chimo Diazz is switched off (since 2026-10-24), see docs/chimodiazz.md.
+# Not installed while Chimo Diazz is switched off (since 2026-10-24). They still assume the root
+# daemon and come back with the TODO proposal for its return through its sandbox, docs/chimodiazz.md.
 # install -m 644 -o root -g root monitoring/cron.d/chimodiazz-worker     /etc/cron.d/chimodiazz-worker
 # install -m 644 -o root -g root monitoring/cron.d/chimodiazz-deploy     /etc/cron.d/chimodiazz-deploy
 mkdir -p /var/lib/vps-health

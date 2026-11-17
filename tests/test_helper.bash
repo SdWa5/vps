@@ -30,6 +30,18 @@ common_setup() {
     export REBOOT_REQUIRED_FILE="$BATS_TEST_TMPDIR/reboot-required"
     export BOOT_DIR="$BATS_TEST_TMPDIR/boot"
     make_account_etc "$BATS_TEST_TMPDIR/etc"
+    make_sandbox_check_fixture
+}
+
+# A healthy monitoring/sandbox-check.sh for the vps-health and security-recheck suites, whose
+# fixtures model no sandbox; tests/sandbox-check.bats runs the real one.
+make_sandbox_check_fixture() {
+    export SANDBOX_CHECK="$BATS_TEST_TMPDIR/sandbox-check"
+    cat > "$SANDBOX_CHECK" <<'EOF'
+#!/bin/sh
+printf '%s\tsandbox fixture\n' "${STUB_SANDBOX_CHECK_STATUS:-OK}"
+EOF
+    chmod 755 "$SANDBOX_CHECK"
 }
 
 # Two throwaway public keys for monitoring/account-check.sh; their private halves were deleted.
@@ -530,6 +542,7 @@ recheck_setup() {
     cp "$GIT_CHECKOUT_DIR/etc/a.conf" "$GIT_CHECKOUT_DIR/etc/b.conf" "$BATS_TEST_TMPDIR/deployed/"
     export DEPLOYED_FILES="etc/a.conf:$BATS_TEST_TMPDIR/deployed/a.conf etc/b.conf:$BATS_TEST_TMPDIR/deployed/b.conf"
     make_account_etc "$BATS_TEST_TMPDIR/etc"
+    make_sandbox_check_fixture
     export ACCESS_LOG_DIR="$BATS_TEST_TMPDIR/caddy"
     mkdir -p "$ACCESS_LOG_DIR"
     local site

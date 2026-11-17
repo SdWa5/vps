@@ -8,12 +8,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
-- `TODO.md`: item 52 proposes moving the server secrets out of the owner's My Drive
+- `TODO.md`: item 51 (52 before 1.109.0) proposes moving the server secrets out of the owner's My Drive
 - `docs/shopware/TODO.md`: item 9.4 proposes linking the public git projects and Jami on sdwa5.org
 
 ### Changed
 
 - TODO: effort estimates halved, by the user's request of 2026-11-16
+
+## [1.109.0] - 2026-11-17
+
+### Added
+
+- `tools/sandbox/sandbox.sh`: `prepare-host`, `create`, `run` and `compose` for one rootless Docker daemon per third-party project account
+- `monitoring/sandbox-check.sh`, reported as `sandbox` by vps-health and `sandbox:host` by security-recheck
+- `monitoring/lib.sh`: `sandbox_members`, `as_sandbox`, `open_private_paths`
+- Firewall chains `SANDBOX-OUT` and `SANDBOX-POLICY` in `OUTPUT` for sandbox uids and subuid ranges
+- `docs/sandbox.md`
+- Dependabot watches `projects/*`
+- TODO proposals 52 to 57: Chimo Diazz's return through its sandbox, Caddy admin socket, hidden processes and cron.log, SMTP relay from sandboxes, disk quota, premove tar deletion
+
+### Changed
+
+- Chimo Diazz compose file moved to `projects/chimodiazz/docker-compose.yml`, `restart: "no"`, data in the sandbox home
+- restic excludes the rootless image stores `/data/sandbox/*/.local/share/docker`
+- `prepare-host` closes ignored data and `.git` of `/opt/docker` to others
+- `.gitignore`: `/sandbox/` replaces the three `chimodiazz-*` entries
+- TODO items 48 to 52 renumbered to 47 to 51; items 1, 8, 12, 17, 19, 26, 35 and 37 point at the sandbox
+- Docs: infrastructure, Chimo Diazz, monitoring, backup, maintenance and README for the sandbox
+
+### Removed
+
+- TODO 47 (project separation), done by the sandbox
 
 ## [1.108.1] - 2026-11-12
 

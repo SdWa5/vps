@@ -13,7 +13,8 @@
     1. move credentials from vps to [docs/vaultwarden.md](docs/vaultwarden.md)
     2. github action on merge to main:
         1. pull credentials from vaultwarden
-        2. provision vps (idempotent)
+        2. provision vps (idempotent), calling the idempotent `tools/sandbox/sandbox.sh prepare-host` and
+           `create` for every sandbox ([docs/sandbox.md](docs/sandbox.md))
         3. deploy to vps (upload from within github action to vps)
         4. cd /opt/docker && docker-compose pull && docker-compose up -d
     3. blocked on 1.1, which is circular: the action needs an ssh deploy key or equivalent to reach
@@ -209,7 +210,9 @@
        `AllowTcpForwarding no` so that an edited `authorized_keys` cannot widen it, and one
        `/etc/sudoers.d` line naming a single root-owned helper with no wildcard in it. Since 1.105.0
        `AllowUsers root relay` and the relay `Match` block exist, so the account joins that list and its
-       `Match` block goes next to the relay one at the end of `10-hardening.conf`.
+       `Match` block goes next to the relay one at the end of `10-hardening.conf`. Since 2026-11-17 the
+       account exists as the sandbox account `chimodiazz` ([docs/sandbox.md](docs/sandbox.md)), so the
+       key would go on it.
 
        **The `docker` group is not the way in and staying out of it is the whole point**, because a
        member of it bind-mounts `/` into a container and is thereby root on this host. The wrapper
@@ -279,7 +282,7 @@
     `sw-storefront-url` and `resolved-uri`, which on sdwa5.org gave the technical `/navigation/<id>` path,
     so the aside probably shares the same wrong URL wherever Chimo Diazz has SEO URLs. SdWa5Theme 1.0.4 uses `sw-sales-channel-absolute-base-url` and
     `sw-original-request-uri` instead (ca. 15 Minuten)
-12. also host gitlab myself (priority high since 2026-11-08, in the sandbox of #47) and email (priority medium to low)
+12. also host gitlab myself (priority high since 2026-11-08, in a sandbox, [docs/sandbox.md](docs/sandbox.md)) and email (priority medium to low)
 13. **host the sdwa5.org dns ourselves** (priority low, ca. 4 Stunden). today the domain and its dns sit
     at squarespace, and squarespace has no dns api. checked on 2026-10-16: it offers commerce apis only,
     its reseller apis are for approved partners, and its dns page drives an undocumented internal
@@ -338,7 +341,8 @@
     [docs/shopware/infrastructure.md](docs/shopware/infrastructure.md#updating-shopware-on-dockware-2026-10-16).
     The mirror runs only the production image since SEC-31, so a dockware rehearsal needs a container of its own. The site comes from
     the private `chimodiazz/website`, so the new lock presumably has to land there and needs Chimo's side
-    Superseded by #35 if that lands first; the dockware route stays the fallback.
+    Superseded by #35 if that lands first; the dockware route stays the fallback. Either way the return
+    starts with the proposal "Chimo Diazz's return through its sandbox" at the end of this file.
 18. **Paperless AI features with a local model** ([docs/paperless.md](docs/paperless.md)) (ca. 2 Stunden).
     Paperless-ngx 3.x offers AI suggestions and a document chat behind `PAPERLESS_AI_ENABLED`, with Ollama
     as one of its backends, and both instances run with it off. `docker-compose.yml` already holds an
@@ -351,7 +355,7 @@
     Shopware falls back to `.env`'s `MAILER_DSN=smtp://127.0.0.1`, which is dockware's MailCatcher. Order
     confirmations and password resets land there. Give it the main shop's relay settings, check that the
     Workspace relay accepts its sender address, send a test mail, then set `SDWA5_STOP_MAILCATCHER=1` for
-    it in `docker-compose.projects.yml` and adjust `CLOSED_LISTENERS` in `monitoring/security-recheck.sh`
+    it in `projects/chimodiazz/docker-compose.yml` and adjust `CLOSED_LISTENERS` in `monitoring/security-recheck.sh`
     With #35 the relay settings become a step of Chimo's return, and the MailCatcher fallback disappears.
 20. **a shared org IT mailbox it@sdwa5.org as the only monitoring recipient** ([docs/monitoring.md](docs/monitoring.md))
     (priority medium, ca. 25 Minuten). Since 2026-11-03 `MONITOR_MAIL_TO` in the vps `.env` lists the private
@@ -419,7 +423,8 @@
     `monitoring/security-recheck.sh` measures, but a container escape in a third-party shop would still
     land on the host that holds the vault. the proposal is a separate small vps for the shop, done as its
     own migration. it overlaps with #17 and #35, whose image would move along, and waits while the shop is
-    not an active project. It is candidate 4 of #47
+    not an active project. Since 2026-11-17 the shop's sandbox ([docs/sandbox.md](docs/sandbox.md)) already
+    lands an escape as an unprivileged uid instead of root; a separate vps would also separate the kernel
     (ca. 3 Stunden)
 27. **delete the evidence of the 2026-10-24 compromise check after 2026-11-23** (ca. 5 Minuten).
     `/root/forensics-20261024`, the `forensic/*:20261024` images and the Dolibarr 24.0.2 upgrade leftover
@@ -467,13 +472,15 @@
     SEC-31 moved sdwa5.org off dockware, and Chimo Diazz stays on it while switched off. The same build with
     the shop's own Composer project and theme from `chimodiazz/website` would settle #7, #17 and #19, end the
     root/root login and setuid `sudo` there, and give it a clean database stop. A move off this host (#26) would
-    take the image along (ca. 8 Stunden). Dependabot PR #4 (dockware 6.7.11.1 to 6.7.15.1) belongs here and #17,
+    take the image along (ca. 8 Stunden). The image is built in or loaded into the `chimodiazz` sandbox, and the
+    return starts with the proposal "Chimo Diazz's return through its sandbox" at the end of this file. Dependabot PR #4 (dockware 6.7.11.1 to 6.7.15.1) belongs here and #17,
     and closes once neither needs dockware
 36. (proposal) **retire the dockware data of sdwa5.org after the rollback window** (ca. 30 Minuten). Tag a restic
     snapshot `sdwa5-archive` holding `shopware-html-data/`'s untracked docroot and `shopware-mysql-data/`, then
     delete both together with `shopware-legacy-data-20260327/`, the unused MySQL datadir of 2026-03-27 that sat in
     `shopware-data/`, and move the tracked shop sources from `shopware-html-data/` into `shopware/`
-37. (proposal) **a vps-health WARN for a pending `docker-ce` or `containerd.io` update** (ca. 25 Minuten). Both
+37. (proposal) **a vps-health WARN for a pending `docker-ce` or `containerd.io` update** (ca. 25 Minuten), including
+    `docker-ce-rootless-extras`, which is upgraded to the same version as `docker-ce`. Both
     come from download.docker.com and restart every container, so they are held for a window rather than
     applied unattended, and nothing reports that one is waiting
 38. (proposal) **SEC-33: check the running shop image and its writes** (ca. 1 Stunde). Compare the image ID of
@@ -511,26 +518,7 @@
     order and needs a check on site. TK2609-0006 waits, because a first test found no damage after a probable
     overload in summer 2026, so measuring each Achenbach driver on its own goes into TS2509-0015. The other six
     become tickets or close
-47. (high) **separate the projects on the vps by user or container sandbox, so that a third-party project such as
-    Chimo Diazz is cut off from the rest** ([docs/infrastructure.md](docs/infrastructure.md#container-isolation))
-    (ca. 8 Stunden). Requested on 2026-11-05. Since 2026-10-15 each application has its own Docker network,
-    drops `NET_RAW` and, except dockware, sets `no-new-privileges`. Everything still runs under one rootful
-    Docker daemon from the shared `/opt/docker` checkout, so a container escape or a shell account (#8) lands as
-    root next to Vaultwarden and every other service. Candidates, to be compared before a plan:
-    1. **one unix user per project with rootless Docker or Podman**, its own home with checkout, volumes and
-       systemd user units, and Caddy proxying to its loopback port. It also gives #8 an account that reaches
-       only its own instance
-    2. **`userns-remap` on the existing daemon**, so container root is an unprivileged host uid. It is cheaper
-       but daemon-wide, so every volume needs new ownership, and it keeps the shared checkout and daemon
-    3. **a sandbox runtime such as gVisor or Sysbox** for the third-party containers only
-    4. **a separate vps**, which is #26
-
-    Check each against the monitoring that reads all containers as root (`monitoring/vps-health.sh`,
-    `monitoring/security-recheck.sh`, `monitoring/database-backup.sh`), restic, the deploy cron and the
-    automatic provisioning of #1, which should build on the result. Chimo Diazz is switched off, so its return
-    in [docs/chimodiazz.md](docs/chimodiazz.md) is the natural first rollout, and it should not come back
-    without this.
-48. (proposal) **public `jami.sdwa5.org` once someone besides the owner keeps an account on the Jami peer**
+47. (proposal) **public `jami.sdwa5.org` once someone besides the owner keeps an account on the Jami peer**
     ([docs/jami.md](docs/jami.md#access)) (ca. 1 Stunde 30 Minuten). Until then the UI stays on an SSH tunnel. The steps:
     - an A record `jami` → 158.220.127.232 at Squarespace, entered by hand
     - a Caddy site with `import hide_server_headers`, `import access_log jami.sdwa5.org` and HSTS that answers 404
@@ -542,7 +530,7 @@
       `tests/caddyfile.bats`
     - an upstream issue asking Jami Web for a `trust proxy` setting, because behind Caddy every login shares one
       rate-limit bucket, so anyone's failed logins lock everyone out for five minutes
-49. (proposal) **The Jami peer as the call host of a group** ([docs/jami.md](docs/jami.md#known-limits))
+48. (proposal) **The Jami peer as the call host of a group** ([docs/jami.md](docs/jami.md#known-limits))
     (ca. 45 Minuten). A Jami group can name one device as its call host, so group calls run on the
     always-on peer instead of on whichever member starts them. The daemon in `jami_web` supports it, since its
     `jamid.node` carries the swarm keys `rdvAccount` and `rdvDevice` (measured 2026-11-08). Jami Web 0.2.3 has
@@ -555,7 +543,7 @@
     and stays off on the owner's account, because it turns the account into a meeting room that answers every
     incoming call into one conference. A permanent meeting room, if one is wanted, is a separate account on the
     peer with that switch on.
-50. (proposal) **IPv6 for the OpenDHT node** ([docs/jami.md](docs/jami.md#opendht-node)) (ca. 1 Stunde 30 Minuten). The node
+49. (proposal) **IPv6 for the OpenDHT node** ([docs/jami.md](docs/jami.md#opendht-node)) (ca. 1 Stunde 30 Minuten). The node
     publishes `udp 4222` on `0.0.0.0` only, because with Docker's userland-proxy an IPv6 publish runs through
     docker-proxy and hides every peer's address. The steps:
     - IPv6 on the `jami` network (a ULA subnet), so Docker DNATs IPv6 natively with the real source addresses
@@ -563,7 +551,7 @@
       `DOCKER-USER` chain as incompatible
     - `[::]:4222:4222/udp`, with `tests/compose.bats`, `tests/sdwa5-firewall.bats`, the recheck and the docs
     - a measurement that every other network stays IPv4 only, since this is the host's first IPv6 Docker network
-51. (proposal) **a public DHT proxy at `dht.sdwa5.org` with UnifiedPush** ([docs/jami.md](docs/jami.md#known-limits)).
+50. (proposal) **a public DHT proxy at `dht.sdwa5.org` with UnifiedPush** ([docs/jami.md](docs/jami.md#known-limits)).
     A proxy lets phones keep their DHT listens on a server and receive pushes instead of staying online. Through
     our proxy, push works only for the F-Droid build of Jami, by UnifiedPush; Google Play and iOS push need SFL's
     own FCM and APNs credentials. Jami's clients list only `dhtproxy1` to `dhtproxy5.jami.net` in
@@ -576,7 +564,7 @@
       measurement whether Jami needs `/node/pingPush`, which would otherwise be an open push relay, and the
       recheck site lists with their tests
     - optionally a self-hosted ntfy at `ntfy.sdwa5.org` as the UnifiedPush distributor (ca. 1 Stunde 30 Minuten)
-52. (proposal) **server secrets in plain text in the owner's My Drive** ([docs/vaultwarden.md](docs/vaultwarden.md)).
+51. (proposal) **server secrets in plain text in the owner's My Drive** ([docs/vaultwarden.md](docs/vaultwarden.md)).
     The My Drive of ripper@sdwa5.org holds `Backup/Server` with three Google Docs of 2025-12-06, `docker-compose.yml`,
     `rclone.conf` and `Caddyfile`, shared with nobody (measured 2026-11-16, key names only). `docker-compose.yml`
     carries `ADMIN_TOKEN`, `DOLI_ADMIN_PASSWORD`, `DOLI_DB_PASSWORD`, `DOLI_CRON_KEY`, `MYSQL_PASSWORD`,
@@ -586,3 +574,30 @@
       needed to a Vaultwarden item, and move the three docs to the Drive trash with `rclone-vault run delete` of
       bestcodename/ai through the `SdWa5-rw` remote (ca. 15 Minuten)
     - rotate every value that is still live (ca. 1 Stunde)
+52. (proposal) **Chimo Diazz's return through its sandbox** ([docs/sandbox.md](docs/sandbox.md)) (ca. 45 Minuten).
+    Its container runs in the sandbox daemon since 2026-11-17, so the root-daemon container lists miss it.
+    Reference it as `sandbox:name` in `vps-health.sh` `EXPECTED_CONTAINERS`, in `database-backup.sh` (its lock
+    block at lines 171-177 then opens a root-owned lock read-only, because `fs.protected_regular=2` blocks root
+    from opening the account's file in `/run/lock`), in `security-recheck.sh` `CLOSED_LISTENERS` and
+    `ISOLATION_APPS` (today they see no root-daemon container and report "not running" as OK,
+    `security-recheck.sh:681`) and in its restore check. Install the deploy and worker cron as the account,
+    with `SRC_DIR` and `STATE_DIR` in the home and `MONITOR_MAIL_TO` in the cron file
+53. (proposal) **Caddy admin API on a private unix socket** ([docs/caddy.md](docs/caddy.md)) (ca. 15 Minuten).
+    `admin unix//run/caddy/admin.sock` with `RuntimeDirectory=caddy` and mode 0700. The sandbox firewall
+    already rejects 127.0.0.1:2019 for sandbox uids; this closes it for every other local uid as well
+54. (proposal) **hide other users' processes and `/var/log/cron.log` from sandbox accounts** (ca. 15 Minuten).
+    `/proc` with `hidepid=invisible` and a group for root's monitoring; `/var/log/cron.log` is world-readable,
+    measured 2026-11-17
+55. (proposal) **SMTP relay from sandboxes** (ca. 15 Minuten). `smtp-relay.gmail.com` accepts mail from any process
+    on this host by its address, a sandbox included. Reject tcp 25, 465 and 587 in `SANDBOX-POLICY`, or give a
+    returning shop its own authenticated sender
+56. (proposal) **disk quota per sandbox** (ca. 20 Minuten). A sandbox shares `/` and only vps-health's disk check
+    sees it fill; a project quota on `/opt/docker/sandbox/<name>` or a size-limited filesystem would cap it
+57. (proposal) **delete `/root/chimodiazz-premove-20261117.tar` after 2026-11-24** (ca. 5 Minuten). The tar of the
+    three Chimo Diazz directories before their move into the sandbox, mode 600, the rollback of that move
+58. (proposal) **own DNS resolver with ad blocking** (ca. 2 Stunden). AdGuard Home as a container, used by the
+    household's devices, because it serves DNS-over-TLS and DNS-over-HTTPS itself and tells clients apart by a
+    ClientID in the DoT hostname or DoH path; Pi-hole has no DoT or DoH server. Publish tcp 853 and DoH behind
+    Caddy, never plain port 53, which would be an open UDP resolver. Allow only known ClientIDs. No VPN, since it
+    needs a client on every phone and clashes with Mullvad on the desktop, while Android Private DNS and iOS
+    profiles speak DoT and DoH directly. Distinct from #13, which is the authoritative zone of sdwa5.org

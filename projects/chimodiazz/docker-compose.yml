@@ -1,5 +1,12 @@
 version: '3'
 
+# Chimo Diazz runs in the sandbox chimodiazz, a rootless Docker daemon of its own
+# account (docs/sandbox.md). Start and stop it through
+#   tools/sandbox/sandbox.sh compose chimodiazz --profile chimodiazz ...
+# which uses the account's home /opt/docker/sandbox/chimodiazz as project
+# directory, so the relative volumes below land there and no .env of /opt/docker
+# is read.
+
 # YAML anchors do not cross files, so this repeats the x-logging anchor from
 # docker-compose.yml rather than referencing it. Without a logging cap a
 # container's json-file log grows without bound, which is what filled the disk
@@ -15,7 +22,7 @@ services:
     # Switched off since 2026-10-24 (PHP security release of 2026-10-21): the
     # container is stopped with restart policy `no`, Caddy serves the
     # placeholder, and the cron files and monitoring defaults leave it out. The
-    # way back is in docs/chimodiazz.md.
+    # way back is in docs/chimodiazz.md and sets `unless-stopped` here again.
     # Same exact pin as the sdwa5.org instance in docker-compose.yml, and for the
     # same reason: the `6.7-latest` tag that does exist rolls across minor
     # versions, and a Shopware minor runs forward-only database migrations.
@@ -25,12 +32,12 @@ services:
     container_name: chimodiazz_shopware
     # Profile-gated on purpose. As of 2026-09-15 chimodiazz/website has no
     # deployable application yet, so this service is defined but must not start:
-    # a bare `docker compose -f docker-compose.projects.yml up -d` would otherwise
+    # a bare `docker compose up -d` of this file would otherwise
     # bring up an empty shop with dockware's default credentials on a public
     # subdomain. Start it deliberately with `--profile chimodiazz` once the site
     # exists, and change those credentials in the same sitting.
     profiles: ["chimodiazz"]
-    restart: unless-stopped
+    restart: "no"
     logging: *default-logging
     # Third-party code runs here, so this container gets a network of its own and
     # no raw sockets. It used to share docker_default with every other service.
@@ -50,20 +57,21 @@ services:
       - ./chimodiazz-mysql-data:/var/lib/mysql
       - ./chimodiazz-html-data:/var/www/html
       # The theme plugin is not owned by this repository. It lives in
-      # chimodiazz/website, which the host checks out to ./chimodiazz-src using
-      # its own read-only deploy key, and it is mounted rather than copied so a
-      # `git pull` in that checkout is the whole update. Read-write on purpose:
+      # chimodiazz/website, which the sandbox account checks out to
+      # ./chimodiazz-src using its own read-only deploy key, and it is mounted
+      # rather than copied so a `git pull` in that checkout is the whole update.
+      # Read-write on purpose:
       # Shopware's storefront build writes into the plugin's own dist directory,
       # which a read-only mount would break.
       - ./chimodiazz-src/shopware/custom/plugins/ChimodiazzTheme:/var/www/html/custom/plugins/ChimodiazzTheme
       # Same boot hook as the sdwa5.org shop, which stops dockware's sshd. Without
       # SDWA5_STOP_MAILCATCHER, because this shop's mailer still falls back to
       # .env's MAILER_DSN=smtp://127.0.0.1 and so hands its mail to mailcatcher.
-      # TODO.md tracks giving it a real mailer.
-      - ./hardening/dockware-boot-end.sh:/var/www/boot_end.sh:ro
+      # TODO.md tracks giving it a real mailer. Absolute, because the project
+      # directory is the sandbox home; the rootless daemon reads it as the
+      # account, through the tracked 755 directories.
+      - /opt/docker/hardening/dockware-boot-end.sh:/var/www/boot_end.sh:ro
 
 # One network per application, see the networks block in docker-compose.yml.
-# Both files share the compose project name, so these names must not repeat
-# the ones defined there.
 networks:
   chimodiazz:

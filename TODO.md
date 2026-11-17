@@ -604,9 +604,10 @@
     Caddy, never plain port 53, which would be an open UDP resolver. Allow only known ClientIDs. No VPN, since it
     needs a client on every phone and clashes with Mullvad on the desktop, while Android Private DNS and iOS
     profiles speak DoT and DoH directly. Distinct from #13, which is the authoritative zone of sdwa5.org
-58. (proposal) **restic master key unchanged after the Drive leak** ([docs/backup.md](docs/backup.md#rotating-the-restic-password)).
-    The password rotated on 2026-11-17 sat in a Google Doc in the owner's My Drive since 2025-12-06. A key rotation
-    keeps the master key, and the Drive audit log was not reachable for ripper@sdwa5.org, so a copy of the old
-    password together with a key file cannot be excluded. The two old key files sit in the trash of "SdWa5 Backup"
-    until about 2026-12-17; a Manager of that drive can delete them for good now (ca. 5 Minuten). Only a new
-    repository, `restic init --copy-chunker-params` plus `restic copy`, replaces the master key (ca. 2 Stunden)
+58. (proposal) **new restic repository, since the master key outlived the Drive leak**
+    ([docs/backup.md](docs/backup.md#rotating-the-restic-password)) (ca. 2 Stunden). The password rotated on
+    2026-11-17 sat in a Google Doc in the owner's My Drive since 2025-12-06, and the Drive audit log was not
+    reachable for ripper@sdwa5.org. A key rotation keeps the master key, so whoever copied the old password together
+    with a key file before 2026-11-17 keeps it; the old key files themselves are deleted for good.
+    `restic init --from-repo … --copy-chunker-params` plus `restic copy` replaces the master key. The estimate is
+    the active work; `restic copy` pulls and pushes 109 GiB through the host, and its wall time is unmeasured

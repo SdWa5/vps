@@ -16,8 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `docs/sandbox.md`: measured figures, writing a root-owned file into a home, stdin in heredoc scripts
 - `docs/backup.md`: rotating the restic password, with the record of 2026-11-17
 - `docs/infrastructure.md`: the server secrets that sat in the owner's My Drive and what became of them
-- `TODO.md`: item 58 proposes deleting the old restic key files for good or a new repository, since the master
-  key outlived the Drive leak
+- `TODO.md`: item 58 proposes a new restic repository, since the master key outlived the Drive leak
 
 ### Changed
 
@@ -32,7 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Security
 
 - restic password rotated by `key add` and `key remove` (new key `f6d5d9c3`), because it sat in a Google Doc in
-  the owner's My Drive
+  the owner's My Drive; the old key files deleted from the Shared Drive trash for good
 - The three Google Docs of 2025-12-06 in My Drive `Backup/Server` moved to the Drive trash, and the OAuth client
   named in their `rclone.conf` deleted
 - The 16 unused `PROJECT2_*` and `PROJECT3_*` keys dropped from the host `.env`

@@ -283,6 +283,9 @@
     so the aside probably shares the same wrong URL wherever Chimo Diazz has SEO URLs. SdWa5Theme 1.0.4 uses `sw-sales-channel-absolute-base-url` and
     `sw-original-request-uri` instead (ca. 15 Minuten)
 12. also host gitlab myself (priority high since 2026-11-08, in a sandbox, [docs/sandbox.md](docs/sandbox.md)) and email (priority medium to low)
+    Sizing basis measured 2026-11-17 with 2343 MB available before: an idle rootless daemon costs ca. 111 MiB
+    (`user-1001.slice` `MemoryCurrent`), the running dockware shop ca. 575 MiB anonymous plus 63 MiB shmem;
+    the slice's 1536M cap filled with reclaimable page cache without an OOM kill.
 13. **host the sdwa5.org dns ourselves** (priority low, ca. 4 Stunden). today the domain and its dns sit
     at squarespace, and squarespace has no dns api. checked on 2026-10-16: it offers commerce apis only,
     its reseller apis are for approved partners, and its dns page drives an undocumented internal

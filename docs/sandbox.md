@@ -3,7 +3,8 @@
 A project this host runs for someone else gets a **sandbox**: a unix account of its own with its own
 rootless Docker daemon. A container escape then lands as an unprivileged uid instead of root next to
 Vaultwarden. The first sandbox is `chimodiazz` ([chimodiazz.md](chimodiazz.md)), set up on
-2026-11-17. The tool is `tools/sandbox/sandbox.sh`.
+2026-11-17. Measured then: the idle daemon costs ca. 111 MiB, a container's uid 33 shows as host
+uid 165568, and restic's snapshot holds the home without the image store. The tool is `tools/sandbox/sandbox.sh`.
 
 ## What a sandbox is
 
@@ -41,7 +42,7 @@ because the account can give its own processes a subuid through `newuidmap`.
 `prepare-host` closed every git-ignored path and `.git` of `/opt/docker` to "other" (`chmod o-rwx`,
 not recursive). Bind mounts resolve as root, so no container noticed. Tracked files stay readable,
 and they hold no secret by design. A new data directory must be created closed, or the hourly check
-reports it.
+reports it. The check sees git-ignored paths only, so a new data directory must also be git-ignored.
 
 `monitoring/sandbox-check.sh` probes all of this as each sandbox account every hour, see
 [monitoring.md](monitoring.md#sandbox-check).
@@ -92,6 +93,16 @@ tools/sandbox/sandbox.sh run <name> \
 
 This is `dockerd-rootless-setuptool.sh nsenter` without its mount and network namespaces, called
 directly because the setuptool's `getopt` parses the command's options.
+
+**A root-owned file goes into a home** through the already open stdin. `install /dev/stdin` fails,
+because reopening `/proc/self/fd/0` after the uid switch checks the permissions of root's file:
+
+```bash
+tools/sandbox/sandbox.sh run <name> sh -c 'umask 077 && cat > "$1"' write .ssh/id_ed25519 < /root/key
+```
+
+A command that reads stdin (`ssh`, `docker exec`) inside a heredoc script needs `< /dev/null`, or it
+swallows the rest of the script.
 
 **A Docker engine upgrade** upgrades `docker-ce-rootless-extras` to the same version
 ([maintenance.md](maintenance.md)) and then restarts each sandbox daemon:

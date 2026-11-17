@@ -292,6 +292,10 @@
     100 GB NVMe for €13.81; Cloud VPS 6 SSD 12 GB, 200 GB SSD for €12.92; Storage VPS 30 6 cores, 18 GB, 1 TB SSD,
     no snapshots for €16.66; Cloud VPS Plus 4 8 GB, 150 GB NVMe for €19.05. Live migration keeps the data and
     takes up to 48 hours. Downgrades are impossible, so the choice of GitLab or Forgejo comes first.
+    - (decision) **GitLab or Forgejo**, open since 2026-11-17, the owner is not sure yet. Forgejo or Gitea fits
+      the current VPS at no extra cost; GitLab needs the Cloud VPS 6 NVMe (+€4.17 a month) or the RAM that #26
+      frees. Compare what each must do (CI, registry, mirrors to GitHub, users besides the owner) before the
+      plan (ca. 30 Minuten)
 13. **host the sdwa5.org dns ourselves** (priority low, ca. 4 Stunden). today the domain and its dns sit
     at squarespace, and squarespace has no dns api. checked on 2026-10-16: it offers commerce apis only,
     its reseller apis are for approved partners, and its dns page drives an undocumented internal

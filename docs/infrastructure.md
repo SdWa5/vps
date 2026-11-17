@@ -234,6 +234,15 @@ uid 1000 and cannot read a root 400 file, and it needs the password only once, s
 into `jami-web setup`, which stores an argon2 hash in `jami-web-data/jami-web/admin.json`, see
 [jami.md](jami.md#setup).
 
+No server secret belongs in Google Drive. Until 2026-11-17 the owner's My Drive held Google Docs of an old
+`docker-compose.yml`, `rclone.conf` and `Caddyfile` of 2025-12-06, which are in the Drive trash since. Of their
+values only the restic password was still live, and it was rotated, see
+[backup.md](backup.md#rotating-the-restic-password). The Vaultwarden admin token and the Shopware database
+passwords there were dead, the Dolibarr entries were `${…}` references, and the Caddyfile held no secret. The
+rclone token was already revoked, and its OAuth client "SdWa5" of Cloud project 1065833129656 was deleted. The
+Drive audit log was not reachable for ripper@sdwa5.org, and no linked app other than SdWa5 Automation has
+Drive access. The same day the 16 unused `PROJECT2_*`/`PROJECT3_*` keys left the host `.env`.
+
 ### No sshd in the shop containers
 
 The sdwa5.org image contains neither `sshd` nor `mailcatcher`. The rest of this section applies to

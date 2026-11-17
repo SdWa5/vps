@@ -50,12 +50,45 @@ Automated backups via **Restic** + **rclone** to Google Drive.
 | Identity          | service account `restic-backup`, key `/opt/docker/rclone-config/restic-sa.json` (mode 600) |
 
 **Without the restic password the repository cannot be decrypted**, so a copy that dies with the host is
-no copy. The Vaultwarden item `restic` holds the current value (checksum compare against the host file on
-2026-10-17). Vaultwarden runs on this host too, so the item is reachable after a host loss only through
-the clients that keep an encrypted offline copy of the vault. Two such copies were synced on 2026-10-17,
+no copy. The Vaultwarden item `restic` holds the current value (byte compare against the host file on
+2026-11-17). Vaultwarden runs on this host too, so the item is reachable after a host loss only through
+the clients that keep an encrypted offline copy of the vault. Two such copies were synced on 2026-11-17,
 the `bw` CLI on the desktop and the Bitwarden app on the phone, and each opens with the master password
 without the server. Rotating the restic password means updating the item and syncing both
 devices in the same step.
+
+### Rotating the restic password
+
+A key file only wraps the repository's master key, so a rotation adds a key and removes the old ones and
+needs no new repository. Whoever already holds an old key file together with its password keeps the master
+key; only a new repository and a `restic copy` end that.
+
+```bash
+cd /opt/docker
+tools/secrets/write-secret-files.sh --dir secrets/rotate-restic restic_password=random
+new=/data/secrets/rotate-restic/restic_password   # the container's read-only view of the file
+docker exec restic restic key add --new-password-file "$new" --user root --host sdwa5-vps < /dev/null
+docker exec -e RESTIC_PASSWORD_FILE="$new" restic restic key list < /dev/null
+docker exec -e RESTIC_PASSWORD_FILE="$new" restic restic snapshots --latest 1 < /dev/null
+```
+
+Then store the new value in the item `restic` and sync the desktop and the phone. Only after that:
+
+```bash
+mv secrets/rotate-restic/restic_password secrets/restic_password
+rmdir secrets/rotate-restic
+docker compose up -d --force-recreate --no-deps restic   # the bind mount follows the old inode until then
+docker exec restic restic key list                        # `*` on the new key
+docker exec restic restic key remove <old key ID>
+```
+
+The service account is only Content manager of the Shared Drive and may not delete files for good, so
+`RCLONE_DRIVE_USE_TRASH=false` makes `key remove` retry a Drive 404 for minutes. Without it the removed key
+files sit 30 days in the drive's trash and still open with the old password.
+
+Rotated on 2026-11-17, because the old password was in a Google Doc in the owner's My Drive (see
+[infrastructure.md](infrastructure.md#secrets)). New key `f6d5d9c3`; `d4d7287a` and `e0b9d523` of
+2025-07-31 removed, their files in the trash of "SdWa5 Backup" until about 2026-12-17.
 
 ## The Vaultwarden database is copied consistently first
 
@@ -223,8 +256,8 @@ a cold cache). The first backup after the switch, snapshot `f65ba272`, took 286 
 
 The repository was copied server-side from the owner's My Drive (`rclone copy --drive-server-side-across-configs`,
 22 945 files, 109.17 GiB, 0 errors, 12:41 to 13:59 CEST on 2026-10-15), and `rclone check --one-way`
-compared checksums afterwards with 0 differences. The My Drive copy stays
-untouched as a fallback until the grace period noted in the changelog ends.
+compared checksums afterwards with 0 differences. The My Drive copy was moved to the trash with
+`rclone-vault run purge` the same day and was gone from My Drive and its trash on 2026-11-17.
 
 ## Operations
 

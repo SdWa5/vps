@@ -577,17 +577,7 @@
       measurement whether Jami needs `/node/pingPush`, which would otherwise be an open push relay, and the
       recheck site lists with their tests
     - optionally a self-hosted ntfy at `ntfy.sdwa5.org` as the UnifiedPush distributor (ca. 1 Stunde 30 Minuten)
-51. (proposal) **server secrets in plain text in the owner's My Drive** ([docs/vaultwarden.md](docs/vaultwarden.md)).
-    The My Drive of ripper@sdwa5.org holds `Backup/Server` with three Google Docs of 2025-12-06, `docker-compose.yml`,
-    `rclone.conf` and `Caddyfile`, shared with nobody (measured 2026-11-16, key names only). `docker-compose.yml`
-    carries `ADMIN_TOKEN`, `DOLI_ADMIN_PASSWORD`, `DOLI_DB_PASSWORD`, `DOLI_CRON_KEY`, `MYSQL_PASSWORD`,
-    `MYSQL_ROOT_PASSWORD` and `RESTIC_PASSWORD`, and `rclone.conf` a drive `token` and `client_secret`. Every Drive
-    token of that account can read them. The steps:
-    - compare each value with the live `.env` and compose files by checksum without printing it, attach what is still
-      needed to a Vaultwarden item, and move the three docs to the Drive trash with `rclone-vault run delete` of
-      bestcodename/ai through the `SdWa5-rw` remote (ca. 15 Minuten)
-    - rotate every value that is still live (ca. 1 Stunde)
-52. (proposal) **Chimo Diazz's return through its sandbox** ([docs/sandbox.md](docs/sandbox.md)) (ca. 45 Minuten).
+51. (proposal) **Chimo Diazz's return through its sandbox** ([docs/sandbox.md](docs/sandbox.md)) (ca. 45 Minuten).
     Its container runs in the sandbox daemon since 2026-11-17, so the root-daemon container lists miss it.
     Reference it as `sandbox:name` in `vps-health.sh` `EXPECTED_CONTAINERS`, in `database-backup.sh` (its lock
     block at lines 171-177 then opens a root-owned lock read-only, because `fs.protected_regular=2` blocks root
@@ -595,22 +585,28 @@
     `ISOLATION_APPS` (today they see no root-daemon container and report "not running" as OK,
     `security-recheck.sh:681`) and in its restore check. Install the deploy and worker cron as the account,
     with `SRC_DIR` and `STATE_DIR` in the home and `MONITOR_MAIL_TO` in the cron file
-53. (proposal) **Caddy admin API on a private unix socket** ([docs/caddy.md](docs/caddy.md)) (ca. 15 Minuten).
+52. (proposal) **Caddy admin API on a private unix socket** ([docs/caddy.md](docs/caddy.md)) (ca. 15 Minuten).
     `admin unix//run/caddy/admin.sock` with `RuntimeDirectory=caddy` and mode 0700. The sandbox firewall
     already rejects 127.0.0.1:2019 for sandbox uids; this closes it for every other local uid as well
-54. (proposal) **hide other users' processes and `/var/log/cron.log` from sandbox accounts** (ca. 15 Minuten).
+53. (proposal) **hide other users' processes and `/var/log/cron.log` from sandbox accounts** (ca. 15 Minuten).
     `/proc` with `hidepid=invisible` and a group for root's monitoring; `/var/log/cron.log` is world-readable,
     measured 2026-11-17
-55. (proposal) **SMTP relay from sandboxes** (ca. 15 Minuten). `smtp-relay.gmail.com` accepts mail from any process
+54. (proposal) **SMTP relay from sandboxes** (ca. 15 Minuten). `smtp-relay.gmail.com` accepts mail from any process
     on this host by its address, a sandbox included. Reject tcp 25, 465 and 587 in `SANDBOX-POLICY`, or give a
     returning shop its own authenticated sender
-56. (proposal) **disk quota per sandbox** (ca. 20 Minuten). A sandbox shares `/` and only vps-health's disk check
+55. (proposal) **disk quota per sandbox** (ca. 20 Minuten). A sandbox shares `/` and only vps-health's disk check
     sees it fill; a project quota on `/opt/docker/sandbox/<name>` or a size-limited filesystem would cap it
-57. (proposal) **delete `/root/chimodiazz-premove-20261117.tar` after 2026-11-24** (ca. 5 Minuten). The tar of the
+56. (proposal) **delete `/root/chimodiazz-premove-20261117.tar` after 2026-11-24** (ca. 5 Minuten). The tar of the
     three Chimo Diazz directories before their move into the sandbox, mode 600, the rollback of that move
-58. (proposal) **own DNS resolver with ad blocking** (ca. 2 Stunden). AdGuard Home as a container, used by the
+57. (proposal) **own DNS resolver with ad blocking** (ca. 2 Stunden). AdGuard Home as a container, used by the
     household's devices, because it serves DNS-over-TLS and DNS-over-HTTPS itself and tells clients apart by a
     ClientID in the DoT hostname or DoH path; Pi-hole has no DoT or DoH server. Publish tcp 853 and DoH behind
     Caddy, never plain port 53, which would be an open UDP resolver. Allow only known ClientIDs. No VPN, since it
     needs a client on every phone and clashes with Mullvad on the desktop, while Android Private DNS and iOS
     profiles speak DoT and DoH directly. Distinct from #13, which is the authoritative zone of sdwa5.org
+58. (proposal) **restic master key unchanged after the Drive leak** ([docs/backup.md](docs/backup.md#rotating-the-restic-password)).
+    The password rotated on 2026-11-17 sat in a Google Doc in the owner's My Drive since 2025-12-06. A key rotation
+    keeps the master key, and the Drive audit log was not reachable for ripper@sdwa5.org, so a copy of the old
+    password together with a key file cannot be excluded. The two old key files sit in the trash of "SdWa5 Backup"
+    until about 2026-12-17; a Manager of that drive can delete them for good now (ca. 5 Minuten). Only a new
+    repository, `restic init --copy-chunker-params` plus `restic copy`, replaces the master key (ca. 2 Stunden)

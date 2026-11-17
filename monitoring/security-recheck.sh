@@ -40,7 +40,7 @@
 #   GATEWAY_OPEN, GATEWAY_CLOSED, NO_EGRESS_CONTAINERS, EGRESS_PROBES, CLOSED_LISTENERS
 #   GIT_CHECKOUT_DIR, GIT_BRANCH, DEPLOYED_FILES, DATABASE_BACKUP_CONTAINERS
 #   ACCESS_LOG_DIR, ACCESS_LOG_SITES            Caddy's access logs and the sites that write one
-#   PORT_TIMEOUT, PROBE_TIMEOUT, HTTP_TIMEOUT, RESTORE_CHECK, ACCOUNT_CHECK, RECHECK_PROC_ROOT (test hooks)
+#   PORT_TIMEOUT, PROBE_TIMEOUT, HTTP_TIMEOUT, RESTORE_CHECK, ACCOUNT_CHECK, SANDBOX_CHECK, RECHECK_PROC_ROOT (test hooks)
 
 set -uo pipefail
 
@@ -100,6 +100,7 @@ DEPLOYED_FILES="${DEPLOYED_FILES:-Caddyfile:/etc/caddy/Caddyfile hardening/fail2
 DATABASE_BACKUP_CONTAINERS="${DATABASE_BACKUP_CONTAINERS:-dolibarr_db shopware_db paperless_sdwa5_db paperless_home_db}"
 RESTORE_CHECK="${RESTORE_CHECK:-$MONITORING_DIR/database-restore-check.sh}"
 ACCOUNT_CHECK="${ACCOUNT_CHECK:-$MONITORING_DIR/account-check.sh}"
+SANDBOX_CHECK="${SANDBOX_CHECK:-$MONITORING_DIR/sandbox-check.sh}"
 ACCESS_LOG_DIR="${ACCESS_LOG_DIR:-/var/log/caddy}"
 ACCESS_LOG_SITES="${ACCESS_LOG_SITES:-sdwa5.org vault.sdwa5.org erp.sdwa5.org paper.sdwa5.org paper.ripper.sdwa5.org chimodiazz.sdwa5.org}"
 
@@ -844,6 +845,7 @@ run_host() {
     emit "revision:$GIT_BRANCH" "$(check_revision)"
     emit "deployed:files" "$(check_deployed_files)"
     emit "accounts:host" "$("$ACCOUNT_CHECK" 2>/dev/null)"
+    emit "sandbox:host" "$("$SANDBOX_CHECK" 2>/dev/null)"
     for site in $ACCESS_LOG_SITES; do
         emit "logs:$site" "$(check_access_log "$site")"
     done

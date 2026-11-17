@@ -27,6 +27,7 @@
 #   REBOOT_REQUIRED_FILE, BOOT_DIR where apt flags a pending reboot, and the installed kernels
 #   HEALTHCHECKS_PING_FILE         file holding the healthchecks.io ping URL, pinged after every run
 #   ACCOUNT_CHECK                  the account and root-key check (account-check.sh next to this script)
+#   SANDBOX_CHECK                  the sandbox isolation check (sandbox-check.sh next to this script)
 #   STATE_DIR, FAKE_NOW            test hooks
 
 set -uo pipefail
@@ -75,6 +76,8 @@ HEALTHCHECKS_PING_FILE="${HEALTHCHECKS_PING_FILE:-$COMPOSE_DIR/secrets/healthche
 # Login accounts, sudoers and root's SSH keys (SEC-34, 2026-10-24). An added account, rule or key is
 # how a break-in stays, and the image's cloud-init account went unnoticed for nine days.
 ACCOUNT_CHECK="${ACCOUNT_CHECK:-$MONITORING_DIR/account-check.sh}"
+# The sandbox accounts' isolation and the private data modes (docs/sandbox.md, 2026-11-17).
+SANDBOX_CHECK="${SANDBOX_CHECK:-$MONITORING_DIR/sandbox-check.sh}"
 
 # **HOW OFTEN THE REMOTE IS ASKED, AND WHY IT IS NOT EVERY RUN.** This check costs an authenticated
 # network round trip, and what it watches changes rarely. Hourly would be 24 calls a day for a fact
@@ -680,6 +683,7 @@ run_checks() {
     emit caddy                 "$(check_caddy)"
     emit firewall              "$(check_firewall)"
     emit accounts              "$("$ACCOUNT_CHECK" 2>/dev/null)"
+    emit sandbox               "$("$SANDBOX_CHECK" 2>/dev/null)"
     emit vaultwarden_version   "$(check_vaultwarden_version)"
     emit git_remote            "$(check_git_remote)"
     emit reboot                "$(check_reboot)"

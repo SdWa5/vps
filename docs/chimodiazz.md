@@ -9,16 +9,25 @@ the shop is not an active project, so it was stopped instead of patched. Caddy s
 the container is stopped with restart policy `no`, its cron files are removed, and the monitoring
 defaults leave it out. It was live from 2026-09-15.
 
+**Since 2026-11-17 it lives in a sandbox**, the account `chimodiazz` with its own rootless Docker
+daemon and home `/opt/docker/sandbox/chimodiazz`, see [sandbox.md](sandbox.md). Every command below
+that touches the container runs as that account through `tools/sandbox/sandbox.sh` (below
+`sandbox.sh`, in `/opt/docker`). It is stopped with
+`sandbox.sh run chimodiazz /opt/docker/tools/shopware/stop-dockware.sh chimodiazz_shopware`.
+
 The way back, as one change, is the following.
-1. Update it to 6.7.15.1 with `PHP_VERSION=8.5` and the mitigation ini mount, like `shopware` in
+1. Do the TODO proposal "Chimo Diazz's return through its sandbox" first. Monitoring, database backup
+   and cron do not reach a container of the sandbox daemon yet, so steps 3 and 4 depend on it.
+2. Update it to 6.7.15.1 with `PHP_VERSION=8.5` and the mitigation ini mount, like `shopware` in
    `docker-compose.yml` (TODO #17).
-2. Put `chimodiazz_shopware` back into `EXPECTED_CONTAINERS` and `DATABASE_BACKUP_CONTAINERS` in
+3. Put `chimodiazz_shopware` back into `EXPECTED_CONTAINERS` and `DATABASE_BACKUP_CONTAINERS` in
    `monitoring/vps-health.sh`, `DATABASE_BACKUP_CONTAINERS` in `monitoring/database-backup.sh` and
    `monitoring/security-recheck.sh`, and `ISOLATION_SOURCES` in the latter.
-3. Install `monitoring/cron.d/chimodiazz-worker` and `chimodiazz-deploy` again, see
+4. Install `monitoring/cron.d/chimodiazz-worker` and `chimodiazz-deploy` again, see
    [monitoring.md](monitoring.md#installation).
-4. `docker update --restart unless-stopped chimodiazz_shopware`, start it, and put the commented
-   `reverse_proxy` back into its `Caddyfile` block.
+5. Set `restart: unless-stopped` in `projects/chimodiazz/docker-compose.yml`, run
+   `sandbox.sh compose chimodiazz --profile chimodiazz up -d chimodiazz_shopware`, and put the
+   commented `reverse_proxy` back into its `Caddyfile` block.
 
 ## Routing
 
@@ -52,23 +61,23 @@ no reload for a content change.
 `chimodiazz/website` is private and owned by someone else. GitHub refuses the same deploy key on two
 repositories, so the key this host already uses for `SdWa5/vps` could not be reused.
 
-- Key: `/root/.ssh/id_ed25519_chimodiazz_20260915`, ed25519, no passphrase, generated on this host on
+- Key: `~chimodiazz/.ssh/id_ed25519_chimodiazz_20260915` (in root's `.ssh` until 2026-11-17), ed25519, no passphrase, generated on this host on
   2026-09-15 and never transported anywhere. Fingerprint
   `SHA256:KAVEnhxAUwt4Hi/QFlrcMXNTAiVugeWDBFmM3jJo/go`.
 - Registered on `chimodiazz/website` as a **read-only** deploy key. This host never writes there.
-- Reached through the alias `github-chimodiazz` in `/root/.ssh/config`, which pins that one key with
+- Reached through the alias `github-chimodiazz` in the account's `~/.ssh/config`, which pins that one key with
   `IdentitiesOnly yes`, exactly as the `github.com` entry does for `SdWa5/vps`. Without
   `IdentitiesOnly` ssh offers every key it can find and GitHub answers as whichever repository the
   first accepted key belongs to.
 - Verified 2026-09-15: `ssh -T github-chimodiazz` answers `Hi chimodiazz/website!` while
   `ssh -T github.com` still answers `Hi SdWa5/vps!`.
 
-Checkout target is `/opt/docker/chimodiazz-src`, a nested git repository that this repository ignores
+Checkout target is `/opt/docker/sandbox/chimodiazz/chimodiazz-src`, a nested git repository that this repository ignores
 rather than tracks, because its history is not ours to carry.
 
 ```bash
-git clone github-chimodiazz:chimodiazz/website.git /opt/docker/chimodiazz-src
-cd /opt/docker/chimodiazz-src && git pull --ff-only    # later updates
+tools/sandbox/sandbox.sh run chimodiazz git clone github-chimodiazz:chimodiazz/website.git chimodiazz-src
+tools/sandbox/sandbox.sh run chimodiazz git -C chimodiazz-src pull --ff-only    # later updates
 ```
 
 **Nothing notices when this key dies.** The `git_remote` health check watches the `SdWa5/vps` key
@@ -77,15 +86,15 @@ here — see [monitoring.md](monitoring.md) and [ssh-hardening.md](ssh-hardening
 
 ## The container, defined and switched off
 
-`docker-compose.projects.yml` holds `chimodiazz_shopware`: one `dockware/shopware:6.7.11.1`
+`projects/chimodiazz/docker-compose.yml` holds `chimodiazz_shopware`: one `dockware/shopware:6.7.11.1`
 container, the same exact pin as the `sdwa5.org` instance. dockware bundles PHP, the web server and
 MySQL in one image, which is how Shopware already runs on this host, so both instances stay the same
 shape and a Shopware upgrade is one decision rather than two.
 
-It is gated behind `profiles: ["chimodiazz"]`. A bare `docker compose -f docker-compose.projects.yml
-up -d` must not bring up an empty shop carrying dockware's default credentials on a public subdomain.
+It is gated behind `profiles: ["chimodiazz"]`. A bare `sandbox.sh compose chimodiazz up -d` must
+not bring up an empty shop carrying dockware's default credentials on a public subdomain.
 
-Mounts:
+Mounts, relative to the sandbox home, plus the boot hook `/opt/docker/hardening/dockware-boot-end.sh`:
 
 | Host path                                              | Container path                                 | Why                                           |
 |--------------------------------------------------------|------------------------------------------------|-----------------------------------------------|
@@ -164,10 +173,11 @@ instance accepted it until the password was rotated, which was done before Caddy
 
 Kept as a recipe, because the next Shopware instance on this host will need the same steps.
 
-1. `git clone github-chimodiazz:chimodiazz/website.git /opt/docker/chimodiazz-src`
+1. `git clone github-chimodiazz:chimodiazz/website.git` into `chimodiazz-src` of the project directory
 2. Seed the two data directories from the image, as above. This is the step that is easy to skip and
    fails silently.
-3. `cd /opt/docker && docker compose -f docker-compose.projects.yml --profile chimodiazz up -d chimodiazz_shopware`
+3. `sandbox.sh compose chimodiazz --profile chimodiazz up -d chimodiazz_shopware` (2026-09-15 this was the
+   root daemon's `docker compose -f docker-compose.projects.yml`)
 4. Rotate dockware's default administrator password **before** the public name points at it, and run
    `hardening/dockware-db-account.sh chimodiazz_shopware` so the shop stops using dockware's database
    root. See [infrastructure.md](infrastructure.md#database-accounts).
@@ -305,10 +315,12 @@ Verified on creation with a `client_credentials` grant, which answered 200, and 
 `chimodiazz=https://chimodiazz.sdwa5.org/` is in the built-in `HEALTH_URLS` default and checks the
 placeholder while the shop is off. Since 2026-10-24 `chimodiazz_shopware` is out of the
 `EXPECTED_CONTAINERS`, database backup and isolation defaults, and the way back above restores them.
+The sandbox itself is checked hourly by `monitoring/sandbox-check.sh`, see
+[monitoring.md](monitoring.md#sandbox-check).
 
 ## Backup
 
-`chimodiazz-placeholder/` and `chimodiazz-src/` sit under `/opt/docker` and are picked up by the
-daily restic run. So would `chimodiazz-html-data/` and `chimodiazz-mysql-data/` once they exist, and
-the MySQL directory carries the same live-file caveat as the `sdwa5.org` one — see
+`chimodiazz-placeholder/` and the sandbox home `sandbox/chimodiazz/` with `chimodiazz-src/`,
+`chimodiazz-html-data/` and `chimodiazz-mysql-data/` sit under `/opt/docker` and are picked up by the
+daily restic run, without the sandbox daemon's image store. The MySQL directory carries the same live-file caveat as the `sdwa5.org` one — see
 [backup.md](backup.md).

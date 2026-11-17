@@ -38,7 +38,7 @@ docker compose up -d
 | Jami Web (always-on Jami peer) | SSH tunnel to 127.0.0.1:8008 (no public domain) | docker-compose.yml |
 | OpenDHT node (public Jami DHT node) | udp 4222, IPv4, public | docker-compose.yml |
 | Restic backup      | —                             | docker-compose.yml             |
-| Chimo Diazz (switched off) | https://chimodiazz.sdwa5.org (placeholder) | docker-compose.projects.yml (profile: chimodiazz) |
+| Chimo Diazz (switched off) | https://chimodiazz.sdwa5.org (placeholder) | projects/chimodiazz/docker-compose.yml (profile: chimodiazz, own [sandbox](docs/sandbox.md)) |
 | Minecraft (inactive) | :25565                      | docker-compose.yml (profile: minecraft) |
 
 ## Credentials
@@ -78,6 +78,7 @@ See `docs/` for per-service documentation:
 - [Ollama](docs/ollama.md)
 - [Minecraft](docs/minecraft.md)
 - [Chimo Diazz](docs/chimodiazz.md)
+- [Sandboxes for third-party projects (rootless Docker per account)](docs/sandbox.md)
 - [Maintenance (disk cleanup, log caps)](docs/maintenance.md)
 - [Image update proposals (Dependabot, weekly)](docs/maintenance.md#update-proposals)
 - [Monitoring (health checks, alerts, Vaultwarden auto-update)](docs/monitoring.md)
@@ -108,8 +109,13 @@ systemctl reload caddy
 # Deploy the shop image that docker-compose.yml names (see docs/shopware/image.md)
 /opt/docker/tools/shopware/deploy.sh
 
-# Stop the Chimo Diazz dockware container with a clean MySQL shutdown (dockware ignores SIGTERM)
-/opt/docker/tools/shopware/stop-dockware.sh chimodiazz_shopware
+# Stop the Chimo Diazz dockware container with a clean MySQL shutdown (dockware ignores SIGTERM),
+# as its sandbox account (see docs/sandbox.md)
+/opt/docker/tools/sandbox/sandbox.sh run chimodiazz /opt/docker/tools/shopware/stop-dockware.sh chimodiazz_shopware
+
+# Compose or any other command as a sandbox account
+/opt/docker/tools/sandbox/sandbox.sh compose chimodiazz ps
+/opt/docker/tools/sandbox/sandbox.sh run chimodiazz docker ps -a
 
 # Health check on demand (see docs/monitoring.md)
 /opt/docker/monitoring/vps-health.sh --dry-run

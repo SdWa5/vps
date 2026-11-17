@@ -60,3 +60,62 @@ loaded() {
     loaded
     [[ "$output" == *'RESTIC_REPOSITORY=from-env'* ]]
 }
+
+# --- sandbox helpers -------------------------------------------------------
+
+sandbox_account() {
+    export STUB_GETENT_GROUP='sandbox:x:998:chimodiazz'
+    export STUB_GETENT_PASSWD='chimodiazz:x:1001:1001::/opt/docker/sandbox/chimodiazz:/usr/sbin/nologin'
+    export STUB_SETPRIV_LOG="$BATS_TEST_TMPDIR/setpriv.log"
+    : > "$STUB_SETPRIV_LOG"
+}
+
+@test "sandbox_members lists the group's members and nothing without the group" {
+    sandbox_account
+    run bash -c '. "$REPO_ROOT/monitoring/lib.sh"; sandbox_members'
+    [ "$output" = chimodiazz ]
+    unset STUB_GETENT_GROUP
+    run bash -c '. "$REPO_ROOT/monitoring/lib.sh"; sandbox_members'
+    [ -z "$output" ]
+}
+
+@test "as_sandbox switches to the account with its runtime dir, socket and home" {
+    sandbox_account
+    run bash -c '. "$REPO_ROOT/monitoring/lib.sh"; as_sandbox chimodiazz /usr/bin/test -r /root'
+    [ "$status" -eq 1 ]
+    grep -qF -- '--reuid=chimodiazz --regid=chimodiazz --init-groups --inh-caps=-all --reset-env' "$STUB_SETPRIV_LOG"
+    grep -qF -- 'env -C /opt/docker/sandbox/chimodiazz XDG_RUNTIME_DIR=/run/user/1001 DOCKER_HOST=unix:///run/user/1001/docker.sock /usr/bin/test' "$STUB_SETPRIV_LOG"
+}
+
+@test "as_sandbox refuses an unknown account without calling setpriv" {
+    sandbox_account
+    run bash -c '. "$REPO_ROOT/monitoring/lib.sh"; as_sandbox nobody-here true'
+    [ "$status" -eq 1 ]
+    [ ! -s "$STUB_SETPRIV_LOG" ]
+}
+
+@test "open_private_paths lists ignored paths and .git open to others, and nothing else" {
+    # Real git, not the stub: the listing is git's own ignore logic.
+    local real_path="${PATH#"$BATS_TEST_DIRNAME/stubs:"}"
+    local repo="$BATS_TEST_TMPDIR/compose"
+    mkdir -p "$repo/tracked" "$repo/open-data" "$repo/closed-data" "$repo/sandbox/someone"
+    PATH="$real_path" git -C "$repo" init -q
+    printf '/open-data/\n/closed-data/\n/tracked/local.conf\n/sandbox/\n/link\n' > "$repo/.gitignore"
+    printf 'x\n' > "$repo/tracked/README"
+    printf 'x\n' > "$repo/tracked/local.conf"
+    ln -s /etc "$repo/link"
+    PATH="$real_path" git -C "$repo" add .gitignore tracked/README
+    chmod 755 "$repo/.git" "$repo/open-data" "$repo/sandbox"
+    chmod 700 "$repo/closed-data"
+    chmod 644 "$repo/tracked/local.conf"
+    PATH="$real_path" COMPOSE_DIR="$repo" run bash -c '. "$REPO_ROOT/monitoring/lib.sh"; open_private_paths; pwd'
+    [ "$status" -eq 0 ]
+    [[ "$output" == *$'.git\n'* ]]
+    [[ "$output" == *$'open-data\n'* ]]
+    [[ "$output" == *$'tracked/local.conf\n'* ]]
+    [[ "$output" != *closed-data* ]]
+    [[ "$output" != *sandbox* ]]
+    [[ "$output" != *link* ]]
+    # The subshell keeps the caller's working directory.
+    [[ "${lines[-1]}" != "$repo" ]]
+}

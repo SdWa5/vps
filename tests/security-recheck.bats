@@ -159,6 +159,7 @@ setup() {
     [ "$(recheck_status firewall:v6)" = OK ]
     [ "$(recheck_status isolation:dolibarr)" = OK ]
     [ "$(recheck_status accounts:host)" = OK ]
+    [ "$(recheck_status sandbox:host)" = OK ]
     [ "$(grep -cE '^logs:[^[:space:]]+[[:space:]]+OK' <<<"$output")" -eq 6 ]
     [ "$(recheck_status host:complete)" = OK ]
 }

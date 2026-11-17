@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Shared helpers for the SdWa5 VPS monitoring scripts.
 #
-# Sourced by vps-health.sh and vaultwarden-autoupdate.sh. Provides configuration
-# loading and mail delivery. Not executable on its own.
+# Sourced by vps-health.sh, vaultwarden-autoupdate.sh, sandbox-check.sh and
+# tools/sandbox/sandbox.sh. Provides configuration loading, mail delivery and the
+# sandbox helpers. Not executable on its own.
 
 # Directory this library lives in, so callers can be invoked from anywhere.
 MONITORING_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -149,3 +150,58 @@ send_mail() {
         "${rcpt_args[@]}" \
         --upload-file "$msg"
 }
+
+# Accounts in the sandbox group, separated by spaces, empty without group or
+# members. A sandbox is a rootless Docker account, see docs/sandbox.md.
+sandbox_members() {
+    getent group "${SANDBOX_GROUP:-sandbox}" | cut -d: -f4 | tr ',' ' '
+}
+
+# as_sandbox USER COMMAND...
+#
+# Runs COMMAND as the sandbox account USER: its own groups, a reset environment,
+# no inheritable capabilities, its runtime directory and rootless Docker socket,
+# and its home as working directory. Root acts on a sandbox only through this, so
+# the sandbox's daemon, ~/.docker config and code never run with root's rights.
+# Stdin passes through. Returns 1 for an unknown account.
+#
+# Never add --no-new-privs here: newuidmap and newgidmap are setuid, and rootless
+# Docker and nsenter into its user namespace need them.
+as_sandbox() {
+    local user="$1"
+    local uid
+    local home
+    local run_dir
+    shift
+    uid="$(getent passwd "$user" | cut -d: -f3)"
+    home="$(getent passwd "$user" | cut -d: -f6)"
+    [[ "$uid" =~ ^[0-9]+$ && -n "$home" ]] || return 1
+    run_dir="${SANDBOX_RUN_DIR:-/run/user}/$uid"
+    setpriv --reuid="$user" --regid="$user" --init-groups --inh-caps=-all --reset-env -- \
+        env -C "$home" XDG_RUNTIME_DIR="$run_dir" DOCKER_HOST="unix://$run_dir/docker.sock" "$@"
+}
+
+# Prints, one per line and relative to COMPOSE_DIR, every git-ignored path and
+# .git that grants "other" any permission bit. These hold the stack's data and
+# secrets, and a sandbox account must not read them. Git lists the ignored
+# entries inside a tracked directory one by one and does not descend into an
+# ignored directory, so a chmod o-rwx of each listed path closes everything below
+# it. Symlinks are skipped, and so is sandbox/, whose homes are closed by their
+# own mode 0700 and are never read here.
+open_private_paths() (
+    local path
+    local mode
+    cd "$COMPOSE_DIR" || return 1
+    {
+        printf '.git\0'
+        git ls-files -z --others --ignored --exclude-standard --directory
+    } | while IFS= read -r -d '' path; do
+        path="${path%/}"
+        [[ "$path" == sandbox ]] && continue
+        [[ -L "$path" || ! -e "$path" ]] && continue
+        mode="$(stat -c '%a' "$path")"
+        if (( (8#$mode & 8#007) != 0 )); then
+            printf '%s\n' "$path"
+        fi
+    done
+)

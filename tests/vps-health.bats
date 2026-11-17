@@ -807,3 +807,11 @@ set_ping_url() {
     health --dry-run
     [ ! -s "$STUB_PING_LOG" ]
 }
+
+# --- sandbox --------------------------------------------------------------
+
+@test "a critical sandbox check reaches the mail" {
+    STUB_SANDBOX_CHECK_STATUS=CRIT health
+    [ "$(mail_count)" -eq 1 ]
+    [[ "$(mail_body)" == *"[CRIT] sandbox"* ]]
+}

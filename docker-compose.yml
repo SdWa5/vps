@@ -603,6 +603,11 @@ services:
       - RCLONE_CONFIG=/root/.config/rclone/rclone.conf
       # --keep-tag keeps every archive snapshot, which holds host files that
       # were deleted after it was taken. See docs/backup.md.
+      # The image stores of the rootless sandbox daemons (docs/sandbox.md): images
+      # and layers, rebuildable and owned by subuids. A sandbox project keeps its
+      # data in bind mounts in its home, which stay in the backup. Word-split
+      # unquoted by restic/backup.sh; the glob reaches restic literally.
+      - RESTIC_JOB_ARGS=--exclude=/data/sandbox/*/.local/share/docker
       - RESTIC_FORGET_ARGS=--keep-daily 6 --keep-weekly 3 --keep-monthly 11 --keep-yearly 2 --keep-tag sdwa5-archive --prune
     networks: [backup]
     cap_drop: [NET_RAW]

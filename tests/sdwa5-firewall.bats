@@ -146,3 +146,50 @@ wrote() {
     firewall
     ! wrote "ip6tables -A DOCKER-USER" || false
 }
+
+# --- OUTPUT policy for sandbox accounts ------------------------------------
+
+sandbox_account() {
+    export STUB_GETENT_GROUP='sandbox:x:998:chimodiazz'
+    export STUB_GETENT_PASSWD='chimodiazz:x:1001:1001::/opt/docker/sandbox/chimodiazz:/usr/sbin/nologin'
+    export SUBUID_FILE="$BATS_TEST_TMPDIR/subuid"
+    printf 'admin:100000:65536\nchimodiazz:165536:65536\n' > "$SUBUID_FILE"
+}
+
+@test "without sandbox accounts only the reply rule and the OUTPUT jump are written" {
+    firewall
+    [ "$status" -eq 0 ]
+    wrote "iptables -I OUTPUT 1 -j SANDBOX-OUT"
+    wrote "iptables -A SANDBOX-OUT -m conntrack --ctstate ESTABLISHED,RELATED -j RETURN"
+    ! wrote "--uid-owner" || false
+}
+
+@test "a sandbox account is filtered by its uid and its subuid range, in both families" {
+    # The subuid range too: the account can give its processes a subuid through newuidmap.
+    sandbox_account
+    firewall
+    [ "$status" -eq 0 ]
+    wrote "iptables -A SANDBOX-OUT -m owner --uid-owner 1001 -j SANDBOX-POLICY"
+    wrote "iptables -A SANDBOX-OUT -m owner --uid-owner 165536-231071 -j SANDBOX-POLICY"
+    wrote "ip6tables -A SANDBOX-OUT -m owner --uid-owner 1001 -j SANDBOX-POLICY"
+    wrote "ip6tables -A SANDBOX-OUT -m owner --uid-owner 165536-231071 -j SANDBOX-POLICY"
+    ! wrote "--uid-owner 100000" || false
+}
+
+@test "the OUTPUT jump is not inserted twice" {
+    STUB_IPT_HAVE="-C OUTPUT -j SANDBOX-OUT" STUB_IP6T_HAVE="-C OUTPUT -j SANDBOX-OUT" firewall
+    [ "$status" -eq 0 ]
+    ! wrote "-I OUTPUT" || false
+}
+
+@test "the sandbox policy closes loopback and the bridges but keeps the public web ports" {
+    firewall
+    wrote "iptables -A SANDBOX-POLICY -o lo -d 127.0.0.0/8 -j REJECT"
+    wrote "iptables -A SANDBOX-POLICY -o lo -p tcp -m multiport --dports 80,443 -j RETURN"
+    wrote "iptables -A SANDBOX-POLICY -d 172.16.0.0/12 -j REJECT"
+    wrote "ip6tables -A SANDBOX-POLICY -o lo -d ::1 -j REJECT"
+    wrote "ip6tables -A SANDBOX-POLICY -d fc00::/7 -j REJECT"
+    # The loopback REJECT comes before the web port RETURN, so 127.0.0.1:443 stays closed.
+    [ "$(grep -n -F -- 'iptables -A SANDBOX-POLICY -o lo -d 127.0.0.0/8 -j REJECT' "$STUB_IPT_LOG" | cut -d: -f1)" -lt \
+      "$(grep -n -F -- 'iptables -A SANDBOX-POLICY -o lo -p tcp -m multiport --dports 80,443 -j RETURN' "$STUB_IPT_LOG" | cut -d: -f1)" ]
+}

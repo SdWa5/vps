@@ -21,7 +21,6 @@ flowchart LR
             P2["Dolibarr Project 2<br/>127.0.0.1:8003"]
             P2DB[("MariaDB")]
             P3["Dolibarr Project 3<br/>127.0.0.1:8004"]
-            CDW["Chimo Diazz Shopware<br/>127.0.0.1:8005/8444 · profile"]
             P3DB[("MariaDB")]
             PL["Paperless Verein<br/>127.0.0.1:8006"]
             PLDB[("MariaDB + valkey<br/>paperless_sdwa5_*")]
@@ -32,6 +31,10 @@ flowchart LR
             OL["Ollama<br/>127.0.0.1 via DOCKER-USER · inactive"]
             MC["Minecraft<br/>0.0.0.0:25565 · profile, inactive"]
             RS["Restic backup<br/>daily 04:00 · source /opt/docker (ro)"]
+        end
+
+        subgraph sandbox ["sandbox chimodiazz · rootless Docker · uid chimodiazz"]
+            CDW["Chimo Diazz Shopware<br/>127.0.0.1:8005/8444 · profile, off"]
         end
 
         subgraph cron ["cron · /etc/cron.d"]
@@ -84,7 +87,7 @@ Domain → port mapping lives in the [Caddyfile](../Caddyfile); backup detail in
 | Vaultwarden         | vaultwarden/server:latest    | 8000            | https://vault.sdwa5.org    | docker-compose.yml                      |
 | Dolibarr SdWa5      | dolibarr/dolibarr:24.0.2-php8.5 | 8002            | https://erp.sdwa5.org      | docker-compose.yml                      |
 | Dolibarr SdWa5 cron | dolibarr/dolibarr:24.0.2-php8.5 | —               | —                          | docker-compose.yml                      |
-| Chimo Diazz (switched off) | dockware/shopware:6.7.11.1 | 8005 / 8444 | https://chimodiazz.sdwa5.org (placeholder) | docker-compose.projects.yml (profile: chimodiazz) |
+| Chimo Diazz (switched off) | dockware/shopware:6.7.11.1 | 8005 / 8444 | https://chimodiazz.sdwa5.org (placeholder) | projects/chimodiazz/docker-compose.yml (profile: chimodiazz, [sandbox](sandbox.md)) |
 | Paperless Verein    | paperless-ngx:3.3.2 + mariadb:12.3 + valkey:9.0 | 8006 | https://paper.sdwa5.org | docker-compose.yml          |
 | Paperless household | paperless-ngx:3.3.2 + mariadb:12.3 + valkey:9.0 | 8007 | https://paper.ripper.sdwa5.org | docker-compose.yml   |
 | Jami Web            | localhost/sdwa5-jami-web:<jami-web version>-N (npm package, Node 26) | 8008 | (no domain, SSH tunnel) | docker-compose.yml, see [jami.md](jami.md) |
@@ -135,7 +138,6 @@ database as dockware's `root`/`root`.
 | `paper_home`, `paper_home_db` | the household instance | Same shape as the Verein instance |
 | `backup` | restic | Egress to Google Drive |
 | `jami` | jami_web, dhtnode | Egress to the Jami network and the public OpenDHT node, see [jami.md](jami.md) |
-| `chimodiazz` | chimodiazz_shopware | Third-party theme code runs here |
 | `minecraft`, `ollama` | profile-gated services | |
 
 Docker keeps user-defined bridges apart, so a container reaches only its own application. Caddy is
@@ -163,6 +165,11 @@ and `dolibarr_db` had no egress at all. All sites answered as before, the databa
 restore checks passed for all three databases, and `vps-health.sh` reported no fault. The cutover
 recreated the containers in ca. 2 minutes. `monitoring/security-recheck.sh` repeats this matrix, see
 [monitoring.md](monitoring.md#security-recheck).
+
+Since 2026-11-17 Chimo Diazz runs in a sandbox, an account `chimodiazz` with its own rootless Docker
+daemon, so a container escape lands as that unprivileged uid. The host firewall keeps the account off
+host loopback and the Docker bridges above, see [sandbox.md](sandbox.md). The measurements above
+predate the move.
 
 ### Database accounts
 
@@ -248,7 +255,9 @@ where the flag was set.
 ```
 /opt/docker/
 ├── docker-compose.yml              # main services
-├── docker-compose.projects.yml     # Chimo Diazz Shopware (profile-gated)
+├── projects/<name>/docker-compose.yml  # compose files of sandboxed projects, see sandbox.md
+├── sandbox/                        # gitignored — homes of sandbox accounts (0711, each home 0700)
+│   └── chimodiazz/                 # chimodiazz-src, -html-data, -mysql-data, owned by its subuids
 ├── .env                            # settings, Vaultwarden's ADMIN_TOKEN hash — NEVER commit
 ├── secrets/                        # gitignored — compose file secrets, 700/400 root
 ├── .env.example                    # template for .env
@@ -274,9 +283,6 @@ where the flag was set.
 ├── shopware-legacy-data-20260327/  # gitignored — unused MySQL datadir of 2026-03-27, retired with TODO #36
 ├── dolibarr-mariadb-data/          # gitignored — Dolibarr SdWa5 DB
 ├── chimodiazz-placeholder/         # tracked — maintenance page, routed while Chimo Diazz is off
-├── chimodiazz-src/                 # gitignored — checkout of chimodiazz/website (own deploy key)
-├── chimodiazz-html-data/           # gitignored — Chimo Diazz Shopware web root
-├── chimodiazz-mysql-data/          # gitignored — Chimo Diazz Shopware DB
 ├── dolibarr-documents-data/        # gitignored — Dolibarr SdWa5 uploads
 ├── dolibarr-custom-data/           # gitignored — only GeoLite2-Country.mmdb (MaxMind, re-downloadable)
 ├── vaultwarden-data/               # gitignored — Vaultwarden data
@@ -285,6 +291,7 @@ where the flag was set.
 ├── paperless-{sdwa5,home}-mariadb-data/  # gitignored — Paperless DBs
 ├── tools/paperless/                # Paperless dev mirror, setup and visibility check
 ├── tools/secrets/                  # writes the compose file secrets
+├── tools/sandbox/                  # creates sandbox accounts, runs commands as them
 ├── jami-web/                       # tracked — Dockerfile, package.json and lock of the Jami Web image
 ├── jami-web-data/                  # gitignored — Jami Web config and the daemon's account keys, 700 uid 1000
 ├── ollama-data/                    # gitignored — Ollama model cache

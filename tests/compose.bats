@@ -45,9 +45,9 @@ setup() {
 
 @test "only the Chimo Diazz dockware shop mounts the boot hook, and nothing stops mailcatcher in the main file" {
     ! grep -q 'dockware-boot-end.sh' "$REPO_ROOT/docker-compose.yml" || false
-    grep -q '\./hardening/dockware-boot-end.sh:/var/www/boot_end.sh:ro' "$REPO_ROOT/docker-compose.projects.yml"
+    grep -q ' /opt/docker/hardening/dockware-boot-end.sh:/var/www/boot_end.sh:ro' "$REPO_ROOT/projects/chimodiazz/docker-compose.yml"
     ! grep -q 'SDWA5_STOP_MAILCATCHER' "$REPO_ROOT/docker-compose.yml" || false
-    ! grep -v '^[[:space:]]*#' "$REPO_ROOT/docker-compose.projects.yml" | grep -q 'SDWA5_STOP_MAILCATCHER' || false
+    ! grep -v '^[[:space:]]*#' "$REPO_ROOT/projects/chimodiazz/docker-compose.yml" | grep -q 'SDWA5_STOP_MAILCATCHER' || false
 }
 
 @test "every running service except the Chimo Diazz dockware shop sets no-new-privileges" {
@@ -57,10 +57,10 @@ setup() {
         s && /^  [a-z0-9_]+:$/ { flush(); svc = $1; profile = 0; nnp = 0; next }
         s && /^    profiles:/ { profile = 1 }
         s && /^    security_opt: \["no-new-privileges:true"\]$/ { nnp = 1 }
-        END { flush() }' "$REPO_ROOT/docker-compose.yml" "$REPO_ROOT/docker-compose.projects.yml")"
+        END { flush() }' "$REPO_ROOT/docker-compose.yml" "$REPO_ROOT/projects/chimodiazz/docker-compose.yml")"
     [ -z "$missing" ] || { echo "without no-new-privileges: $missing"; return 1; }
     extra="$(awk '/^  [a-z0-9_]+:$/ { svc = $1 } /^    security_opt:.*no-new-privileges/ && svc == "chimodiazz_shopware:" { print svc }' \
-        "$REPO_ROOT/docker-compose.yml" "$REPO_ROOT/docker-compose.projects.yml")"
+        "$REPO_ROOT/docker-compose.yml" "$REPO_ROOT/projects/chimodiazz/docker-compose.yml")"
     [ -z "$extra" ] || { echo "dockware needs setuid sudo: $extra"; return 1; }
     [ "$(grep -c 'no-new-privileges:true' "$REPO_ROOT/docker-compose.yml")" -eq 15 ]
 }

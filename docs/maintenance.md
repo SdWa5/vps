@@ -70,6 +70,7 @@ fixes, and Debian 13 would still ship runc 1.1.15.
 | `docker-ce`, `docker-ce-cli` | 29.9.3 |
 | `containerd.io` | 2.4.2, bundles runc 1.5.2 |
 | `docker-compose-plugin` | 5.7.1 |
+| `docker-ce-rootless-extras` | same version as `docker-ce`, since 2026-11-17 for the [sandboxes](sandbox.md) |
 
 The key is `/etc/apt/keyrings/docker.asc` (fingerprint `9DC8 5822 9FC7 DD38 854A E2D8 8D81 803C 0EBF
 CD88`) and the source is `/etc/apt/sources.list.d/docker.list`. The host has no gpg, so the key is
@@ -129,9 +130,12 @@ unattended-upgrades covers only Debian origins, so Docker updates are manual. Th
 every daemon restart stops and restarts every container. Update in a quiet hour:
 
 ```bash
-apt-get update && apt-get install --no-install-recommends docker-ce docker-ce-cli containerd.io docker-compose-plugin
+apt-get update && apt-get install --no-install-recommends docker-ce docker-ce-cli containerd.io docker-compose-plugin docker-ce-rootless-extras
 docker info --format '{{.ServerVersion}} {{.Driver}}'   # expect overlay2, the store the images live in
 systemctl restart sdwa5-firewall                         # Docker rebuilds its chains on start
+for name in $(getent group sandbox | cut -d: -f4 | tr ',' ' '); do
+    systemctl --user --machine="$name@" restart docker  # each sandbox daemon, see docs/sandbox.md
+done
 ```
 
 The switch from docker.io took ca. 2 minutes of downtime on 2026-10-15. Both compose files went down
@@ -140,8 +144,8 @@ image survived the upgrade, and the containers were recreated because v2 labels 
 
 `docker-compose.service` has `Requires=docker.service`. Stopping or upgrading Docker therefore stops
 the unit too, and its `ExecStop` runs `down` on the main stack, which removes those containers and
-networks. They come back with `systemctl start docker-compose.service`. docker-compose.projects.yml is
-not part of the unit and needs its own `up`.
+networks. They come back with `systemctl start docker-compose.service`. Sandboxed projects run in
+their own rootless daemons, outside the unit, see [sandbox.md](sandbox.md).
 
 ## Compose version
 
@@ -181,8 +185,8 @@ docker compose up -d                                              # recreates ch
 docker inspect --format '{{.HostConfig.LogConfig}}' shopware      # expect: {json-file map[max-file:3 max-size:10m]}
 ```
 
-`docker-compose.projects.yml` carries **its own copy** of the `x-logging` anchor rather than
-referencing the one in `docker-compose.yml`, because YAML anchors do not cross files. Both blocks must
+Every `projects/<name>/docker-compose.yml` carries **its own copy** of the `x-logging` anchor rather than
+referencing the one in `docker-compose.yml`, because YAML anchors do not cross files. All blocks must
 be kept in step. To change the cap, edit both and recreate.
 
 ## CI dependencies
@@ -225,7 +229,7 @@ its own.
 | Service | Tag | Why |
 |---|---|---|
 | `shopware` | `localhost/sdwa5-shopware:<core version>-N`, built on this host | The tag is the locked core version plus a build number, and the base and build images are pinned by digest in `shopware/Dockerfile`. `pull_policy: never`, so nothing outside the host replaces it. An update is a rehearsal on the mirror, then a build, ship and deploy, see [image.md](shopware/image.md#updates) |
-| `shopware_db` | `mysql:8.4` | LTS series. Patch updates are safe; a major is ignored by Dependabot and goes through a restore rehearsal. Chimo Diazz stays on dockware 6.7.11.1 in `docker-compose.projects.yml` and is switched off |
+| `shopware_db` | `mysql:8.4` | LTS series. Patch updates are safe; a major is ignored by Dependabot and goes through a restore rehearsal. Chimo Diazz stays on dockware 6.7.11.1 in `projects/chimodiazz/docker-compose.yml` and is switched off |
 | `dolibarr`, `dolibarr_cron` | `dolibarr/dolibarr:24.0.2-php8.5@sha256:46c066a9…` | Exact, by tag, PHP variant and digest, because upstream rebuilds tags. The isolated rehearsal takes its target from this pin, so a Dolibarr update starts by bumping it, see [Dolibarr 24.0.1 upgrade](#dolibarr-2401-upgrade) |
 | `dolibarr_db` and the project DBs | `mariadb:12.3` | Minor series. Patch updates inside 12.3 are safe and wanted; crossing a major version is the one-way door |
 | `paperless_sdwa5`, `paperless_home` | `ghcr.io/paperless-ngx/paperless-ngx:3.3.2@sha256:d232cba3…` | Exact, by tag and digest, the same pin on both services, which a test keeps equal. 3.3.2 of 2026-10-16 fixes GHSA-c8f3-pqr2-rr24. A minor runs forward-only migrations, so a bump goes through the dev mirror first, see [paperless.md](paperless.md#updates) |

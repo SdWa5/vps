@@ -3,11 +3,12 @@
 # through its rehearsal before anybody merges it.
 version: 2
 updates:
-  # Both compose files in the root, with their tag and tag@sha256 pins. Services on :latest are
-  # skipped, since there is no version to compare. The updater edits the raw text, so every image
-  # is written out on its service rather than shared through a YAML anchor.
+  # The compose file in the root and each sandbox project's in projects/, with their tag and
+  # tag@sha256 pins. Services on :latest are skipped, since there is no version to compare. The
+  # updater edits the raw text, so every image is written out on its service rather than shared
+  # through a YAML anchor.
   - package-ecosystem: docker-compose
-    directory: /
+    directories: ["/", "/projects/*"]
     schedule:
       interval: weekly
     open-pull-requests-limit: 3

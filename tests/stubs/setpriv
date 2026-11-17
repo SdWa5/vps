@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Fake setpriv for as_sandbox in monitoring/lib.sh. Logs its whole argument list
+# to STUB_SETPRIV_LOG, drops its own options up to "--", the `env -C DIR` and
+# VAR=value words after it and an optional `timeout N`, and then answers the
+# probes of monitoring/sandbox-check.sh. Anything else runs as the test user.
+#
+#   STUB_SANDBOX_OPEN     HOST:PORT pairs a TCP probe reaches, space separated
+#   STUB_SANDBOX_ACCESS   paths `test -r|-w|-x` passes for, space separated
+[[ -n "${STUB_SETPRIV_LOG:-}" ]] && printf 'setpriv %s\n' "$*" >> "$STUB_SETPRIV_LOG"
+
+while [[ $# -gt 0 && "$1" != "--" ]]; do
+    shift
+done
+shift
+if [[ "${1:-}" == env ]]; then
+    shift
+    [[ "${1:-}" == -C ]] && shift 2
+    while [[ "${1:-}" == *=* ]]; do
+        shift
+    done
+fi
+if [[ "${1:-}" == timeout ]]; then
+    shift 2
+fi
+
+if [[ "${1:-}" == /bin/bash && "${2:-}" == -c && "${4:-}" == probe ]]; then
+    [[ " ${STUB_SANDBOX_OPEN-} " == *" $5:$6 "* ]] && exit 0
+    exit 1
+fi
+if [[ "${1:-}" == /usr/bin/test ]]; then
+    [[ " ${STUB_SANDBOX_ACCESS-} " == *" $3 "* ]] && exit 0
+    exit 1
+fi
+exec "$@"

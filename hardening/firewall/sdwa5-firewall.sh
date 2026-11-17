@@ -1,11 +1,12 @@
 #!/bin/bash
 # Default-deny INPUT for the SdWa5 VPS, IPv4 and IPv6, plus DOCKER-USER.
 #
-# It rewrites INPUT and DOCKER-USER and nothing else. Docker owns DOCKER,
-# DOCKER-ISOLATION and its FORWARD rules, and rebuilds them at its own start, so
-# a full iptables-restore would replay stale copies of them at boot. This script
-# is therefore idempotent by flushing only the two chains it owns and appending
-# its own rules.
+# It rewrites INPUT, DOCKER-USER and its own SANDBOX-OUT and SANDBOX-POLICY, and
+# nothing else. Docker owns DOCKER, DOCKER-ISOLATION and its FORWARD rules, and
+# rebuilds them at its own start, so a full iptables-restore would replay stale
+# copies of them at boot. This script is therefore idempotent by flushing only
+# the chains it owns and appending its own rules. In OUTPUT it only keeps one
+# jump to SANDBOX-OUT at the head, see the end of this file.
 #
 # DOCKER-USER is the exception Docker provides deliberately: it creates the chain
 # empty, jumps to it from the head of FORWARD and never puts rules in it, so it
@@ -129,3 +130,73 @@ ip6tables -A INPUT -p tcp --dport 443 -j ACCEPT
 ip6tables -A INPUT -p udp --dport 443 -j ACCEPT
 restore_fail2ban_jump ip6tables
 ip6tables -P INPUT DROP
+
+# OUTPUT policy for the sandbox accounts (group "sandbox", docs/sandbox.md).
+#
+# A rootless container's traffic leaves through slirp4netns, a process of the
+# sandbox account in the host's network namespace. Locally originated traffic
+# never passes DOCKER-USER, so without this the account reaches every loopback
+# listener (the Caddy admin API on 2019 among them) and the bridge address of
+# every root-daemon container, such as shopware_db:3306 or vaultwarden:80.
+#
+# The subordinate uid range is matched as well as the account's own uid: the
+# account can give its own processes a subuid in the host's network namespace
+# through newuidmap (`unshare --map-users`), so a match on the uid alone could be
+# walked around.
+SANDBOX_GROUP="${SANDBOX_GROUP:-sandbox}"
+SUBUID_FILE="${SUBUID_FILE:-/etc/subuid}"
+
+# Prints the uid and the subuid range of every sandbox account, one per line, in
+# the forms --uid-owner takes (1001, 165536-231071). Nothing without the group.
+sandbox_owner_ranges() {
+    local members
+    local user
+    local uid
+    members="$(getent group "$SANDBOX_GROUP" | cut -d: -f4 | tr ',' ' ' || true)"
+    for user in $members; do
+        uid="$(getent passwd "$user" | cut -d: -f3 || true)"
+        [[ "$uid" =~ ^[0-9]+$ ]] || continue
+        printf '%s\n' "$uid"
+        if [[ -r "$SUBUID_FILE" ]]; then
+            awk -F: -v u="$user" '$1 == u { print $2 "-" ($2 + $3 - 1) }' "$SUBUID_FILE"
+        fi
+    done
+}
+
+SANDBOX_OWNER_RANGES="$(sandbox_owner_ranges)"
+
+for ipt in iptables ip6tables; do
+    "$ipt" -N SANDBOX-OUT 2>/dev/null || true
+    "$ipt" -F SANDBOX-OUT
+    "$ipt" -N SANDBOX-POLICY 2>/dev/null || true
+    "$ipt" -F SANDBOX-POLICY
+    "$ipt" -C OUTPUT -j SANDBOX-OUT 2>/dev/null || "$ipt" -I OUTPUT 1 -j SANDBOX-OUT
+    # Replies on connections others opened, such as rootlesskit answering Caddy
+    # on a loopback port the sandbox publishes.
+    "$ipt" -A SANDBOX-OUT -m conntrack --ctstate ESTABLISHED,RELATED -j RETURN
+    for owner_range in $SANDBOX_OWNER_RANGES; do
+        "$ipt" -A SANDBOX-OUT -m owner --uid-owner "$owner_range" -j SANDBOX-POLICY
+    done
+done
+
+# Loopback: closed, because the root daemon publishes every port there and the
+# Caddy admin API listens there. The host's own public address is also routed
+# over lo, so 80 and 443 to it stay open, as they are for anyone outside.
+iptables -A SANDBOX-POLICY -o lo -d 127.0.0.0/8 -j REJECT
+iptables -A SANDBOX-POLICY -o lo -p tcp -m multiport --dports 80,443 -j RETURN
+iptables -A SANDBOX-POLICY -o lo -p udp --dport 443 -j RETURN
+iptables -A SANDBOX-POLICY -o lo -j REJECT
+# Private, shared and link-local ranges: the Docker bridges and their containers.
+for private_range in 10.0.0.0/8 172.16.0.0/12 192.168.0.0/16 100.64.0.0/10 169.254.0.0/16; do
+    iptables -A SANDBOX-POLICY -d "$private_range" -j REJECT
+done
+iptables -A SANDBOX-POLICY -j RETURN
+
+ip6tables -A SANDBOX-POLICY -o lo -d ::1 -j REJECT
+ip6tables -A SANDBOX-POLICY -o lo -p tcp -m multiport --dports 80,443 -j RETURN
+ip6tables -A SANDBOX-POLICY -o lo -p udp --dport 443 -j RETURN
+ip6tables -A SANDBOX-POLICY -o lo -j REJECT
+for private_range in fc00::/7 fe80::/10; do
+    ip6tables -A SANDBOX-POLICY -d "$private_range" -j REJECT
+done
+ip6tables -A SANDBOX-POLICY -j RETURN

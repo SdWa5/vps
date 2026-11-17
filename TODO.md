@@ -604,3 +604,33 @@
     Caddy, never plain port 53, which would be an open UDP resolver. Allow only known ClientIDs. No VPN, since it
     needs a client on every phone and clashes with Mullvad on the desktop, while Android Private DNS and iOS
     profiles speak DoT and DoH directly. Distinct from #13, which is the authoritative zone of sdwa5.org
+59. (proposal, P1) **prevent sandbox listeners from impersonating trusted backends** ([docs/sandbox.md](docs/sandbox.md)) (ca. 1 Stunde).
+    Measured on 2026-11-17 with temporary ports and a separate Caddy process running as `caddy`. A trusted IPv4
+    upstream remained available, but `reverse_proxy localhost:<port>` reached an IPv6 listener owned by
+    `chimodiazz` and returned its marker. Production uses `localhost` for Vaultwarden, Dolibarr and both
+    Paperless instances, while their Docker publishes bind only IPv4. No production backend was impersonated.
+    `SANDBOX-OUT` permits every established reply before checking the owner, so blocking outbound connections
+    does not prevent a sandbox from serving another application's requests.
+    Proposed fix is to pin Caddy's upstreams to `127.0.0.1` and prevent sandbox uids and subuids from answering
+    on ports reserved for other applications, including while those applications are stopped. Preserve the
+    sandbox's own approved publishes. Add regression tests and monitoring that cover inbound impersonation.
+    Acceptance repeats the dual-stack proxy test and checks reserved ports while a trusted backend is stopped.
+60. (proposal, P1) **update sandbox firewall chains atomically** ([docs/sandbox.md](docs/sandbox.md)) (ca. 45 Minuten).
+    Measured on 2026-11-17 in a separate network namespace with the VPS's INPUT conntrack rule and sandbox
+    OUTPUT rules. A connection was blocked before the reload, opened while `SANDBOX-OUT` was empty, and carried
+    data after the original policy returned. The host firewall was not changed by the test.
+    `hardening/firewall/sdwa5-firewall.sh` flushes `SANDBOX-OUT` and `SANDBOX-POLICY` before rebuilding them.
+    OUTPUT defaults to ACCEPT, and the restored established-connection RETURN preserves connections opened
+    during that interval. Proposed fix is a transactional update of only the owned chains, preserving Docker's
+    and fail2ban's rules. Add a regression test that repeatedly attempts blocked connections during reloads
+    and confirms that no connection opens or survives. Complete this before the startup ordering fix in #61.
+61. (proposal, P2) **require sandbox firewall readiness before sandbox startup** ([docs/sandbox.md](docs/sandbox.md)) (ca. 30 Minuten).
+    Code and live systemd dependencies were checked on 2026-11-17. `tools/sandbox/sandbox.sh create` enables
+    linger and installs the daemon before restarting `sdwa5-firewall`. The lingering `user@1001.service` also
+    has no requirement or ordering dependency on that firewall at boot. nftables persistence is disabled and
+    netfilter-persistent is absent. Sandbox processes can therefore start before their OUTPUT policy exists.
+    This startup risk was inferred from the sequence and dependencies. Production was not rebooted to test it.
+    Proposed fix is to apply the uid and subuid policy before enabling linger or executing account-controlled
+    code, and require firewall readiness for each sandbox's system user-manager unit. Depend on #60 so policy
+    reloads stay closed too. Add creation-order and dependency tests, then verify a controlled boot with a
+    harmless sandbox probe before claiming that the boot path is covered.

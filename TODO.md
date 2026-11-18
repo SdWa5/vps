@@ -611,3 +611,15 @@
     with a key file before 2026-11-17 keeps it; the old key files themselves are deleted for good.
     `restic init --from-repo … --copy-chunker-params` plus `restic copy` replaces the master key. The estimate is
     the active work; `restic copy` pulls and pushes 109 GiB through the host, and its wall time is unmeasured
+59. (proposal) **a Tor relay, and every public service as an onion service too** (priority low, ca. 3 Stunden).
+    Onion services come first. A `tor` container gets one `HiddenServicePort` per Caddy site, Caddy also answers
+    the onion host names, and the clearnet sites send an `Onion-Location` header. They need no inbound port, since
+    tor connects out. A relay needs an ORPort in `sdwa5-firewall`, and its address then sits in the public Tor
+    consensus. Some blocklists list every relay, not only exits, so a relay on the shop's address may hurt its
+    payments and the IP-authorised `smtp-relay.gmail.com`. An unlisted obfs4 bridge or a Snowflake proxy avoids
+    that, and an exit is out, since its abuse complaints would hit sdwa5.org. Check Contabo's terms on Tor first,
+    and size the relay's bandwidth and memory against item 14, since the host has 5.8 GiB RAM
+    1. look for similar decentralised, community-run FOSS projects the host can serve (ca. 1 Stunde). The
+       OpenDHT node for Jami already runs ([docs/jami.md](docs/jami.md#opendht-node)). Candidates are the NTP
+       Pool, a Syncthing relay, a RIPE Atlas software probe, an I2P router, a Matrix or fediverse server and a
+       Nostr relay; compare memory, traffic and abuse exposure per candidate

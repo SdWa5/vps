@@ -623,3 +623,10 @@
        OpenDHT node for Jami already runs ([docs/jami.md](docs/jami.md#opendht-node)). Candidates are the NTP
        Pool, a Syncthing relay, a RIPE Atlas software probe, an I2P router, a Matrix or fediverse server and a
        Nostr relay; compare memory, traffic and abuse exposure per candidate
+
+60. (proposal) **`sync-pm.sh` and the MCP tools set the ticket statuses assigned and waiting** (ca. 45 Minuten).
+    The spec's `status` knows only `open`, `closed` and `canceled`, and PmTools only closes, cancels and reopens.
+    On 2026-11-20 TS2610-0036, -0041 and -0055 moved from waiting (5) to assigned (2) by hand through the core
+    `PUT tickets/{id}` with `{"status": 2, "fk_statut": 2}`, which answered 200 and read back as status 2. Reuse
+    that core route in `sync-pm.sh` for `assigned` and `waiting`, add a `pm_ticket_update` status field in PmTools
+    for the MCP side, and test both

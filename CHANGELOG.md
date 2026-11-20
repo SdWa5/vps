@@ -38,6 +38,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   named in their `rclone.conf` deleted
 - The 16 unused `PROJECT2_*` and `PROJECT3_*` keys dropped from the host `.env`
 
+## [1.110.0] - 2026-11-20
+
+### Added
+
+- `ripper.sdwa5.org`: static homepage and privacy policy of the private OAuth app `private-automation` from `ripper-site/`, with access log and HSTS
+- `tests/caddyfile.bats`: checks the `ripper.sdwa5.org` block and its access log
+
 ## [1.109.0] - 2026-11-17
 
 ### Added

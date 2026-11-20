@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>private-automation</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f6f5f3;
+    --fg: #16161a;
+    --muted: #5d5d66;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #111114; --fg: #f2f1ee; --muted: #9a9aa4; }
+  }
+  body {
+    margin: 0 auto;
+    max-width: 40rem;
+    padding: 2rem 1rem;
+    background: var(--bg);
+    color: var(--fg);
+    font: 400 1rem/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  a { color: inherit; }
+  footer { color: var(--muted); margin-top: 2rem; }
+</style>
+</head>
+<body>
+<h1>private-automation</h1>
+<p>private-automation is a Google OAuth app for personal command-line tools that run on its owner's own
+computers. It has no other users.</p>
+<ul>
+  <li><strong>todo-sync</strong> reads Google Tasks into a local to-do list.</li>
+  <li><strong>gmail-headers</strong> searches the headers of the owner's own Gmail messages.</li>
+</ul>
+<p>Both tools only read. Nothing they fetch leaves the owner's computers.</p>
+<footer><a href="privacy.html">Privacy policy</a> · Contact: ripper@sdwa5.org</footer>
+</body>
+</html>

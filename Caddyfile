@@ -236,3 +236,18 @@ chimodiazz.sdwa5.org {
         file_server
     }
 }
+
+# ripper.sdwa5.org — homepage and privacy policy of the owner's private Google
+# OAuth app private-automation (todo-sync, gmail-headers). Google requires both
+# URLs before the app leaves testing mode, whose refresh tokens expire after
+# seven days. Static files from ripper-site/, see docs/caddy.md.
+ripper.sdwa5.org {
+    import hide_server_headers
+    import access_log ripper.sdwa5.org
+    header Strict-Transport-Security "max-age=31536000"
+
+    handle {
+        root * /opt/docker/ripper-site
+        file_server
+    }
+}

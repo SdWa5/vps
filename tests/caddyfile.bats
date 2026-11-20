@@ -47,7 +47,7 @@ site_block() {
     local pair block
     for pair in https://sdwa5.org:sdwa5.org vault.sdwa5.org:vault.sdwa5.org erp.sdwa5.org:erp.sdwa5.org \
         paper.sdwa5.org:paper.sdwa5.org paper.ripper.sdwa5.org:paper.ripper.sdwa5.org \
-        chimodiazz.sdwa5.org:chimodiazz.sdwa5.org ripper.sdwa5.org:ripper.sdwa5.org; do
+        chimodiazz.sdwa5.org:chimodiazz.sdwa5.org; do
         block="$(site_block "${pair%:*}")"
         grep -q "import access_log ${pair##*:}\$" <<<"$block" || { echo "no access log in ${pair%:*}"; return 1; }
     done
@@ -70,15 +70,4 @@ site_block() {
     grep -qE '^\s+reverse_proxy 127\.0\.0\.1:8001 \{$' <<<"$block"
     grep -qE '^\s+lb_try_duration 15s$' <<<"$block"
     ! grep -qE '8443|tls_insecure_skip_verify' <<<"$block" || false
-}
-
-@test "ripper.sdwa5.org serves the static OAuth homepage and privacy policy from ripper-site" {
-    local block
-    block="$(site_block ripper.sdwa5.org)"
-    grep -qE '^\s+root \* /opt/docker/ripper-site$' <<<"$block"
-    grep -qE '^\s+file_server$' <<<"$block"
-    ! grep -q 'reverse_proxy' <<<"$block" || false
-    [ -f "$REPO_ROOT/ripper-site/index.html" ]
-    [ -f "$REPO_ROOT/ripper-site/privacy.html" ]
-    grep -q 'href="privacy.html"' "$REPO_ROOT/ripper-site/index.html"
 }

@@ -38,6 +38,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   named in their `rclone.conf` deleted
 - The 16 unused `PROJECT2_*` and `PROJECT3_*` keys dropped from the host `.env`
 
+## [1.111.0] - 2026-11-20
+
+### Removed
+
+- `ripper.sdwa5.org` and `ripper-site/`: the private OAuth app moved to Google's Personal mode, which needs no homepage or privacy policy
+
 ## [1.110.0] - 2026-11-20
 
 ### Added

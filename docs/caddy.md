@@ -58,7 +58,6 @@ apt-get install --allow-downgrades -o Dpkg::Options::=--force-confold ./caddy_2.
 | paper.sdwa5.org           | http://localhost:8006 | `paperless` snippet: `/admin` 404, basic auth 403, HSTS |
 | paper.ripper.sdwa5.org    | http://localhost:8007 | same snippet as paper.sdwa5.org |
 | chimodiazz.sdwa5.org      | https://127.0.0.1:8444 | TLS skip verify, same shape as sdwa5.org |
-| ripper.sdwa5.org         | static `/opt/docker/ripper-site` | homepage and privacy policy of the private OAuth app `private-automation`, which Google requires for publishing; HSTS |
 
 ## Caddyfile
 

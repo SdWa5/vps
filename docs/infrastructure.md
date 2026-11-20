@@ -288,7 +288,6 @@ where the flag was set.
 ├── shopware-legacy-data-20260327/  # gitignored — unused MySQL datadir of 2026-03-27, retired with TODO #36
 ├── dolibarr-mariadb-data/          # gitignored — Dolibarr SdWa5 DB
 ├── chimodiazz-placeholder/         # tracked — maintenance page, routed while Chimo Diazz is off
-├── ripper-site/                    # tracked — homepage and privacy policy of the private OAuth app
 ├── dolibarr-documents-data/        # gitignored — Dolibarr SdWa5 uploads
 ├── dolibarr-custom-data/           # gitignored — only GeoLite2-Country.mmdb (MaxMind, re-downloadable)
 ├── vaultwarden-data/               # gitignored — Vaultwarden data

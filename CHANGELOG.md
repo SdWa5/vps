@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- `TODO.md`: item 12 records GitLab CE as the self-hosted git choice; the host decision stays open
 - TODO: effort estimates halved, by the user's request of 2026-11-16
 - TODO items 52 to 58 renumbered to 51 to 57
 - `docs/backup.md`: the My Drive copy of the repository is gone, no longer a fallback

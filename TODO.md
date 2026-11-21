@@ -291,11 +291,18 @@
     VPS 1 NVMe 4 cores, 6 GB, 100 GB NVMe, €9.64 a month with Auto Backup): Cloud VPS 6 NVMe 6 cores, 12 GB,
     100 GB NVMe for €13.81; Cloud VPS 6 SSD 12 GB, 200 GB SSD for €12.92; Storage VPS 30 6 cores, 18 GB, 1 TB SSD,
     no snapshots for €16.66; Cloud VPS Plus 4 8 GB, 150 GB NVMe for €19.05. Live migration keeps the data and
-    takes up to 48 hours. Downgrades are impossible, so the choice of GitLab or Forgejo comes first.
-    - (decision) **GitLab or Forgejo**, open since 2026-11-17, the owner is not sure yet. Forgejo or Gitea fits
-      the current VPS at no extra cost; GitLab needs the Cloud VPS 6 NVMe (+€4.17 a month) or the RAM that #26
-      frees. Compare what each must do (CI, registry, mirrors to GitHub, users besides the owner) before the
-      plan (ca. 30 Minuten)
+    takes up to 48 hours. Downgrades are impossible.
+    - **GitLab CE**, decided on 2026-11-21 over Forgejo, because the owner knows it from work and its CI dialect
+      carries over. Measured the same day: 2178 MiB available, so GitLab's memory-constrained minimum (2.5 GB) does
+      not fit without more RAM. Consequences for the plan: pull mirroring is a Premium feature, so GitLab becomes the
+      primary and push-mirrors to GitHub; 10 private repos have 18 GitHub workflows to port or keep on the GitHub
+      mirror (ca. 3 Stunden); the employer's CI/CD components are licensed `proprietary`, so only the know-how
+      carries over; upgrades must pass the required stops x.2, x.5, x.8 and x.11
+    - (decision) **Host**, open since 2026-11-21. Options: an own Hetzner Cloud CX33 (4 vCPU, 8 GB, 80 GB, ca.
+      €8.49 net plus €0.50 IPv4 a month by third-party listings after Hetzner's 15.06.2026 price change, billed
+      hourly, separate from Vaultwarden), or this VPS upgraded to Cloud VPS 6 NVMe (+€4.17 a month, irreversible,
+      GitLab in a rootless sandbox next to Vaultwarden, omnibus rootless untested). Employer infrastructure (an old
+      Hetzner VPS or a Proxmox VM) is possible but not preferred. The plan follows the choice (ca. 30 Minuten)
 13. **host the sdwa5.org dns ourselves** (priority low, ca. 4 Stunden). today the domain and its dns sit
     at squarespace, and squarespace has no dns api. checked on 2026-10-16: it offers commerce apis only,
     its reseller apis are for approved partners, and its dns page drives an undocumented internal

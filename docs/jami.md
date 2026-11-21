@@ -113,6 +113,12 @@ The admin password stays in `secrets/` and is mounted nowhere, see
 
 `docker exec jami_web jami-web accounts list` then shows the account.
 
+Link only a fresh peer. With a login in place, log in with the Vaultwarden password instead. A second link adds a
+second device of the same account, moves the login to it and leaves the old device running without a login. To clean
+up, revoke the old device from the notebook's Jami app under the account's linked devices, because revoking in Jami
+Web 0.2.3 fails with HTTP 500. Then run `docker exec jami_web jami-web accounts remove --accountId <old>`, where the
+old account is the older folder under `jami-web-data/.local/share/jami/` (`stat -c %W`).
+
 Both were tested on 2026-11-07. The link ran through Jami's relay, as expected without inbound UDP. For the
 offline test, a throwaway account in a separate daemon sent a message while the notebook's daemon was stopped, and
 then went offline itself. The restarted notebook had fetched the message two seconds later, and this peer was the

@@ -552,8 +552,9 @@
       rate-limit bucket, so anyone's failed logins lock everyone out for five minutes
     - members get accounts only from the admin (`jami-web accounts create`), never by self-signup. Jami Web 0.2.3
       has no setting to turn signup off: `jami-web config` offers only `localAuthEnabled`, which also ends every
-      login (measured 2026-11-21), so the Caddy 404 on `/api/auth/new-account` is the only lock, and
-      `tests/caddyfile.bats` asserts it. Ask upstream for a signup switch in the same issue as `trust proxy`
+      login (measured 2026-11-21), so the Caddy 404 on `/api/auth/new-account`, `/api/auth/link-token` and
+      `/api/auth/link/*` is the only lock, because the link flow gives a login to any account a stranger links, and
+      `tests/caddyfile.bats` asserts all three. Ask upstream for a signup switch in the same issue as `trust proxy`
       (ca. 5 Minuten)
 48. (proposal) **The Jami peer as the call host of a group** ([docs/jami.md](docs/jami.md#known-limits))
     (ca. 45 Minuten). A Jami group can name one device as its call host, so group calls run on the

@@ -23,6 +23,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Changed
 
+- `docs/jami.md`: link only a fresh peer; cleanup of a second device from a relink
+- `TODO.md`: item 47 names the link routes next to signup as what the Caddy 404 must lock
 - `TODO.md`: item 12 records GitLab CE as the self-hosted git choice; the host decision stays open
 - TODO: effort estimates halved, by the user's request of 2026-11-16
 - TODO items 52 to 58 renumbered to 51 to 57

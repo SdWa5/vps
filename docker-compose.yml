@@ -281,7 +281,7 @@ services:
     # on its own, which is why it is not used. The PHP variant and the digest
     # are part of the pin, because upstream rebuilds tags and moved the plain
     # `24.0.2` from PHP 8.2 to 8.5 on 2026-10-24. This build ships PHP 8.5.12.
-    image: dolibarr/dolibarr:24.0.2-php8.5@sha256:46c066a954179e31b1d139d8e315162cf8ab72a6f6ae14add89622fd0457eff0
+    image: dolibarr/dolibarr:24.0.2-php8.5@sha256:0fab863277ca8f88759ecf6857325a55ee43a0457c94c54459db036bf19d3cae
     container_name: dolibarr
     restart: unless-stopped
     logging: *default-logging
@@ -341,7 +341,7 @@ services:
     # on its own, which is why it is not used. The PHP variant and the digest
     # are part of the pin, because upstream rebuilds tags and moved the plain
     # `24.0.2` from PHP 8.2 to 8.5 on 2026-10-24. This build ships PHP 8.5.12.
-    image: dolibarr/dolibarr:24.0.2-php8.5@sha256:46c066a954179e31b1d139d8e315162cf8ab72a6f6ae14add89622fd0457eff0
+    image: dolibarr/dolibarr:24.0.2-php8.5@sha256:0fab863277ca8f88759ecf6857325a55ee43a0457c94c54459db036bf19d3cae
     container_name: dolibarr_cron
     restart: unless-stopped
     logging: *default-logging

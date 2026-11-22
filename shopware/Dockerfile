@@ -15,7 +15,7 @@ RUN --mount=type=secret,id=composer_auth,dst=/src/auth.json \
 # Shopware's own guard against its web installer, besides SHOPWARE_SKIP_WEBINSTALLER.
 RUN touch install.lock
 
-FROM ghcr.io/shopware/docker-base:8.5.12-frankenphp@sha256:25b0762ff358ddde7caf3919cb791c933d75e314accd5c428f4920b643f9d142
+FROM ghcr.io/shopware/docker-base:8.5.13-frankenphp@sha256:b2e511c47a3356ef9c4a9f372ab5f506ac5e0635ae2449b2ff11d1e57ab4947f
 USER root
 # The shop listens on 8000, so frankenphp needs no file capability, and with one it
 # cannot start under cap_drop: [ALL]. Caddy on the host writes the access log with
